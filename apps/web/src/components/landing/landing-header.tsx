@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/logo";
 
 const NAV_LINKS = [
-  { href: "#tinh-nang", label: "Tính năng" },
+  { href: "#tinh-nang", label: "Năng lực" },
   { href: "#lop-hoc-phan", label: "Lớp học phần" },
   { href: "#vai-tro", label: "Vai trò" },
 ];
@@ -17,7 +17,7 @@ interface LandingHeaderProps {
   ctaLabel: string;
 }
 
-/** Header sticky — trong suốt lúc đầu, glass/blur + viền khi scroll */
+/** Header sticky — trong suốt lúc đầu, blur + viền khi scroll */
 export function LandingHeader({ ctaHref, ctaLabel }: LandingHeaderProps) {
   const [scrolled, setScrolled] = useState(false);
 
@@ -38,7 +38,11 @@ export function LandingHeader({ ctaHref, ctaLabel }: LandingHeaderProps) {
       )}
     >
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-4 px-6">
-        <Link href="/" aria-label="LMS-P — trang chủ" className="flex items-center gap-2.5">
+        <Link
+          href="/"
+          aria-label="LMS-P — trang chủ"
+          className="flex items-center gap-2.5"
+        >
           <Logo size={32} />
         </Link>
 
@@ -48,7 +52,7 @@ export function LandingHeader({ ctaHref, ctaLabel }: LandingHeaderProps) {
               <li key={link.href}>
                 <a
                   href={link.href}
-                  className="text-xs font-semibold tracking-widest uppercase text-muted-foreground transition-colors hover:text-foreground"
+                  className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
                 >
                   {link.label}
                 </a>
@@ -61,7 +65,11 @@ export function LandingHeader({ ctaHref, ctaLabel }: LandingHeaderProps) {
           <Button asChild variant="ghost" size="sm">
             <Link href="/login">Đăng nhập</Link>
           </Button>
-          <Button asChild size="sm">
+          <Button
+            asChild
+            size="sm"
+            className="bg-(--gold) text-white hover:bg-(--gold)/90"
+          >
             <Link href={ctaHref}>{ctaLabel}</Link>
           </Button>
         </div>

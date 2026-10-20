@@ -2,8 +2,8 @@ import { cn } from "@/lib/utils";
 
 /**
  * Logo LMS-P — badge monogram "bộ tầng tri thức tăng dần":
- * rounded square vàng đồng chứa 3 thanh ink navy cao dần (sách/bậc thang
- * tri thức). Dùng token --gold + --mark-ink nên ăn theo theme, vẫn rõ ở 16px.
+ * rounded square màu foreground chứa 3 thanh màu background cao dần
+ * (sách/bậc thang tri thức). Đơn sắc, tự đảo theo dark mode, rõ ở 16px.
  */
 
 interface LogoProps {
@@ -26,10 +26,10 @@ export function LogoMark({ size = 32, className }: { size?: number; className?: 
       aria-label="LMS-P"
       className={cn("shrink-0", className)}
     >
-      <rect x="2" y="2" width="44" height="44" rx="12" fill="var(--gold)" />
-      <rect x="13" y="28" width="6" height="8" rx="1.5" fill="var(--mark-ink)" />
-      <rect x="21" y="21" width="6" height="15" rx="1.5" fill="var(--mark-ink)" />
-      <rect x="29" y="14" width="6" height="22" rx="1.5" fill="var(--mark-ink)" />
+      <rect x="2" y="2" width="44" height="44" rx="12" fill="var(--foreground)" />
+      <rect x="13" y="28" width="6" height="8" rx="1.5" fill="var(--background)" />
+      <rect x="21" y="21" width="6" height="15" rx="1.5" fill="var(--background)" />
+      <rect x="29" y="14" width="6" height="22" rx="1.5" fill="var(--background)" />
     </svg>
   );
 }
@@ -53,7 +53,7 @@ export function Logo({
         className="leading-none"
         style={{ fontSize: `${textScale}rem` }}
       >
-        <span className="block font-heading font-bold tracking-tight">
+        <span className="block font-heading font-semibold tracking-tight">
           LMS-P
         </span>
         {caption ? (

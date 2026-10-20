@@ -12,7 +12,7 @@ interface HeroSectionProps {
   ctaLabel: string;
 }
 
-/** Hero — stagger fade-up chữ + visual khi mount (anime.js) */
+/** Hero — stagger fade-up nhẹ (translateY 12px) khi mount, tôn trọng reduced-motion */
 export function HeroSection({ ctaHref, ctaLabel }: HeroSectionProps) {
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -28,76 +28,62 @@ export function HeroSection({ ctaHref, ctaLabel }: HeroSectionProps) {
 
     animate(targets, {
       opacity: [0, 1],
-      translateY: [28, 0],
-      duration: 800,
-      delay: stagger(110),
+      translateY: [12, 0],
+      duration: 500,
+      delay: stagger(70),
       ease: "out(3)",
     });
   }, []);
 
   return (
-    <section className="relative overflow-hidden">
-      {/* Họa tiết nền: đường kẻ dọc kiểu vở học thuật */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 mx-auto hidden w-full max-w-6xl grid-cols-4 px-6 lg:grid"
-      >
-        {[0, 1, 2, 3].map((i) => (
-          <div key={i} className="border-l border-border/60" />
-        ))}
-      </div>
-
+    <section className="border-b border-border">
       <div
         ref={rootRef}
-        className="relative mx-auto grid w-full max-w-6xl items-center gap-12 px-6 py-16 md:py-24 lg:grid-cols-2"
+        className="mx-auto grid w-full max-w-6xl items-center gap-12 px-6 py-16 md:py-24 lg:grid-cols-[1.1fr_1fr]"
       >
-        <div className="flex flex-col items-start gap-6">
-          <p
-            data-hero
-            className="border border-border bg-card px-3 py-1.5 text-[11px] font-semibold tracking-widest uppercase text-muted-foreground"
-          >
-            Hệ thống đào tạo trực tuyến
-          </p>
-
+        <div className="flex flex-col items-start gap-5">
           <h1
             data-hero
-            className="font-heading text-4xl leading-tight font-semibold tracking-tight text-balance md:text-5xl"
+            className="text-3xl leading-tight font-semibold tracking-tight text-balance md:text-4xl"
           >
-            Lớp học phần, kỳ thi và chấm điểm tự động —{" "}
-            <span className="text-gold">trên một cổng duy nhất</span>
+            Lớp học phần, học liệu, bài tập, kỳ thi và chấm bài lập trình tự
+            động — trên một hệ thống
           </h1>
 
           <p
             data-hero
             className="max-w-lg text-base leading-relaxed text-muted-foreground"
           >
-            LMS-P là hệ thống quản lý học tập dành cho môn Lập trình mạng:
-            giảng viên tổ chức lớp, học liệu và ngân hàng đề; sinh viên làm bài
-            trực tuyến; bài nộp lập trình được chấm tự động trong sandbox
-            Docker và trả kết quả realtime qua WebSocket.
+            Sinh viên nộp bài viết bằng Python, C, C++ hoặc Java và nhận kết
+            quả chấm từng test gần như ngay lập tức. Giảng viên quản lý toàn bộ
+            lớp học phần, từ học liệu đến sổ điểm.
           </p>
 
           <div data-hero className="flex flex-wrap items-center gap-3">
-            <Button asChild size="lg">
+            <Button
+              asChild
+              size="lg"
+              className="bg-(--gold) text-white hover:bg-(--gold)/90"
+            >
               <Link href={ctaHref}>
                 {ctaLabel}
                 <ArrowRight data-icon="inline-end" />
               </Link>
             </Button>
             <Button asChild variant="outline" size="lg">
-              <a href="#tinh-nang">Khám phá tính năng</a>
+              <a href="#tinh-nang">Xem năng lực hệ thống</a>
             </Button>
           </div>
 
           <p
             data-hero
-            className="text-xs tracking-wide text-muted-foreground"
+            className="text-sm text-muted-foreground"
           >
             Tài khoản do quản trị cấp · Sinh viên — Giảng viên — Quản trị
           </p>
         </div>
 
-        <div data-hero className="lg:justify-self-end lg:w-full lg:max-w-md">
+        <div data-hero className="lg:justify-self-end lg:w-full">
           <DashboardMockup />
         </div>
       </div>

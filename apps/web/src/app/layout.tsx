@@ -1,16 +1,10 @@
 import type { Metadata } from "next";
-import { Be_Vietnam_Pro, Literata, Geist_Mono } from "next/font/google";
+import { Be_Vietnam_Pro, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { Providers } from "@/components/providers";
 
-/** Serif display — chất học thuật, hỗ trợ tiếng Việt */
-const literata = Literata({
-  variable: "--font-heading",
-  subsets: ["vietnamese", "latin"],
-});
-
-/** Sans UI — tối ưu dấu tiếng Việt */
+/** Sans UI — tối ưu dấu tiếng Việt, dùng cho cả heading (xem globals.css) */
 const beVietnamPro = Be_Vietnam_Pro({
   variable: "--font-sans",
   subsets: ["vietnamese", "latin"],
@@ -40,7 +34,6 @@ export default function RootLayout({
       suppressHydrationWarning
       className={cn(
         "h-full antialiased",
-        literata.variable,
         beVietnamPro.variable,
         geistMono.variable
       )}

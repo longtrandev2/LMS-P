@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Users } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useReveal } from "@/lib/hooks/use-reveal";
 import { SectionHeading } from "@/components/landing/section-heading";
@@ -14,45 +13,55 @@ interface SampleClass {
   name: string;
   lecturer: string;
   students: number;
-  progress: number;
   status: ClassStatus;
 }
 
-/** Dữ liệu minh họa cho card lớp học phần (grid kiểu Open edX) */
+/** Dữ liệu minh họa cho danh sách lớp học phần */
 const SAMPLE_CLASSES: SampleClass[] = [
   {
-    code: "IT3090 · NH21",
+    code: "IT3090-11",
     name: "Lập trình mạng",
     lecturer: "ThS. Trần Quốc Bảo",
     students: 42,
-    progress: 68,
     status: "Đang mở",
   },
   {
-    code: "IT3090 · NH22",
+    code: "IT3090-12",
     name: "Lập trình mạng — thực hành",
     lecturer: "ThS. Trần Quốc Bảo",
     students: 38,
-    progress: 41,
     status: "Đang mở",
   },
   {
-    code: "IT4082 · NH11",
+    code: "IT4082-11",
     name: "Lập trình mạng nâng cao",
     lecturer: "PGS. TS. Lê Hoài Nam",
     students: 30,
-    progress: 0,
     status: "Sắp mở",
+  },
+  {
+    code: "IT4082-12",
+    name: "Lập trình mạng nâng cao — thực hành",
+    lecturer: "PGS. TS. Lê Hoài Nam",
+    students: 28,
+    status: "Đã kết thúc",
   },
 ];
 
+/** Chip trạng thái — chỉ chữ + chấm màu, không nền màu */
 const STATUS_STYLES: Record<ClassStatus, string> = {
-  "Đang mở": "border-success/40 bg-success/10 text-success",
-  "Sắp mở": "border-gold/40 bg-gold/10 text-gold",
-  "Đã kết thúc": "border-border bg-muted text-muted-foreground",
+  "Đang mở": "text-success",
+  "Sắp mở": "text-muted-foreground",
+  "Đã kết thúc": "text-muted-foreground",
 };
 
-/** Danh mục lớp học phần — card grid kiểu cổng đào tạo */
+const STATUS_DOTS: Record<ClassStatus, string> = {
+  "Đang mở": "bg-success",
+  "Sắp mở": "bg-muted-foreground/50",
+  "Đã kết thúc": "bg-muted-foreground/30",
+};
+
+/** Danh mục lớp học phần — danh sách dày kiểu bảng app thật */
 export function ClassesSection() {
   const ref = useReveal<HTMLElement>();
 
@@ -60,74 +69,61 @@ export function ClassesSection() {
     <section
       id="lop-hoc-phan"
       ref={ref}
-      className="scroll-mt-20 border-y border-border bg-secondary/50 py-20 md:py-24"
+      className="scroll-mt-20 border-y border-border py-16 md:py-24"
     >
       <div className="mx-auto w-full max-w-6xl px-6">
-        <SectionHeading
-          eyebrow="Lớp học phần"
-          title="Khám phá lớp học phần đang mở"
-          description="Mỗi lớp học phần gắn với một khóa học, một giảng viên phụ trách và danh sách sinh viên ghi danh."
-        />
-
-        <div className="mt-14 grid gap-6 md:grid-cols-3">
-          {SAMPLE_CLASSES.map((cls) => (
-            <Card
-              key={cls.code}
-              data-reveal
-              className="transition-transform duration-300 hover:-translate-y-1"
-            >
-              {/* Visual đầu card: dải mã học phần kiểu bìa giáo trình */}
-              <div className="flex items-center justify-between border-b border-border bg-muted px-4 py-3">
-                <span className="font-mono text-xs font-medium text-card-foreground">
-                  {cls.code}
-                </span>
-                <span
-                  className={`border px-2 py-0.5 text-[11px] font-semibold tracking-wide ${STATUS_STYLES[cls.status]}`}
-                >
-                  {cls.status}
-                </span>
-              </div>
-              <CardContent className="flex flex-col gap-4 pt-4">
-                <h3 className="font-heading text-lg font-semibold text-card-foreground">
-                  {cls.name}
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  GV: {cls.lecturer}
-                </p>
-                <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <Users className="size-4" strokeWidth={1.75} />
-                  {cls.students} sinh viên
-                </p>
-                <div className="mt-auto">
-                  <div
-                    className="h-1 w-full bg-muted"
-                    role="progressbar"
-                    aria-valuenow={cls.progress}
-                    aria-valuemin={0}
-                    aria-valuemax={100}
-                    aria-label={`Tiến độ ${cls.name}`}
-                  >
-                    <div
-                      className="h-full bg-gold"
-                      style={{ width: `${cls.progress}%` }}
-                    />
-                  </div>
-                  <p className="mt-1.5 text-[11px] tabular-nums text-muted-foreground">
-                    Hoàn thành {cls.progress}%
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        <div data-reveal className="mt-10 text-center">
-          <Button asChild variant="outline">
+        <div className="flex flex-wrap items-end justify-between gap-6">
+          <SectionHeading
+            title="Lớp học phần"
+            description="Mỗi lớp học phần gắn với một khóa học, một giảng viên phụ trách và danh sách sinh viên ghi danh theo học kỳ."
+          />
+          <Button asChild variant="outline" size="sm" data-reveal>
             <Link href="/login">
-              Đăng nhập để xem lớp của bạn
+              Xem lớp của bạn
               <ArrowRight data-icon="inline-end" />
             </Link>
           </Button>
+        </div>
+
+        <div data-reveal className="mt-10 border-t border-border">
+          {/* Hàng tiêu đề cột — ẩn trên mobile */}
+          <div className="hidden grid-cols-[7rem_1fr_12rem_5rem_7rem] gap-4 border-b border-border px-4 py-2.5 text-[11px] font-medium text-muted-foreground md:grid">
+            <span>Mã học phần</span>
+            <span>Tên lớp</span>
+            <span>Giảng viên</span>
+            <span className="text-right">Sĩ số</span>
+            <span className="text-right">Trạng thái</span>
+          </div>
+
+          <ul>
+            {SAMPLE_CLASSES.map((cls) => (
+              <li
+                key={cls.code}
+                className="grid grid-cols-1 gap-1.5 border-b border-border px-4 py-4 transition-colors duration-200 hover:border-foreground md:grid-cols-[7rem_1fr_12rem_5rem_7rem] md:items-center md:gap-4 md:py-3.5"
+              >
+                <span className="font-mono text-xs text-muted-foreground">
+                  {cls.code}
+                </span>
+                <span className="text-sm font-medium text-foreground">
+                  {cls.name}
+                </span>
+                <span className="text-sm text-muted-foreground">
+                  {cls.lecturer}
+                </span>
+                <span className="font-mono text-xs text-muted-foreground tabular-nums md:text-right">
+                  {cls.students} SV
+                </span>
+                <span
+                  className={`flex items-center gap-1.5 text-xs md:justify-end ${STATUS_STYLES[cls.status]}`}
+                >
+                  <span
+                    className={`size-1.5 shrink-0 rounded-full ${STATUS_DOTS[cls.status]}`}
+                  />
+                  {cls.status}
+                </span>
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
     </section>

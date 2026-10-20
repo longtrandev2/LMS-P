@@ -6,7 +6,6 @@ import { LandingHeader } from "@/components/landing/landing-header";
 import { HeroSection } from "@/components/landing/hero-section";
 import { PillarsSection } from "@/components/landing/pillars-section";
 import { ClassesSection } from "@/components/landing/classes-section";
-import { StatsSection } from "@/components/landing/stats-section";
 import { RolesSection } from "@/components/landing/roles-section";
 import { LandingFooter } from "@/components/landing/landing-footer";
 
@@ -33,7 +32,6 @@ export default function RootPage() {
         <HeroSection ctaHref={ctaHref} ctaLabel={ctaLabel} />
         <PillarsSection />
         <ClassesSection />
-        <StatsSection />
         <RolesSection />
       </main>
       <LandingFooter ctaHref={ctaHref} ctaLabel={ctaLabel} />

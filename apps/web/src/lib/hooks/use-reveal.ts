@@ -13,7 +13,7 @@ function prefersReducedMotion(): boolean {
 /**
  * Scroll-reveal bằng IntersectionObserver + anime.js.
  * Gắn ref vào section; các phần tử con mang thuộc tính `data-reveal`
- * sẽ fade-up theo stagger khi section vào viewport.
+ * sẽ fade-up nhẹ theo stagger khi section vào viewport.
  * Nếu user bật prefers-reduced-motion → không ẩn, không animate.
  */
 export function useReveal<T extends HTMLElement = HTMLElement>() {
@@ -31,7 +31,7 @@ export function useReveal<T extends HTMLElement = HTMLElement>() {
     // Ẩn trước khi observe để tránh nhảy layout; SSR vẫn render nội dung đầy đủ
     targets.forEach((el) => {
       el.style.opacity = "0";
-      el.style.transform = "translateY(24px)";
+      el.style.transform = "translateY(12px)";
     });
 
     const io = new IntersectionObserver(
@@ -40,9 +40,9 @@ export function useReveal<T extends HTMLElement = HTMLElement>() {
         io.disconnect();
         animate(targets, {
           opacity: [0, 1],
-          translateY: [24, 0],
-          duration: 700,
-          delay: stagger(90),
+          translateY: [12, 0],
+          duration: 500,
+          delay: stagger(60),
           ease: "out(3)",
           complete: () => {
             // Dọn inline style để không chặn transition/hover về sau

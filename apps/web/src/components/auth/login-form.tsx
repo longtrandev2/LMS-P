@@ -53,11 +53,9 @@ export function LoginForm() {
   }
 
   return (
-    <Card className="border-none shadow-glass">
+    <Card className="border shadow-soft">
       <CardHeader>
-        <p className="text-xs font-medium tracking-widest text-gold uppercase">
-          LMS-P
-        </p>
+        <p className="text-xs font-medium text-muted-foreground">LMS-P</p>
         <CardTitle className="font-heading text-xl font-bold">Đăng nhập</CardTitle>
         <CardDescription>Dùng tài khoản do trường cấp để truy cập hệ thống.</CardDescription>
       </CardHeader>
@@ -96,7 +94,7 @@ export function LoginForm() {
             </p>
           ) : null}
 
-          <Button type="submit" className="w-full" disabled={submitting}>
+          <Button type="submit" variant="cta" className="w-full" disabled={submitting}>
             {submitting ? "Đang đăng nhập…" : "Đăng nhập"}
           </Button>
           <p className="text-center text-xs text-muted-foreground">

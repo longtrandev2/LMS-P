@@ -7,28 +7,19 @@ import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/logo";
 
-const FOOTER_LINKS: { title: string; links: { label: string; href: string }[] }[] =
-  [
-    {
-      title: "Hệ thống",
-      links: [
-        { label: "Tính năng", href: "#tinh-nang" },
-        { label: "Lớp học phần", href: "#lop-hoc-phan" },
-        { label: "Vai trò", href: "#vai-tro" },
-      ],
-    },
-    {
-      title: "Tài khoản",
-      links: [{ label: "Đăng nhập", href: "/login" }],
-    },
-  ];
+const FOOTER_LINKS: { label: string; href: string }[] = [
+  { label: "Năng lực hệ thống", href: "#tinh-nang" },
+  { label: "Lớp học phần", href: "#lop-hoc-phan" },
+  { label: "Vai trò", href: "#vai-tro" },
+  { label: "Đăng nhập", href: "/login" },
+];
 
 interface LandingFooterProps {
   ctaHref: string;
   ctaLabel: string;
 }
 
-/** CTA cuối trang + footer tối giản kiểu cổng đào tạo */
+/** CTA cuối trang + footer tối giản — chỉ nghiệp vụ, không công nghệ */
 export function LandingFooter({ ctaHref, ctaLabel }: LandingFooterProps) {
   const ref = useRef<HTMLElement>(null);
 
@@ -47,9 +38,9 @@ export function LandingFooter({ ctaHref, ctaLabel }: LandingFooterProps) {
         io.disconnect();
         animate(targets, {
           opacity: [0, 1],
-          translateY: [24, 0],
-          duration: 700,
-          delay: stagger(90),
+          translateY: [12, 0],
+          duration: 500,
+          delay: stagger(60),
           ease: "out(3)",
           complete: () =>
             targets.forEach((el) => {
@@ -67,19 +58,26 @@ export function LandingFooter({ ctaHref, ctaLabel }: LandingFooterProps) {
   return (
     <footer ref={ref} className="border-t border-border">
       {/* CTA cuối */}
-      <div className="bg-primary text-primary-foreground">
-        <div
+      <div className="mx-auto w-full max-w-6xl px-6 py-16 text-center md:py-20">
+        <h2
           data-reveal
-          className="mx-auto flex w-full max-w-6xl flex-col items-center gap-6 px-6 py-16 text-center md:py-20"
+          className="mx-auto max-w-xl text-2xl font-semibold tracking-tight text-balance md:text-3xl"
         >
-          <h2 className="max-w-2xl font-heading text-3xl font-semibold tracking-tight text-balance md:text-4xl">
-            Sẵn sàng cho học kỳ mới?
-          </h2>
-          <p className="max-w-xl text-sm leading-relaxed text-primary-foreground/75">
-            Đăng nhập bằng tài khoản được cấp để vào lớp học phần, nộp bài tập
-            lập trình và nhận kết quả chấm ngay khi hệ thống xử lý xong.
-          </p>
-          <Button asChild size="lg" variant="secondary">
+          Sẵn sàng cho học kỳ mới?
+        </h2>
+        <p
+          data-reveal
+          className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-muted-foreground"
+        >
+          Đăng nhập bằng tài khoản được cấp để vào lớp học phần, nộp bài tập
+          lập trình và nhận kết quả chấm ngay khi hệ thống xử lý xong.
+        </p>
+        <div data-reveal className="mt-6">
+          <Button
+            asChild
+            size="lg"
+            className="bg-(--gold) text-white hover:bg-(--gold)/90"
+          >
             <Link href={ctaHref}>
               {ctaLabel}
               <ArrowRight data-icon="inline-end" />
@@ -89,23 +87,20 @@ export function LandingFooter({ ctaHref, ctaLabel }: LandingFooterProps) {
       </div>
 
       {/* Footer */}
-      <div className="mx-auto grid w-full max-w-6xl gap-10 px-6 py-12 md:grid-cols-[1fr_auto_auto]">
-        <div className="flex flex-col gap-3">
-          <Logo size={32} />
-          <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">
-            Nền tảng quản trị học tập cho lớp học hiện đại — Next.js · FastAPI ·
-            MySQL · RabbitMQ.
-          </p>
-        </div>
-
-        {FOOTER_LINKS.map((group) => (
-          <nav key={group.title} aria-label={group.title}>
-            <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
-              {group.title}
+      <div className="border-t border-border">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 py-10 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col gap-3">
+            <Logo size={28} />
+            <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">
+              Hệ thống quản lý học tập dành cho môn Lập trình mạng — từ lớp học
+              phần đến kết quả chấm bài.
             </p>
-            <ul className="mt-4 flex flex-col gap-2.5">
-              {group.links.map((link) => (
-                <li key={link.label}>
+          </div>
+
+          <nav aria-label="Liên kết chân trang">
+            <ul className="flex flex-wrap gap-x-8 gap-y-3">
+              {FOOTER_LINKS.map((link) => (
+                <li key={link.href}>
                   <a
                     href={link.href}
                     className="text-sm text-muted-foreground transition-colors hover:text-foreground"
@@ -116,13 +111,12 @@ export function LandingFooter({ ctaHref, ctaLabel }: LandingFooterProps) {
               ))}
             </ul>
           </nav>
-        ))}
-      </div>
+        </div>
 
-      <div className="border-t border-border">
-        <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-2 px-6 py-5 text-xs text-muted-foreground sm:flex-row">
-          <p>© 2026 LMS-P</p>
-          <p>Hỗ trợ: liên hệ quản trị hệ thống của khóa học</p>
+        <div className="border-t border-border">
+          <div className="mx-auto flex w-full max-w-6xl px-6 py-5">
+            <p className="text-xs text-muted-foreground">© 2026 LMS-P</p>
+          </div>
         </div>
       </div>
     </footer>

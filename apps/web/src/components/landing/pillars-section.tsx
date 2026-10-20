@@ -1,74 +1,82 @@
 "use client";
 
-import {
-  FolderOpen,
-  School,
-  SquareTerminal,
-  type LucideIcon,
-} from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import type { ReactNode } from "react";
 import { useReveal } from "@/lib/hooks/use-reveal";
 import { SectionHeading } from "@/components/landing/section-heading";
+import {
+  AssignmentListFragment,
+  JudgeResultFragment,
+  SectionListFragment,
+} from "@/components/landing/feature-fragments";
 
-interface Pillar {
-  icon: LucideIcon;
+interface Capability {
+  number: string;
   title: string;
   description: string;
+  fragment: ReactNode;
 }
 
-const PILLARS: Pillar[] = [
+/** 3 nhóm năng lực đúng spec — mô tả 1 câu, minh họa bằng fragment UI thật */
+const CAPABILITIES: Capability[] = [
   {
-    icon: School,
-    title: "Quản lý lớp học & học phần",
+    number: "01",
+    title: "Quản trị lớp học & học phần",
     description:
-      "Khóa học, lớp học phần và ghi danh sinh viên được tổ chức tập trung theo học kỳ — mỗi vai trò chỉ thấy đúng phần việc của mình.",
+      "Tạo lớp học phần theo học kỳ, ghi danh sinh viên và phân công giảng viên phụ trách — mỗi lớp gắn với một khóa học duy nhất.",
+    fragment: <SectionListFragment />,
   },
   {
-    icon: FolderOpen,
+    number: "02",
     title: "Học liệu, bài tập & ngân hàng đề",
     description:
-      "Tài liệu theo từng chương, bài tập với hạn nộp và số lần nộp, ngân hàng câu hỏi trắc nghiệm kèm test case công khai và ẩn.",
+      "Học liệu theo từng chương, bài tập có hạn nộp và giới hạn số lần nộp, ngân hàng câu hỏi trắc nghiệm kèm test case công khai và ẩn.",
+    fragment: <AssignmentListFragment />,
   },
   {
-    icon: SquareTerminal,
-    title: "Chấm bài lập trình tự động",
+    number: "03",
+    title: "Chấm bài tự động & realtime",
     description:
-      "Bài nộp vào hàng đợi RabbitMQ, worker chấm trong sandbox Docker cô lập, kết quả đẩy về sinh viên realtime qua WebSocket.",
+      "Bài nộp viết bằng Python, C, C++ hoặc Java được chấm tự động trong môi trường cách ly; kết quả từng test trả về sinh viên ngay khi chấm xong.",
+    fragment: <JudgeResultFragment />,
   },
 ];
 
-/** 3 trụ cột năng lực hệ thống theo spec */
+/** Section "Năng lực" — dòng đánh số, text trái + fragment UI phải */
 export function PillarsSection() {
   const ref = useReveal<HTMLElement>();
 
   return (
-    <section id="tinh-nang" ref={ref} className="scroll-mt-20 py-20 md:py-24">
+    <section id="tinh-nang" ref={ref} className="scroll-mt-20 py-16 md:py-24">
       <div className="mx-auto w-full max-w-6xl px-6">
         <SectionHeading
-          eyebrow="Tính năng cốt lõi"
-          title="Ba trụ cột của một lớp học hiện đại"
-          description="Mọi năng lực trên landing đều đối chiếu trực tiếp với đặc tả yêu cầu của hệ thống."
+          title="Năng lực hệ thống"
+          description="Ba nhóm chức năng chính, mỗi nhóm là một phần việc thật của lớp học phần — không hơn, không kém."
         />
 
-        <div className="mt-14 grid gap-6 md:grid-cols-3">
-          {PILLARS.map((pillar) => (
-            <Card
-              key={pillar.title}
+        <div className="mt-12 flex flex-col">
+          {CAPABILITIES.map((item) => (
+            <div
+              key={item.number}
               data-reveal
-              className="transition-transform duration-300 hover:-translate-y-1"
+              className="grid items-center gap-8 border-t border-border py-10 first:border-t-0 first:pt-0 md:grid-cols-2 md:py-12"
             >
-              <CardContent className="flex flex-col gap-4">
-                <span className="flex size-11 items-center justify-center border border-border bg-background text-gold">
-                  <pillar.icon className="size-5" strokeWidth={1.75} />
+              <div className="flex gap-5">
+                <span className="pt-1 font-mono text-sm text-muted-foreground tabular-nums">
+                  {item.number}
                 </span>
-                <h3 className="font-heading text-lg font-semibold text-card-foreground">
-                  {pillar.title}
-                </h3>
-                <p className="text-sm leading-relaxed text-muted-foreground">
-                  {pillar.description}
-                </p>
-              </CardContent>
-            </Card>
+                <div>
+                  <h3 className="text-lg font-semibold tracking-tight">
+                    {item.title}
+                  </h3>
+                  <p className="mt-2.5 max-w-md text-sm leading-relaxed text-muted-foreground">
+                    {item.description}
+                  </p>
+                </div>
+              </div>
+              <div className="md:justify-self-end md:w-full md:max-w-md">
+                {item.fragment}
+              </div>
+            </div>
           ))}
         </div>
       </div>

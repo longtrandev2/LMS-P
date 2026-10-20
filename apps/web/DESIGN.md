@@ -1,55 +1,63 @@
 # DESIGN.md — LMS Web (identity & class management)
 
-Hướng design: **"Học thuật hiện đại" (academic editorial)** — cảm giác thư viện/trường khoa học,
-không phải SaaS dashboard template. Ink-and-paper: sidebar mực đậm (ink navy), nền giấy kem,
-điểm nhấn vàng đồng. Typography serif display (Literata) kết hợp sans UI (Be Vietnam Pro) —
-hỗ trợ đầy đủ dấu tiếng Việt.
+Hướng design: **monochrome product** — trắng/đen chuẩn product (kiểu Linear/Vercel/Notion):
+dense, clean, không trang trí. Chỉ đúng 3 màu chức năng:
 
-Tuyệt đối tránh: gradient tím generic, Inter/Roboto, emoji làm icon, card đều nhau kiểu admin template.
+- **Đen/trắng** (neutral): toàn bộ nội dung, bề mặt, viền, chữ.
+- **Đỏ CTA** (`--cta`, red-600): chỉ cho hành động chính — nút submit/CTA, active nav marker.
+- **Xanh lá / đỏ** (`--success` / `--destructive`): chỉ cho trạng thái pass/fail.
 
+Cấm: gradient tím generic, serif display, nền kem/vàng đồng, eyebrow uppercase nhiều,
+icon bubble màu, fake stats, tech names trên UI marketing, emoji làm icon.
 ## 1. Design tokens
 
 Đặt trong `src/app/globals.css` (Tailwind v4 `@theme inline`, chuẩn shadcn/ui variables, oklch).
 
-### Palette — Light (paper)
+### Palette — Light (trắng nền, đen nội dung, đỏ CTA)
 | Token | Giá trị | Dùng |
 |---|---|---|
-| `--background` | `oklch(0.977 0.006 85)` — giấy kem | nền trang |
-| `--foreground` | `oklch(0.24 0.03 260)` — mực đậm | chữ chính |
-| `--primary` | `oklch(0.34 0.07 258)` — ink navy | sidebar, nút chính, link |
-| `--primary-foreground` | `oklch(0.97 0.01 85)` | chữ trên primary |
-| `--accent` | `oklch(0.42 0.06 258)` — navy nhạt hơn | hover sidebar |
+| `--background` | `oklch(1 0 0)` — trắng | nền trang |
+| `--foreground` | `oklch(0.145 0 0)` — đen | chữ chính, badge logo |
+| `--primary` | `oklch(0.145 0 0)` — đen | nút chính (đen), link |
+| `--primary-foreground` | `oklch(0.985 0 0)` | chữ trên primary |
+| `--cta` | `oklch(0.577 0.245 27.3)` — red-600 | **nút CTA**, active nav marker |
+| `--cta-foreground` | `oklch(1 0 0)` | chữ trên CTA |
+| `--accent` | `oklch(0.967 0 0)` — neutral-100 | hover |
 | `--card` | `oklch(1 0 0)` | bề mặt card |
-| `--muted` | `oklch(0.945 0.008 85)` | nền phụ, chip |
-| `--muted-foreground` | `oklch(0.47 0.02 260)` | chữ phụ (đạt contrast 4.5:1) |
-| `--border` | `oklch(0.90 0.01 85)` | viền |
-| `--ring` | ink navy | focus ring |
-| `--destructive` | `oklch(0.55 0.2 27)` | lỗi, xóa |
-| `--gold` | `oklch(0.72 0.12 80)` — vàng đồng | điểm nhấn nhỏ: badge mã lớp, active nav marker |
+| `--muted` | `oklch(0.967 0 0)` | nền phụ, chip |
+| `--muted-foreground` | `oklch(0.552 0 0)` — neutral-500 | chữ phụ (contrast đạt chuẩn) |
+| `--border`, `--input` | `oklch(0.922 0 0)` — neutral-200 | viền |
+| `--ring` | `oklch(0.145 0 0)` | focus ring |
+| `--destructive` | `oklch(0.577 0.245 27.3)` | lỗi, xóa |
+| `--gold` | `oklch(0.577 0.245 27.3)` | **token cũ giữ tên** — giờ là đỏ CTA |
+| `--success` | `oklch(0.527 0.154 150)` | pass/thành công |
 
-### Palette — Dark (đêm thư viện)
-Nền navy đậm có chroma (không xám bệt), card sáng hơn nền một mức để có chiều sâu,
-gold dùng có chủ đích: active nav marker, badge mã lớp, check trong theme toggle.
+Chart: `--chart-1..5` = bậc xám + đỏ CTA + xanh lá.
 
+### Palette — Dark (đen xám đậm, đỏ CTA sáng để giữ contrast)
 | Token | Giá trị |
 |---|---|
-| `--background` | `oklch(0.165 0.022 262)` — navy đêm |
-| `--foreground` | `oklch(0.925 0.01 85)` |
-| `--primary` | `oklch(0.68 0.1 255)` — navy sáng cho contrast |
-| `--card` | `oklch(0.205 0.024 262)` — nổi khối nhẹ so với nền |
-| `--popover` | `oklch(0.215 0.024 262)` |
-| `--muted` | `oklch(0.235 0.022 262)` |
-| `--muted-foreground` | `oklch(0.72 0.016 262)` |
-| `--border` | `oklch(0.29 0.024 262)` |
-| `--gold` | `oklch(0.8 0.13 85)` |
+| `--background` | `oklch(0.13 0 0)` |
+| `--foreground` | `oklch(0.97 0 0)` |
+| `--primary` | `oklch(0.97 0 0)` — trắng (nút chính đảo màu) |
+| `--primary-foreground` | `oklch(0.145 0 0)` |
+| `--cta` | `oklch(0.637 0.237 25)` — red-500 |
+| `--card` / `--popover` | `oklch(0.17 0 0)` — nổi khối nhẹ so với nền |
+| `--muted` | `oklch(0.21 0 0)` |
+| `--muted-foreground` | `oklch(0.708 0 0)` |
+| `--border` | `oklch(0.26 0 0)` |
+| `--destructive` | `oklch(0.704 0.191 22.2)` |
+| `--gold` | `oklch(0.637 0.237 25)` |
+| `--success` | `oklch(0.723 0.219 149.6)` |
 
 ### Elevation
 - `--shadow-soft`: bóng ambient nhẹ (header sticky, hover card).
 - `--shadow-glass`: bóng sâu hơn (dialog, card login).
 - Dark mode phân cấp chủ yếu bằng độ chênh nền + border; shadow chỉ bổ trợ.
 
-Sidebar giữ **ink navy đậm ở cả 2 mode** (signature của app) — chữ kem, active item có thanh
-gold bên trái + nền accent.
+Sidebar: nền gần trắng + viền phải ở light mode (`--sidebar: oklch(0.985 0 0)`),
+đen xám đậm ở dark mode (`oklch(0.16 0 0)`) — không còn "ink navy signature".
+Active item: nền `--sidebar-accent` + **thanh đỏ CTA bên trái**.
 
 ### Theme transition
 Đổi theme qua `theme-toggle.tsx` gắn tạm class `.theme-transition` vào `<html>` ~250ms
@@ -57,19 +65,21 @@ gold bên trái + nền accent.
 trên `*` để tránh lag hover. Tôn trọng `prefers-reduced-motion`.
 
 ### Logo (`src/components/logo.tsx`)
-- **Badge monogram "bộ tầng tri thức"**: rounded square vàng đồng (`--gold`) chứa
-  3 thanh ink navy (`--mark-ink`, cố định 2 mode) cao dần — gợi sách/bậc thang tri thức.
-- Wordmark **LMS-P** bằng Literata (serif display), kèm caption tuỳ chọn.
+- **Badge monogram "bộ tầng tri thức"**: rounded square màu `--foreground` chứa
+  3 thanh màu `--background` cao dần — gợi sách/bậc thang tri thức. Đơn sắc,
+  tự đảo theo dark mode, rõ ở 16px.
+- Wordmark **LMS-P** bằng sans (Be Vietnam Pro) weight 600, tracking chặt — không serif.
 - API: `<Logo size variant="full" | "mark" caption />`. File tĩnh: `public/logo.svg`,
-  favicon `src/app/icon.svg` (màu hex cố định tương đương token).
-- Rõ ở 16px, một màu, không motif mạch điện/node mạng/terminal.
+  favicon `src/app/icon.svg` (đen `#111111` + trắng `#FFFFFF` cố định).
+- Một màu, không motif mạch điện/node mạng/terminal, không vàng đồng.
 
 ### Typography
-- Display/headings: **Literata** (serif, học thuật) — tải qua `next/font`, subset `vietnamese`.
-- UI/body: **Be Vietnam Pro** (sans, tối ưu dấu tiếng Việt).
-- Scale (rem): `h1` 1.875/700 serif · `h2` 1.375/700 serif · `h3` 1.125/600 sans ·
-  body 0.875/400 · caption 0.75/500 uppercase tracking-wide cho nhãn phân mục.
-- Mã (mã lớp, mã SV): `font-mono` (Geist Mono của scaffold) — phân biệt dữ liệu định danh.
+- Mọi chữ (heading + UI/body): **Be Vietnam Pro** (sans, tối ưu dấu tiếng Việt) —
+  `--font-heading` gán bằng `--font-sans`, heading dùng weight 600, tracking chặt
+  (`--tracking-heading: -0.02em`). Không serif display.
+- Mono cho dữ liệu định danh: `font-mono` (Geist Mono).
+- Scale (rem): `h1` 1.875/600 · `h2` 1.375/600 · `h3` 1.125/600 ·
+  body 0.875/400 · caption 0.75/500. Không lạm dụng uppercase/tracking-widest.
 
 ### Spacing & layout
 - 8px base; page padding 24px (mobile 16px); card padding 20–24px; gap grid 16–24px.
@@ -90,10 +100,10 @@ badge, sonner (toast), form, skeleton, tabs, separator, avatar, sheet, tooltip, 
 | Component | Vai trò |
 |---|---|
 | `app-shell.tsx` | Khung: sidebar theo role + header (user menu, theme toggle dropdown) |
-| `nav-sidebar.tsx` | Nav item (Lucide icon), active marker gold, nhóm theo role |
-| `logo.tsx` | Badge monogram LMS-P + wordmark serif (variant full/mark) |
+| `nav-sidebar.tsx` | Nav item (Lucide icon), active marker đỏ CTA, nhóm theo role |
+| `logo.tsx` | Badge monogram LMS-P đơn sắc + wordmark sans (variant full/mark) |
 | `ui/theme-toggle.tsx` | Dropdown Sáng/Tối/Hệ thống (next-themes, icon sun/moon) |
-| `page-header.tsx` | Tiêu đề trang serif + mô tả + actions |
+| `page-header.tsx` | Tiêu đề trang sans weight 600 + mô tả + actions |
 | `state-blocks/*` | `loading-skeleton.tsx`, `empty-state.tsx`, `error-state.tsx` (retry) |
 | `data-table-pagination.tsx` | Phân trang chuẩn `?page&limit` |
 | `users/*` | Bảng users, dialog tạo/sửa, dialog reset mật khẩu, dialog import CSV |
@@ -106,7 +116,7 @@ badge, sonner (toast), form, skeleton, tabs, separator, avatar, sheet, tooltip, 
 ```
 ┌──────────┬──────────────────────────────────────┐
 │ Sidebar  │ Header: breadcrumb-light · theme ⏻   │
-│ (ink)    │                                      │
+│ (neutral)│                                      │
 │  Logo    │  Page header (serif) + actions       │
 │  ── Admin│  Content: table / grid / dialogs     │
 │  ── Lec  │                                      │
@@ -115,13 +125,14 @@ badge, sonner (toast), form, skeleton, tabs, separator, avatar, sheet, tooltip, 
 └──────────┴──────────────────────────────────────┘
 ```
 
-- `/login`: nền paper, khối form đặt lệch trái kèm panel giới thiệu (ink) — không phải
-  card nằm giữa màn hình kiểu template.
+- `/login`: form card trắng viền; panel giới thiệu đơn sắc đảo theo theme
+  (`bg-foreground text-background`), không họa tiết trang trí; nút submit đỏ CTA.
 - Protected: `(app)` layout kiểm tra session; role guard chặn route không đúng role.
 
 ## 4. Ngữ nghĩa trạng thái
 
-- Badge role: Admin = navy solid, Lecturer = outline navy, Student = muted.
-- Badge status: active = xanh olive, locked = đỏ đất.
+- Badge role: Admin = đen solid, Lecturer = outline đen, Student = muted.
+- Badge status: active = xanh lá (`--success`), locked = đỏ (`--destructive`).
+- Nút hành động chính: variant `cta` (đỏ). Nút thường: đen (light) / trắng (dark).
 - Mọi trang: skeleton (loading) → empty-state (icon + hướng dẫn + CTA) → error-state
   (thông điệp tiếng Việt + nút "Thử lại").

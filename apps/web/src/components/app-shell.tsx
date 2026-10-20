@@ -87,8 +87,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-dvh">
-      {/* Sidebar desktop — ink navy cố định ở cả hai mode */}
-      <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col bg-sidebar text-sidebar-foreground lg:flex">
+      {/* Sidebar desktop — nền trung tính + viền phải, chuẩn product */}
+      <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r bg-sidebar text-sidebar-foreground lg:flex">
         <BrandMark />
         <SidebarNav />
         <SidebarFooterRole />

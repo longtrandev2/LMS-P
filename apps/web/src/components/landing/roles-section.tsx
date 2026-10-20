@@ -1,80 +1,74 @@
 "use client";
 
-import {
-  GraduationCap,
-  Presentation,
-  ShieldCheck,
-  type LucideIcon,
-} from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
 import { useReveal } from "@/lib/hooks/use-reveal";
 import { SectionHeading } from "@/components/landing/section-heading";
 
 interface Role {
-  icon: LucideIcon;
   title: string;
-  description: string;
+  duties: string[];
 }
 
+/** 3 vai trò theo RBAC — chỉ text: tên vai trò + các việc được làm */
 const ROLES: Role[] = [
   {
-    icon: ShieldCheck,
     title: "Quản trị",
-    description:
-      "Quản lý tài khoản và phân quyền, cấu hình hệ thống, theo dõi nhật ký kiểm toán và thống kê hoạt động.",
+    duties: [
+      "Quản lý tài khoản và phân quyền theo vai trò",
+      "Cấu hình khóa học, học kỳ và hệ thống",
+      "Theo dõi nhật ký hoạt động của toàn hệ thống",
+    ],
   },
   {
-    icon: Presentation,
     title: "Giảng viên",
-    description:
-      "Tạo lớp học phần, soạn ngân hàng đề, giao bài tập và kỳ thi trực tuyến, chốt sổ điểm theo trọng số.",
+    duties: [
+      "Tạo lớp học phần và ghi danh sinh viên",
+      "Soạn học liệu, bài tập và ngân hàng đề",
+      "Tổ chức kỳ thi trực tuyến, chốt điểm theo trọng số",
+    ],
   },
   {
-    icon: GraduationCap,
     title: "Sinh viên",
-    description:
-      "Học tài liệu, làm bài và nộp bài lập trình, theo dõi kết quả chấm realtime và điểm số của mình.",
+    duties: [
+      "Học tài liệu và làm bài trực tuyến",
+      "Nộp bài lập trình, xem kết quả chấm từng test",
+      "Theo dõi điểm số của từng lớp học phần",
+    ],
   },
 ];
 
-/** Ba vai trò của hệ thống theo RBAC */
+/** Ba vai trò của hệ thống — 3 cột text đơn giản, không icon */
 export function RolesSection() {
   const ref = useReveal<HTMLElement>();
 
   return (
-    <section
-      id="vai-tro"
-      ref={ref}
-      className="scroll-mt-20 border-t border-border py-20 md:py-24"
-    >
+    <section id="vai-tro" ref={ref} className="scroll-mt-20 py-16 md:py-24">
       <div className="mx-auto w-full max-w-6xl px-6">
         <SectionHeading
-          eyebrow="Vai trò"
           title="Mỗi người, một vùng làm việc riêng"
-          description="Phân quyền dựa trên vai trò (RBAC): sinh viên, giảng viên và quản trị mỗi vai trò thấy đúng chức năng mình cần."
+          description="Sinh viên, giảng viên và quản trị đăng nhập bằng tài khoản được cấp — mỗi vai trò chỉ thấy đúng chức năng mình cần."
         />
 
-        <div className="mt-14 grid gap-6 md:grid-cols-3">
+        <div className="mt-12 grid gap-10 border-t border-border pt-10 md:grid-cols-3 md:gap-8">
           {ROLES.map((role) => (
-            <Card
-              key={role.title}
-              data-reveal
-              className="transition-transform duration-300 hover:-translate-y-1"
-            >
-              <CardContent className="flex flex-col gap-4">
-                <div className="flex items-center gap-3">
-                  <span className="flex size-11 items-center justify-center bg-primary text-primary-foreground">
-                    <role.icon className="size-5" strokeWidth={1.75} />
-                  </span>
-                  <h3 className="font-heading text-lg font-semibold text-card-foreground">
-                    {role.title}
-                  </h3>
-                </div>
-                <p className="text-sm leading-relaxed text-muted-foreground">
-                  {role.description}
-                </p>
-              </CardContent>
-            </Card>
+            <div key={role.title} data-reveal>
+              <h3 className="text-base font-semibold tracking-tight">
+                {role.title}
+              </h3>
+              <ul className="mt-4 flex flex-col gap-2.5">
+                {role.duties.map((duty) => (
+                  <li
+                    key={duty}
+                    className="flex gap-2.5 text-sm leading-relaxed text-muted-foreground"
+                  >
+                    <span
+                      aria-hidden="true"
+                      className="mt-2 h-px w-3 shrink-0 bg-border"
+                    />
+                    {duty}
+                  </li>
+                ))}
+              </ul>
+            </div>
           ))}
         </div>
       </div>

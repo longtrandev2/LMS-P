@@ -1,91 +1,104 @@
 "use client";
 
-import { CheckCircle2, Clock3, FileCode2 } from "lucide-react";
-
 const SIDEBAR_ITEMS = [
   "Lớp học phần",
   "Học liệu",
   "Bài tập",
-  "Ngân hàng đề",
+  "Kỳ thi",
   "Sổ điểm",
 ];
 
-/** Visual hero: mockup bảng điều khiển dựng bằng div — không dùng ảnh */
+/**
+ * Visual hero: mockup bảng điều khiển dựng bằng div — không dùng ảnh.
+ * Mô phỏng đúng giao diện app: sidebar, tiêu đề trang, panel kết quả chấm
+ * từng test. Không icon bubble, không màu trang trí.
+ */
 export function DashboardMockup() {
   return (
-    <div className="ring-1 ring-foreground/10 shadow-2xl shadow-primary/10">
+    <div className="border border-border bg-card shadow-sm">
       {/* Thanh cửa sổ */}
-      <div className="flex items-center gap-2 border-b border-border bg-muted px-4 py-2.5">
-        <span className="size-2.5 rounded-full bg-border" />
-        <span className="size-2.5 rounded-full bg-border" />
-        <span className="size-2.5 rounded-full bg-gold/70" />
+      <div className="flex items-center gap-2 border-b border-border px-4 py-2.5">
+        <span className="size-2 rounded-full bg-border" />
+        <span className="size-2 rounded-full bg-border" />
+        <span className="size-2 rounded-full bg-border" />
         <span className="ml-3 font-mono text-[11px] text-muted-foreground">
-          lms-p · Bảng điều khiển sinh viên
+          LMS-P · Bảng điều khiển sinh viên
         </span>
       </div>
 
-      <div className="grid grid-cols-[120px_1fr] bg-card">
-        {/* Sidebar mini — ink navy signature */}
-        <div className="flex flex-col gap-1 bg-sidebar p-3">
+      <div className="grid grid-cols-[110px_1fr]">
+        {/* Sidebar mini */}
+        <nav className="flex flex-col gap-0.5 border-r border-border p-2">
           {SIDEBAR_ITEMS.map((item, i) => (
             <div
               key={item}
               className={
                 i === 0
-                  ? "rounded-none bg-sidebar-accent px-2 py-1.5 text-[11px] font-medium text-sidebar-primary"
-                  : "px-2 py-1.5 text-[11px] text-sidebar-foreground/60"
+                  ? "bg-muted px-2 py-1.5 text-[11px] font-medium text-foreground"
+                  : "px-2 py-1.5 text-[11px] text-muted-foreground"
               }
             >
               {item}
             </div>
           ))}
-        </div>
+        </nav>
 
         {/* Nội dung chính */}
-        <div className="flex flex-col gap-4 p-5">
-          <div>
-            <p className="text-[11px] font-semibold tracking-widest uppercase text-gold">
-              Học kỳ I · 2026–2027
+        <div className="flex flex-col gap-3 p-4">
+          <div className="flex items-baseline justify-between gap-2">
+            <p className="text-sm font-semibold text-card-foreground">
+              Lập trình mạng
             </p>
-            <p className="font-heading text-base font-semibold text-card-foreground">
-              Xin chào, Minh Anh
+            <p className="font-mono text-[11px] text-muted-foreground">
+              IT3090-11 · Học kỳ I
             </p>
           </div>
 
-          {/* Thẻ lớp học phần */}
-          <div className="grid gap-3">
-            <ClassRow
-              code="IT3090 · NH21"
-              name="Lập trình mạng"
-              progress={68}
-            />
-            <ClassRow
-              code="IT3090 · NH22"
-              name="Lập trình mạng — lớp thực hành"
-              progress={41}
-            />
-          </div>
-
-          {/* Kết quả chấm realtime */}
-          <div className="flex items-start gap-3 border border-border bg-background p-3">
-            <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center bg-primary/10 text-primary">
-              <FileCode2 className="size-4" />
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="truncate font-mono text-[11px] font-medium text-card-foreground">
-                bai_nop_128 · tcp_echo_server.py
+          {/* Panel kết quả chấm — đúng dữ liệu thật hệ thống trả về */}
+          <div className="border border-border">
+            <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2">
+              <p className="truncate text-[11px] font-medium text-card-foreground">
+                Bài tập 02 · Máy chủ echo TCP
               </p>
-              <p className="mt-0.5 flex items-center gap-3 text-[11px] text-muted-foreground">
-                <span className="flex items-center gap-1 text-success">
-                  <CheckCircle2 className="size-3" /> 10/10 test
-                </span>
-                <span className="flex items-center gap-1">
-                  <Clock3 className="size-3" /> 1.2s · sandbox
-                </span>
+              <span className="shrink-0 font-mono text-[11px] text-muted-foreground">
+                9/10
+              </span>
+            </div>
+            <div className="border-b border-border px-3 py-1.5">
+              <p className="font-mono text-[10px] text-muted-foreground">
+                tcp_echo_server.py · Python
               </p>
             </div>
-            <span className="shrink-0 border border-gold/40 bg-gold/10 px-2 py-1 font-heading text-sm font-bold text-gold">
-              10
+            <ul>
+              {TESTS.map((test) => (
+                <li
+                  key={test.id}
+                  className="flex items-center gap-2 border-b border-border px-3 py-1.5 font-mono text-[10px] last:border-b-0"
+                >
+                  <span
+                    className={`size-1.5 shrink-0 rounded-full ${
+                      test.pass ? "bg-success" : "bg-destructive"
+                    }`}
+                  />
+                  <span className="text-card-foreground">{test.id}</span>
+                  <span className={test.pass ? "text-success" : "text-destructive"}>
+                    {test.verdict}
+                  </span>
+                  <span className="ml-auto text-muted-foreground">
+                    {test.detail}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Bài tập tới hạn */}
+          <div className="flex items-center justify-between gap-2 border border-border px-3 py-2">
+            <p className="truncate text-[11px] text-card-foreground">
+              Bài tập 03 · Trò chơi đoán số
+            </p>
+            <span className="shrink-0 text-[10px] text-muted-foreground">
+              Hạn 19/11 · 23:59
             </span>
           </div>
         </div>
@@ -94,43 +107,8 @@ export function DashboardMockup() {
   );
 }
 
-function ClassRow({
-  code,
-  name,
-  progress,
-}: {
-  code: string;
-  name: string;
-  progress: number;
-}) {
-  return (
-    <div className="border border-border bg-background p-3">
-      <div className="flex items-baseline justify-between gap-2">
-        <p className="truncate text-xs font-semibold text-card-foreground">
-          {name}
-        </p>
-        <p className="shrink-0 font-mono text-[11px] text-muted-foreground">
-          {code}
-        </p>
-      </div>
-      <div className="mt-2 flex items-center gap-2">
-        <div
-          className="h-1 flex-1 bg-muted"
-          role="progressbar"
-          aria-valuenow={progress}
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-label={`Tiến độ ${name}`}
-        >
-          <div
-            className="h-full bg-gold"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-        <span className="text-[11px] tabular-nums text-muted-foreground">
-          {progress}%
-        </span>
-      </div>
-    </div>
-  );
-}
+const TESTS = [
+  { id: "test_01", verdict: "pass", detail: "12ms", pass: true },
+  { id: "test_02", verdict: "pass", detail: "9ms", pass: true },
+  { id: "test_03", verdict: "fail", detail: "sai kết quả", pass: false },
+];
