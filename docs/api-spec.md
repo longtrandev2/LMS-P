@@ -25,7 +25,7 @@
 |---|---|---|---|
 | POST | /auth/login | pub | Đăng nhập → `{access_token, refresh_token, user}`; 429 nếu khóa tạm |
 | POST | /auth/refresh | pub | Rotate cặp token |
-| POST | /auth/logout | auth | Revoke refresh hiện tại |
+| POST | /auth/logout | auth | Revoke refresh hiện tại (body tùy chọn: có `{refresh_token}` → revoke 1 token; không body → revoke toàn bộ session) |
 | GET | /auth/me | auth | Profile + roles |
 | PATCH | /users/me | auth | Sửa tên / đổi mật khẩu |
 | GET | /users | admin | List (filter role/status, phân trang) |

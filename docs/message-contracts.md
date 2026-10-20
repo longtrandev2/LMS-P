@@ -65,6 +65,14 @@ API consume `q.events` → route theo `user_id` → push qua ConnectionManager t
 
 Client → server: `{"type":"ping"}` mỗi 30s. Mọi event đều có `ts` (epoch ms) ở envelope chung: `{"type": <event>, "ts": 1730550000000, "data": {...}}`.
 
+### 3.1 Kết nối và xác thực WebSocket <!-- added wave 2 -->
+
+- Endpoint: `GET /ws?token=<access_token>` (access token qua query param — trình duyệt không cho phép set header khi bắt tay WS native).
+- Server validate JWT khi bắt tay: token sai/hết hạn hoặc user không active → đóng ngay với close code **1008** (policy violation), chưa accept.
+- Sau khi accept, connection được gắn với `user_id` (một user có thể nhiều tab/connection).
+- Client chỉ gửi `{"type":"ping"}` mỗi 30s → server trả `pong`. Mọi event server-push dùng envelope chung `{"type", "ts", "data"}` (xem §3).
+- Offline khi có event → bỏ qua (không queue); client refetch REST khi reconnect.
+
 ## 4. Quy tắc đáng tin cậy
 
 1. **At-least-once** ở hàng đợi → mọi consumer/handler phải idempotent (khóa tự nhiên: submission_id, notification id, upsert theo key).
