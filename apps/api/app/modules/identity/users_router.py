@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, File, Query, Request, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import get_db
+from app.core.error_schemas import error_responses
 from app.core.pagination import Page, PageParams, page_query, paginate
 from app.modules.identity import repository as repo
 from app.modules.identity import user_service
@@ -23,7 +24,7 @@ from app.modules.identity.schemas import (
 router = APIRouter(tags=["users"])
 
 
-@router.patch("/users/me", response_model=UserOut)
+@router.patch("/users/me", response_model=UserOut, responses=error_responses(400, 401))
 async def update_me(
     payload: UpdateMeIn,
     request: Request,
@@ -36,7 +37,8 @@ async def update_me(
     return UserOut.from_user(updated)
 
 
-@router.get("/users", response_model=Page[UserOut], dependencies=[Depends(require_roles("admin"))])
+@router.get("/users", response_model=Page[UserOut], dependencies=[Depends(require_roles("admin"))],
+            responses=error_responses(401, 403))
 async def list_users(
     role: str | None = Query(None),
     status: str | None = Query(None),
@@ -49,7 +51,8 @@ async def list_users(
 
 
 @router.post("/users", response_model=UserWithTempPassword, status_code=201,
-             dependencies=[Depends(require_roles("admin"))])
+             dependencies=[Depends(require_roles("admin"))],
+             responses=error_responses(401, 403, 409))
 async def create_user(
     payload: UserCreateIn,
     request: Request,
@@ -60,7 +63,8 @@ async def create_user(
     return UserWithTempPassword(user=UserOut.from_user(user), temporary_password=temp_pw)
 
 
-@router.post("/users/import", response_model=ImportResult, dependencies=[Depends(require_roles("admin"))])
+@router.post("/users/import", response_model=ImportResult, dependencies=[Depends(require_roles("admin"))],
+             responses=error_responses(401, 403))
 async def import_users_csv(
     request: Request,
     file: UploadFile = File(...),
@@ -72,12 +76,14 @@ async def import_users_csv(
     return ImportResult(created=created, skipped=skipped, errors=errors, temp_passwords=temp_passwords)
 
 
-@router.get("/users/{user_id}", response_model=UserOut, dependencies=[Depends(require_roles("admin"))])
+@router.get("/users/{user_id}", response_model=UserOut, dependencies=[Depends(require_roles("admin"))],
+            responses=error_responses(401, 403, 404))
 async def get_user(user_id: int, db: AsyncSession = Depends(get_db)):
     return UserOut.from_user(await user_service.get_user_or_404(db, user_id))
 
 
-@router.patch("/users/{user_id}", response_model=UserWithTempPassword, dependencies=[Depends(require_roles("admin"))])
+@router.patch("/users/{user_id}", response_model=UserWithTempPassword, dependencies=[Depends(require_roles("admin"))],
+              responses=error_responses(401, 403, 404, 409))
 async def update_user(
     user_id: int,
     payload: UserUpdateIn,

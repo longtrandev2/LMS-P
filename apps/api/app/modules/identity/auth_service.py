@@ -75,3 +75,9 @@ async def logout(db: AsyncSession, refresh_token: str) -> None:
     if stored is not None and stored.revoked_at is None:
         stored.revoked_at = utcnow()
         await db.commit()
+
+
+async def logout_all(db: AsyncSession, user_id: int) -> None:
+    """Logout khi client không gửi refresh_token: thu hồi toàn bộ session (M4)."""
+    await repo.revoke_all_refresh_tokens(db, user_id)
+    await db.commit()
