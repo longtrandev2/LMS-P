@@ -27,9 +27,9 @@ storage/      # volume học liệu (gitignored)
 - Mọi thay đổi dữ liệu nhạy cảm → ghi `audit_logs` (helper `write_audit()`).
 
 ### Git
-- Nhánh: `main` (bảo vệ) ← feature branch `feat/<scope>`, fix `fix/<scope>`.
-- Commit conventional: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:` — không nhắc AI.
-- PR: mô tả ngắn + checklist (spec khớp, test pass, migration kèm theo) → code-review trước khi merge.
+- Nhánh: đặt tên **mô tả tính năng, không mã code nội bộ** (cấm kiểu `m1-m2`): `feat/<tinh-nang-ngan>` (vd `feat/identity-and-class-management`), `fix/<loi>`, `chore/<việc>`.
+- Commit conventional có scope: `feat(api):`, `feat(web):`, `feat(worker):`, `feat(infra):`, `fix(api):`, `docs:`, `refactor:`, `test:`, `chore:` — subject viết rõ ai đọc cũng hiểu, không nhắc AI.
+- PR: title `type(scope): tóm tắt`, mô tả gồm What/Why + checklist (spec khớp, test pass, migration kèm theo, docs đã cập nhật) → code-review trước khi merge.
 - **Không bao giờ commit**: `.env`, secret, credentials, `storage/` contents, dump DB.
 - Sub-agent song song: KHÔNG chạy lệnh git (chỉ lead orchestrate commit) — tránh race git index.
 
