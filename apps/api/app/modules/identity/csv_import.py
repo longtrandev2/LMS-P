@@ -3,6 +3,8 @@
 import csv
 import io
 
+import app.core.email_compat  # noqa: F401 — allow @lms.local demo domain
+from email_validator import EmailNotValidError, validate_email
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,6 +16,15 @@ from app.modules.identity.models import User
 from app.modules.identity.user_service import generate_temp_password
 
 REQUIRED_HEADERS = {"email", "full_name", "student_code", "role"}
+
+
+def _email_error(email: str) -> str | None:
+    """Return a reason string if the email is invalid, else None (M3)."""
+    try:
+        validate_email(email, check_deliverability=False)
+        return None
+    except EmailNotValidError as exc:
+        return f"email không hợp lệ: {str(exc)[:80]}"
 
 
 def parse_csv(content: str) -> tuple[list[dict], list[dict]]:
@@ -34,6 +45,9 @@ def parse_csv(content: str) -> tuple[list[dict], list[dict]]:
             continue
         if cleaned["role"] not in ("student", "lecturer", "admin"):
             errors.append({"row": line_no, "reason": f"role không hợp lệ '{cleaned['role']}'"})
+            continue
+        if reason := _email_error(cleaned["email"]):
+            errors.append({"row": line_no, "reason": reason})
             continue
         rows.append(cleaned | {"_line": line_no})
     return rows, errors

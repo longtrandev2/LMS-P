@@ -62,10 +62,39 @@ async def test_refresh_rotation_revokes_old_token(client: AsyncClient, db: Async
 async def test_logout_revokes_refresh(client: AsyncClient, db: AsyncSession):
     await make_user(db, "logout@example.com", ["student"])
     tokens = await login(client, "logout@example.com")
-    resp = await client.post("/api/v1/auth/logout", json={"refresh_token": tokens["refresh_token"]})
+    resp = await client.post("/api/v1/auth/logout", json={"refresh_token": tokens["refresh_token"]},
+                             headers=bearer(tokens))
     assert resp.status_code == 204
     resp = await client.post("/api/v1/auth/refresh", json={"refresh_token": tokens["refresh_token"]})
     assert resp.status_code == 401
+
+
+async def test_logout_requires_bearer(client: AsyncClient, db: AsyncSession):
+    await make_user(db, "logout2@example.com", ["student"])
+    tokens = await login(client, "logout2@example.com")
+    resp = await client.post("/api/v1/auth/logout", json={"refresh_token": tokens["refresh_token"]})
+    assert resp.status_code == 401
+
+
+async def test_change_password_revokes_all_refresh_tokens(client: AsyncClient, db: AsyncSession):
+    """M4: đổi mật khẩu phải thu hồi mọi refresh token đang sống."""
+    await make_user(db, "chg-revoke@example.com", ["student"])
+    tokens1 = await login(client, "chg-revoke@example.com")
+    tokens2 = await login(client, "chg-revoke@example.com")
+    resp = await client.patch(
+        "/api/v1/users/me",
+        json={"current_password": DEMO_PASSWORD, "new_password": "NewPass@123"},
+        headers=bearer(tokens1),
+    )
+    assert resp.status_code == 200
+    # both pre-change refresh tokens are now dead
+    for old in (tokens1, tokens2):
+        resp = await client.post("/api/v1/auth/refresh", json={"refresh_token": old["refresh_token"]})
+        assert resp.status_code == 401
+    # fresh login works and yields a live token
+    fresh = await login(client, "chg-revoke@example.com", "NewPass@123")
+    resp = await client.post("/api/v1/auth/refresh", json={"refresh_token": fresh["refresh_token"]})
+    assert resp.status_code == 200
 
 
 async def test_me_requires_token(client: AsyncClient, db: AsyncSession):

@@ -1,6 +1,6 @@
 """Identity models (M1): users, roles, user_roles, refresh_tokens."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import (
     BigInteger,
@@ -21,21 +21,26 @@ from app.core.db import Base
 # BIGINT PK; Integer variant keeps sqlite (tests) autoincrement working
 BigIntegerPK = BigInteger().with_variant(Integer, "sqlite")
 
+# database-design §4: utf8mb4 + utf8mb4_0900_ai_ci toàn hệ thống (tiếng Việt)
+MYSQL_CHARSET = {"mysql_charset": "utf8mb4", "mysql_collate": "utf8mb4_0900_ai_ci"}
+
 user_roles_table = Table(
     "user_roles",
     Base.metadata,
     Column("user_id", ForeignKey("users.id", ondelete="CASCADE"), primary_key=True),
     Column("role_id", ForeignKey("roles.id", ondelete="CASCADE"), primary_key=True),
+    **MYSQL_CHARSET,
 )
 
 
 def utcnow() -> datetime:
     """Naive UTC timestamp (app-level UTC per database-design conventions)."""
-    return datetime.utcnow()
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 class User(Base):
     __tablename__ = "users"
+    __table_args__ = MYSQL_CHARSET
 
     id: Mapped[int] = mapped_column(BigIntegerPK, primary_key=True, autoincrement=True)
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
@@ -56,6 +61,7 @@ class User(Base):
 
 class Role(Base):
     __tablename__ = "roles"
+    __table_args__ = MYSQL_CHARSET
 
     # TINYINT-like PK; Integer variant keeps sqlite (tests) autoincrement working
     id: Mapped[int] = mapped_column(
@@ -67,6 +73,7 @@ class Role(Base):
 
 class RefreshToken(Base):
     __tablename__ = "refresh_tokens"
+    __table_args__ = MYSQL_CHARSET
 
     id: Mapped[int] = mapped_column(BigIntegerPK, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
@@ -76,4 +83,4 @@ class RefreshToken(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, nullable=False)
 
 
-__all__ = ["User", "Role", "RefreshToken", "user_roles_table", "utcnow"]
+__all__ = ["User", "Role", "RefreshToken", "user_roles_table", "utcnow", "MYSQL_CHARSET"]

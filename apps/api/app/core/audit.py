@@ -3,11 +3,11 @@
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import JSON, BigInteger, DateTime, Index, String
+from sqlalchemy import JSON, BigInteger, DateTime, ForeignKey, Index, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.db import Base
-from app.modules.identity.models import BigIntegerPK
+from app.modules.identity.models import MYSQL_CHARSET, BigIntegerPK, utcnow
 
 
 class AuditLog(Base):
@@ -16,17 +16,18 @@ class AuditLog(Base):
         Index("ix_audit_entity", "entity_type", "entity_id"),
         Index("ix_audit_actor", "actor_id", "created_at"),
         Index("ix_audit_created", "created_at"),
+        MYSQL_CHARSET,
     )
 
     id: Mapped[int] = mapped_column(BigIntegerPK, primary_key=True, autoincrement=True)
-    actor_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    actor_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)  # NULL = system
     action: Mapped[str] = mapped_column(String(60))
     entity_type: Mapped[str] = mapped_column(String(40))
     entity_id: Mapped[int] = mapped_column(BigInteger)
     old_value: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     new_value: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     ip: Mapped[str | None] = mapped_column(String(45), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
 
 
 async def write_audit(
@@ -49,6 +50,6 @@ async def write_audit(
             old_value=old,
             new_value=new,
             ip=ip,
-            created_at=datetime.utcnow(),
+            created_at=utcnow(),
         )
     )

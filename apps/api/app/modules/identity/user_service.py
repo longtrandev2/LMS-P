@@ -3,6 +3,7 @@
 import secrets
 import string
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.audit import write_audit
@@ -28,6 +29,8 @@ async def update_me(db: AsyncSession, user: User, full_name: str | None,
             raise AppError.validation("Mật khẩu hiện tại không đúng")
         user.password_hash = hash_password(new_password)
         old["password"] = "***"
+        # kill all live sessions (M4): refresh tokens revoked in the same txn
+        await repo.revoke_all_refresh_tokens(db, user.id)
     await write_audit(db, user.id, "user.update", "user", user.id, old=old,
                       new={"full_name": user.full_name}, ip=ip)
     await db.commit()
@@ -46,11 +49,16 @@ async def create_user(db: AsyncSession, payload: UserCreateIn, actor: User, ip: 
         password_hash=hash_password(temp_password),
     )
     db.add(user)
-    await db.flush()
-    await repo.set_user_roles(db, user, payload.role_names)
-    await write_audit(db, actor.id, "user.create", "user", user.id,
-                      new={"email": user.email, "roles": payload.role_names}, ip=ip)
-    await db.commit()
+    try:
+        await db.flush()
+        await repo.set_user_roles(db, user, payload.role_names)
+        await write_audit(db, actor.id, "user.create", "user", user.id,
+                          new={"email": user.email, "roles": payload.role_names}, ip=ip)
+        await db.commit()
+    except IntegrityError:
+        # race on unique email/student_code (minor #2) -> clean 409, not 500
+        await db.rollback()
+        raise AppError.validation("Email hoặc mã sinh viên đã tồn tại", status_code=409)
     await db.refresh(user)
     return user, (None if payload.password else temp_password)
 
@@ -67,8 +75,14 @@ async def update_user(db: AsyncSession, user_id: int, payload: UserUpdateIn, act
     old = {"full_name": user.full_name, "status": user.status, "roles": user.role_names}
     if payload.full_name is not None:
         user.full_name = payload.full_name
+    if payload.student_code is not None:
+        user.student_code = payload.student_code or None
+    sessions_revoked = False
     if payload.status is not None and payload.status != user.status:
         user.status = payload.status
+        if payload.status == "locked":
+            await repo.revoke_all_refresh_tokens(db, user.id)  # lock kills sessions (M4)
+            sessions_revoked = True
     if payload.role_names is not None:
         await repo.set_user_roles(db, user, payload.role_names)
         await write_audit(db, actor.id, "role.assign", "user", user.id,
@@ -77,10 +91,17 @@ async def update_user(db: AsyncSession, user_id: int, payload: UserUpdateIn, act
     if payload.reset_password:
         temp_password = generate_temp_password()
         user.password_hash = hash_password(temp_password)
+        await repo.revoke_all_refresh_tokens(db, user.id)  # reset kills sessions (M4)
+        sessions_revoked = True
     await write_audit(db, actor.id, "user.update", "user", user.id, old=old,
                       new={"full_name": user.full_name, "status": user.status,
-                           "roles": user.role_names, "password_reset": payload.reset_password},
+                           "roles": user.role_names, "password_reset": payload.reset_password,
+                           "sessions_revoked": sessions_revoked},
                       ip=ip)
-    await db.commit()
+    try:
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        raise AppError.validation("Mã sinh viên đã tồn tại", status_code=409)
     await db.refresh(user)
     return user, temp_password

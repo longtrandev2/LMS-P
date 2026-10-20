@@ -7,12 +7,13 @@ from sqlalchemy import JSON, BigInteger, DateTime, Enum, ForeignKey, String, Tex
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.db import Base
-from app.modules.identity.models import BigIntegerPK
+from app.modules.identity.models import MYSQL_CHARSET, BigIntegerPK
 from app.modules.identity.models import User, utcnow
 
 
 class Course(Base):
     __tablename__ = "courses"
+    __table_args__ = MYSQL_CHARSET
 
     id: Mapped[int] = mapped_column(BigIntegerPK, primary_key=True, autoincrement=True)
     code: Mapped[str] = mapped_column(String(20), unique=True, nullable=False)
@@ -26,7 +27,7 @@ class Course(Base):
 
 class Class(Base):
     __tablename__ = "classes"
-    __table_args__ = (UniqueConstraint("course_id", "code"),)
+    __table_args__ = (UniqueConstraint("course_id", "code"), MYSQL_CHARSET)
 
     id: Mapped[int] = mapped_column(BigIntegerPK, primary_key=True, autoincrement=True)
     course_id: Mapped[int] = mapped_column(ForeignKey("courses.id"), nullable=False, index=True)
@@ -57,7 +58,7 @@ class Class(Base):
 
 class Enrollment(Base):
     __tablename__ = "enrollments"
-    __table_args__ = (UniqueConstraint("class_id", "student_id"),)
+    __table_args__ = (UniqueConstraint("class_id", "student_id"), MYSQL_CHARSET)
 
     id: Mapped[int] = mapped_column(BigIntegerPK, primary_key=True, autoincrement=True)
     class_id: Mapped[int] = mapped_column(ForeignKey("classes.id"), nullable=False)

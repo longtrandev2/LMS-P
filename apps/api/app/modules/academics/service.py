@@ -73,8 +73,16 @@ async def delete_course(db: AsyncSession, course_id: int, actor: User, ip: str |
         raise AppError.validation("Không thể xóa khóa học còn lớp học", status_code=409)
 
 
+async def _ensure_lecturer_exists(db: AsyncSession, lecturer_id: int) -> None:
+    """Validate FK target up front so IntegrityError isn't mislabeled (minor #3)."""
+    lecturer = await db.get(User, lecturer_id)
+    if lecturer is None:
+        raise AppError.not_found(f"Không tìm thấy giảng viên (lecturer_id={lecturer_id})")
+
+
 async def create_class(db: AsyncSession, payload: ClassCreateIn, actor: User, ip: str | None) -> Class:
     await get_course_or_404(db, payload.course_id)
+    await _ensure_lecturer_exists(db, payload.lecturer_id)
     class_obj = Class(
         course_id=payload.course_id,
         code=payload.code,
@@ -98,6 +106,8 @@ async def create_class(db: AsyncSession, payload: ClassCreateIn, actor: User, ip
 
 async def update_class(db: AsyncSession, class_id: int, payload: ClassUpdateIn, actor: User, ip: str | None) -> Class:
     class_obj = await get_class_or_404(db, class_id)
+    if payload.lecturer_id is not None:
+        await _ensure_lecturer_exists(db, payload.lecturer_id)
     old = {"code": class_obj.code, "name": class_obj.name, "semester": class_obj.semester,
            "lecturer_id": class_obj.lecturer_id, "grade_policy": class_obj.grade_policy}
     for field in ("code", "name", "semester", "lecturer_id", "grade_policy"):
@@ -157,16 +167,3 @@ async def remove_enrollment(db: AsyncSession, class_id: int, student_id: int, ac
                       old={"student_id": student_id, "status": "active"},
                       new={"student_id": student_id, "status": "dropped"}, ip=ip)
     await db.commit()
-
-
-async def my_classes(db: AsyncSession, student: User) -> list[dict]:
-    rows = (await db.execute(repo.my_classes_stmt(student.id))).all()
-    return [
-        {
-            "id": c.id, "course_id": c.course_id, "code": c.code, "name": c.name,
-            "semester": c.semester, "lecturer_id": c.lecturer_id, "status": status,
-            "course_code": c.course_code, "course_name": c.course_name,
-            "lecturer_name": c.lecturer_name,
-        }
-        for c, status in rows
-    ]

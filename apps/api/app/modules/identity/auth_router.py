@@ -23,7 +23,11 @@ async def refresh(payload: RefreshIn, db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/auth/logout", status_code=204)
-async def logout(payload: RefreshIn, db: AsyncSession = Depends(get_db)):
+async def logout(
+    payload: RefreshIn,
+    user: User = Depends(get_current_user),  # spec: logout requires auth
+    db: AsyncSession = Depends(get_db),
+):
     await auth_service.logout(db, payload.refresh_token)
 
 

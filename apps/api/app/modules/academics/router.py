@@ -1,6 +1,6 @@
 """Academics endpoints: courses, classes, enrollments, my classes."""
 
-from fastapi import APIRouter, Depends, Request, Response
+from fastapi import APIRouter, Depends, Query, Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import get_db
@@ -77,8 +77,12 @@ async def delete_course(
 
 
 @router.get("/classes", response_model=Page[ClassOut], dependencies=[Depends(lecturer_or_admin)])
-async def list_classes(pager: PageParams = Depends(page_query), db: AsyncSession = Depends(get_db)):
-    return await paginate(db, repo.list_classes(), ClassOut.model_validate, pager.page, pager.limit)
+async def list_classes(
+    course_id: int | None = Query(None, description="Lọc lớp theo khóa học"),
+    pager: PageParams = Depends(page_query),
+    db: AsyncSession = Depends(get_db),
+):
+    return await paginate(db, repo.list_classes(course_id), ClassOut.model_validate, pager.page, pager.limit)
 
 
 @router.post("/classes", response_model=ClassOut, status_code=201, dependencies=[Depends(lecturer_or_admin)])
@@ -176,6 +180,20 @@ def _student_out(e) -> StudentInClassOut:
 # -- Student self-service ---------------------------------------------------
 
 
-@router.get("/me/classes", response_model=list[MyClassOut])
-async def my_classes(user: User = Depends(require_roles("student")), db: AsyncSession = Depends(get_db)):
-    return await service.my_classes(db, user)
+@router.get("/me/classes", response_model=Page[MyClassOut])
+async def my_classes(
+    user: User = Depends(require_roles("student")),
+    pager: PageParams = Depends(page_query),
+    db: AsyncSession = Depends(get_db),
+):
+    return await paginate(db, repo.my_classes_stmt(user.id), _my_class_out, pager.page, pager.limit)
+
+
+def _my_class_out(e) -> MyClassOut:
+    """Map an Enrollment (class eagerly loaded) to the my-classes view."""
+    c = e.class_
+    return MyClassOut(
+        id=c.id, course_id=c.course_id, code=c.code, name=c.name,
+        semester=c.semester, lecturer_id=c.lecturer_id, status=e.status,
+        course_code=c.course_code, course_name=c.course_name, lecturer_name=c.lecturer_name,
+    )

@@ -44,7 +44,7 @@ async def list_users(
     pager: PageParams = Depends(page_query),
     db: AsyncSession = Depends(get_db),
 ):
-    stmt = await repo.list_users(db, role, status, q)
+    stmt = repo.list_users(role, status, q)
     return await paginate(db, stmt, UserOut.from_user, pager.page, pager.limit)
 
 

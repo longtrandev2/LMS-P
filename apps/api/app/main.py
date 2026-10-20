@@ -17,6 +17,16 @@ from app.modules.identity.users_router import router as users_router
 
 API_PREFIX = "/api/v1"
 
+# known-bad secrets that must never reach a running server
+_BLACKLISTED_SECRETS = {"change-me"}
+
+
+def _assert_jwt_secret(secret: str | None) -> None:
+    if not secret or not secret.strip() or secret in _BLACKLISTED_SECRETS:
+        raise RuntimeError("JWT_SECRET is missing or a known default — set a strong value via environment/.env")
+    if len(secret) < 32:
+        raise RuntimeError("JWT_SECRET must be at least 32 bytes (RFC 7518 §3.2)")
+
 
 async def _ping_db() -> bool:
     try:
@@ -38,6 +48,7 @@ async def _ping_amqp(url: str) -> bool:
 
 def create_app() -> FastAPI:
     settings = get_settings()
+    _assert_jwt_secret(settings.JWT_SECRET)
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI):

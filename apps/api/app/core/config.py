@@ -10,7 +10,8 @@ class Settings(BaseSettings):
 
     DATABASE_URL: str = "mysql+asyncmy://lms:lms@localhost:3306/lms"
     RABBITMQ_URL: str = "amqp://guest:guest@localhost:5672/"
-    JWT_SECRET: str = "dev-secret-change-me-0123456789abcdef0123456789abcdef"
+    # No default on purpose: create_app() fails fast when missing/weak.
+    JWT_SECRET: str | None = None
     JWT_ACCESS_TTL_MIN: int = 15
     JWT_REFRESH_TTL_DAYS: int = 7
     STORAGE_DIR: str = "../storage"

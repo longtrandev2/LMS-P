@@ -67,6 +67,7 @@ class UserCreateIn(BaseModel):
 
 class UserUpdateIn(BaseModel):
     full_name: str | None = Field(default=None, min_length=1, max_length=150)
+    student_code: str | None = Field(default=None, max_length=20)  # "" clears the code
     role_names: list[RoleName] | None = None
     status: Literal["active", "locked"] | None = None
     reset_password: bool = False

@@ -114,3 +114,40 @@ async def test_import_requires_admin(client: AsyncClient, db: AsyncSession):
         headers=bearer(tokens),
     )
     assert resp.status_code == 403
+
+
+async def test_import_rejects_invalid_emails_per_row(client: AsyncClient, db: AsyncSession):
+    """M3: email xấu -> errors theo dòng, KHÔNG vào DB."""
+    content = CSV_OK + "not-an-email,Bad Email,SV9007,student\nok-email@example.com,Good Email,SV9008,student\n"
+    await make_user(db, "admin6@example.com", ["admin"])
+    tokens = await login(client, "admin6@example.com")
+    resp = await client.post(
+        "/api/v1/users/import",
+        files={"file": ("bademail.csv", content.encode("utf-8"), "text/csv")},
+        headers=bearer(tokens),
+    )
+    assert resp.status_code == 200, resp.text
+    data = resp.json()
+    assert data["created"] == 4  # 3 CSV_OK + 1 good row
+    assert len(data["errors"]) == 1
+    assert data["errors"][0]["row"] == 5
+    assert "email" in data["errors"][0]["reason"]
+    # poisoned email never reached the DB (GET /users must stay healthy)
+    resp = await client.get("/api/v1/users?limit=100", headers=bearer(tokens))
+    assert resp.status_code == 200
+    emails = [u["email"] for u in resp.json()["items"]]
+    assert "not-an-email" not in emails
+
+
+async def test_admin_lock_revokes_refresh_tokens(client: AsyncClient, db: AsyncSession):
+    """M4: khóa tài khoản thu hồi refresh token đang sống."""
+    await make_user(db, "admin7@example.com", ["admin"])
+    target = await make_user(db, "lockee@example.com", ["student"], student_code="SV9100")
+    tokens = await login(client, "lockee@example.com")
+    admin_tokens = await login(client, "admin7@example.com")
+    resp = await client.patch(
+        f"/api/v1/users/{target.id}", json={"status": "locked"}, headers=bearer(admin_tokens)
+    )
+    assert resp.status_code == 200
+    resp = await client.post("/api/v1/auth/refresh", json={"refresh_token": tokens["refresh_token"]})
+    assert resp.status_code == 401

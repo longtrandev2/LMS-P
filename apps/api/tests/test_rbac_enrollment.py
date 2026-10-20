@@ -100,7 +100,10 @@ async def test_lecturer_enrolls_students_and_student_sees_my_classes(client: Asy
     stu_tokens = await login(client, "enrollee@example.com")
     resp = await client.get("/api/v1/me/classes", headers=bearer(stu_tokens))
     assert resp.status_code == 200
-    classes = resp.json()
+    # Page envelope per api-spec §1
+    page = resp.json()
+    assert page["total"] == 1 and page["page"] == 1 and page["limit"] == 20
+    classes = page["items"]
     assert len(classes) == 1 and classes[0]["id"] == class_id and classes[0]["status"] == "active"
     # joined display fields for class cards
     assert classes[0]["course_code"] == "NET101"
@@ -138,3 +141,30 @@ async def test_remove_enrollment(client: AsyncClient, db: AsyncSession):
     resp = await client.get(f"/api/v1/classes/{class_id}", headers=bearer(stu_tokens))
     assert resp.status_code == 403
     assert resp.json()["error"]["code"] == "ENROLLMENT_REQUIRED"
+
+
+async def test_list_classes_filters_by_course_id(client: AsyncClient, db: AsyncSession):
+    """B3: GET /classes?course_id= chỉ trả lớp của khóa đó."""
+    lecturer = await make_user(db, "lec7@example.com", ["lecturer"])
+    course1 = Course(code="FIL201", name="Triết học", created_by=lecturer.id)
+    course2 = Course(code="MAT202", name="Toán rời rạc", created_by=lecturer.id)
+    db.add_all([course1, course2])
+    await db.flush()
+    db.add_all([
+        Class(course_id=course1.id, code="FIL201-01", name="Nhóm 1", semester="2026.1", lecturer_id=lecturer.id),
+        Class(course_id=course1.id, code="FIL201-02", name="Nhóm 2", semester="2026.1", lecturer_id=lecturer.id),
+        Class(course_id=course2.id, code="MAT202-01", name="Nhóm 1", semester="2026.1", lecturer_id=lecturer.id),
+    ])
+    await db.commit()
+
+    tokens = await login(client, "lec7@example.com")
+    resp = await client.get(f"/api/v1/classes?course_id={course1.id}", headers=bearer(tokens))
+    assert resp.status_code == 200
+    page = resp.json()
+    assert page["total"] == 2
+    assert all(c["course_id"] == course1.id for c in page["items"])
+    assert [c["code"] for c in page["items"]] == ["FIL201-01", "FIL201-02"]
+
+    # unfiltered returns everything
+    resp = await client.get("/api/v1/classes", headers=bearer(tokens))
+    assert resp.json()["total"] == 3

@@ -4,6 +4,8 @@ import hashlib
 import secrets
 from datetime import datetime, timedelta, timezone
 
+from app.modules.identity.models import utcnow
+
 import jwt
 from passlib.context import CryptContext
 
@@ -57,4 +59,4 @@ def hash_refresh_token(token: str) -> str:
 
 def refresh_expiry() -> datetime:
     """Naive UTC expiry for refresh tokens."""
-    return datetime.utcnow() + timedelta(days=get_settings().JWT_REFRESH_TTL_DAYS)
+    return utcnow() + timedelta(days=get_settings().JWT_REFRESH_TTL_DAYS)

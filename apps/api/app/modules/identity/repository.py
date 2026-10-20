@@ -1,12 +1,13 @@
 """SQLAlchemy data access for identity module."""
 
+
 from datetime import datetime
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.modules.identity.models import RefreshToken, Role, User, user_roles_table
+from app.modules.identity.models import RefreshToken, Role, User, user_roles_table, utcnow
 
 
 async def get_user_by_email(db: AsyncSession, email: str) -> User | None:
@@ -46,12 +47,20 @@ async def find_refresh_token(db: AsyncSession, token_hash: str) -> RefreshToken 
 
 
 async def revoke_refresh_token(db: AsyncSession, token: RefreshToken) -> None:
-    token.revoked_at = datetime.utcnow()
+    token.revoked_at = utcnow()
 
 
-async def list_users(
-    db: AsyncSession, role: str | None, status: str | None, q: str | None
-) -> list[User]:
+async def revoke_all_refresh_tokens(db: AsyncSession, user_id: int) -> None:
+    """Revoke every live refresh token of a user (password reset/change, lock)."""
+    await db.execute(
+        RefreshToken.__table__.update()
+        .where(RefreshToken.user_id == user_id, RefreshToken.revoked_at.is_(None))
+        .values(revoked_at=utcnow())
+    )
+
+
+def list_users(role: str | None, status: str | None, q: str | None) -> select:
+    """Build the filtered user query (sync — returns the statement)."""
     stmt = select(User).options(selectinload(User.roles)).order_by(User.id)
     if status:
         stmt = stmt.where(User.status == status)

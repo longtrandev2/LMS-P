@@ -27,8 +27,11 @@ async def get_class(db: AsyncSession, class_id: int) -> Class | None:
     return (await db.execute(stmt)).scalar_one_or_none()
 
 
-def list_classes() -> select:
-    return select(Class).options(*_CLASS_EAGER).order_by(Class.id)
+def list_classes(course_id: int | None = None) -> select:
+    stmt = select(Class).options(*_CLASS_EAGER).order_by(Class.id)
+    if course_id is not None:
+        stmt = stmt.where(Class.course_id == course_id)
+    return stmt
 
 
 async def get_enrollment(db: AsyncSession, class_id: int, student_id: int) -> Enrollment | None:
@@ -53,10 +56,13 @@ def list_students_stmt(class_id: int) -> select:
 
 
 def my_classes_stmt(student_id: int) -> select:
+    """Enrollments of a student with the class (+course/lecturer) eagerly loaded."""
     return (
-        select(Class, Enrollment.status)
-        .options(*_CLASS_EAGER)
-        .join(Enrollment, Enrollment.class_id == Class.id)
+        select(Enrollment)
+        .options(
+            selectinload(Enrollment.class_).selectinload(Class.course),
+            selectinload(Enrollment.class_).selectinload(Class.lecturer),
+        )
         .where(Enrollment.student_id == student_id)
-        .order_by(Class.id)
+        .order_by(Enrollment.class_id)
     )

@@ -1,6 +1,5 @@
 """Auth flows: login (argon2 + brute-force lock), refresh rotation, logout."""
 
-from datetime import datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,7 +13,7 @@ from app.core.security import (
 )
 from app.modules.identity import repository as repo
 from app.modules.identity.login_throttle import login_throttle
-from app.modules.identity.models import User
+from app.modules.identity.models import User, utcnow
 from app.modules.identity.schemas import TokenPair, UserOut
 
 
@@ -44,7 +43,7 @@ async def login(db: AsyncSession, email: str, password: str) -> TokenPair:
         raise _cred_error(msg)
 
     login_throttle.reset(email)
-    user.last_login_at = datetime.utcnow()
+    user.last_login_at = utcnow()
     pair = _issue_tokens(db, user)
     await db.commit()
     return pair
@@ -58,7 +57,7 @@ def _cred_error(msg: str) -> AppError:
 async def refresh(db: AsyncSession, refresh_token: str) -> TokenPair:
     token_hash = hash_refresh_token(refresh_token)
     stored = await repo.find_refresh_token(db, token_hash)
-    now = datetime.utcnow()
+    now = utcnow()
     if stored is None or stored.revoked_at is not None or stored.expires_at <= now:
         raise AppError.unauthenticated("Refresh token không hợp lệ hoặc đã hết hạn")
     user = await repo.get_user_by_id(db, stored.user_id)
@@ -74,5 +73,5 @@ async def refresh(db: AsyncSession, refresh_token: str) -> TokenPair:
 async def logout(db: AsyncSession, refresh_token: str) -> None:
     stored = await repo.find_refresh_token(db, hash_refresh_token(refresh_token))
     if stored is not None and stored.revoked_at is None:
-        stored.revoked_at = datetime.utcnow()
+        stored.revoked_at = utcnow()
         await db.commit()
