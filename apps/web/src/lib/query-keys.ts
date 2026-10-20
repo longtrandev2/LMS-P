@@ -18,6 +18,12 @@ export const queryKeys = {
     detail: (id: string) => ["classes", "detail", id] as const,
     students: (id: string) => ["classes", "students", id] as const,
   },
+  materials: {
+    list: (classId: string) => ["classes", classId, "materials"] as const,
+  },
+  notifications: {
+    list: () => ["notifications", "list"] as const,
+  },
   me: {
     classes: () => ["me", "classes"] as const,
   },

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { LogOut, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { NotificationsBell } from "@/components/notifications/notifications-bell";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -28,11 +29,12 @@ import { ROLE_LABELS } from "@/components/role-status-badges";
 
 function UserMenu() {
   const router = useRouter();
-  const { user, clearSession } = useAuthStore();
+  const { user, refreshToken, clearSession } = useAuthStore();
 
   const handleLogout = async () => {
     try {
-      await api.post("/auth/logout");
+      // BE yêu cầu body {refresh_token} để revoke — không gửi sẽ 400
+      if (refreshToken) await api.post("/auth/logout", { refresh_token: refreshToken });
     } catch {
       /* logout là best-effort — session local vẫn phải clear */
     }
@@ -123,6 +125,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </span>
           </div>
           <div className="flex items-center gap-1.5">
+            <NotificationsBell />
             <ThemeToggle />
             <UserMenu />
           </div>

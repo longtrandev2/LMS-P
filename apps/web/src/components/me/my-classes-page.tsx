@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { CalendarRange, GraduationCap, UserRound } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -72,9 +73,13 @@ export function MyClassesPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {classes?.map((clazz) => (
-            <Card
+            <Link
               key={clazz.id}
-              className="group relative overflow-hidden gap-0 py-0 transition-colors duration-200 hover:border-primary/40"
+              href={`/me/classes/${clazz.id}`}
+              className="block h-full rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+            >
+            <Card
+              className="group relative h-full overflow-hidden gap-0 py-0 transition-colors duration-200 hover:border-primary/40"
             >
               <span
                 aria-hidden
@@ -108,6 +113,7 @@ export function MyClassesPage() {
                 </div>
               </CardContent>
             </Card>
+            </Link>
           ))}
         </div>
       )}
