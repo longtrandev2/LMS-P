@@ -1,0 +1,5 @@
+# Grading worker runtime deps — pinned for reproducible builds
+aio-pika==9.4.2
+SQLAlchemy==2.0.35
+asyncmy==0.2.9
+docker==7.1.0
