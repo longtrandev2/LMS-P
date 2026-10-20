@@ -25,7 +25,7 @@ services:
     volumes:
       - mysql-data:/var/lib/mysql
     ports:
-      - "3306:3306" # host access for dev tools; remove in real deployments
+      - "3308:3306" # host access for dev tools; remove in real deployments
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-root}"]
       interval: 10s
@@ -65,8 +65,8 @@ services:
       MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-100}
     volumes:
       - ../storage:/app/storage
-      # Seed: docker compose exec api python /app/scripts/seed.py
-      - ../scripts:/app/scripts
+      # Seed: docker compose exec api python scripts/seed.py (WORKDIR /srv/app)
+      - ../scripts:/srv/app/scripts
     ports:
       - "8000:8000"
     healthcheck:

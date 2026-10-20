@@ -11,7 +11,11 @@ import string
 import sys
 from pathlib import Path
 
-API_ROOT = Path(__file__).resolve().parents[1] / "apps" / "api"
+_API_ROOT = Path(__file__).resolve().parents[1]
+if (_API_ROOT / "apps" / "api" / "app").is_dir():
+    API_ROOT = _API_ROOT / "apps" / "api"  # host: scripts/ nằm ở repo root
+else:
+    API_ROOT = _API_ROOT  # container: scripts được mount cạnh package `app`
 sys.path.insert(0, str(API_ROOT))
 
 from sqlalchemy import select  # noqa: E402

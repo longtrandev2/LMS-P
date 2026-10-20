@@ -29,14 +29,12 @@ copy .env.example infra\.env   # mở infra\.env, dán JWT_SECRET (lệnh gen tr
 cd infra
 docker compose up -d --build
 
-# 3. Seed dữ liệu ban đầu (roles + admin) — CHỜ BE HOÀN THIỆN scripts/seed.py
-docker compose exec api python /app/scripts/seed.py
+# 3. Migration + seed dữ liệu ban đầu (bảng + roles + admin)
+docker compose exec api alembic upgrade head
+docker compose exec api python scripts/seed.py
 ```
 
-> **Lưu ý song-song:** `apps/api` và `apps/web` đang được xây dựng ở phase khác.
-> Cho tới khi Dockerfile 2 app đó merge, lệnh build trên sẽ fail ở `api`/`web` —
-> mysql / rabbitmq / worker vẫn chạy bình thường, hoặc tạm dùng
-> `docker compose up -d --build mysql rabbitmq worker`.
+> Seed in ngày mật khẩu admin ra console (v1 chưa có email); lecturer/student demo dùng `Demo@12345`.
 
 ## URLs
 
