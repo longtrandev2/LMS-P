@@ -29,9 +29,9 @@
 | GET | /auth/me | auth | Profile + roles |
 | PATCH | /users/me | auth | Sửa tên / đổi mật khẩu |
 | GET | /users | admin | List (filter role/status, phân trang) |
-| POST | /users | admin | Tạo user + roles |
-| POST | /users/import | admin | Import CSV (email, họ tên, mã SV, role) |
-| GET/PATCH | /users/{id} | admin | Xem / sửa (role, status, reset mật khẩu) |
+| POST | /users | admin | Tạo user (`role_names`) → `{user, temporary_password}` |
+| POST | /users/import | admin | Import CSV (email, họ tên, mã SV, role) → `{created, skipped: [email], errors: [{row, reason}], temp_passwords}` |
+| GET/PATCH | /users/{id} | admin | Xem / sửa (`role_names`, status, reset mật khẩu → `{user, temporary_password}`; reset/đổi pw revoke refresh) |
 
 ## 3. Courses / Classes / Enrollment (M2)
 
@@ -39,12 +39,12 @@
 |---|---|---|---|
 | GET/POST | /courses | lec/adm | List / tạo khóa học |
 | GET/PATCH/DELETE | /courses/{id} | lec/adm | Chi tiết / sửa / xóa |
-| GET/POST | /classes | lec/adm | List (theo vai trò) / tạo lớp |
+| GET/POST | /classes | lec/adm | List (filter `?course_id=`) / tạo lớp (`course_id`, `lecturer_id`) |
 | GET/PATCH/DELETE | /classes/{id} | lec/adm | Chi tiết / sửa / xóa |
 | POST | /classes/{id}/enrollments | lec/adm | Ghi danh 1 hoặc bulk `[{student_id}]` |
 | DELETE | /classes/{id}/enrollments/{studentId} | lec/adm | Hủy ghi danh |
 | GET | /classes/{id}/students | lec/adm | Danh sách sinh viên lớp |
-| GET | /me/classes | student | Lớp đã ghi danh + tiến độ |
+| GET | /me/classes | student | Lớp đã ghi danh (Page envelope) + tiến độ |
 
 ## 4. Materials (M3)
 

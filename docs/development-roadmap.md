@@ -19,6 +19,8 @@
 
 Nếu gấp show giữa chừng: P0 → P1 → nhảy P3 (P2 đưa về sau) — pipeline chấm là phần đáng nhớ nhất.
 
+**Trạng thái 2026-10-20 (wave 1 — branch `feat/identity-and-class-management`):** P0 ✅ (gộp scaffold vào wave 1) · P1: M1+M2 ✅ (27/27 pytest, review + fix xong — còn M3 học liệu + WS notifications) · lesson: cần contract test FE↔BE cho wave sau.
+
 ## P0 — Scaffold
 - Việc: monorepo `apps/api`, `apps/web`, `apps/worker`, `infra/` (compose: mysql, rabbitmq-management, api, worker, web; profile prod: nginx); app factory FastAPI + `/health`; Next.js init + layout + AuthProvider khung; worker entry print.consume;
 - Migration rỗng Alembic; `.env.example`; seed admin.
