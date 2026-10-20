@@ -1,0 +1,148 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useTheme } from "next-themes";
+import { LogOut, Menu, Moon, Sun } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { BrandMark, SidebarFooterRole, SidebarNav } from "@/components/nav-sidebar";
+import { api } from "@/lib/api";
+import { useAuthStore } from "@/stores/auth";
+import { ROLE_LABELS } from "@/components/role-status-badges";
+
+function UserMenu() {
+  const router = useRouter();
+  const { user, clearSession } = useAuthStore();
+
+  const handleLogout = async () => {
+    try {
+      await api.post("/auth/logout");
+    } catch {
+      /* logout là best-effort — session local vẫn phải clear */
+    }
+    clearSession();
+    router.replace("/login");
+  };
+
+  const initials = (user?.full_name ?? "?")
+    .split(" ")
+    .filter(Boolean)
+    .slice(-2)
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase();
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          className="gap-2.5 px-2 py-1.5 font-normal data-[state=open]:bg-accent"
+        >
+          <Avatar className="size-8">
+            <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+          <span className="hidden max-w-40 truncate text-sm sm:block">
+            {user?.full_name}
+          </span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-60">
+        <DropdownMenuLabel>
+          <p className="truncate text-sm font-medium">{user?.full_name}</p>
+          <p className="truncate text-xs font-normal text-muted-foreground">{user?.email}</p>
+          <p className="mt-1 text-xs font-normal text-muted-foreground">
+            {user?.roles.map((r) => ROLE_LABELS[r]).join(" · ")}
+          </p>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={handleLogout}>
+          <LogOut aria-hidden /> Đăng xuất
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+function ThemeToggle() {
+  const { theme, setTheme } = useTheme();
+  return (
+    <Button
+      variant="ghost"
+      size="icon-sm"
+      aria-label={theme === "dark" ? "Chuyển sang chế độ sáng" : "Chuyển sang chế độ tối"}
+      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+    >
+      {theme === "dark" ? <Sun aria-hidden /> : <Moon aria-hidden />}
+    </Button>
+  );
+}
+
+export function AppShell({ children }: { children: React.ReactNode }) {
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  return (
+    <div className="flex min-h-dvh">
+      {/* Sidebar desktop — ink navy cố định ở cả hai mode */}
+      <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col bg-sidebar text-sidebar-foreground lg:flex">
+        <BrandMark />
+        <SidebarNav />
+        <SidebarFooterRole />
+      </aside>
+
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="sticky top-0 z-20 flex h-14 items-center justify-between gap-3 border-b bg-background/90 px-4 backdrop-blur sm:px-6">
+          <div className="flex items-center gap-2">
+            {/* Sidebar mobile */}
+            <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon-sm" aria-label="Mở menu" className="lg:hidden">
+                  <Menu aria-hidden />
+                </Button>
+              </SheetTrigger>
+              <SheetContent
+                side="left"
+                className="w-64 bg-sidebar p-0 text-sidebar-foreground [&>button]:text-sidebar-foreground"
+              >
+                <SheetHeader className="p-0 text-left">
+                  <SheetTitle asChild>
+                    <div>
+                      <BrandMark />
+                    </div>
+                  </SheetTitle>
+                </SheetHeader>
+                <SidebarNav onNavigate={() => setMobileOpen(false)} />
+              </SheetContent>
+            </Sheet>
+            <span className="hidden text-sm text-muted-foreground sm:block">
+              Môn Lập trình mạng
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <ThemeToggle />
+            <UserMenu />
+          </div>
+        </header>
+        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6">{children}</main>
+      </div>
+    </div>
+  );
+}
