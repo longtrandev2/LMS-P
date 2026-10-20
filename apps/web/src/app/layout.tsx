@@ -24,11 +24,11 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "LMS — Lập trình mạng",
-    template: "%s · LMS Lập trình mạng",
+    default: "LMS-P — Nền tảng quản trị học tập",
+    template: "%s · LMS-P",
   },
   description:
-    "Hệ thống quản lý học tập môn Lập trình mạng: lớp học, bài tập, kỳ thi và chấm điểm tự động.",
+    "Nền tảng quản trị học tập: lớp học, học liệu, bài tập, kỳ thi và chấm điểm tự động realtime.",
 };
 
 export default function RootLayout({

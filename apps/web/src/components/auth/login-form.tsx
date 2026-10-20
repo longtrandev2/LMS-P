@@ -53,8 +53,11 @@ export function LoginForm() {
   }
 
   return (
-    <Card className="border-none shadow-sm">
+    <Card className="border-none shadow-glass">
       <CardHeader>
+        <p className="text-xs font-medium tracking-widest text-gold uppercase">
+          LMS-P
+        </p>
         <CardTitle className="font-heading text-xl font-bold">Đăng nhập</CardTitle>
         <CardDescription>Dùng tài khoản do trường cấp để truy cập hệ thống.</CardDescription>
       </CardHeader>

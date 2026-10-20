@@ -27,20 +27,42 @@ Tuyệt đối tránh: gradient tím generic, Inter/Roboto, emoji làm icon, car
 | `--destructive` | `oklch(0.55 0.2 27)` | lỗi, xóa |
 | `--gold` | `oklch(0.72 0.12 80)` — vàng đồng | điểm nhấn nhỏ: badge mã lớp, active nav marker |
 
-### Palette — Dark (đèn bàn học đêm)
+### Palette — Dark (đêm thư viện)
+Nền navy đậm có chroma (không xám bệt), card sáng hơn nền một mức để có chiều sâu,
+gold dùng có chủ đích: active nav marker, badge mã lớp, check trong theme toggle.
+
 | Token | Giá trị |
 |---|---|
-| `--background` | `oklch(0.17 0.015 260)` |
-| `--foreground` | `oklch(0.93 0.008 85)` |
-| `--primary` | `oklch(0.62 0.09 255)` — navy sáng lên cho contrast |
-| `--card` | `oklch(0.21 0.018 260)` |
-| `--muted` | `oklch(0.25 0.02 260)` |
-| `--muted-foreground` | `oklch(0.70 0.015 260)` |
-| `--border` | `oklch(0.30 0.02 260)` |
-| `--gold` | `oklch(0.78 0.12 85)` |
+| `--background` | `oklch(0.165 0.022 262)` — navy đêm |
+| `--foreground` | `oklch(0.925 0.01 85)` |
+| `--primary` | `oklch(0.68 0.1 255)` — navy sáng cho contrast |
+| `--card` | `oklch(0.205 0.024 262)` — nổi khối nhẹ so với nền |
+| `--popover` | `oklch(0.215 0.024 262)` |
+| `--muted` | `oklch(0.235 0.022 262)` |
+| `--muted-foreground` | `oklch(0.72 0.016 262)` |
+| `--border` | `oklch(0.29 0.024 262)` |
+| `--gold` | `oklch(0.8 0.13 85)` |
+
+### Elevation
+- `--shadow-soft`: bóng ambient nhẹ (header sticky, hover card).
+- `--shadow-glass`: bóng sâu hơn (dialog, card login).
+- Dark mode phân cấp chủ yếu bằng độ chênh nền + border; shadow chỉ bổ trợ.
 
 Sidebar giữ **ink navy đậm ở cả 2 mode** (signature của app) — chữ kem, active item có thanh
 gold bên trái + nền accent.
+
+### Theme transition
+Đổi theme qua `theme-toggle.tsx` gắn tạm class `.theme-transition` vào `<html>` ~250ms
+(transition background/border/color 200ms) — không giữ transition thường trực
+trên `*` để tránh lag hover. Tôn trọng `prefers-reduced-motion`.
+
+### Logo (`src/components/logo.tsx`)
+- **Badge monogram "bộ tầng tri thức"**: rounded square vàng đồng (`--gold`) chứa
+  3 thanh ink navy (`--mark-ink`, cố định 2 mode) cao dần — gợi sách/bậc thang tri thức.
+- Wordmark **LMS-P** bằng Literata (serif display), kèm caption tuỳ chọn.
+- API: `<Logo size variant="full" | "mark" caption />`. File tĩnh: `public/logo.svg`,
+  favicon `src/app/icon.svg` (màu hex cố định tương đương token).
+- Rõ ở 16px, một màu, không motif mạch điện/node mạng/terminal.
 
 ### Typography
 - Display/headings: **Literata** (serif, học thuật) — tải qua `next/font`, subset `vietnamese`.
@@ -67,8 +89,10 @@ badge, sonner (toast), form, skeleton, tabs, separator, avatar, sheet, tooltip, 
 **App components** (`src/components/`):
 | Component | Vai trò |
 |---|---|
-| `app-shell.tsx` | Khung: sidebar theo role + header (user menu, dark mode toggle) |
+| `app-shell.tsx` | Khung: sidebar theo role + header (user menu, theme toggle dropdown) |
 | `nav-sidebar.tsx` | Nav item (Lucide icon), active marker gold, nhóm theo role |
+| `logo.tsx` | Badge monogram LMS-P + wordmark serif (variant full/mark) |
+| `ui/theme-toggle.tsx` | Dropdown Sáng/Tối/Hệ thống (next-themes, icon sun/moon) |
 | `page-header.tsx` | Tiêu đề trang serif + mô tả + actions |
 | `state-blocks/*` | `loading-skeleton.tsx`, `empty-state.tsx`, `error-state.tsx` (retry) |
 | `data-table-pagination.tsx` | Phân trang chuẩn `?page&limit` |

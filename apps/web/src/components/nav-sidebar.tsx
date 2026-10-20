@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, GraduationCap, LayoutGrid, Network, Users } from "lucide-react";
+import { BookOpen, GraduationCap, LayoutGrid, Users } from "lucide-react";
+import { Logo } from "@/components/logo";
 import { hasRole, useAuthStore } from "@/stores/auth";
 import { cn } from "@/lib/utils";
 import type { CurrentUser } from "@/types/api";
@@ -38,18 +39,8 @@ function navFor(user: CurrentUser | null): { group: string; items: NavItem[] }[]
 
 export function BrandMark() {
   return (
-    <Link href="/" className="flex items-center gap-2.5 px-5 py-5">
-      <span className="flex size-9 items-center justify-center rounded-lg bg-gold/15 text-gold">
-        <Network className="size-5" aria-hidden />
-      </span>
-      <span className="leading-tight">
-        <span className="block font-heading text-sm font-bold text-sidebar-foreground">
-          LMS Lập trình mạng
-        </span>
-        <span className="block text-xs text-sidebar-foreground/50">
-          Hệ thống quản lý học tập
-        </span>
-      </span>
+    <Link href="/" className="flex items-center px-5 py-5">
+      <Logo size={36} caption="Hệ thống quản lý học tập" className="text-sidebar-foreground" />
     </Link>
   );
 }
