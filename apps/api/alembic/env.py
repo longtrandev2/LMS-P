@@ -15,6 +15,7 @@ from app.core.db import Base
 import app.core.audit  # noqa: F401
 import app.modules.identity.models  # noqa: F401
 import app.modules.academics.models  # noqa: F401
+import app.modules.notifications.models  # noqa: F401
 
 config = context.config
 if config.config_file_name is not None:

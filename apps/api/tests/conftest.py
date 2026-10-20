@@ -1,9 +1,12 @@
 """Shared fixtures: in-memory aiosqlite DB + ASGI client (no external services)."""
 
 import os
+import tempfile
 
 # JWT_SECRET is mandatory (create_app fails fast) — set before importing app
 os.environ.setdefault("JWT_SECRET", "test-only-secret-0123456789abcdef0123456789abcdef")
+# Isolated storage root for material upload/download tests (read once by Settings)
+os.environ.setdefault("STORAGE_DIR", tempfile.mkdtemp(prefix="lms-test-storage-"))
 
 import pytest_asyncio  # noqa: E402
 from httpx import ASGITransport, AsyncClient  # noqa: E402
@@ -11,6 +14,8 @@ from sqlalchemy import select  # noqa: E402
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine  # noqa: E402
 
 import app.modules.academics.models  # noqa: F401,E402 — register tables
+import app.modules.notifications.models  # noqa: F401,E402
+import app.modules.materials.models  # noqa: F401,E402 — register tables
 from app.core.db import Base, get_db  # noqa: E402
 from app.core.security import hash_password  # noqa: E402
 from app.main import app  # noqa: E402
