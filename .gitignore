@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+
+# Node
+node_modules/
+.next/
+out/
+
+# Env & secrets
+.env
+.env.*
+!.env.example
+*.pem
+
+# Storage / data
+storage/*
+!storage/.gitkeep
+mysql-data/
+*.sql.dump
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+Thumbs.db
+.DS_Store
+
+# Claudekit toolkit (công cụ, không phải code dự án)
+Claudekit Engineer v2.13.0/
+
+# Dist
+dist/
+build/
