@@ -1,6 +1,6 @@
 # LMS-P — full stack compose (phase-00-5)
 # Run from infra/:  docker compose up -d --build
-# Env comes from ../.env (copy ../.env.example first).
+# Env comes from ./.env trong infra/ (copy ../../.env.example tới infra/.env).
 #
 # NOTE: `api` and `web` build contexts point at ../apps/api and ../apps/web.
 # Their Dockerfiles land with the API/web phases (parallel agents) — until then

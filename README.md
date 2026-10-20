@@ -22,8 +22,8 @@ storage/      volume học liệu (gitignored)
 ## Chạy dự án
 
 ```powershell
-# 1. Environment
-copy .env.example .env        # chỉnh JWT_SECRET trước khi dùng thật
+# 1. Environment — compose đọc .env NGAY thư mục infra/
+copy .env.example infra\.env   # mở infra\.env, dán JWT_SECRET (lệnh gen trong comment)
 
 # 2. Toàn stack (từ thư mục infra/)
 cd infra
