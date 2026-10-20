@@ -133,7 +133,7 @@ export function ClassFormDialog({ onOpenChange, courseId, clazz, onSaved }: Clas
               id="class-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="VD: Lập trình mạng — Lớp 1"
+              placeholder="VD: Nhập môn lập trình — Lớp 1"
               aria-invalid={!!errors.name}
             />
             {errors.name ? <FieldError text={errors.name} /> : null}

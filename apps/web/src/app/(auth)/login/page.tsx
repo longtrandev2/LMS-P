@@ -38,8 +38,8 @@ export default function LoginPage() {
 
         <div className="relative max-w-md space-y-8 py-10">
           <h1 className="font-heading text-4xl font-bold leading-tight">
-            Nền tảng học tập dành cho môn{" "}
-            <span className="font-bold">Lập trình mạng</span>
+            Học trực tuyến, nộp bài, kỳ thi và{" "}
+            <span className="font-bold">chấm code tự động</span>
           </h1>
           <ul className="space-y-5">
             {HIGHLIGHTS.map((item) => (

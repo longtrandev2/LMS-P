@@ -119,7 +119,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </SheetContent>
             </Sheet>
             <span className="hidden text-sm text-muted-foreground sm:block">
-              Môn Lập trình mạng
+              Hệ thống quản lý học tập
             </span>
           </div>
           <div className="flex items-center gap-1.5">

@@ -47,7 +47,7 @@ export function DashboardMockup() {
         <div className="flex flex-col gap-3 p-4">
           <div className="flex items-baseline justify-between gap-2">
             <p className="text-sm font-semibold text-card-foreground">
-              Lập trình mạng
+              Cấu trúc dữ liệu và giải thuật
             </p>
             <p className="font-mono text-[11px] text-muted-foreground">
               IT3090-11 · Học kỳ I

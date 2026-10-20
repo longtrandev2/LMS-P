@@ -33,16 +33,16 @@ function FragmentShell({
 /** Fragment 01 — bảng lớp học phần thu nhỏ như trong app */
 export function SectionListFragment() {
   const rows = [
-    { code: "IT3090-11", name: "Lập trình mạng", students: 42, open: true },
+    { code: "IT3090-11", name: "Cấu trúc dữ liệu và giải thuật", students: 42, open: true },
     {
       code: "IT3090-12",
-      name: "Lập trình mạng — thực hành",
+      name: "Cấu trúc dữ liệu và giải thuật — thực hành",
       students: 38,
       open: true,
     },
     {
       code: "IT4082-11",
-      name: "Lập trình mạng nâng cao",
+      name: "Cơ sở dữ liệu",
       students: 30,
       open: false,
     },

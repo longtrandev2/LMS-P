@@ -1,6 +1,6 @@
-# LMS-P — Hệ thống quản lý học tập môn Lập trình mạng
+# LMS-P — Hệ thống quản lý học tập
 
-LMS Client/Server cho môn học lập trình: **Next.js (App Router) + FastAPI + MySQL 8 + RabbitMQ**, kèm grading worker chạy code sinh viên trong **Docker sandbox** (no-network, giới hạn CPU/RAM/time). Nộp bài bất đồng bộ qua queue (202 + submission_id), kết quả đẩy về client qua WebSocket. Đầy đủ spec: nghiệp vụ (M1–M10), thiết kế DB, hợp đồng API/message — xem [`docs/`](./docs) (nguồn chân lý của dự án, spec-first).
+LMS Client/Server hỗ trợ học trực tuyến, nộp bài, kỳ thi và chấm bài lập trình tự động: **Next.js (App Router) + FastAPI + MySQL 8 + RabbitMQ**, kèm grading worker chạy code sinh viên trong **Docker sandbox** (no-network, giới hạn CPU/RAM/time). Nộp bài bất đồng bộ qua queue (202 + submission_id), kết quả đẩy về client qua WebSocket. Đầy đủ spec: nghiệp vụ (M1–M10), thiết kế DB, hợp đồng API/message — xem [`docs/`](./docs) (nguồn chân lý của dự án, spec-first).
 
 ## Cấu trúc
 

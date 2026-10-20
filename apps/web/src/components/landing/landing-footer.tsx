@@ -92,7 +92,7 @@ export function LandingFooter({ ctaHref, ctaLabel }: LandingFooterProps) {
           <div className="flex flex-col gap-3">
             <Logo size={28} />
             <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">
-              Hệ thống quản lý học tập dành cho môn Lập trình mạng — từ lớp học
+              Nền tảng quản lý học tập — từ lớp học
               phần đến kết quả chấm bài.
             </p>
           </div>

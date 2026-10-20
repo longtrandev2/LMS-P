@@ -92,7 +92,7 @@ export function CourseFormDialog({ onOpenChange, course, onSaved }: CourseFormDi
               id="course-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="VD: Lập trình mạng"
+              placeholder="VD: Cấu trúc dữ liệu và giải thuật"
               aria-invalid={!!errors.name}
             />
             {errors.name ? <FieldError text={errors.name} /> : null}

@@ -20,28 +20,28 @@ interface SampleClass {
 const SAMPLE_CLASSES: SampleClass[] = [
   {
     code: "IT3090-11",
-    name: "Lập trình mạng",
+    name: "Cấu trúc dữ liệu và giải thuật",
     lecturer: "ThS. Trần Quốc Bảo",
     students: 42,
     status: "Đang mở",
   },
   {
     code: "IT3090-12",
-    name: "Lập trình mạng — thực hành",
+    name: "Cấu trúc dữ liệu và giải thuật — thực hành",
     lecturer: "ThS. Trần Quốc Bảo",
     students: 38,
     status: "Đang mở",
   },
   {
     code: "IT4082-11",
-    name: "Lập trình mạng nâng cao",
+    name: "Cơ sở dữ liệu",
     lecturer: "PGS. TS. Lê Hoài Nam",
     students: 30,
     status: "Sắp mở",
   },
   {
     code: "IT4082-12",
-    name: "Lập trình mạng nâng cao — thực hành",
+    name: "Cơ sở dữ liệu — thực hành",
     lecturer: "PGS. TS. Lê Hoài Nam",
     students: 28,
     status: "Đã kết thúc",
