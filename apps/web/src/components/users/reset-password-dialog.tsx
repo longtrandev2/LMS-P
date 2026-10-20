@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Copy, KeyRound } from "lucide-react";
+import { KeyRound } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { TempPasswordReveal } from "@/components/users/temp-password-reveal";
 import { api } from "@/lib/api";
 import { errorText } from "@/lib/error-messages";
 import type { User } from "@/types/api";
@@ -26,7 +27,6 @@ interface ResetPasswordDialogProps {
 export function ResetPasswordDialog({ user, onOpenChange, onDone }: ResetPasswordDialogProps) {
   const [submitting, setSubmitting] = useState(false);
   const [tempPassword, setTempPassword] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
 
   const open = !!user;
 
@@ -46,17 +46,6 @@ export function ResetPasswordDialog({ user, onOpenChange, onDone }: ResetPasswor
     }
   }
 
-  async function copyPassword() {
-    if (!tempPassword) return;
-    try {
-      await navigator.clipboard.writeText(tempPassword);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      toast.error("Không sao chép được, vui lòng chép tay.");
-    }
-  }
-
   return (
     <Dialog open={open} onOpenChange={(o) => { onOpenChange(o); if (!o) setTempPassword(null); }}>
       <DialogContent className="sm:max-w-md">
@@ -71,12 +60,7 @@ export function ResetPasswordDialog({ user, onOpenChange, onDone }: ResetPasswor
 
         {tempPassword ? (
           <div className="space-y-3">
-            <div className="flex items-center justify-between gap-3 rounded-lg border border-gold/40 bg-gold/10 px-4 py-3">
-              <code className="break-all font-mono text-base font-semibold">{tempPassword}</code>
-              <Button type="button" variant="outline" size="icon-sm" aria-label="Sao chép mật khẩu" onClick={copyPassword}>
-                {copied ? <Check className="text-success" aria-hidden /> : <Copy aria-hidden />}
-              </Button>
-            </div>
+            <TempPasswordReveal password={tempPassword} />
             <p className="text-xs text-muted-foreground">
               Người dùng nên đổi mật khẩu ngay khi đăng nhập lần đầu.
             </p>

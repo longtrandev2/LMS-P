@@ -22,7 +22,7 @@ import { RemoveStudentButton } from "@/components/classes/remove-student-button"
 import { api } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
-import type { ClassStudent, ClassSummary } from "@/types/api";
+import type { ClassStudent, ClassSummary, Paginated } from "@/types/api";
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("vi-VN");
@@ -40,14 +40,15 @@ export function ClassDetailPage({ classId }: { classId: string }) {
   });
   const studentsQuery = useQuery({
     queryKey: queryKeys.classes.students(classId),
-    queryFn: ({ signal }) => api.get<ClassStudent[]>(`/classes/${classId}/students`, undefined, signal),
+    queryFn: ({ signal }) =>
+      api.get<Paginated<ClassStudent>>(`/classes/${classId}/students`, { page: 1, limit: 100 }, signal),
     enabled: guard === "ok",
   });
 
   if (guard !== "ok") return null;
 
   const clazz = classQuery.data;
-  const students = studentsQuery.data;
+  const students = studentsQuery.data?.items;
 
   function invalidateStudents() {
     queryClient.invalidateQueries({ queryKey: queryKeys.classes.students(classId) });

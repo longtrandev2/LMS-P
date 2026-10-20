@@ -29,14 +29,21 @@ export function MyClassesPage() {
   const { status: guard } = useAuthGuard(["student"]);
   const query = useQuery({
     queryKey: queryKeys.me.classes(),
-    queryFn: ({ signal }) =>
-      api.get<Paginated<ClassSummary>>("/me/classes", { page: 1, limit: 50 }, signal),
+    queryFn: async ({ signal }) => {
+      // BE đang transition sang Page envelope — chấp nhận cả array và {items}
+      const data = await api.get<ClassSummary[] | Paginated<ClassSummary>>(
+        "/me/classes",
+        { page: 1, limit: 50 },
+        signal
+      );
+      return Array.isArray(data) ? data : data.items;
+    },
     enabled: guard === "ok",
   });
 
   if (guard !== "ok") return null;
 
-  const classes = query.data?.items;
+  const classes = query.data;
 
   return (
     <div className="space-y-6">

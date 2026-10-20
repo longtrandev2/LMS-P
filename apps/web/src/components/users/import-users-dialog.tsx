@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { TempPasswordReveal } from "@/components/users/temp-password-reveal";
 import { api } from "@/lib/api";
 import { errorText } from "@/lib/error-messages";
 import type { ImportResult } from "@/types/api";
@@ -54,7 +55,7 @@ export function ImportUsersDialog({ open, onOpenChange, onImported }: ImportUser
 
   return (
     <Dialog open={open} onOpenChange={(o) => { onOpenChange(o); if (!o) reset(); }}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="font-heading">Nhập người dùng từ CSV</DialogTitle>
           <DialogDescription>
@@ -63,19 +64,35 @@ export function ImportUsersDialog({ open, onOpenChange, onImported }: ImportUser
         </DialogHeader>
 
         {result ? (
-          <div className="space-y-3">
+          <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-lg border border-success/40 bg-success/10 px-4 py-3">
                 <p className="text-2xl font-semibold tabular-nums text-success">{result.created}</p>
                 <p className="text-xs text-muted-foreground">tài khoản đã tạo</p>
               </div>
               <div className="rounded-lg border bg-muted px-4 py-3">
-                <p className="text-2xl font-semibold tabular-nums">{result.skipped}</p>
+                <p className="text-2xl font-semibold tabular-nums">{result.skipped.length}</p>
                 <p className="text-xs text-muted-foreground">dòng bỏ qua (đã tồn tại)</p>
               </div>
             </div>
+
+            {result.skipped.length > 0 ? (
+              <div className="rounded-lg border px-4 py-3">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Email đã tồn tại, bỏ qua
+                </p>
+                <ul className="mt-1 space-y-0.5">
+                  {result.skipped.map((email) => (
+                    <li key={email} className="font-mono text-xs">
+                      {email}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+
             {result.errors.length > 0 ? (
-              <div className="max-h-44 overflow-y-auto rounded-lg border">
+              <div className="max-h-40 overflow-y-auto rounded-lg border">
                 <table className="w-full text-sm">
                   <thead className="bg-muted/60 text-left text-xs uppercase tracking-wide text-muted-foreground">
                     <tr>
@@ -92,6 +109,25 @@ export function ImportUsersDialog({ open, onOpenChange, onImported }: ImportUser
                     ))}
                   </tbody>
                 </table>
+              </div>
+            ) : null}
+
+            {result.temp_passwords.length > 0 ? (
+              <div className="space-y-2">
+                <p className="text-sm font-medium">
+                  Mật khẩu tạm của các tài khoản vừa tạo
+                  <span className="ml-1 text-xs font-normal text-muted-foreground">
+                    — chỉ hiển thị lần này, hãy lưu lại trước khi đóng
+                  </span>
+                </p>
+                <div className="space-y-2">
+                  {result.temp_passwords.map((entry) => (
+                    <div key={entry.email} className="space-y-1">
+                      <p className="font-mono text-xs text-muted-foreground">{entry.email}</p>
+                      <TempPasswordReveal password={entry.temp_password} />
+                    </div>
+                  ))}
+                </div>
               </div>
             ) : null}
           </div>

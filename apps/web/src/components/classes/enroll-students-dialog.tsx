@@ -24,11 +24,17 @@ interface EnrollStudentsDialogProps {
   onEnrolled: () => void;
 }
 
-function parseIds(text: string): string[] {
-  return text
-    .split(/[\n,;]+/)
-    .map((line) => line.trim())
-    .filter(Boolean);
+/** ID sinh viên là số nguyên (BIGINT) — parse và báo lỗi dòng không hợp lệ */
+function parseIds(text: string): { ids: number[]; invalid: string[] } {
+  const ids: number[] = [];
+  const invalid: string[] = [];
+  for (const line of text.split(/[\n,;]+/)) {
+    const token = line.trim();
+    if (!token) continue;
+    if (/^\d+$/.test(token)) ids.push(Number(token));
+    else invalid.push(token);
+  }
+  return { ids, invalid };
 }
 
 /** POST /classes/{id}/enrollments — body [{student_id}] (1 hoặc bulk theo api-spec §3) */
@@ -38,11 +44,20 @@ export function EnrollStudentsDialog({ onOpenChange, classId, onEnrolled }: Enro
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  async function enroll(ids: string[]) {
+  async function enroll(ids: number[]) {
     setSubmitting(true);
     try {
-      await api.post(`/classes/${classId}/enrollments`, ids.map((student_id) => ({ student_id })));
-      toast.success(`Đã ghi danh ${ids.length} sinh viên vào lớp.`);
+      const data = await api.post<{ added: number }>(
+        `/classes/${classId}/enrollments`,
+        ids.map((student_id) => ({ student_id }))
+      );
+      if (data.added < ids.length) {
+        toast.success(
+          `Đã ghi danh ${data.added} sinh viên; ${ids.length - data.added} đã ở trong lớp từ trước.`
+        );
+      } else {
+        toast.success(`Đã ghi danh ${data.added} sinh viên vào lớp.`);
+      }
       onOpenChange(false);
       setSingleId("");
       setBulkText("");
@@ -57,20 +72,25 @@ export function EnrollStudentsDialog({ onOpenChange, classId, onEnrolled }: Enro
 
   function handleSingle(e: React.FormEvent) {
     e.preventDefault();
-    const id = singleId.trim();
-    if (!id) {
-      setErrors((prev) => ({ ...prev, single: "Nhập mã định danh (ID) của sinh viên." }));
+    if (!/^\d+$/.test(singleId.trim())) {
+      setErrors((prev) => ({ ...prev, single: "ID sinh viên là số (vd: 42)." }));
       return;
     }
-    enroll([id]);
+    enroll([Number(singleId.trim())]);
   }
 
   function handleBulk(e: React.FormEvent) {
     e.preventDefault();
-    const ids = parseIds(bulkText);
+    const { ids, invalid } = parseIds(bulkText);
     if (ids.length === 0) {
-      setErrors((prev) => ({ ...prev, bulk: "Dán ít nhất một ID sinh viên." }));
+      setErrors((prev) => ({ ...prev, bulk: "Dán ít nhất một ID sinh viên (số)." }));
       return;
+    }
+    if (invalid.length > 0) {
+      setErrors((prev) => ({
+        ...prev,
+        bulk: `Các dòng không phải số bị bỏ qua: ${invalid.slice(0, 3).join(", ")}${invalid.length > 3 ? "…" : ""}`,
+      }));
     }
     enroll(ids);
   }
@@ -97,10 +117,11 @@ export function EnrollStudentsDialog({ onOpenChange, classId, onEnrolled }: Enro
                 <Label htmlFor="enroll-single">ID sinh viên</Label>
                 <Input
                   id="enroll-single"
+                  inputMode="numeric"
                   value={singleId}
                   onChange={(e) => setSingleId(e.target.value)}
                   className="font-mono"
-                  placeholder="ID tài khoản sinh viên"
+                  placeholder="Số ID tài khoản, vd: 42"
                   aria-invalid={!!errors.single}
                 />
                 {errors.single ? <FieldError text={errors.single} /> : null}
@@ -117,11 +138,12 @@ export function EnrollStudentsDialog({ onOpenChange, classId, onEnrolled }: Enro
                 <Label htmlFor="enroll-bulk">Danh sách ID sinh viên</Label>
                 <Textarea
                   id="enroll-bulk"
+                  inputMode="numeric"
                   value={bulkText}
                   onChange={(e) => setBulkText(e.target.value)}
                   rows={6}
                   className="font-mono text-sm"
-                  placeholder={"Mỗi dòng một ID, ví dụ:\n3f1c...\n9ab2..."}
+                  placeholder={"Mỗi dòng một ID số, ví dụ:\n42\n57"}
                   aria-invalid={!!errors.bulk}
                 />
                 {errors.bulk ? <FieldError text={errors.bulk} /> : null}

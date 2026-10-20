@@ -13,10 +13,11 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { TempPasswordReveal } from "@/components/users/temp-password-reveal";
 import { api } from "@/lib/api";
 import { errorText } from "@/lib/error-messages";
 import { ROLE_LABELS } from "@/components/role-status-badges";
-import type { Role, User } from "@/types/api";
+import type { Role, User, UserWithTempPassword } from "@/types/api";
 import { cn } from "@/lib/utils";
 
 const ALL_ROLES: Role[] = ["admin", "lecturer", "student"];
@@ -41,6 +42,8 @@ export function UserFormDialog({ onOpenChange, user, onSaved }: UserFormDialogPr
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  /** Mật khẩu tạm từ POST /users — hiển thị 1 lần rồi mới đóng dialog */
+  const [tempPassword, setTempPassword] = useState<string | null>(null);
 
   function toggleRole(role: Role) {
     setRoles((prev) =>
@@ -67,24 +70,30 @@ export function UserFormDialog({ onOpenChange, user, onSaved }: UserFormDialogPr
     setSubmitting(true);
     try {
       if (isEdit) {
+        // UserUpdateIn BE không nhận student_code — chỉ gửi field hợp lệ
         await api.patch(`/users/${user.id}`, {
           full_name: fullName.trim(),
-          student_code: studentCode.trim() || null,
-          roles,
+          role_names: roles,
         });
         toast.success("Đã cập nhật người dùng.");
+        onOpenChange(false);
+        onSaved();
       } else {
-        await api.post("/users", {
+        const data = await api.post<UserWithTempPassword>("/users", {
           email: email.trim(),
           full_name: fullName.trim(),
           student_code: studentCode.trim() || null,
-          roles,
+          role_names: roles,
           ...(password ? { password } : {}),
         });
-        toast.success("Đã tạo người dùng mới.");
+        onSaved();
+        if (data.temporary_password) {
+          setTempPassword(data.temporary_password);
+        } else {
+          toast.success("Đã tạo người dùng mới.");
+          onOpenChange(false);
+        }
       }
-      onOpenChange(false);
-      onSaved();
     } catch (error) {
       toast.error(errorText(error));
     } finally {
@@ -105,91 +114,113 @@ export function UserFormDialog({ onOpenChange, user, onSaved }: UserFormDialogPr
               : "Tài khoản mới sẽ nhận mật khẩu tạm nếu không nhập mật khẩu."}
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-          <div className="space-y-2">
-            <Label htmlFor="user-email">Email</Label>
-            <Input
-              id="user-email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={isEdit}
-              aria-invalid={!!errors.email}
-              placeholder="ten@truong.edu.vn"
-            />
-            {errors.email ? <FieldError text={errors.email} /> : null}
+
+        {tempPassword ? (
+          <div className="space-y-3">
+            <p className="text-sm">
+              Đã tạo người dùng <span className="font-medium">{email}</span>. Mật khẩu tạm chỉ
+              hiển thị một lần — hãy giao cho người dùng ngay:
+            </p>
+            <TempPasswordReveal password={tempPassword} />
+            <DialogFooter>
+              <Button type="button" onClick={() => onOpenChange(false)}>
+                Hoàn tất
+              </Button>
+            </DialogFooter>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="user-name">Họ và tên</Label>
-            <Input
-              id="user-name"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              aria-invalid={!!errors.fullName}
-            />
-            {errors.fullName ? <FieldError text={errors.fullName} /> : null}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="user-code">Mã số sinh viên</Label>
-            <Input
-              id="user-code"
-              value={studentCode}
-              onChange={(e) => setStudentCode(e.target.value)}
-              className="font-mono"
-              placeholder="VD: 21DH110123"
-              aria-invalid={!!errors.studentCode}
-            />
-            {errors.studentCode ? <FieldError text={errors.studentCode} /> : null}
-          </div>
-          <fieldset className="space-y-2">
-            <legend className="text-sm font-medium">Vai trò</legend>
-            <div className="flex flex-wrap gap-2">
-              {ALL_ROLES.map((role) => {
-                const active = roles.includes(role);
-                return (
-                  <button
-                    key={role}
-                    type="button"
-                    aria-pressed={active}
-                    onClick={() => toggleRole(role)}
-                    className={cn(
-                      "cursor-pointer rounded-full border px-3 py-1.5 text-sm transition-colors duration-200",
-                      active
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-border text-muted-foreground hover:border-primary/40 hover:text-foreground"
-                    )}
-                  >
-                    {ROLE_LABELS[role]}
-                  </button>
-                );
-              })}
-            </div>
-            {errors.roles ? <FieldError text={errors.roles} /> : null}
-          </fieldset>
-          {!isEdit ? (
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
             <div className="space-y-2">
-              <Label htmlFor="user-password">
-                Mật khẩu <span className="text-muted-foreground">(để trống = hệ thống sinh tạm)</span>
+              <Label htmlFor="user-email">Email</Label>
+              <Input
+                id="user-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={isEdit}
+                aria-invalid={!!errors.email}
+                placeholder="ten@truong.edu.vn"
+              />
+              {errors.email ? <FieldError text={errors.email} /> : null}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="user-name">Họ và tên</Label>
+              <Input
+                id="user-name"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                aria-invalid={!!errors.fullName}
+              />
+              {errors.fullName ? <FieldError text={errors.fullName} /> : null}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="user-code">
+                Mã số sinh viên{" "}
+                {isEdit ? (
+                  <span className="text-muted-foreground">(chỉ đặt khi tạo, liên hệ quản trị để đổi)</span>
+                ) : null}
               </Label>
               <Input
-                id="user-password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                aria-invalid={!!errors.password}
+                id="user-code"
+                value={studentCode}
+                onChange={(e) => setStudentCode(e.target.value)}
+                className="font-mono"
+                placeholder="VD: 21DH110123"
+                disabled={isEdit}
+                aria-invalid={!!errors.studentCode}
               />
-              {errors.password ? <FieldError text={errors.password} /> : null}
+              {errors.studentCode ? <FieldError text={errors.studentCode} /> : null}
             </div>
-          ) : null}
-          <DialogFooter>
-            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
-              Hủy
-            </Button>
-            <Button type="submit" disabled={submitting}>
-              {submitting ? "Đang lưu…" : isEdit ? "Lưu thay đổi" : "Tạo người dùng"}
-            </Button>
-          </DialogFooter>
-        </form>
+            <fieldset className="space-y-2">
+              <legend className="text-sm font-medium">Vai trò</legend>
+              <div className="flex flex-wrap gap-2">
+                {ALL_ROLES.map((role) => {
+                  const active = roles.includes(role);
+                  return (
+                    <button
+                      key={role}
+                      type="button"
+                      aria-pressed={active}
+                      onClick={() => toggleRole(role)}
+                      className={cn(
+                        "cursor-pointer rounded-full border px-3 py-1.5 text-sm transition-colors duration-200",
+                        active
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                      )}
+                    >
+                      {ROLE_LABELS[role]}
+                    </button>
+                  );
+                })}
+              </div>
+              {errors.roles ? <FieldError text={errors.roles} /> : null}
+            </fieldset>
+            {!isEdit ? (
+              <div className="space-y-2">
+                <Label htmlFor="user-password">
+                  Mật khẩu <span className="text-muted-foreground">(để trống = hệ thống sinh tạm)</span>
+                </Label>
+                <Input
+                  id="user-password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  aria-invalid={!!errors.password}
+                />
+                {errors.password ? <FieldError text={errors.password} /> : null}
+              </div>
+            ) : null}
+            <DialogFooter>
+              <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+                Hủy
+              </Button>
+              <Button type="submit" disabled={submitting}>
+                {submitting ? "Đang lưu…" : isEdit ? "Lưu thay đổi" : "Tạo người dùng"}
+              </Button>
+            </DialogFooter>
+          </form>
+        )}
       </DialogContent>
     </Dialog>
   );

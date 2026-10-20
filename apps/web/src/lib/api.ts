@@ -5,7 +5,20 @@
  */
 import { useAuthStore } from "@/stores/auth";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
+/**
+ * Chuẩn hoá base URL: chấp nhận env có hoặc không có hậu tố "/api/v1"
+ * (vd "http://localhost:8000" và "http://localhost:8000/api/v1" đều đúng —
+ * tránh double-prefix /api/v1/api/v1 hoặc thiếu tiền tố).
+ */
+function normalizeBaseUrl(raw: string): string {
+  let url = raw.trim().replace(/\/+$/, "");
+  if (!url.endsWith("/api/v1")) url = `${url}/api/v1`;
+  return url;
+}
+
+const BASE_URL = normalizeBaseUrl(
+  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1"
+);
 
 export class ApiError extends Error {
   code: string;
