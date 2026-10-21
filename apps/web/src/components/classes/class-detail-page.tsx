@@ -19,9 +19,11 @@ import { PageHeader } from "@/components/page-header";
 import { EmptyState, ErrorState, TableSkeleton } from "@/components/state-blocks";
 import { EnrollStudentsDialog } from "@/components/classes/enroll-students-dialog";
 import { RemoveStudentButton } from "@/components/classes/remove-student-button";
+import { MaterialsSection } from "@/components/materials/materials-section";
 import { api } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
+import { hasRole } from "@/stores/auth";
 import type { ClassStudent, ClassSummary, Paginated } from "@/types/api";
 
 function formatDate(iso: string): string {
@@ -29,9 +31,11 @@ function formatDate(iso: string): string {
 }
 
 export function ClassDetailPage({ classId }: { classId: string }) {
-  const { status: guard } = useAuthGuard(["admin", "lecturer"]);
+  const { status: guard, user } = useAuthGuard(["admin", "lecturer"]);
   const queryClient = useQueryClient();
   const [enrollOpen, setEnrollOpen] = useState(false);
+  const [tab, setTab] = useState("students");
+  const canManageMaterials = hasRole(user, "lecturer");
 
   const classQuery = useQuery({
     queryKey: queryKeys.classes.detail(classId),
@@ -73,14 +77,17 @@ export function ClassDetailPage({ classId }: { classId: string }) {
         }
       />
 
-      <Tabs defaultValue="students">
+      <Tabs value={tab} onValueChange={setTab}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <TabsList>
             <TabsTrigger value="students">Sinh viên</TabsTrigger>
+            <TabsTrigger value="materials">Học liệu</TabsTrigger>
           </TabsList>
-          <Button size="sm" onClick={() => setEnrollOpen(true)}>
-            <UserPlus aria-hidden /> Thêm sinh viên
-          </Button>
+          {tab === "students" ? (
+            <Button size="sm" onClick={() => setEnrollOpen(true)}>
+              <UserPlus aria-hidden /> Thêm sinh viên
+            </Button>
+          ) : null}
         </div>
 
         <TabsContent value="students" className="mt-4">
@@ -143,6 +150,10 @@ export function ClassDetailPage({ classId }: { classId: string }) {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="materials" className="mt-4">
+          <MaterialsSection classId={classId} canManage={canManageMaterials} />
         </TabsContent>
       </Tabs>
 

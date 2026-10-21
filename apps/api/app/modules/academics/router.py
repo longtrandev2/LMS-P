@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, Query, Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import get_db
+from app.core.error_schemas import error_responses
 from app.core.exceptions import AppError
 from app.core.pagination import Page, PageParams, page_query, paginate
 from app.modules.academics import repository as repo
@@ -31,12 +32,14 @@ lecturer_or_admin = require_roles("lecturer", "admin")
 # -- Courses ---------------------------------------------------------------
 
 
-@router.get("/courses", response_model=Page[CourseOut], dependencies=[Depends(lecturer_or_admin)])
+@router.get("/courses", response_model=Page[CourseOut], dependencies=[Depends(lecturer_or_admin)],
+            responses=error_responses(401, 403))
 async def list_courses(pager: PageParams = Depends(page_query), db: AsyncSession = Depends(get_db)):
     return await paginate(db, repo.list_courses(), CourseOut.model_validate, pager.page, pager.limit)
 
 
-@router.post("/courses", response_model=CourseOut, status_code=201, dependencies=[Depends(lecturer_or_admin)])
+@router.post("/courses", response_model=CourseOut, status_code=201, dependencies=[Depends(lecturer_or_admin)],
+             responses=error_responses(401, 403, 409))
 async def create_course(
     payload: CourseCreateIn,
     request: Request,
@@ -46,12 +49,14 @@ async def create_course(
     return await service.create_course(db, payload, actor, client_ip(request))
 
 
-@router.get("/courses/{course_id}", response_model=CourseOut, dependencies=[Depends(lecturer_or_admin)])
+@router.get("/courses/{course_id}", response_model=CourseOut, dependencies=[Depends(lecturer_or_admin)],
+            responses=error_responses(401, 403, 404))
 async def get_course(course_id: int, db: AsyncSession = Depends(get_db)):
     return await service.get_course_or_404(db, course_id)
 
 
-@router.patch("/courses/{course_id}", response_model=CourseOut, dependencies=[Depends(lecturer_or_admin)])
+@router.patch("/courses/{course_id}", response_model=CourseOut, dependencies=[Depends(lecturer_or_admin)],
+              responses=error_responses(401, 403, 404, 409))
 async def update_course(
     course_id: int,
     payload: CourseUpdateIn,
@@ -62,7 +67,8 @@ async def update_course(
     return await service.update_course(db, course_id, payload, actor, client_ip(request))
 
 
-@router.delete("/courses/{course_id}", status_code=204, dependencies=[Depends(lecturer_or_admin)])
+@router.delete("/courses/{course_id}", status_code=204, dependencies=[Depends(lecturer_or_admin)],
+               responses=error_responses(401, 403, 404, 409))
 async def delete_course(
     course_id: int,
     request: Request,
@@ -76,7 +82,8 @@ async def delete_course(
 # -- Classes ---------------------------------------------------------------
 
 
-@router.get("/classes", response_model=Page[ClassOut], dependencies=[Depends(lecturer_or_admin)])
+@router.get("/classes", response_model=Page[ClassOut], dependencies=[Depends(lecturer_or_admin)],
+            responses=error_responses(401, 403))
 async def list_classes(
     course_id: int | None = Query(None, description="Lọc lớp theo khóa học"),
     pager: PageParams = Depends(page_query),
@@ -85,7 +92,8 @@ async def list_classes(
     return await paginate(db, repo.list_classes(course_id), ClassOut.model_validate, pager.page, pager.limit)
 
 
-@router.post("/classes", response_model=ClassOut, status_code=201, dependencies=[Depends(lecturer_or_admin)])
+@router.post("/classes", response_model=ClassOut, status_code=201, dependencies=[Depends(lecturer_or_admin)],
+             responses=error_responses(401, 403, 404, 409))
 async def create_class(
     payload: ClassCreateIn,
     request: Request,
@@ -95,12 +103,14 @@ async def create_class(
     return await service.create_class(db, payload, actor, client_ip(request))
 
 
-@router.get("/classes/{class_id}", response_model=ClassOut)
+@router.get("/classes/{class_id}", response_model=ClassOut,
+            responses=error_responses(401, 403, 404))  # 403 ENROLLMENT_REQUIRED (BR2)
 async def get_class(class_obj=Depends(require_class_access)):
     return ClassOut.model_validate(class_obj)
 
 
-@router.patch("/classes/{class_id}", response_model=ClassOut, dependencies=[Depends(lecturer_or_admin)])
+@router.patch("/classes/{class_id}", response_model=ClassOut, dependencies=[Depends(lecturer_or_admin)],
+              responses=error_responses(401, 403, 404, 409))
 async def update_class(
     class_id: int,
     payload: ClassUpdateIn,
@@ -111,7 +121,8 @@ async def update_class(
     return await service.update_class(db, class_id, payload, actor, client_ip(request))
 
 
-@router.delete("/classes/{class_id}", status_code=204, dependencies=[Depends(lecturer_or_admin)])
+@router.delete("/classes/{class_id}", status_code=204, dependencies=[Depends(lecturer_or_admin)],
+               responses=error_responses(401, 403, 404, 409))
 async def delete_class(
     class_id: int,
     request: Request,
@@ -125,7 +136,8 @@ async def delete_class(
 # -- Enrollments -----------------------------------------------------------
 
 
-@router.post("/classes/{class_id}/enrollments", status_code=201, dependencies=[Depends(lecturer_or_admin)])
+@router.post("/classes/{class_id}/enrollments", status_code=201, dependencies=[Depends(lecturer_or_admin)],
+             responses=error_responses(400, 401, 403, 404))
 async def enroll_students(
     class_id: int,
     payload: list[EnrollItem],
@@ -142,7 +154,8 @@ async def enroll_students(
 
 
 @router.delete("/classes/{class_id}/enrollments/{student_id}", status_code=204,
-               dependencies=[Depends(lecturer_or_admin)])
+               dependencies=[Depends(lecturer_or_admin)],
+               responses=error_responses(401, 403, 404))
 async def remove_enrollment(
     class_id: int,
     student_id: int,
@@ -155,7 +168,8 @@ async def remove_enrollment(
 
 
 @router.get("/classes/{class_id}/students", response_model=Page[StudentInClassOut],
-            dependencies=[Depends(lecturer_or_admin)])
+            dependencies=[Depends(lecturer_or_admin)],
+            responses=error_responses(401, 403, 404))
 async def list_students(
     class_id: int,
     pager: PageParams = Depends(page_query),
@@ -180,7 +194,7 @@ def _student_out(e) -> StudentInClassOut:
 # -- Student self-service ---------------------------------------------------
 
 
-@router.get("/me/classes", response_model=Page[MyClassOut])
+@router.get("/me/classes", response_model=Page[MyClassOut], responses=error_responses(401, 403))
 async def my_classes(
     user: User = Depends(require_roles("student")),
     pager: PageParams = Depends(page_query),

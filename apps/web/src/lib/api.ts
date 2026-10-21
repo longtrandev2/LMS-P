@@ -154,6 +154,37 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   return (await res.json()) as T;
 }
 
+/**
+ * GET trả về blob (tải học liệu…) — giữ cùng flow auth + refresh 1 lần như request().
+ * Filename lấy từ Content-Disposition nếu server gửi.
+ */
+async function requestBlob(path: string): Promise<{ blob: Blob; filename: string | null }> {
+  const doFetch = (token: string | null): Promise<Response> =>
+    fetch(buildUrl(path), {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+
+  const token = useAuthStore.getState().accessToken;
+  let res = await doFetch(token);
+
+  if (res.status === 401) {
+    const newToken = await refreshOnce();
+    if (newToken) {
+      res = await doFetch(newToken);
+    } else {
+      useAuthStore.getState().clearSession();
+    }
+  }
+
+  if (!res.ok) throw await parseError(res);
+
+  const disposition = res.headers.get("content-disposition") ?? "";
+  const utf8 = /filename\*=UTF-8''([^;]+)/i.exec(disposition);
+  const plain = /filename="?([^";]+)"?/i.exec(disposition);
+  const filename = utf8 ? decodeURIComponent(utf8[1]) : plain ? plain[1] : null;
+  return { blob: await res.blob(), filename };
+}
+
 export const api = {
   get: <T>(path: string, query?: RequestOptions["query"], signal?: AbortSignal) =>
     request<T>(path, { query, signal }),
@@ -163,4 +194,5 @@ export const api = {
   put: <T>(path: string, body?: unknown) => request<T>(path, { method: "PUT", body }),
   delete: <T>(path: string) => request<T>(path, { method: "DELETE" }),
   upload: <T>(path: string, form: FormData) => request<T>(path, { method: "POST", form }),
+  download: (path: string) => requestBlob(path),
 };
