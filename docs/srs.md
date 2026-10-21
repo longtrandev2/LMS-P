@@ -80,17 +80,21 @@ React/Next.js (frontend) · Python (backend) · MySQL (lưu trữ) · REST API �
 |---|---|---|
 | FR-AUTH-01 | M | Đăng nhập email + mật khẩu (argon2id) → access token (15m) + refresh token (7d, rotate). Sai 5 lần liên tiếp/khóa tạm 15 phút theo tài khoản |
 | FR-AUTH-02 | M | Refresh → cấp cặp mới + revoke cũ; logout revoke refresh |
-| FR-AUTH-03 | M | GET /auth/me; đổi thông tin cá nhân, đổi mật khẩu |
+| FR-AUTH-03 | M | Hồ sơ cá nhân: GET /auth/me; sửa họ tên, SĐT; đổi mật khẩu; **upload ảnh đại diện** (jpg/png/webp ≤2MB, lưu file trong `storage/avatars/<user_id>`, không lưu binary trong DB) |
 | FR-AUTH-04 | M | RBAC 3 role; user có thể có nhiều role; kiểm tra quyền ở tầng service (không chỉ UI) |
-| FR-AUTH-05 | M | Admin: CRUD user, gán role, import CSV hàng loạt, reset mật khẩu, khóa/mở tài khoản |
+| FR-AUTH-05 | M | Admin: CRUD user, gán role, import CSV hàng loạt, reset mật khẩu, khóa/mở tài khoản (kèm lý do → audit; khóa → revoke toàn bộ refresh token). **Chi tiết user**: roles, lớp đang học (nếu SV), lớp đang dạy (nếu GV); filter theo role/trạng thái, search tên/email/mã SV |
 | FR-AUTH-06 | S | WebSocket xác thực bằng token khi kết nối |
+| FR-AUTH-07 | S | Admin (nên có): import CSV có bước **preview + validate trước commit** (báo trùng email/mã SV từng dòng, file mẫu), xuất CSV danh sách user, ép đăng xuất 1 user bất kỳ (revoke sessions) |
 
 ### M2 — Khóa học & lớp học
 | ID | Ưu tiên | Yêu cầu |
 |---|---|---|
-| FR-CRS-01 | M | CRUD khóa học (lecturer/admin); CRUD lớp học thuộc khóa học, học kỳ, giảng viên phụ trách |
-| FR-CRS-02 | M | Ghi danh: thêm/xóa sinh viên (lẻ + bulk), sinh viên xem lớp đã ghi danh |
+| FR-CRS-01 | M | CRUD khóa học (lecturer/admin); CRUD lớp học thuộc khóa học, học kỳ, giảng viên phụ trách. Thuộc tính lớp: **sĩ số tối đa** `max_students` (NULL = không giới hạn), **khung giờ ghi danh** `enroll_from`/`enroll_until` (NULL = luôn mở, lecturer đặt — admin override), phòng học, lịch học (text), trạng thái `active`/`locked` |
+| FR-CRS-02 | M | Ghi danh: (a) lecturer/admin **thêm/xóa sinh viên theo mã SV hoặc email**, bulk theo mã SV `[{student_code}]` — validate từng dòng, trả lỗi rõ (không tìm thấy/trùng); (b) **sinh viên tự ghi danh** (không cần duyệt) khi còn chỗ + trong khung giờ; sinh viên KHÔNG tự rời lớp — chỉ lecturer/admin xóa (enrollment → `dropped`, giữ lịch sử) |
 | FR-CRS-03 | M | Kiểm soát truy cập theo ghi danh (xem BR2) |
+| FR-CRS-04 | M | **Catalog lớp mở ghi danh** cho sinh viên: duyệt/tìm kiếm lớp, thấy sĩ số còn trống (`45/50`), trạng thái khung giờ (sắp mở / đang mở / đã đóng / đã đầy), nút tham gia |
+| FR-CRS-05 | S | Thông báo cho lecturer khi sinh viên tự ghi danh vào lớp (type `enrollment.created`) |
+| FR-CRS-06 | M | Danh sách (courses, classes, lớp của tôi, sinh viên lớp, học liệu) hỗ trợ **search + phân trang + sort** theo quy ước chung api-spec |
 
 ### M3 — Học liệu
 | ID | Ưu tiên | Yêu cầu |
@@ -156,7 +160,7 @@ React/Next.js (frontend) · Python (backend) · MySQL (lưu trữ) · REST API �
 ### M9 — Thông báo
 | ID | Ưu tiên | Yêu cầu |
 |---|---|---|
-| FR-NTF-01 | M | Thông báo in-app: bài mới, kết quả chấm, kỳ thi mở, điểm công bố |
+| FR-NTF-01 | M | Thông báo in-app: bài mới, kết quả chấm, kỳ thi mở, điểm công bố, sinh viên tự ghi danh (gửi lecturer) |
 | FR-NTF-02 | M | WS push realtime + danh sách + đánh dấu đã đọc |
 
 ### M10 — Quản trị & giám sát
@@ -204,12 +208,16 @@ React/Next.js (frontend) · Python (backend) · MySQL (lưu trữ) · REST API �
 | BR8 | Submission bất biến (không sửa/xóa); regrade tạo grading_result mới gắn cùng submission |
 | BR9 | Đề thi chỉ hiển thị sau thời điểm bắt đầu phiên của thí sinh đó |
 | BR10 | Code sinh viên chỉ chạy trong sandbox: không mạng, giới hạn CPU/RAM/PID/thời gian/đầu ra, filesystem chỉ đọc |
+| BR11 | Tự ghi danh: chỉ trong `[enroll_from, enroll_until]` theo **giờ server** (không tin client) và chỉ khi sĩ số < max_students; ngoài khung giờ hoặc đầy → lỗi rõ (ENROLL_CLOSED / CLASS_FULL); lecturer/admin thêm tay **được ngoài khung giờ**, chỉ admin bypass được khi đầy |
+| BR12 | Sửa `max_students` không được nhỏ hơn sĩ số hiện tại; nếu cả hai đầu có, `enroll_until` > `enroll_from`; thay đổi sĩ số/khung giờ/trạng thái lớp → audit |
+| BR13 | Lớp `locked`: chặn ghi danh mới, sinh viên không truy cập nội dung lớp (học liệu) |
 
 ## 6. Yêu cầu phi chức năng (đúng quy mô môn học)
 
 | Nhóm | Yêu cầu |
 |---|---|
 | Hiệu năng | API thường p95 < 500ms (môi trường demo); từ nộp đến bắt đầu chấm < 5s khi rảnh |
+| FE performance | Search phía client **debounce ≥300ms**, chỉ gọi API khi ≥2 ký tự; hủy request đang chạy khi thay đổi filter (abort); phân trang server-side (không load all); list dùng skeleton loading; sort/filter đổi URL state để back/forward giữ ngữ cảnh |
 | Chịu tải | 100–300 CCU; burst ~100 submission cuối giờ thi hấp thụ bằng queue |
 | Bảo mật | TLS qua nginx (profile prod), argon2id, JWT ngắn hạn + refresh rotate, RBAC tầng service, ORM tham số hóa, validate đầu vào, CORS chặt, rate limit login, sandbox cô lập (BR10) |
 | Tin cậy | Manual ack sau khi ghi DB, idempotency nộp bài, retry 3 lần → DLQ, transaction khi nộp bài/đóng phiên thi, mysqldump định kỳ |
