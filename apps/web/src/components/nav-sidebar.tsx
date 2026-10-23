@@ -1,8 +1,6 @@
-"use client";
-
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { BookOpen, GraduationCap, LayoutGrid, Users } from "lucide-react";
+import { Link } from "react-router-dom";
+import { useLocation } from "react-router-dom";
+import { BookOpen, GraduationCap, LayoutGrid, Users, History } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { hasRole, useAuthStore } from "@/stores/auth";
 import { cn } from "@/lib/utils";
@@ -19,7 +17,10 @@ function navFor(user: CurrentUser | null): { group: string; items: NavItem[] }[]
   if (hasRole(user, "admin")) {
     groups.push({
       group: "Quản trị",
-      items: [{ href: "/admin/users", label: "Người dùng", icon: Users }],
+      items: [
+        { href: "/admin/users", label: "Người dùng", icon: Users },
+        { href: "/admin/audit-logs", label: "Nhật ký kiểm toán", icon: History },
+      ],
     });
   }
   if (hasRole(user, "lecturer")) {
@@ -39,14 +40,14 @@ function navFor(user: CurrentUser | null): { group: string; items: NavItem[] }[]
 
 export function BrandMark() {
   return (
-    <Link href="/" className="flex items-center px-5 py-5">
+    <Link to="/" className="flex items-center px-5 py-5">
       <Logo size={36} caption="Hệ thống quản lý học tập" className="text-sidebar-foreground" />
     </Link>
   );
 }
 
 export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
-  const pathname = usePathname();
+  const pathname = useLocation().pathname;
   const user = useAuthStore((s) => s.user);
   const groups = navFor(user);
 
@@ -63,7 +64,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
             return (
               <Link
                 key={item.href}
-                href={item.href}
+                to={item.href}
                 onClick={onNavigate}
                 aria-current={active ? "page" : undefined}
                 className={cn(

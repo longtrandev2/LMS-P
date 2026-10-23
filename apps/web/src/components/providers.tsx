@@ -1,10 +1,8 @@
-"use client";
-
 import { useState } from "react";
-import { ThemeProvider } from "next-themes";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
-import { NotificationProvider } from "@/components/notifications/notification-provider";
+import { NotificationProvider } from "@/features/notifications/notification-provider";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(

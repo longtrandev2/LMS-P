@@ -1,5 +1,3 @@
-"use client";
-
 const SIDEBAR_ITEMS = [
   "Lớp học phần",
   "Học liệu",

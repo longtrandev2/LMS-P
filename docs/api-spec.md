@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Phiên bản | 1.0 — 2026-10-20 |
+| Phiên bản | 1.2 — 2026-10-23 |
 | Base URL | `/api/v1` (OpenAPI tự sinh tại `/docs` — tài liệu sống) |
 | Nguồn FR | `srs.md` |
 
@@ -18,7 +18,7 @@
 ```
 - **Mã lỗi nghiệp vụ** (tập trung ở core/exceptions): `UNAUTHENTICATED`, `FORBIDDEN`, `ENROLLMENT_REQUIRED`, `ATTEMPT_EXCEEDED`, `DEADLINE_PASSED`, `EXAM_NOT_OPEN`, `SESSION_ENDED`, `IDEMPOTENCY_CONFLICT`, `VALIDATION_ERROR`, `NOT_FOUND`, `RATE_LIMITED`, `INTERNAL`, `CLASS_FULL` (hết chỗ), `ENROLL_CLOSED` (ngoài khung giờ ghi danh), `ALREADY_ENROLLED` (đã ghi danh lớp), `ENROLLMENT_INVALID` (mã SV/email không hợp lệ khi thêm tay).
 - **HTTP语义:** 200/201 thành công; 202 nộp bài bất đồng bộ; 400 validate; 401/403 auth; 404; 409 xung đột nghiệp vụ; 423 khóa (đang chấm); 429 rate limit.
-- **Idempotency:** POST nộp bài kèm header `Idempotency-Key: <uuid>`; trùng key → trả submission gốc (200).
+- **Idempotency:** POST nộp bài kèm header `Idempotency-Key: <uuid>`; trùng key → trả submission hoặc lượt quiz gốc (200), không tăng số lượt.
 
 ## 2. Auth & Users (M1)
 
@@ -70,9 +70,9 @@
 
 | Method | Path | Role | Mô tả |
 |---|---|---|---|
-| GET/POST | /questions | lec | List (filter type/topic/difficulty) / tạo (MCQ kèm options, code kèm limits) |
-| GET/PATCH/DELETE | /questions/{id} | owner/adm | Chi tiết / sửa / soft-delete |
-| PUT | /questions/{id}/test-cases | owner | Thay toàn bộ test cases (input, expected, is_public, weight) |
+| GET/POST | /questions | lec | List (filter type/topic/difficulty) / tạo (MCQ kèm options, code kèm limits); trả version hiện hành |
+| GET/PATCH/DELETE | /questions/{id} | owner/adm | Chi tiết / sửa (tạo nội dung phiên bản mới) / soft-delete; các bản đã publish giữ snapshot cũ |
+| PUT | /questions/{id}/test-cases | owner | Thay toàn bộ test cases (input, expected, is_public, weight), tạo revision cho lần publish kế tiếp |
 | POST | /questions/{id}/verify | owner | Chạy thử solution mẫu → kết quả từng test |
 
 ## 6. Assignments & Submissions (M5/M6)
@@ -81,11 +81,12 @@
 |---|---|---|---|
 | GET/POST | /classes/{id}/assignments | mem / lec | List (kèm trạng thái của tôi) / tạo |
 | GET/PATCH/DELETE | /assignments/{id} | mem / lec | Chi tiết (câu hỏi + điểm; test ẩn ẩn) / sửa / xóa |
-| POST | /assignments/{id}/publish | lec | Xuất bản + notify lớp |
-| POST | /assignments/{id}/questions/{qid}/submissions | student | **Nộp bài** (mcq: `{selected_option_ids}`; code: `{language, source_code}` + Idempotency-Key) → MCQ chấm đồng bộ; code 202 |
+| POST | /assignments/{id}/publish | lec | Xuất bản + ghim snapshot phiên bản câu hỏi/điểm/thứ tự + notify lớp; assessment đã publish không sửa trực tiếp |
+| GET/POST | /assignments/{id}/quiz-attempts | student | Chỉ `category=quiz`: GET lịch sử lượt của tôi; POST nộp cả bài `{answers: [{question_id, selected_option_ids}]}` + Idempotency-Key → chấm MCQ đồng bộ, trả `{attempt_id, attempt_no, score, question_scores}`. Câu không có trong `answers` = bỏ trống, 0 điểm; câu lạ/trùng bị từ chối; một POST chỉ tính một lượt |
+| POST | /assignments/{id}/questions/{qid}/submissions | student | Chỉ bài **không phải quiz**: nộp từng câu (mcq: `{selected_option_ids}`; code: `{language, source_code}`) + Idempotency-Key. `max_attempts` và best/last tính riêng cho câu; MCQ chấm đồng bộ, code 202 |
 | POST | /assignments/{id}/questions/{qid}/run | student | Run thử test công khai → 202 (priority thấp, không tính lượt, không điểm) |
 | GET | /submissions/{id} | owner/lec | Trạng thái + kết quả (BR4: test ẩn chỉ pass/fail) |
-| GET | /me/submissions?assignment_id= | student | Lịch sử nộp của tôi |
+| GET | /me/submissions?assignment_id= | student | Lịch sử nộp từng câu; lịch sử quiz theo `/assignments/{id}/quiz-attempts` |
 | GET | /assignments/{id}/submissions | lec | Toàn bộ bài nộp (filter student/question/status) |
 | POST | /submissions/{id}/regrade | lec | Chấm lại (BR8) → 202 |
 
@@ -93,9 +94,9 @@
 
 | Method | Path | Role | Mô tả |
 |---|---|---|---|
-| GET/POST | /classes/{id}/exams | mem(list) / lec | List / tạo (đề, duration, opens/closes, rules, shuffle) |
-| GET/PATCH | /exams/{id} | mem / lec | Chi tiết (chưa publish: chỉ metadata) / sửa / publish |
-| POST | /exams/{id}/sessions | student | Bắt đầu phiên: check khung giờ + xác nhận quy chế → session + đề (BR9) |
+| GET/POST | /classes/{id}/exams | mem(list) / lec | List / tạo (đề, `grade_category=midterm\|final`, duration, opens/closes, rules, shuffle) |
+| GET/PATCH | /exams/{id} | mem / lec | Chi tiết (chưa publish: chỉ metadata) / sửa nháp / publish; publish ghim snapshot phiên bản câu hỏi/điểm/thứ tự; exam đã publish không sửa trực tiếp |
+| POST | /exams/{id}/sessions | student | Bắt đầu phiên: check khung giờ + xác nhận quy chế → session + đề theo snapshot đã publish (BR9) |
 | GET | /exam-sessions/{id} | owner | Trạng thái + `remaining_seconds` + đề + đáp án đã lưu |
 | PUT | /exam-sessions/{id}/answers | owner | Autosave upsert `{question_id, selected_option_ids?, code_text?}` |
 | POST | /exam-sessions/{id}/finish | owner | Nộp: MCQ chấm, code → queue priority 10; sau ends_at → 409 SESSION_ENDED |
@@ -107,9 +108,9 @@
 | Method | Path | Role | Mô tả |
 |---|---|---|---|
 | GET/PUT | /classes/{id}/grade-policy | lec | Xem / đặt trọng số hạng mục (validate Σ=100%) |
-| GET | /classes/{id}/gradebook | lec | Bảng điểm (student × assignment + tổng thang 10 + adjustments) |
+| GET | /classes/{id}/gradebook | lec | Bảng điểm (student × assessment gồm assignment + exam + trạng thái từng điểm/tổng + adjustments); tổng chỉ chốt theo FR-GB-02 khi mọi assessment đã publish hết cửa sổ nộp và chấm xong |
 | GET | /classes/{id}/gradebook/export | lec | CSV |
-| GET | /me/classes/{id}/grades | student | Điểm cá nhân lớp |
+| GET | /me/classes/{id}/grades | student | Điểm cá nhân lớp, điểm từng assessment và trạng thái tổng (`pending`/đã chốt) |
 | POST | /classes/{id}/grade-adjustments | lec | Điều chỉnh (points, reason) → audit |
 
 ## 9. Notifications / Admin (M9/M10)
@@ -126,6 +127,6 @@
 ## 10. WebSocket
 
 - Kết nối: `GET /ws?token=<access_token>` → server validate → connection gắn user_id.
-- Server-push only (client chỉ `ping`); state resume bằng REST sau reconnect.
+- WebSocket chỉ gửi trạng thái/kết quả chấm bài (client chỉ `ping`); state resume bằng REST sau reconnect.
 - Catalog event + payload: xem `message-contracts.md` §3.
-- Clock thi: `exam.clock` mỗi 30s cho session đang mở + `exam.closing` cảnh báo 60s cuối.
+- Đồng hồ thi lấy mốc thời gian từ REST/session; client tự đếm ngược và đồng bộ lại qua REST, không dùng WebSocket.

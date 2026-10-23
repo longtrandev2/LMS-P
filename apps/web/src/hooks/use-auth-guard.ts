@@ -1,7 +1,5 @@
-"use client";
-
 import { useEffect, useSyncExternalStore } from "react";
-import { useRouter } from "next/navigation";
+import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth";
 import type { Role } from "@/types/api";
 
@@ -14,7 +12,7 @@ const EMPTY_ROLES: Role[] = [];
  * sai role → trả "denied" để layout hiển thị màn chặn.
  */
 export function useAuthGuard(allowedRoles: Role[] = EMPTY_ROLES) {
-  const router = useRouter();
+  const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
 
   // Tránh hydration mismatch: SSR/prerender thấy false, client thấy true sau khi persist hydrate
@@ -31,8 +29,8 @@ export function useAuthGuard(allowedRoles: Role[] = EMPTY_ROLES) {
       : "ok";
 
   useEffect(() => {
-    if (hydrated && !user) router.replace("/login");
-  }, [hydrated, user, router]);
+    if (hydrated && !user) navigate("/login", { replace: true });
+  }, [hydrated, user, navigate]);
 
   return { status, user };
 }

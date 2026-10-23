@@ -1,5 +1,3 @@
-"use client";
-
 import type { ReactNode } from "react";
 import { useReveal } from "@/lib/hooks/use-reveal";
 import { SectionHeading } from "@/components/landing/section-heading";

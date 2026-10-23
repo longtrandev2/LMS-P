@@ -1,0 +1,38 @@
+server:
+  port: ${SERVER_PORT:8000}
+
+spring:
+  application:
+    name: lms-api
+  datasource:
+    url: "${DATABASE_URL:jdbc:mysql://localhost:3306/lms?useUnicode=true&characterEncoding=utf8&serverTimezone=UTC}"
+    username: ${MYSQL_USER:lms}
+    password: ${MYSQL_PASSWORD:lms}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    baseline-version: 4
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:lms}
+    password: ${RABBITMQ_PASSWORD:lms}
+  servlet:
+    multipart:
+      max-file-size: "${MAX_UPLOAD_MB:20}MB"
+      max-request-size: "${MAX_UPLOAD_MB:20}MB"
+
+lms:
+  jwt:
+    secret: "${JWT_SECRET:}"
+    access-ttl-minutes: ${JWT_ACCESS_TTL_MIN:15}
+    refresh-ttl-days: ${JWT_REFRESH_TTL_DAYS:7}
+  storage-dir: ${STORAGE_DIR:./storage}
+  cors-origins: "${CORS_ORIGINS:http://localhost:5173}"
+  upload:
+    max-mb: ${MAX_UPLOAD_MB:20}

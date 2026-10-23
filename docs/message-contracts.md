@@ -2,8 +2,8 @@
 
 | | |
 |---|---|
-| Phiên bản | 1.0 — 2026-10-20 |
-| Nguồn | `srs.md` FR-GRD-*, FR-NTF-02, FR-EXM-04 |
+| Phiên bản | 1.2 — 2026-10-23 |
+| Nguồn | `srs.md` FR-GRD-* |
 
 ## 1. Topology RabbitMQ
 
@@ -18,7 +18,7 @@ exchange  lms.dlx (fanout)
 ```
 
 - Publish: `delivery_mode=2` (persistent), `content_type=application/json`, `message_id=uuid4()`, `priority` (10=thi, 5=bài tập, 1=run thử).
-- **Message nhỏ, không nhúng code**: worker tự tải submission + test case từ DB theo id → tránh message to, luôn đọc dữ liệu mới nhất.
+- **Message nhỏ, không nhúng code**: worker tự tải submission cùng question-version snapshot đã ghim (gồm test case) từ DB theo id → tránh message to và chấm đúng phiên bản đề đã giao.
 - Worker: `prefetch=2`, manual ack **sau khi ghi kết quả vào DB**; crash giữa chừng → message unacked được redeliver, grader idempotent theo (submission_id, grading attempt).
 
 ## 2. Message schemas
@@ -29,6 +29,7 @@ exchange  lms.dlx (fanout)
 {
   "submission_id": 1024,
   "question_id": 55,
+  "question_version_id": 81,
   "student_id": 88,
   "language": "python",
   "priority": 5,
@@ -56,11 +57,6 @@ API consume `q.events` → route theo `user_id` → push qua ConnectionManager t
 |---|---|---|
 | `submission.status` | `{submission_id, status}` | pending→grading→completed/failed |
 | `submission.graded` | `{submission_id, score, total_tests, passed_tests, compile_error?: bool}` | worker ghi xong kết quả |
-| `run.completed` | `{run_id, results: [{test_case_id, status}]}` | run thử xong (chỉ test công khai) |
-| `notification.new` | `{id, type, title, body, data}` | mọi notification mới |
-| `exam.clock` | `{exam_session_id, remaining_seconds}` | mỗi 30s cho phiên đang mở |
-| `exam.closing` | `{exam_session_id, remaining_seconds}` | còn đúng 60s — cảnh báo |
-| `exam.submitted` | `{exam_session_id, auto: bool}` | nộp tay hoặc sweeper auto-submit |
 | `pong` | `{}` | phản hồi `ping` của client |
 
 Client → server: `{"type":"ping"}` mỗi 30s. Mọi event đều có `ts` (epoch ms) ở envelope chung: `{"type": <event>, "ts": 1730550000000, "data": {...}}`.

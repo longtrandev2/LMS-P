@@ -1,6 +1,4 @@
-"use client";
-
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useReveal } from "@/lib/hooks/use-reveal";
@@ -78,7 +76,7 @@ export function ClassesSection() {
             description="Mỗi lớp học phần gắn với một khóa học, một giảng viên phụ trách và danh sách sinh viên ghi danh theo học kỳ."
           />
           <Button asChild variant="outline" size="sm" data-reveal>
-            <Link href="/login">
+            <Link to="/login">
               Xem lớp của bạn
               <ArrowRight data-icon="inline-end" />
             </Link>

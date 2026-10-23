@@ -21,7 +21,7 @@ Allow lecturers to manage courses, assignments, examinations, test cases, and st
 Provide administrators with interfaces for managing users, system settings, and activity monitoring.
 **3. Communication and Architecture**
 
-The system uses a React/Next.js frontend, a Python backend, and MySQL for persistent storage. REST APIs handle standard requests, WebSockets support real-time updates, and RabbitMQ distributes grading tasks to isolated workers. The architecture supports concurrent users, secure code execution, and future scalability. cho bản phân tích nghiệp và kiến trúc công nghệ
+The current project decision is React + TypeScript SPA, Java Spring Boot backend, and MySQL. REST APIs handle business operations, WebSocket pushes grading progress/results only, and RabbitMQ distributes grading tasks to isolated workers. The architecture supports concurrent users, secure code execution, and future scalability. cho bản phân tích nghiệp và kiến trúc công nghệ
 
 
 
@@ -183,12 +183,12 @@ The system uses a React/Next.js frontend, a Python backend, and MySQL for persis
 ### 3.2 Kiến trúc tổng thể
 
 ```
-[Trình duyệt: React / Next.js]
+[Trình duyệt: React + TypeScript SPA]
         |  HTTPS (REST)        |  WSS (WebSocket)
         v                      v
 [Reverse Proxy / Load Balancer (Nginx)]
         |
-        +--> [API Server (Python)]  <--->  [MySQL (chính + replica đọc)]
+        +--> [API Server (Java + Spring Boot)]  <--->  [MySQL (chính + replica đọc)]
         |        |   |   
         |        |   +--> [Redis: cache, session, pub/sub, rate limit]
         |        |
@@ -198,7 +198,7 @@ The system uses a React/Next.js frontend, a Python backend, and MySQL for persis
         |          [Grading Workers x N]
         |            (sandbox cô lập từng lần chạy)
         |
-        +--> [WebSocket Gateway] <-- Redis pub/sub -- (kết quả chấm, đồng hồ thi, thông báo)
+        +--> [WebSocket Gateway] <-- Redis pub/sub -- (trạng thái/kết quả chấm bài)
         |
         +--> [Object Storage: học liệu, test case lớn, log]
 ```
@@ -207,12 +207,12 @@ The system uses a React/Next.js frontend, a Python backend, and MySQL for persis
 
 | Tầng | Công nghệ | Vai trò và ghi chú |
 | --- | --- | --- |
-| Frontend | React / Next.js, TypeScript | SSR/CSR, giao diện sinh viên, giảng viên, quản trị; code editor (ví dụ Monaco); quản lý state và gọi API |
-| Backend API | Python (FastAPI khuyến nghị; Django là phương án thay thế) | REST API, xác thực, phân quyền, logic nghiệp vụ; FastAPI phù hợp async, sinh tài liệu OpenAPI tự động |
-| Realtime | WebSocket (FastAPI/Starlette hoặc Django Channels) kết hợp Redis pub/sub | Đẩy trạng thái chấm, thông báo, đồng hồ thi tới đúng người dùng |
+| Frontend | React, TypeScript, Vite | SPA cho sinh viên, giảng viên, quản trị; editor Monaco; quản lý state và gọi API |
+| Backend API | Java + Spring Boot | REST API, xác thực, phân quyền, logic nghiệp vụ, OpenAPI |
+| Realtime | WebSocket trong Spring Boot | Đẩy trạng thái và kết quả chấm bài tới đúng người dùng |
 | CSDL | MySQL 8 (InnoDB) | Dữ liệu giao dịch; replica đọc cho báo cáo; chỉ mục theo truy vấn chính |
 | Hàng đợi | RabbitMQ | Phân phối tác vụ chấm; ack thủ công, retry, dead-letter queue, ưu tiên |
-| Worker chấm | Python worker (Celery hoặc consumer tự viết) | Nhận tác vụ, điều phối sandbox, thu kết quả |
+| Worker chấm | Java worker + Spring AMQP | Nhận tác vụ, điều phối sandbox, thu kết quả |
 | Sandbox | Docker với seccomp/AppArmor, hoặc gVisor / Firecracker / isolate | Cô lập thực thi mã không tin cậy |
 | Cache | Redis | Cache, rate limit, khóa phân tán, pub/sub cho WebSocket |
 | Lưu trữ tệp | Object storage tương thích S3 (MinIO hoặc dịch vụ đám mây) | Học liệu, test case lớn, log chấm |
@@ -225,7 +225,7 @@ Khuyến nghị **modular monolith** theo module nghiệp vụ M1–M11, mỗi m
 
 - **Tầng trình bày:** router REST, validate đầu vào, xử lý lỗi thống nhất.
 - **Tầng nghiệp vụ:** service chứa quy tắc BR1–BR9.
-- **Tầng dữ liệu:** repository, ORM (SQLAlchemy), migration (Alembic).
+- **Tầng dữ liệu:** repository, ORM (Spring Data JPA), migration (Flyway).
 - **Tác vụ nền:** gửi email, tính báo cáo, dọn dẹp, chạy qua hàng đợi.
 - **Hợp đồng API:** OpenAPI, phiên bản hóa (ví dụ /api/v1).
 
@@ -234,7 +234,7 @@ Khuyến nghị **modular monolith** theo module nghiệp vụ M1–M11, mỗi m
 | Kênh | Dùng cho | Ghi chú |
 | --- | --- | --- |
 | REST | CRUD, nộp bài, tải học liệu, truy vấn điểm | JSON, phân trang, idempotency key khi nộp bài |
-| WebSocket | Kết quả chấm, thông báo, trạng thái kỳ thi, đồng bộ đồng hồ | Xác thực bằng token khi bắt tay; cơ chế heartbeat và tự kết nối lại |
+| WebSocket | Trạng thái và kết quả chấm bài | Xác thực bằng token khi bắt tay; cơ chế heartbeat và tự kết nối lại |
 | RabbitMQ | Server tới worker | Tác vụ chấm; kết quả trả qua hàng đợi phản hồi hoặc API nội bộ |
 
 Một số endpoint tiêu biểu:
@@ -287,7 +287,7 @@ Mã của sinh viên là mã không tin cậy; đây là rủi ro bảo mật l�
 
 ### 3.8 Quản lý phiên thi đồng thời
 
-- **Thời gian chuẩn từ server:** lưu thời điểm bắt đầu và hạn kết thúc của từng phiên; client chỉ hiển thị đếm ngược và đồng bộ định kỳ qua WebSocket.
+- **Thời gian chuẩn từ server:** lưu thời điểm bắt đầu và hạn kết thúc của từng phiên; client hiển thị đếm ngược và đồng bộ định kỳ qua REST.
 - **Tự động lưu:** lưu nháp theo chu kỳ ngắn để tránh mất bài khi rớt mạng; cho phép tiếp tục phiên sau khi kết nối lại trong thời gian thi còn lại.
 - **Tự động nộp:** tác vụ nền đóng phiên và nộp bài khi hết giờ, không phụ thuộc client.
 - **Chịu tải đồng loạt:** nộp bài dồn dập cuối giờ được hấp thụ bởi hàng đợi; dự phòng thêm worker trước giờ thi (co giãn theo lịch).

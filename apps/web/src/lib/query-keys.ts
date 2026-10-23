@@ -6,6 +6,7 @@ export const queryKeys = {
     list: (filters: { page: number; limit: number; role?: string; status?: string }) =>
       ["users", "list", filters] as const,
   },
+  audit: { list: (filters: Record<string, string | number | undefined>) => ["audit", "list", filters] as const },
   courses: {
     all: ["courses"] as const,
     list: () => ["courses", "list"] as const,

@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Phiên bản | 1.0 — 2026-10-20 |
+| Phiên bản | 1.2 — 2026-10-23 |
 | Nguồn | `srs.md`, `system-architecture.md` |
 | Nguyên tắc | Mỗi phase chốt được một mảng demo chạy thật; spec-first, code theo spec |
 
@@ -19,7 +19,7 @@
 
 Nếu gấp show giữa chừng: P0 → P1 → nhảy P3 (P2 đưa về sau) — pipeline chấm là phần đáng nhớ nhất.
 
-**Trạng thái 2026-10-20 (wave 1 — branch `feat/identity-and-class-management`):** P0 ✅ (gộp scaffold vào wave 1) · P1 HOÀN TẤT (wave 2, 2026-10-21, branch feat/materials-and-realtime-notifications): M1+M2+M3 materials + WS notifications + contract suite — pytest 95/95, FE build/lint pass · chờ user verify demo → PR.
+**Trạng thái 2026-10-20 (wave 1 — branch `feat/identity-and-class-management`):** P0 ✅ (gộp scaffold vào wave 1) · P1 HOÀN TẤT (wave 2, 2026-10-21, branch feat/materials-and-realtime-notifications): M1+M2+M3 materials + notifications qua WebSocket (lịch sử trước quyết định 23/10) + contract suite — pytest 95/95, FE build/lint pass · chờ user verify demo → PR.
 
 **Wave 2.5 (khởi động 2026-10-21) — bổ sung nghiệp vụ M1–M3 theo review user:** hồ sơ cá nhân + avatar (FR-AUTH-03), admin quản trị user đầy đủ (FR-AUTH-05/07), thuộc tính lớp: sĩ số tối đa + khung giờ ghi danh + phòng/lịch + trạng thái (FR-CRS-01, BR11–13), ghi danh theo mã SV + sinh viên tự ghi danh + catalog (FR-CRS-02/04/05), search/phân trang/sort mọi danh sách (FR-CRS-06). Spec đã cập nhật trước (srs/api-spec/db-design) — code theo branch `feat/profile-enrollment-and-list-ux` sau khi wave 2 được PR.
 
@@ -29,23 +29,23 @@ Nếu gấp show giữa chừng: P0 → P1 → nhảy P3 (P2 đưa về sau) —
 - Xong khi: compose up xanh cả 5 service; /health 200 (check DB+AMQP); login admin được (seed).
 
 ## P1 — Nền tảng (M1–M3)
-- Việc: JWT+refresh+rotate, lock brute-force; CRUD users + import CSV; RBAC dependency; courses/classes/enrollments; materials upload/download (StorageService volume); audit helper + notifications table + WS hub (chỉ `notification.new`); UI: login, admin users, lecturer classes, student "lớp của tôi".
+- Việc: JWT+refresh+rotate, lock brute-force; CRUD users + import CSV; RBAC dependency; courses/classes/enrollments; materials upload/download (StorageService volume); audit helper + notification REST endpoints; UI: login, admin users, lecturer classes, student "lớp của tôi".
 - Xong khi: BR1/BR2 enforce (student không vào lớp lạ → 403 ENROLLMENT_REQUIRED); import CSV 50 user chạy; upload PDF + download đúng.
 
 ## P2 — Quiz & điểm (M4/M5/M8)
-- Việc: CRUD questions (MCQ + options, programming + test cases); assignments + policies; submit MCQ chấm đồng bộ; gradebook computed + policy weights + adjustments + CSV; UI bank đề, giao bài, làm quiz, bảng điểm.
-- Xong khi: max_attempts/deadline/late enforce; điểm tổng khớp công thức FR-GB-02 (case test tay).
+- Việc: CRUD questions + version snapshot; publish assignment thì ghim phiên bản câu, điểm và thứ tự; quiz MCQ nộp cả bài qua `assignment_attempts`, chấm đồng bộ; bài không phải quiz nộp từng câu; gradebook computed từ assignment + exam với trạng thái pending/final; UI bank đề, giao bài, làm quiz, bảng điểm.
+- Xong khi: `max_attempts`/deadline/late enforce theo lượt toàn bài quiz hoặc từng câu bài khác; nộp trùng Idempotency-Key không tăng lượt; điểm tổng khớp công thức FR-GB-02 (case test tay).
 
 ## P3 ⭐ — Chấm lập trình (M6)
 - Việc: submit code → pending + publish AMQP (aio-pika) + Idempotency-Key; worker consumer (manual ack, retry, DLQ, priority); runner docker-py sandbox (limits đầy đủ BR10); grader compare + score trọng số; grading_results/test_results; API consume q.events → WS push `submission.status/graded`; UI Monaco editor + panel kết quả từng test live + trạng thái; regrade; (S nếu kịp: Run thử, verify đề).
 - Xong khi: nộp code Python đúng/sai/compile error/timeout → đúng trạng thái + điểm; test ẩn không lộ (check response); kill worker giữa chừng → redeliver chấm tiếp; `--scale worker=2` hai worker cùng kéo queue.
 
 ## P4 — Kỳ thi (M7)
-- Việc: exams CRUD + publish + notify; sessions (BR9 shuffle, ends_at server); exam_answers autosave PUT; sweeper 10s auto-submit (MCQ chấm + code priority 10); WS exam.clock/closing/submitted; finish tay; monitor lecturer (poll 5s) + exam_events log; UI phòng thi (đề + editor + countdown + autosave indicator), màn hình monitor.
+- Việc: exams CRUD (hạng mục midterm/final) + publish snapshot câu hỏi + notify; sessions (BR9 shuffle, ends_at server); exam_answers autosave PUT; sweeper 10s auto-submit (MCQ chấm + code priority 10); đồng hồ thi lấy mốc từ REST và client đếm ngược; finish tay; monitor lecturer (poll 5s) + exam_events log; UI phòng thi (đề + editor + countdown + autosave indicator), màn hình monitor.
 - Xong khi: tắt tab không nộp → hết giờ sweeper tự nộp; reconnect lấy lại bài nháp; countdown 2 client đồng bộ theo server.
 
 ## P5 — Hoàn thiện
-- Việc: admin stats + audit viewer + settings UI; CSV gradebook; run thử; test suite pytest cho service chính (auth, policies, grading score, exam sweeper); README chạy demo + kịch bản; hardening nho nhỏ (rate limit, truncate log).
+- Việc: admin stats + audit viewer + settings UI; CSV gradebook; run thử; test suite JUnit cho service chính (auth, policies, grading score, exam sweeper); README chạy demo + kịch bản; hardening nho nhỏ (rate limit, truncate log).
 - Xong khi: demo script chạy trọn không sửa code.
 
 ## Kịch bản demo (chuẩn bị từ P5, dùng suốt)
@@ -57,11 +57,11 @@ Nếu gấp show giữa chừng: P0 → P1 → nhảy P3 (P2 đưa về sau) —
 
 ## Kiến thức nạp thêm theo phase (mục tiêu học tập)
 - P0: monorepo, compose multi-service, health check, env config — mở rộng từ Docker đã biết.
-- P1: **Python + FastAPI + SQLAlchemy + Alembic + JWT/argon2** (mới chính), RBAC pattern.
+- P1: **Java + Spring Boot + Spring Data JPA + Flyway + Spring Security/JWT** (mới chính), RBAC pattern.
 - P2: modeling nghiệp vụ phức tạp, transaction, formula-driven gradebook.
-- P3: **RabbitMQ (AMQP, ack/DLQ/priority), docker-py, sandboxing, asyncio producer/consumer** (mới chính), thiết kế giao thức WS.
+- P3: **RabbitMQ (Spring AMQP, ack/DLQ/priority), Docker client, sandboxing, consumer worker** (mới chính), thiết kế giao thức WS.
 - P4: server-authoritative time, background scheduler, xử lý reconnect/autosave, concurrent sessions.
-- P5: pytest, observability cơ bản.
+- P5: JUnit, observability cơ bản.
 
 ## Rủi ro & giảm thiểu
 | Rủi ro | Giảm thiểu |
@@ -75,3 +75,6 @@ Nếu gấp show giữa chừng: P0 → P1 → nhảy P3 (P2 đưa về sau) —
 1. Deadline thật + solo/nhóm → cần rút Should nào?
 
 *(Đã chốt 2026-10-20: ngôn ngữ chấm v1 = Python, C, C++, Java — effort chỉ là config `languages.py` + smoke test mỗi ngôn ngữ ở P3.)*
+## Tình trạng chuyển stack (2026-10-23)
+
+Chủ dự án đã chọn React SPA + Spring Boot. Web đã chuyển route sang React Router + Vite và chia màn hình theo feature; admin có trang tra cứu nhật ký kiểm toán. Java API hiện có health, auth, quản trị user (kể cả import CSV), khóa học/lớp/ghi danh, học liệu, thông báo và ghi/xem audit log; worker nhận và kiểm tra message chấm bài. Còn thiếu kiểm thử tương đương và xác nhận build/integration khi dependencies sẵn sàng. Quiz/sổ điểm, chấm code thực thi sandbox và kỳ thi chưa có trong backend Python hiện tại nên là các phase phát triển LMS tiếp theo, không phải tính năng Java đã port.

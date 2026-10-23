@@ -1,44 +1,40 @@
 # CLAUDE.md — LMS-P (Môn Lập trình mạng)
 
-LMS Client/Server: Next.js + FastAPI + MySQL + RabbitMQ. **Spec-first** — mọi thay đổi phải đối chiếu `docs/`, đổi yêu cầu thì đổi spec trước.
+LMS Client/Server: React + Spring Boot + MySQL + RabbitMQ. **Spec-first** — đối chiếu `docs/`, sửa spec trước khi thay đổi yêu cầu/hành vi.
 
 ## Đọc trước khi làm
-1. `docs/srs.md` — yêu cầu chức năng (M1–M10, BR1–BR10)
-2. `docs/system-architecture.md` — kiến trúc + cấu trúc folder + sandbox
-3. `docs/database-design.md` · `docs/api-spec.md` · `docs/message-contracts.md` · `docs/tech-decisions.md`
-4. `docs/development-roadmap.md` — phase P0–P5
+1. `docs/srs.md` — yêu cầu chức năng M1–M10, BR1–BR10
+2. `docs/system-architecture.md` — kiến trúc và cấu trúc thư mục
+3. `docs/database-design.md`, `docs/api-spec.md`, `docs/message-contracts.md`, `docs/tech-decisions.md`
+4. `docs/development-roadmap.md`
 
 ## Cấu trúc repo
 ```
-apps/api      # FastAPI: core/ + modules/<m>/{router,service,repository,schemas,models}.py + ws/ + events/
-apps/web      # Next.js App Router + TS + Tailwind + shadcn/ui + Monaco
-apps/worker   # consumer aio-pika + runner sandbox + languages.py (bảng 4 ngôn ngữ)
+apps/api      # Spring Boot REST /api/v1, WebSocket grading
+apps/web      # React + TypeScript + Vite SPA, chia theo features
+apps/worker   # Spring Boot RabbitMQ consumer + Docker sandbox grader
 infra/        # docker-compose.yml, nginx/
-scripts/      # seed, dev utilities
-docs/         # specs — nguồn chân lý
+scripts/      # seed và tiện ích dev
 storage/      # volume học liệu (gitignored)
+docs/         # specs — nguồn chân lý
 ```
 
 ## Quy tắc bắt buộc
 
-### Database (quan trọng nhất — nền tảng)
-- Schema chỉ tồn tại qua **SQLAlchemy models + Alembic migration**. Flow dev: sửa model → `alembic revision --autogenerate -m "..."` → review migration → `alembic upgrade head`.
-- **CẤM** sửa schema tay trong MySQL, cấm sửa file migration đã commit (tạo migration mới).
-- Mọi thay đổi dữ liệu nhạy cảm → ghi `audit_logs` (helper `write_audit()`).
+### Database
+- Schema quản lý bằng JPA entities và **Flyway migrations**. Mỗi thay đổi schema cần migration versioned, review được.
+- **Cấm** sửa schema trực tiếp trong MySQL hoặc sửa migration đã dùng; tạo migration mới.
+- Thao tác nhạy cảm ghi `audit_logs`.
 
 ### Git
-- Nhánh: đặt tên **mô tả tính năng, không mã code nội bộ** (cấm kiểu `m1-m2`): `feat/<tinh-nang-ngan>` (vd `feat/identity-and-class-management`), `fix/<loi>`, `chore/<việc>`.
-- Commit conventional có scope: `feat(api):`, `feat(web):`, `feat(worker):`, `feat(infra):`, `fix(api):`, `docs:`, `refactor:`, `test:`, `chore:` — subject viết rõ ai đọc cũng hiểu, không nhắc AI.
-- PR: title `type(scope): tóm tắt`, mô tả gồm What/Why + checklist (spec khớp, test pass, migration kèm theo, docs đã cập nhật) → code-review trước khi merge.
-- **Không bao giờ commit**: `.env`, secret, credentials, `storage/` contents, dump DB.
-- Sub-agent song song: KHÔNG chạy lệnh git (chỉ lead orchestrate commit) — tránh race git index.
+- Nhánh mô tả tính năng: `feat/<tinh-nang>`, `fix/<loi>`, `chore/<viec>`.
+- Conventional commits có scope (`feat(api):`, `feat(web):`, `feat(worker):`, `docs:`...).
+- Không commit `.env`, secret, credentials, nội dung `storage/`, dump DB.
 
 ### Code
-- File < 200 dòng, tách module khi vượt. Tên file kebab-case.
-- BE: router → service (nghiệp vụ + BR + audit) → repository (SQLAlchemy). Validate Pydantic. Error envelope đúng `api-spec.md` §1.
-- FE: theo quy trình design — load skill `frontend-design` / `ui-ux-pro-max` / `web-design-guidelines` (đọc file SKILL.md trong `.claude/skills/` nếu không gọi skill được). Design tokens trước, components sau. **Không AI-slop**: cấm gradient tím-generic, dashboard template taste, emoji-menu. UI copy tiếng Việt.
-- Sau khi sửa code: chạy compile/build/test trước khi báo xong (không mô phỏng, không mock để qua).
-
-### Verify với user
-- Hành động ảnh hưởng repo ngoài/PR/merge/deploy → hỏi user trước.
-- Hoàn thành phase → user verify demo trước khi sang phase sau.
+- File < 200 dòng; tách theo trách nhiệm.
+- Backend: controller → service → repository; validate request bằng Jakarta Validation; lỗi theo envelope `api-spec.md` §1.
+- Frontend chia theo feature; logic gọi API qua client dùng chung; TypeScript strict; UI tiếng Việt.
+- Auth/RBAC bắt buộc ở backend service/security, không dựa vào ẩn nút UI.
+- WebSocket chỉ cập nhật trạng thái/kết quả chấm bài.
+- Chạy compile/build/test trước khi báo hoàn tất.

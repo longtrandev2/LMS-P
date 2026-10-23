@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useRef } from "react";
 
 /**
@@ -15,7 +13,7 @@ interface WsEnvelope {
 }
 
 function wsUrl(token: string): string {
-  const base = (process.env.NEXT_PUBLIC_WS_URL ?? "ws://localhost:8000/ws").trim();
+  const base = (import.meta.env.VITE_WS_URL ?? "ws://localhost:8000/ws").trim();
   const sep = base.includes("?") ? "&" : "?";
   return `${base}${sep}token=${encodeURIComponent(token)}`;
 }

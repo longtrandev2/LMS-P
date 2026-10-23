@@ -1,24 +1,13 @@
-# LMS API — FastAPI + uvicorn
-FROM python:3.12-slim
+FROM maven:3.9-eclipse-temurin-21 AS build
+WORKDIR /workspace
+COPY pom.xml .
+COPY src ./src
+RUN mvn -B -DskipTests package
 
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
-
-WORKDIR /srv/app
-
-# dependencies first (layer cache)
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# application code (scripts/seed.py is mounted via compose volume, not baked in)
-COPY app/ app/
-COPY alembic/ alembic/
-COPY alembic.ini .
-
-# non-root runtime user
-RUN useradd --create-home --shell /usr/sbin/nologin apiuser \
-    && chown -R apiuser:apiuser /srv/app
-USER apiuser
-
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
+RUN apk add --no-cache curl && addgroup -S lms && adduser -S api -G lms
+COPY --from=build /workspace/target/lms-api-1.0.0-SNAPSHOT.jar app.jar
+USER api
 EXPOSE 8000
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+ENTRYPOINT ["java", "-jar", "app.jar"]

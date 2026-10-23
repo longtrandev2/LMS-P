@@ -1,5 +1,3 @@
-"use client";
-
 import { useSyncExternalStore } from "react";
 import { homePathFor, useAuthStore } from "@/stores/auth";
 import { LandingHeader } from "@/components/landing/landing-header";

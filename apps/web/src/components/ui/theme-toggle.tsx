@@ -1,7 +1,4 @@
-"use client";
-
-import * as React from "react";
-import { useTheme } from "next-themes";
+import { useTheme } from "@/components/theme-provider";
 import { CheckIcon, Monitor, Moon, Sun } from "lucide-react";
 import { cn } from "cn";
 import { Button } from "@/components/ui/button";
@@ -19,7 +16,7 @@ const THEME_OPTIONS = [
 ] as const;
 
 /** Đổi theme kèm transition mượt — gắn tạm class vào <html> (xem globals.css). */
-function switchTheme(value: string, setTheme: (v: string) => void) {
+function switchTheme(value: "light" | "dark" | "system", setTheme: (v: "light" | "dark" | "system") => void) {
   const root = document.documentElement;
   root.classList.add("theme-transition");
   setTheme(value);

@@ -102,7 +102,7 @@ badge, sonner (toast), form, skeleton, tabs, separator, avatar, sheet, tooltip, 
 | `app-shell.tsx` | Khung: sidebar theo role + header (user menu, theme toggle dropdown) |
 | `nav-sidebar.tsx` | Nav item (Lucide icon), active marker đỏ CTA, nhóm theo role |
 | `logo.tsx` | Badge monogram LMS-P đơn sắc + wordmark sans (variant full/mark) |
-| `ui/theme-toggle.tsx` | Dropdown Sáng/Tối/Hệ thống (next-themes, icon sun/moon) |
+| `ui/theme-toggle.tsx` | Dropdown Sáng/Tối/Hệ thống (theme provider React, icon sun/moon) |
 | `page-header.tsx` | Tiêu đề trang sans weight 600 + mô tả + actions |
 | `state-blocks/*` | `loading-skeleton.tsx`, `empty-state.tsx`, `error-state.tsx` (retry) |
 | `data-table-pagination.tsx` | Phân trang chuẩn `?page&limit` |

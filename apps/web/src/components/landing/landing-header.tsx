@@ -1,7 +1,5 @@
-"use client";
-
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
@@ -40,7 +38,7 @@ export function LandingHeader({ ctaHref, ctaLabel }: LandingHeaderProps) {
     >
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-4 px-6">
         <Link
-          href="/"
+          to="/"
           aria-label="LMS-P — trang chủ"
           className="flex items-center gap-2.5"
         >
@@ -65,14 +63,14 @@ export function LandingHeader({ ctaHref, ctaLabel }: LandingHeaderProps) {
         <div className="flex items-center gap-2">
           <ThemeToggle />
           <Button asChild variant="ghost" size="sm">
-            <Link href="/login">Đăng nhập</Link>
+            <Link to="/login">Đăng nhập</Link>
           </Button>
           <Button
             asChild
             size="sm"
             className="bg-(--gold) text-white hover:bg-(--gold)/90"
           >
-            <Link href={ctaHref}>{ctaLabel}</Link>
+            <Link to={ctaHref}>{ctaLabel}</Link>
           </Button>
         </div>
       </div>

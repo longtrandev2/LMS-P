@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: lms-worker
+  main:
+    web-application-type: none
+  rabbitmq:
+    host: ${RABBITMQ_HOST:rabbitmq}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:lms}
+    password: ${RABBITMQ_PASSWORD:lms}
+    listener:
+      simple:
+        acknowledge-mode: manual
+        prefetch: ${WORKER_PREFETCH:2}

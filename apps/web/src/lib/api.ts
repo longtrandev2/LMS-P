@@ -1,5 +1,5 @@
 /**
- * Fetch wrapper — base URL từ NEXT_PUBLIC_API_URL, Bearer token từ auth store,
+ * Fetch wrapper — base URL từ VITE_API_URL, Bearer token từ auth store,
  * parse envelope lỗi {error:{code,message}} → ApiError.
  * 401: thử refresh đúng 1 lần rồi retry; thất bại → clear session → /login.
  */
@@ -17,7 +17,7 @@ function normalizeBaseUrl(raw: string): string {
 }
 
 const BASE_URL = normalizeBaseUrl(
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1"
+  import.meta.env.VITE_API_URL ?? "http://localhost:8000/api/v1"
 );
 
 export class ApiError extends Error {
@@ -142,8 +142,8 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     } else {
       useAuthStore.getState().clearSession();
       if (typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
-        // Ngoài cây React — reset toàn bộ state client là chủ đích, không dùng router của Next
-        // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+        // Ngoài cây React — reset toàn bộ state client là chủ đích, không phụ thuộc router UI
+        // Navigate after session expiry outside React component context.
         window.location.assign("/login");
       }
     }

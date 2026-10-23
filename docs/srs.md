@@ -2,7 +2,7 @@
 
 | Thuộc tính | Giá trị |
 |---|---|
-| Phiên bản | 1.0 — 2026-10-20 |
+| Phiên bản | 1.3 — 2026-10-23 |
 | Trạng thái | Baseline (spec-first, chuẩn đối chiếu cho DB/API/kiến trúc/plan) |
 | Nguồn требования | Subject gốc của giảng viên (English, bản gốc trong repo docs) |
 | Tham khảo mở rộng | `LMS – Phân tích nghiệp vụ và kiến trúc công nghệ.md` — CHỈ tham khảo, phạm vi lấy theo Subject + tài liệu này |
@@ -24,7 +24,7 @@
 - Bài tập lập trình: nộp code → hàng đợi RabbitMQ → worker chấm trong sandbox Docker cô lập → kết quả realtime qua WebSocket.
 - Kỳ thi: lịch thi, phiên thi, đồng hồ server, tự lưu bài, tự động nộp, giám sát của giảng viên.
 - Sổ điểm: trọng số theo hạng mục, điều chỉnh thủ công, xuất CSV.
-- Thông báo in-app realtime; nhật ký kiểm toán; cấu hình hệ thống; thống kê quản trị.
+- Thông báo in-app; nhật ký kiểm toán; cấu hình hệ thống; thống kê quản trị.
 
 **Ngoài phạm vi (v1) — ghi rõ để không bị "scope creep":**
 - Thanh toán, video streaming quy mô lớn, mobile native, SSO, email, i18n, chống gian lận bằng AI.
@@ -56,16 +56,17 @@ flowchart TB
     ST[Student] -->|REST + WS| CORE
     LE[Lecturer] -->|REST + WS| CORE
     AD[Admin] -->|REST + WS| CORE
-    CORE[LMS API Server\nFastAPI + MySQL] <-->|AMQP: grading tasks| WK[Grading Workers]
+    CORE[LMS API Server\nSpring Boot + MySQL] <-->|AMQP: grading tasks| WK[Grading Workers]
     WK -->|Docker sandbox| SB[Container thực thi code]
     WK -->|AMQP: events| CORE
 ```
 
-### 2.2 Ràng buộc công nghệ (Subject lock — không thay đổi)
-React/Next.js (frontend) · Python (backend) · MySQL (lưu trữ) · REST API · WebSocket · RabbitMQ phân phối chấm bài tới worker cô lập.
+### 2.2 Nền tảng công nghệ
+Frontend dùng React + TypeScript (SPA); backend dùng Java + Spring Boot. MySQL lưu dữ liệu; REST API xử lý nghiệp vụ; WebSocket chỉ đẩy trạng thái/kết quả chấm bài; RabbitMQ phân phối tác vụ chấm tới worker cô lập. Thay đổi nền tảng này theo quyết định của chủ dự án; các yêu cầu nghiệp vụ và hợp đồng API vẫn giữ nguyên.
 
 ### 2.3 Giả định
 - Triển khai demo: Docker Compose local, 1 instance API, N worker (`--scale worker=2` demo "distributed workers").
+- Tài khoản demo local của student, lecturer và admin dùng chung mật khẩu `Demo@12345` để thuận tiện trình diễn; không dùng thông tin đăng nhập demo khi triển khai thật.
 - Quy mô mục tiêu: 100–300 CCU, burst nộp bài ~100 lượt cuối giờ thi (hàng đợi hấp thụ).
 - Mỗi thí sinh 1 phiên thi / kỳ thi (v1).
 
@@ -111,15 +112,16 @@ React/Next.js (frontend) · Python (backend) · MySQL (lưu trữ) · REST API �
 | FR-QB-03 | M | CRUD test case: input, expected output, công khai/ẩn, trọng số, thứ tự |
 | FR-QB-04 | M | Lọc theo loại/chủ đề/độ khó; câu hỏi tái sử dụng cho nhiều bài |
 | FR-QB-05 | S | Lecturer chạy thử solution mẫu để kiểm tra đề |
+| FR-QB-06 | M | Mỗi lần xuất bản bài tập/kỳ thi phải ghim nội dung và phiên bản các câu hỏi, lựa chọn/đáp án, giới hạn code, test case, điểm và thứ tự. Sửa ngân hàng sau đó không đổi assessment đã xuất bản; muốn đổi assessment phải tạo bản nháp mới |
 
 ### M5 — Bài tập & Quiz
 | ID | Ưu tiên | Yêu cầu |
 |---|---|---|
-| FR-ASG-01 | M | Tạo bài tập trong lớp: gắn câu hỏi từ bank, điểm từng câu, thứ tự, xuất bản |
-| FR-ASG-02 | M | Chính sách: available_from, due_at, max_attempts, nộp muộn (late_due_at + phạt %), score_policy (best/last), hạng mục điểm (quiz/assignment/midterm/final) |
-| FR-ASG-03 | M | Làm quiz: nộp đáp án MCQ → chấm đồng bộ, trả điểm ngay |
-| FR-ASG-04 | M | Server kiểm tra hạn nộp + lượt nộp; quá hạn từ chối hoặc đánh dấu muộn trừ % |
-| FR-ASG-05 | M | Student xem lịch sử nộp, kết quả từng test công khai, điểm |
+| FR-ASG-01 | M | Tạo bài tập trong lớp: gắn câu hỏi từ bank, điểm từng câu, thứ tự, xuất bản. Khi xuất bản, cố định danh sách câu, phiên bản câu hỏi, điểm và thứ tự. Bài có hạng mục `quiz` chỉ gồm câu MCQ trong v1 |
+| FR-ASG-02 | M | Chính sách: available_from, due_at, max_attempts (NULL = không giới hạn), nộp muộn (late_due_at + phạt %), score_policy (best/last), hạng mục điểm (quiz/assignment/midterm/final). Với quiz, lượt và best/last áp dụng cho **toàn bài**; với bài khác, áp dụng cho **từng câu** |
+| FR-ASG-03 | M | Làm quiz: nộp đáp án của cả bài trong một request có Idempotency-Key; câu bỏ trống được 0 điểm; server lưu một lượt quiz cùng các đáp án trong một transaction, chấm MCQ đồng bộ và trả điểm của lượt ngay |
+| FR-ASG-04 | M | Server kiểm tra hạn nộp + lượt nộp theo BR3; quá hạn từ chối hoặc đánh dấu muộn trừ %. Chỉ nộp chính thức mới tính lượt; mở đề và Run thử test công khai không tính lượt |
+| FR-ASG-05 | M | Student xem lịch sử lượt quiz hoặc lần nộp từng câu, kết quả từng test công khai, điểm |
 | FR-ASG-06 | S | Lecturer xem danh sách bài nộp theo bài/lớp |
 
 ### M6 — Chấm bài lập trình tự động ⭐
@@ -137,7 +139,7 @@ React/Next.js (frontend) · Python (backend) · MySQL (lưu trữ) · REST API �
 ### M7 — Kỳ thi
 | ID | Ưu tiên | Yêu cầu |
 |---|---|---|
-| FR-EXM-01 | M | Tạo kỳ thi: đề từ bank, thời lượng, opens_at/closes_at, nội dung quy chế, shuffle, xuất bản |
+| FR-EXM-01 | M | Tạo kỳ thi: đề từ bank, hạng mục điểm `midterm` hoặc `final`, thời lượng, opens_at/closes_at, nội dung quy chế, shuffle, xuất bản. Khi xuất bản, cố định danh sách câu, phiên bản câu hỏi, điểm và thứ tự |
 | FR-EXM-02 | M | Vào thi trong [opens_at, closes_at): xác nhận quy chế → tạo phiên; `ends_at = min(started_at + duration, closes_at)`; 1 phiên/thí sinh |
 | FR-EXM-03 | M | Đề chỉ hiển thị sau khi phiên bắt đầu (BR9); shuffle thứ tự câu theo thí sinh nếu bật |
 | FR-EXM-04 | M | Thời gian chuẩn do server; client hiển thị đếm ngược từ `remaining_seconds` định kỳ |
@@ -151,17 +153,18 @@ React/Next.js (frontend) · Python (backend) · MySQL (lưu trữ) · REST API �
 | ID | Ưu tiên | Yêu cầu |
 |---|---|---|
 | FR-GB-01 | M | Chính sách điểm theo lớp: trọng số hạng mục (quiz/assignment/midterm/final), validate tổng 100% |
-| FR-GB-02 | M | Điểm tổng kết = Σ(avg hạng mục × trọng số), quy thang 10 |
+| FR-GB-02 | M | Mỗi bài tập và kỳ thi đã xuất bản thuộc một hạng mục điểm; kỳ thi được gán `midterm` hoặc `final`. Điểm hạng mục là trung bình các assessment đã đóng sau khi chuẩn hóa theo điểm tối đa; bài không nộp sau khi hết hạn/cửa sổ nộp tính 0. Tổng chỉ được chốt khi mọi assessment đã xuất bản đóng nhận bài và mọi submission đã chấm xong; trong lúc còn bài chưa chấm, trạng thái tổng là `pending`, không coi submission đang chấm là 0 |
 | FR-GB-03 | M | Lecturer: bảng điểm lớp (sinh viên × bài + tổng), xuất CSV |
 | FR-GB-04 | M | Student: điểm cá nhân theo lớp |
 | FR-GB-05 | M | Điều chỉnh thủ công (cộng/trừ + lý do) → ghi audit (BR7) |
 | FR-GB-06 | S | Tiến độ học tập: % bài tập đã nộp theo lớp |
+| FR-GB-07 | M | Điểm từng assessment hiển thị khi đã chấm; trạng thái và tổng điểm cho biết đang chờ chấm hay đã chốt. Khi tất cả assessment trong lớp đã đóng và chấm xong, hệ thống tính và hiển thị tổng điểm cuối theo FR-GB-02 |
 
 ### M9 — Thông báo
 | ID | Ưu tiên | Yêu cầu |
 |---|---|---|
 | FR-NTF-01 | M | Thông báo in-app: bài mới, kết quả chấm, kỳ thi mở, điểm công bố, sinh viên tự ghi danh (gửi lecturer) |
-| FR-NTF-02 | M | WS push realtime + danh sách + đánh dấu đã đọc |
+| FR-NTF-02 | M | Danh sách thông báo, lọc trạng thái, đánh dấu một hoặc tất cả đã đọc qua REST |
 
 ### M10 — Quản trị & giám sát
 | ID | Ưu tiên | Yêu cầu |
@@ -190,7 +193,12 @@ React/Next.js (frontend) · Python (backend) · MySQL (lưu trữ) · REST API �
 5. Lecturer xem kết quả, xử lý phúc khảo (regrade/điều chỉnh — có audit).
 
 ### C — Điểm tổng kết
-Điểm từng bài (best/last theo chính sách) → avg theo hạng mục → × trọng số lớp → tổng % → thang 10 (+ điều chỉnh thủ công có audit).
+Điểm từng bài (best/last theo chính sách) và kỳ thi đã chấm → chuẩn hóa theo điểm tối đa → trung bình theo hạng mục (quiz/assignment/midterm/final) → × trọng số lớp → tổng % → thang 10 (+ điều chỉnh thủ công có audit). Assessment quá hạn/cửa sổ thi đã đóng mà không có bài nộp tính 0. Nếu còn submission chưa chấm, tổng ở trạng thái `pending`; chỉ chốt sau khi mọi assessment đã xuất bản đóng và bài nộp đã có kết quả.
+
+### D — Làm quiz
+1. Student mở quiz đã xuất bản trong khung thời gian cho phép; thao tác xem đề không tính lượt.
+2. Student nộp đáp án MCQ của cả bài một lần; câu bỏ trống tính 0 điểm. Server kiểm tra hạn và `max_attempts` theo **số lượt quiz** đã nộp.
+3. Server tạo một lượt quiz và các submission theo câu trong cùng transaction, chấm đồng bộ, trả điểm lượt. Nộp lại tạo lượt mới; Idempotency-Key trùng trả lượt cũ và không tăng bộ đếm.
 
 ---
 
@@ -200,17 +208,19 @@ React/Next.js (frontend) · Python (backend) · MySQL (lưu trữ) · REST API �
 |---|---|
 | BR1 | User có ≥1 role; quyền giới hạn theo role VÀ phạm vi lớp (enrollment) |
 | BR2 | Student chỉ truy cập khóa học/bài tập/kỳ thi của lớp mình ghi danh |
-| BR3 | Max attempts, hạn nộp, phạt nộp muộn cấu hình từng bài; server kiểm soát |
+| BR3 | Max attempts, hạn nộp, phạt nộp muộn cấu hình từng bài; server kiểm soát kể cả khi nhiều request nộp đồng thời. `max_attempts` NULL = không giới hạn. Với `category=quiz`, 1 request nộp cả bài = 1 lượt, tính `best/last` trên **tổng điểm từng lượt**. Với bài không phải quiz, mỗi lần nộp một câu = 1 lượt **của câu đó**, tính `best/last` riêng cho từng câu rồi cộng điểm câu thành điểm bài. Run thử và xem đề không tính lượt. Kỳ thi dùng 1 phiên/thí sinh theo M7, không dùng `max_attempts` của bài tập |
 | BR4 | Test ẩn KHÔNG bao giờ trả input/expected về client; chỉ pass/fail |
 | BR5 | Thời gian thi tính bởi server; nộp sau ends_at bị từ chối |
 | BR6 | Điểm câu lập trình = điểm câu × (Σ trọng số test đạt / Σ trọng số test); vượt thời gian/bộ nhớ = không đạt |
 | BR7 | Mọi thay đổi điểm, đề thi, cấu hình, phân quyền → audit log (ai, khi nào, before/after) |
-| BR8 | Submission bất biến (không sửa/xóa); regrade tạo grading_result mới gắn cùng submission |
+| BR8 | Submission bất biến (không sửa/xóa); regrade tạo grading_result mới gắn cùng submission và dùng đúng phiên bản câu hỏi/test case mà submission đã tham chiếu |
 | BR9 | Đề thi chỉ hiển thị sau thời điểm bắt đầu phiên của thí sinh đó |
 | BR10 | Code sinh viên chỉ chạy trong sandbox: không mạng, giới hạn CPU/RAM/PID/thời gian/đầu ra, filesystem chỉ đọc |
 | BR11 | Tự ghi danh: chỉ trong `[enroll_from, enroll_until]` theo **giờ server** (không tin client) và chỉ khi sĩ số < max_students; ngoài khung giờ hoặc đầy → lỗi rõ (ENROLL_CLOSED / CLASS_FULL); lecturer/admin thêm tay **được ngoài khung giờ**, chỉ admin bypass được khi đầy |
 | BR12 | Sửa `max_students` không được nhỏ hơn sĩ số hiện tại; nếu cả hai đầu có, `enroll_until` > `enroll_from`; thay đổi sĩ số/khung giờ/trạng thái lớp → audit |
 | BR13 | Lớp `locked`: chặn ghi danh mới, sinh viên không truy cập nội dung lớp (học liệu) |
+| BR14 | Khi xuất bản assessment, hệ thống lưu snapshot bất biến của câu hỏi và phiên bản nội dung/đáp án/test case/giới hạn chấm, điểm tối đa và thứ tự. Sửa hoặc xóa câu trong ngân hàng không thay đổi assessment đã xuất bản; muốn thay đổi phải tạo assessment nháp mới. Bài nộp và mọi lần chấm lại giữ tham chiếu snapshot đã dùng |
+| BR15 | Chỉ assessment đã xuất bản được tính điểm. Assessment không có submission sau khi hạn/cửa sổ đóng có điểm 0. Submission code đang `pending`/`grading` không tính là 0; tổng điểm lớp ở trạng thái `pending` cho tới khi tất cả assessment đã xuất bản đóng và các submission của chúng đã chấm xong |
 
 ## 6. Yêu cầu phi chức năng (đúng quy mô môn học)
 
@@ -234,7 +244,7 @@ React/Next.js (frontend) · Python (backend) · MySQL (lưu trữ) · REST API �
 | S3 submissions/compile/execute isolated/test cases/scores | FR-GRD-* |
 | S4 concurrent exams/submission queues/distributed workers | FR-EXM-04..08, FR-GRD-01/03/08 |
 | S5 records/grades/histories/audit logs | FR-ASG-05, FR-GB-*, FR-ADM-02, BR8 |
-| S6 APIs + realtime notifications | Toàn bộ api-spec.md, FR-NTF-*, FR-GRD-05 |
+| S6 APIs + notifications | Toàn bộ api-spec.md, FR-NTF-*, FR-GRD-05 |
 | C1 access courses/materials/progress | FR-MAT-02, FR-GB-06 |
 | C2 quizzes/code editor/submission | FR-ASG-03, FR-GRD-01 |
 | C3 display errors/test results/scores/status | FR-GRD-04 |

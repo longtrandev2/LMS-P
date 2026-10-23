@@ -1,11 +1,9 @@
-"use client";
-
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useNavigate } from "react-router-dom";
 import { LogOut, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { NotificationsBell } from "@/components/notifications/notifications-bell";
+import { NotificationsBell } from "@/features/notifications/notifications-bell";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -28,7 +26,7 @@ import { useAuthStore } from "@/stores/auth";
 import { ROLE_LABELS } from "@/components/role-status-badges";
 
 function UserMenu() {
-  const router = useRouter();
+  const navigate = useNavigate();
   const { user, refreshToken, clearSession } = useAuthStore();
 
   const handleLogout = async () => {
@@ -39,7 +37,7 @@ function UserMenu() {
       /* logout là best-effort — session local vẫn phải clear */
     }
     clearSession();
-    router.replace("/login");
+    navigate("/login", { replace: true });
   };
 
   const initials = (user?.full_name ?? "?")
