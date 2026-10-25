@@ -24,7 +24,7 @@
 
 | Method | Path | Role | Mô tả |
 |---|---|---|---|
-| POST | /auth/login | pub | Đăng nhập → `{access_token, refresh_token, user}`; 429 nếu khóa tạm |
+| POST | /auth/login | pub | Đăng nhập: `{account, password}` — `account` = email hoặc mã SV (SV dùng MSV như SLINK) → `{access_token, refresh_token, user}`; sai 5 lần trong 15' → khóa tạm 15' → 429 `RATE_LIMITED` |
 | POST | /auth/refresh | pub | Rotate cặp token |
 | POST | /auth/logout | auth | Revoke refresh hiện tại (body tùy chọn: có `{refresh_token}` → revoke 1 token; không body → revoke toàn bộ session) |
 | GET | /auth/me | auth | Profile + roles (kèm `avatar_url` nếu có) |
