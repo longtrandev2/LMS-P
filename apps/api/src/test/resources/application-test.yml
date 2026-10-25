@@ -1,0 +1,23 @@
+# Test: H2 in-memory chế độ MySQL (không cần Docker), Flyway tắt — Hibernate sinh schema từ entity.
+spring:
+  datasource:
+    url: "jdbc:h2:mem:lms;MODE=MySQL;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE"
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+  flyway:
+    enabled: false
+  rabbitmq:
+    listener:
+      simple:
+        auto-startup: false
+
+lms:
+  jwt:
+    secret: "test-secret-dung-cho-junit-h2-0123456789abcdef"
+  storage-dir: "./target/test-storage"
+  upload:
+    max-mb: 1
