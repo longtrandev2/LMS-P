@@ -2,7 +2,7 @@
 
 | Thuộc tính | Giá trị |
 |---|---|
-| Phiên bản | 1.3 — 2026-10-23 |
+| Phiên bản | 1.4 — 2026-10-25 |
 | Trạng thái | Baseline (spec-first, chuẩn đối chiếu cho DB/API/kiến trúc/plan) |
 | Nguồn требования | Subject gốc của giảng viên (English, bản gốc trong repo docs) |
 | Tham khảo mở rộng | `LMS – Phân tích nghiệp vụ và kiến trúc công nghệ.md` — CHỈ tham khảo, phạm vi lấy theo Subject + tài liệu này |
@@ -111,11 +111,28 @@ Frontend dùng React + TypeScript (SPA); backend dùng Java + Spring Boot. MySQL
 | FR-QB-04 | M | Lọc theo loại/chủ đề/độ khó; câu hỏi tái sử dụng cho nhiều bài |
 | FR-QB-05 | S | Lecturer chạy thử solution mẫu để kiểm tra đề |
 | FR-QB-06 | M | Mỗi lần xuất bản bài tập/kỳ thi phải ghim nội dung và phiên bản các câu hỏi, lựa chọn/đáp án, giới hạn code, test case, điểm và thứ tự. Sửa ngân hàng sau đó không đổi assessment đã xuất bản; muốn đổi assessment phải tạo bản nháp mới |
+| FR-QB-07 | M | **Folder cây thư mục** câu hỏi (đa cấp): tạo/đổi tên/di chuyển/xóa (chỉ khi rỗng, câu con chuyển về root); câu chưa gán nằm ở root |
+| FR-QB-08 | M | Thuộc tính câu hỏi: folder, chủ đề, độ khó (easy/medium/hard), tag tự do; search + filter theo tất cả |
+| FR-QB-09 | M | Phạm vi: riêng tư theo owner; admin thấy tất cả; không chia sẻ GV-GV trong v1 |
+| FR-QB-10 | S | Thùng rác: soft-delete + khôi phục (giữ tối thiểu 30 ngày); duplicate câu hỏi 1 bước |
+| FR-QB-11 | M | Loại câu **Đúng/Sai** (`true_false`) — chấm theo pipeline MCQ |
+| FR-QB-12 | S | Loại câu **điền khuyết** (`short_answer`): so khớp sau chuẩn hoá (trim/lowercase/gộp khoảng trắng); hỗ trợ nhiều đáp án tương đương |
+| FR-QB-13 | W | Tự luận essay + chấm tay — defer |
+| FR-QB-14 | W | Ghép đôi (matching), MCQ nhiều đáp án từng lựa chọn — defer |
+| FR-QB-15 | M | Câu hỏi có **hình ảnh** đính kèm (upload ≤2MB; người làm bài nhận ảnh qua snapshot đã publish) |
+| FR-QB-16 | S | **Import CSV/Excel** MCQ hàng loạt (template + validate từng dòng như import user); **export CSV** theo filter |
+| FR-QB-17 | M | Thống kê sử dụng: câu đang dùng trong bao nhiêu assessment; câu đang dùng chỉ được soft-delete |
+| FR-QB-18 | W | Item analysis (tỉ lệ đúng thực tế sau chấm) — defer |
 
 ### M5 — Bài tập & Quiz
 | ID | Ưu tiên | Yêu cầu |
 |---|---|---|
 | FR-ASG-01 | M | Tạo bài tập trong lớp: gắn câu hỏi từ bank, điểm từng câu, thứ tự, xuất bản. Khi xuất bản, cố định danh sách câu, phiên bản câu hỏi, điểm và thứ tự. Bài có hạng mục `quiz` chỉ gồm câu MCQ trong v1 |
+| FR-ASM-01 | M | Ghép câu vào đề: **chọn tay** từng câu từ bank (điểm, thứ tự) |
+| FR-ASM-02 | M | **Random theo filter**: thêm N câu ngẫu nhiên từ tập con (folder/chủ đề/độ khó) vào bài; kết quả cụ thể được ghim vào snapshot khi publish (BR14) |
+| FR-ASM-03 | S | **Đề theo section**: nhóm chỉ dẫn ("5 câu easy + 3 câu medium"), mỗi section một filter + số lượng + điểm/câu; tổng điểm tự tính |
+| FR-ASM-04 | M | **Preview đề**: render đúng góc nhìn SV (kèm ảnh, tổng điểm) trước khi xuất bản |
+| FR-ASM-05 | S | Shuffle câu/lựa chọn theo thí sinh cho quiz nếu bật flag (kỳ thi đã có BR9) |
 | FR-ASG-02 | M | Chính sách: available_from, due_at, max_attempts (NULL = không giới hạn), nộp muộn (late_due_at + phạt %), score_policy (best/last), hạng mục điểm (quiz/assignment/midterm/final). Với quiz, lượt và best/last áp dụng cho **toàn bài**; với bài khác, áp dụng cho **từng câu** |
 | FR-ASG-03 | M | Làm quiz: nộp đáp án của cả bài trong một request có Idempotency-Key; câu bỏ trống được 0 điểm; server lưu một lượt quiz cùng các đáp án trong một transaction, chấm MCQ đồng bộ và trả điểm của lượt ngay |
 | FR-ASG-04 | M | Server kiểm tra hạn nộp + lượt nộp theo BR3; quá hạn từ chối hoặc đánh dấu muộn trừ %. Chỉ nộp chính thức mới tính lượt; mở đề và Run thử test công khai không tính lượt |
@@ -146,6 +163,7 @@ Frontend dùng React + TypeScript (SPA); backend dùng Java + Spring Boot. MySQL
 | FR-EXM-07 | M | Nộp sớm thủ công; sau ends_at từ chối |
 | FR-EXM-08 | S | Lecturer giám sát trực tiếp: danh sách phiên (trạng thái, đã nộp), poll 5s |
 | FR-EXM-09 | S | Ghi log sự kiện phiên thi: start, autosave, mất kết nối, reconnect, submit |
+| FR-EXM-10 | M | Thí sinh hợp lệ: role student + enrollment `active` trong lớp của kỳ thi |
 
 ### M8 — Sổ điểm
 | ID | Ưu tiên | Yêu cầu |

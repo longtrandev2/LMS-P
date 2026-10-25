@@ -87,7 +87,11 @@ erDiagram
 
 ### 2.4 Ngân hàng câu hỏi (M4)
 
-**questions** — id, owner_id FK users, type ENUM('mcq','programming'), content TEXT, topic VARCHAR(100) NULL, difficulty ENUM('easy','medium','hard') default 'medium', is_deleted BOOL default 0, created_at, updated_at. Đây là bản hiện hành trong ngân hàng; chỉnh sửa tạo nội dung cho phiên bản mới, không sửa snapshot đã được assessment xuất bản sử dụng. Index (owner_id, type).
+**question_folders** — id, owner_id FK users, parent_id FK question_folders NULL (NULL = root), name NVARCHAR(100), created_at. UNIQUE(owner_id, parent_id, name); index (owner_id).
+
+**questions** — id, owner_id FK users, folder_id FK question_folders NULL, type ENUM('mcq','true_false','short_answer','programming'), content TEXT, image_path VARCHAR(500) NULL (ảnh câu hỏi, serve tĩnh), topic VARCHAR(100) NULL, difficulty ENUM('easy','medium','hard') default 'medium', tags JSON NULL, is_deleted BOOL default 0 (thùng rác, giữ ≥30 ngày), created_at, updated_at. Đây là bản hiện hành trong ngân hàng; chỉnh sửa tạo nội dung cho phiên bản mới, không sửa snapshot đã được assessment xuất bản sử dụng; câu đang được assessment dùng chỉ được soft-delete (FR-QB-17). Index (owner_id, type), (owner_id, folder_id).
+
+**question_short** — question_id PK/FK questions; answers JSON (mảng đáp án đúng đã chuẩn hoá theo quy tắc so khớp), case_sensitive BOOL default 0. `true_false` tái dùng question_options (2 lựa chọn).
 
 **question_versions** — id, question_id FK, version_no INT, snapshot JSON, created_by FK users, created_at. UNIQUE(question_id, version_no). `snapshot` giữ toàn bộ dữ liệu cần để hiển thị/chấm phiên bản đó: type, content, options kèm đáp án đúng, starter code, ngôn ngữ/giới hạn chạy, test case theo thứ tự kèm input/expected/public/weight. Bản ghi là append-only; không cập nhật/xóa sau khi tạo.
 
@@ -99,9 +103,11 @@ erDiagram
 
 ### 2.5 Bài tập (M5)
 
-**assignments** — id, class_id FK, title NVARCHAR(200), description TEXT, category ENUM('quiz','assignment','midterm','final') default 'assignment', available_from DATETIME NULL, due_at DATETIME, allow_late BOOL default 0, late_due_at DATETIME NULL, late_penalty_percent TINYINT default 0, max_attempts INT NULL (NULL = không giới hạn), score_policy ENUM('best','last') default 'best', is_published BOOL default 0, created_by FK, created_at, updated_at. `category='quiz'` chỉ nhận câu MCQ trong v1; `max_attempts` tính theo toàn bài quiz, còn các hạng mục khác tính theo từng câu. Index (class_id, due_at).
+**assignments** — id, class_id FK, title NVARCHAR(200), description TEXT, category ENUM('quiz','assignment','midterm','final') default 'assignment', available_from DATETIME NULL, due_at DATETIME, allow_late BOOL default 0, late_due_at DATETIME NULL, late_penalty_percent TINYINT default 0, max_attempts INT NULL (NULL = không giới hạn), score_policy ENUM('best','last') default 'best', shuffle_per_student BOOL default 0 (quiz, FR-ASM-05), is_published BOOL default 0, created_by FK, created_at, updated_at. `category='quiz'` chỉ nhận câu MCQ trong v1; `max_attempts` tính theo toàn bài quiz, còn các hạng mục khác tính theo từng câu. Index (class_id, due_at).
 
 **assignment_questions** — id, assignment_id FK, question_id FK (nguồn trong bank), question_version_id FK NULL (được ghim khi publish), points DECIMAL(6,2), position SMALLINT. UNIQUE(assignment_id, question_id). Sau publish, assessment và các dòng câu hỏi/snapshot/điểm/thứ tự bất biến; thay đổi cần tạo assignment nháp mới.
+
+**assessment_sections** — id, assignment_id FK, title NVARCHAR(200), filter JSON (`{folder_id, topic, difficulty}`, NULL = mọi câu của owner), pick_count SMALLINT, points_each DECIMAL(6,2), position TINYINT. Index (assignment_id). Section là chỉ dẫn lấy câu (FR-ASM-03): câu được chọn ghi thành các dòng assignment_questions như chọn tay và ghim snapshot khi publish (FR-ASM-02 áp cùng cơ chế).
 
 **assignment_attempts** — lượt nộp **toàn bài quiz**: id, assignment_id FK, student_id FK users, attempt_no INT, is_late BOOL default 0, idempotency_key CHAR(36) UNIQUE, submitted_at DATETIME. UNIQUE(assignment_id, student_id, attempt_no); index (student_id, submitted_at). Chỉ tạo khi nộp quiz chính thức; tạo lượt và toàn bộ submission MCQ của lượt trong cùng transaction. Điểm lượt = tổng điểm các câu, câu không trả lời = 0.
 

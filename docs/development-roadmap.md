@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Phiên bản | 1.2 — 2026-10-23 |
+| Phiên bản | 1.3 — 2026-10-25 |
 | Nguồn | `srs.md`, `system-architecture.md` |
 | Nguyên tắc | Mỗi phase chốt được một mảng demo chạy thật; spec-first, code theo spec |
 
@@ -33,7 +33,7 @@ Nếu gấp show giữa chừng: P0 → P1 → nhảy P3 (P2 đưa về sau) —
 - Xong khi: BR1/BR2 enforce (student không vào lớp lạ → 403 ENROLLMENT_REQUIRED); import CSV 50 user chạy; upload PDF + download đúng.
 
 ## P2 — Quiz & điểm (M4/M5/M8)
-- Việc: CRUD questions + version snapshot; publish assignment thì ghim phiên bản câu, điểm và thứ tự; quiz MCQ nộp cả bài qua `assignment_attempts`, chấm đồng bộ; bài không phải quiz nộp từng câu; gradebook computed từ assignment + exam với trạng thái pending/final; UI bank đề, giao bài, làm quiz, bảng điểm.
+- Việc: bank đề đầy đủ — folder cây, độ khó/tag, loại Đúng/Sai + điền khuyết, ảnh câu hỏi, import/export CSV, thùng rác + duplicate; assembly đề: chọn tay, random theo filter, đề theo section, preview; publish assignment thì ghim phiên bản câu, điểm và thứ tự; quiz MCQ nộp cả bài qua `assignment_attempts`, chấm đồng bộ; bài không phải quiz nộp từng câu; gradebook computed từ assignment + exam với trạng thái pending/final; UI bank đề, giao bài, làm quiz, bảng điểm. (Essay chấm tay — defer.)
 - Xong khi: `max_attempts`/deadline/late enforce theo lượt toàn bài quiz hoặc từng câu bài khác; nộp trùng Idempotency-Key không tăng lượt; điểm tổng khớp công thức FR-GB-02 (case test tay).
 
 ## P3 ⭐ — Chấm lập trình (M6)

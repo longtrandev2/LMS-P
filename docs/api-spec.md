@@ -68,10 +68,19 @@
 
 | Method | Path | Role | Mô tả |
 |---|---|---|---|
-| GET/POST | /questions | lec | List (filter type/topic/difficulty) / tạo (MCQ kèm options, code kèm limits); trả version hiện hành |
+| GET/POST | /questions | lec | List (`q` search, filter `type`/`topic`/`difficulty`/`folder_id`/`tag`, include thùng rác) / tạo (MCQ, true_false, short_answer kèm options/answers, code kèm limits); trả version hiện hành |
 | GET/PATCH/DELETE | /questions/{id} | owner/adm | Chi tiết / sửa (tạo nội dung phiên bản mới) / soft-delete; các bản đã publish giữ snapshot cũ |
 | PUT | /questions/{id}/test-cases | owner | Thay toàn bộ test cases (input, expected, is_public, weight), tạo revision cho lần publish kế tiếp |
 | POST | /questions/{id}/verify | owner | Chạy thử solution mẫu → kết quả từng test |
+| GET/POST | /question-folders | lec | Cây folder của tôi (đa cấp) / tạo `{parent_id?, name}` |
+| PATCH/DELETE | /question-folders/{id} | owner/adm | Đổi tên / di chuyển (`parent_id`) / xóa (chỉ khi rỗng) |
+| POST | /questions/{id}/duplicate | owner | Nhân bản câu (bản mới nháp, tùy `{folder_id}`) |
+| POST | /questions/{id}/restore | owner/adm | Khôi phục từ thùng rác |
+| GET | /questions/{id}/usage | owner | Số assessment đang dùng câu + danh sách |
+| POST | /questions/import | lec | Import CSV/Excel MCQ (template, validate từng dòng, trả errors theo dòng) |
+| GET | /questions/export | lec | Export CSV theo filter hiện tại |
+| POST/DELETE | /questions/{id}/image | owner | Upload/xóa ảnh câu hỏi (multipart jpg/png/webp ≤2MB) |
+| GET | /questions/{id}/image | auth | Serve ảnh câu hỏi (đề đã publish: qua tham chiếu snapshot của assignment) |
 
 ## 6. Assignments & Submissions (M5/M6)
 
@@ -80,6 +89,9 @@
 | GET/POST | /classes/{id}/assignments | mem / lec | List (kèm trạng thái của tôi) / tạo |
 | GET/PATCH/DELETE | /assignments/{id} | mem / lec | Chi tiết (câu hỏi + điểm; test ẩn ẩn) / sửa / xóa |
 | POST | /assignments/{id}/publish | lec | Xuất bản + ghim snapshot phiên bản câu hỏi/điểm/thứ tự + notify lớp; assessment đã publish không sửa trực tiếp |
+| POST | /assignments/{id}/questions:random | lec | Thêm N câu random theo `{filter: {folder_id?, topic?, difficulty?}, count, points}` (FR-ASM-02) — trả danh sách câu đã chọn; bản nháp vẫn sửa/xóa được trước publish |
+| GET | /assignments/{id}/preview | lec | Đề render như SV thấy + tổng điểm (FR-ASM-04) |
+| GET/POST/PATCH/DELETE | /assignments/{id}/sections | lec | Đề theo section (FR-ASM-03): `{title, filter, pick_count, points_each, position}` |
 | GET/POST | /assignments/{id}/quiz-attempts | student | Chỉ `category=quiz`: GET lịch sử lượt của tôi; POST nộp cả bài `{answers: [{question_id, selected_option_ids}]}` + Idempotency-Key → chấm MCQ đồng bộ, trả `{attempt_id, attempt_no, score, question_scores}`. Câu không có trong `answers` = bỏ trống, 0 điểm; câu lạ/trùng bị từ chối; một POST chỉ tính một lượt |
 | POST | /assignments/{id}/questions/{qid}/submissions | student | Chỉ bài **không phải quiz**: nộp từng câu (mcq: `{selected_option_ids}`; code: `{language, source_code}`) + Idempotency-Key. `max_attempts` và best/last tính riêng cho câu; MCQ chấm đồng bộ, code 202 |
 | POST | /assignments/{id}/questions/{qid}/run | student | Run thử test công khai → 202 (priority thấp, không tính lượt, không điểm) |
@@ -94,7 +106,7 @@
 |---|---|---|---|
 | GET/POST | /classes/{id}/exams | mem(list) / lec | List / tạo (đề, `grade_category=midterm\|final`, duration, opens/closes, rules, shuffle) |
 | GET/PATCH | /exams/{id} | mem / lec | Chi tiết (chưa publish: chỉ metadata) / sửa nháp / publish; publish ghim snapshot phiên bản câu hỏi/điểm/thứ tự; exam đã publish không sửa trực tiếp |
-| POST | /exams/{id}/sessions | student | Bắt đầu phiên: check khung giờ + xác nhận quy chế → session + đề theo snapshot đã publish (BR9) |
+| POST | /exams/{id}/sessions | student | Bắt đầu phiên: check khung giờ + enrollment `active` + xác nhận quy chế → session + đề theo snapshot đã publish (BR9) |
 | GET | /exam-sessions/{id} | owner | Trạng thái + `remaining_seconds` + đề + đáp án đã lưu |
 | PUT | /exam-sessions/{id}/answers | owner | Autosave upsert `{question_id, selected_option_ids?, code_text?}` |
 | POST | /exam-sessions/{id}/finish | owner | Nộp: MCQ chấm, code → queue priority 10; sau ends_at → 409 SESSION_ENDED |
