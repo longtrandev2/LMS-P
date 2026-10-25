@@ -21,7 +21,7 @@ Nếu gấp show giữa chừng: P0 → P1 → nhảy P3 (P2 đưa về sau) —
 
 **Trạng thái 2026-10-20 (wave 1 — branch `feat/identity-and-class-management`):** P0 ✅ (gộp scaffold vào wave 1) · P1 HOÀN TẤT (wave 2, 2026-10-21, branch feat/materials-and-realtime-notifications): M1+M2+M3 materials + notifications qua WebSocket (lịch sử trước quyết định 23/10) + contract suite — pytest 95/95, FE build/lint pass · chờ user verify demo → PR.
 
-**Wave 2.5 (khởi động 2026-10-21) — bổ sung nghiệp vụ M1–M3 theo review user:** hồ sơ cá nhân + avatar (FR-AUTH-03), admin quản trị user đầy đủ (FR-AUTH-05/07), thuộc tính lớp: sĩ số tối đa + khung giờ ghi danh + phòng/lịch + trạng thái (FR-CRS-01, BR11–13), ghi danh theo mã SV + sinh viên tự ghi danh + catalog (FR-CRS-02/04/05), search/phân trang/sort mọi danh sách (FR-CRS-06). Spec đã cập nhật trước (srs/api-spec/db-design) — code theo branch `feat/profile-enrollment-and-list-ux` sau khi wave 2 được PR.
+**Wave 2.5 (khởi động 2026-10-21, cập nhật 2026-10-25 — chốt ghi danh 1 chiều, bỏ self-enroll/catalog/khung giờ):** hồ sơ cá nhân + avatar (FR-AUTH-03), admin quản trị user đầy đủ (FR-AUTH-05/07), thuộc tính lớp: sĩ số tối đa + phòng/lịch + trạng thái (FR-CRS-01, BR11–13), ghi danh 1 chiều lecturer/admin thêm SV theo mã SV/email (FR-CRS-02), search/phân trang/sort mọi danh sách (FR-CRS-04). Spec đã cập nhật (srs/api-spec/db-design) — code theo branch `feat/profile-enrollment-and-list-ux`.
 
 ## P0 — Scaffold
 - Việc: monorepo `apps/api`, `apps/web`, `apps/worker`, `infra/` (compose: mysql, rabbitmq-management, api, worker, web; profile prod: nginx); app factory FastAPI + `/health`; Next.js init + layout + AuthProvider khung; worker entry print.consume;

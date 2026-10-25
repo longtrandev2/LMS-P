@@ -16,7 +16,7 @@
 ```json
 { "error": { "code": "ENROLLMENT_REQUIRED", "message": "Bạn không thuộc lớp này", "details": {} } }
 ```
-- **Mã lỗi nghiệp vụ** (tập trung ở core/exceptions): `UNAUTHENTICATED`, `FORBIDDEN`, `ENROLLMENT_REQUIRED`, `ATTEMPT_EXCEEDED`, `DEADLINE_PASSED`, `EXAM_NOT_OPEN`, `SESSION_ENDED`, `IDEMPOTENCY_CONFLICT`, `VALIDATION_ERROR`, `NOT_FOUND`, `RATE_LIMITED`, `INTERNAL`, `CLASS_FULL` (hết chỗ), `ENROLL_CLOSED` (ngoài khung giờ ghi danh), `ALREADY_ENROLLED` (đã ghi danh lớp), `ENROLLMENT_INVALID` (mã SV/email không hợp lệ khi thêm tay).
+- **Mã lỗi nghiệp vụ** (tập trung ở core/exceptions): `UNAUTHENTICATED`, `FORBIDDEN`, `ENROLLMENT_REQUIRED`, `ATTEMPT_EXCEEDED`, `DEADLINE_PASSED`, `EXAM_NOT_OPEN`, `SESSION_ENDED`, `IDEMPOTENCY_CONFLICT`, `VALIDATION_ERROR`, `NOT_FOUND`, `RATE_LIMITED`, `INTERNAL`, `CLASS_FULL` (hết chỗ), `ALREADY_ENROLLED` (đã ghi danh lớp), `ENROLLMENT_INVALID` (mã SV/email không hợp lệ khi thêm tay).
 - **HTTP语义:** 200/201 thành công; 202 nộp bài bất đồng bộ; 400 validate; 401/403 auth; 404; 409 xung đột nghiệp vụ; 423 khóa (đang chấm); 429 rate limit.
 - **Idempotency:** POST nộp bài kèm header `Idempotency-Key: <uuid>`; trùng key → trả submission hoặc lượt quiz gốc (200), không tăng số lượt.
 
@@ -47,15 +47,13 @@
 |---|---|---|---|
 | GET/POST | /courses | lec/adm | List (`q` search mã/tên, sort `code`,`name`,`created_at`) / tạo khóa học |
 | GET/PATCH/DELETE | /courses/{id} | lec/adm | Chi tiết / sửa / xóa |
-| GET/POST | /classes | lec/adm | List (`q`, filter `course_id`, `semester`, sort `code`,`name`,`created_at`) / tạo lớp (`course_id`, `lecturer_id`, `max_students`, `enroll_from`, `enroll_until`, `room`, `schedule`) |
-| GET/PATCH/DELETE | /classes/{id} | lec/adm | Chi tiết (kèm `enrolled_count`, `seats_left`) / sửa / xóa. Validate BR12: max_students ≥ sĩ số hiện tại, enroll_until > enroll_from |
-| GET | /admin/classes | adm | Mọi lớp (search/filter như trên) — admin xem + override sĩ số/khung giờ/khóa lớp |
-| PATCH | /admin/classes/{id} | adm | Override `max_students` (bypass khi đầy), `enroll_from/until`, `status` → audit |
-| POST | /classes/{id}/enrollments | lec/adm | Thêm SV theo **mã SV hoặc email**: lẻ `{student_code \| email}` hoặc bulk `{students: [{student_code}]}` → validate từng dòng, trả `errors: [{row, reason}]` (`ENROLLMENT_INVALID`/`ALREADY_ENROLLED`/`CLASS_FULL`). Lecturer thêm tay được ngoài khung giờ; chỉ admin bypass khi đầy |
+| GET/POST | /classes | lec/adm | List (`q`, filter `course_id`, `semester`, sort `code`,`name`,`created_at`) / tạo lớp (`course_id`, `lecturer_id`, `max_students`, `room`, `schedule`) |
+| GET/PATCH/DELETE | /classes/{id} | lec/adm | Chi tiết (kèm `enrolled_count`, `seats_left`) / sửa / xóa. Validate BR12: max_students ≥ sĩ số hiện tại |
+| GET | /admin/classes | adm | Mọi lớp (search/filter như trên) — admin xem + override sĩ số/khóa lớp |
+| PATCH | /admin/classes/{id} | adm | Override `max_students`, `status` → audit (BR12) |
+| POST | /classes/{id}/enrollments | lec/adm | Thêm SV theo **mã SV hoặc email**: lẻ `{student_code \| email}` hoặc bulk `{students: [{student_code}]}` → validate từng dòng, trả `errors: [{row, reason}]` (`ENROLLMENT_INVALID`/`ALREADY_ENROLLED`/`CLASS_FULL`) — BR11 |
 | DELETE | /classes/{id}/enrollments/{studentId} | lec/adm | Hủy ghi danh (enrollment → `dropped`, giữ lịch sử) |
 | GET | /classes/{id}/students | lec/adm | Danh sách SV lớp: `q` (tên/email/mã SV), sort (`full_name`, `student_code`, `enrolled_at`) + phân trang |
-| POST | /classes/{id}/self-enroll | student | Sinh viên tự ghi danh (BR11: giờ server, còn chỗ, lớp active, chưa ghi danh) → 201; lỗi `ENROLL_CLOSED`/`CLASS_FULL`/`ALREADY_ENROLLED`; notify lecturer (FR-CRS-05) |
-| GET | /catalog/classes | student | Lớp mở ghi danh: `q`, sort + phân trang; mỗi item có `enrolled_count/max_students`, `seats_left`, `enroll_state` (`upcoming/open/closed/full`), `is_enrolled` |
 | GET | /me/classes | student | Lớp đã ghi danh (`q`, sort) (Page envelope) + tiến độ |
 
 ## 4. Materials (M3)

@@ -78,8 +78,8 @@ erDiagram
 ### 2.2 Khóa học & lớp (M2)
 
 **courses** — id, code VARCHAR(20) UNIQUE, name NVARCHAR(200), description TEXT, created_by FK users, created_at.
-**classes** — id, course_id FK, code VARCHAR(30), name NVARCHAR(200), semester VARCHAR(20) (vd '2026.1'), lecturer_id FK users, max_students INT UNSIGNED NULL (NULL = không giới hạn; BR12: không được < sĩ số hiện tại), enroll_from DATETIME NULL, enroll_until DATETIME NULL (NULL/NULL = luôn mở; enroll_until > enroll_from), room VARCHAR(50) NULL, schedule VARCHAR(100) NULL, status ENUM('active','locked') default 'active', grade_policy JSON NULL (`{"quiz":0.2,"assignment":0.3,"midterm":0.2,"final":0.3}`), created_at. UNIQUE(course_id, code); index (semester), (enroll_until).
-**enrollments** — id, class_id FK, student_id FK, status ENUM('active','dropped') default active, enrolled_at, enrolled_via ENUM('lecturer','self') default 'lecturer'. UNIQUE(class_id, student_id); index (student_id).
+**classes** — id, course_id FK, code VARCHAR(30), name NVARCHAR(200), semester VARCHAR(20) (vd '2026.1'), lecturer_id FK users, max_students INT UNSIGNED NULL (NULL = không giới hạn; BR12: không được < sĩ số hiện tại), room VARCHAR(50) NULL, schedule VARCHAR(100) NULL, status ENUM('active','locked') default 'active', grade_policy JSON NULL (`{"quiz":0.2,"assignment":0.3,"midterm":0.2,"final":0.3}`), created_at. UNIQUE(course_id, code); index (semester).
+**enrollments** — id, class_id FK, student_id FK, status ENUM('active','dropped') default active, enrolled_at. UNIQUE(class_id, student_id); index (student_id).
 
 ### 2.3 Học liệu (M3)
 
@@ -160,7 +160,7 @@ Công thức (FR-GB-02), tính từ submissions + grade_policy, KHÔNG lưu bả
 
 ### 2.9 Thông báo / Audit / Cấu hình (M9/M10)
 
-**notifications** — id, user_id FK, type VARCHAR(40) ('assignment.published','submission.graded','exam.published','grade.released','material.created','enrollment.created'), title VARCHAR(200), body TEXT NULL, data JSON NULL (vd submission_id), is_read BOOL default 0, created_at. Index (user_id, is_read, created_at).
+**notifications** — id, user_id FK, type VARCHAR(40) ('assignment.published','submission.graded','exam.published','grade.released','material.created'), title VARCHAR(200), body TEXT NULL, data JSON NULL (vd submission_id), is_read BOOL default 0, created_at. Index (user_id, is_read, created_at).
 
 **audit_logs** — id, actor_id FK NULL (NULL = system), action VARCHAR(60) ('user.update','role.assign','grade.adjust','exam.publish','settings.update','submission.regrade'...), entity_type VARCHAR(40), entity_id BIGINT, old_value JSON, new_value JSON, ip VARCHAR(45), created_at. Index (entity_type, entity_id), (actor_id, created_at), (created_at). **Append-only.**
 
@@ -179,7 +179,7 @@ ExamSession:       in_progress ──submit──▶ submitted
 ## 4. Chiến lược hiệu năng & khối lượng
 
 - Index nóng khớp truy vấn: gradebook đọc theo (class → assignments → submissions theo student); monitor thi đọc (exam_id, status).
-- Search danh sách (FR-CRS-06): email/student_code đã UNIQUE-index; `classes(semester)`, `classes(enroll_until)` phục vụ catalog; search `full_name`/`title` dùng LIKE prefix + index thường ở quy mô môn học (không fulltext engine). Catalog đếm sĩ số bằng subquery COUNT, KHÔNG N+1.
+- Search danh sách (FR-CRS-04): email/student_code đã UNIQUE-index; `classes(semester)`; search `full_name`/`title` dùng LIKE prefix + index thường ở quy mô môn học (không fulltext engine).
 - Bảng tăng nhanh: submissions, test_results, audit_logs, exam_events → chỉ giữ cột cần, output/log truncate 64KB, code MEDIUMTEXT.
 - Điểm/số liệu tổng hợp: query + cache app-level ngắn (60s) nếu cần; v1 ưu tiên query thẳng, đo trước tối ưu.
 - Charset utf8mb4 + collation utf8mb4_0900_ai_ci toàn hệ thống (tiếng Việt).

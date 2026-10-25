@@ -90,12 +90,10 @@ Frontend dùng React + TypeScript (SPA); backend dùng Java + Spring Boot. MySQL
 ### M2 — Khóa học & lớp học
 | ID | Ưu tiên | Yêu cầu |
 |---|---|---|
-| FR-CRS-01 | M | CRUD khóa học (lecturer/admin); CRUD lớp học thuộc khóa học, học kỳ, giảng viên phụ trách. Thuộc tính lớp: **sĩ số tối đa** `max_students` (NULL = không giới hạn), **khung giờ ghi danh** `enroll_from`/`enroll_until` (NULL = luôn mở, lecturer đặt — admin override), phòng học, lịch học (text), trạng thái `active`/`locked` |
-| FR-CRS-02 | M | Ghi danh: (a) lecturer/admin **thêm/xóa sinh viên theo mã SV hoặc email**, bulk theo mã SV `[{student_code}]` — validate từng dòng, trả lỗi rõ (không tìm thấy/trùng); (b) **sinh viên tự ghi danh** (không cần duyệt) khi còn chỗ + trong khung giờ; sinh viên KHÔNG tự rời lớp — chỉ lecturer/admin xóa (enrollment → `dropped`, giữ lịch sử) |
+| FR-CRS-01 | M | CRUD khóa học (lecturer/admin); CRUD lớp học thuộc khóa học, học kỳ, giảng viên phụ trách. Thuộc tính lớp: **sĩ số tối đa** `max_students` (NULL = không giới hạn), phòng học, lịch học (text), trạng thái `active`/`locked` |
+| FR-CRS-02 | M | Ghi danh **1 chiều**: lecturer/admin **thêm/xóa sinh viên theo mã SV hoặc email**, bulk theo mã SV `[{student_code}]` — validate từng dòng, trả lỗi rõ (không tìm thấy/trùng); chỉ thêm khi còn chỗ (`CLASS_FULL`) và lớp `active`. Sinh viên KHÔNG tự ghi danh, KHÔNG tự rời lớp — chỉ lecturer/admin xóa (enrollment → `dropped`, giữ lịch sử) |
 | FR-CRS-03 | M | Kiểm soát truy cập theo ghi danh (xem BR2) |
-| FR-CRS-04 | M | **Catalog lớp mở ghi danh** cho sinh viên: duyệt/tìm kiếm lớp, thấy sĩ số còn trống (`45/50`), trạng thái khung giờ (sắp mở / đang mở / đã đóng / đã đầy), nút tham gia |
-| FR-CRS-05 | S | Thông báo cho lecturer khi sinh viên tự ghi danh vào lớp (type `enrollment.created`) |
-| FR-CRS-06 | M | Danh sách (courses, classes, lớp của tôi, sinh viên lớp, học liệu) hỗ trợ **search + phân trang + sort** theo quy ước chung api-spec |
+| FR-CRS-04 | M | Danh sách (courses, classes, lớp của tôi, sinh viên lớp, học liệu) hỗ trợ **search + phân trang + sort** theo quy ước chung api-spec |
 
 ### M3 — Học liệu
 | ID | Ưu tiên | Yêu cầu |
@@ -163,7 +161,7 @@ Frontend dùng React + TypeScript (SPA); backend dùng Java + Spring Boot. MySQL
 ### M9 — Thông báo
 | ID | Ưu tiên | Yêu cầu |
 |---|---|---|
-| FR-NTF-01 | M | Thông báo in-app: bài mới, kết quả chấm, kỳ thi mở, điểm công bố, sinh viên tự ghi danh (gửi lecturer) |
+| FR-NTF-01 | M | Thông báo in-app: bài mới, kết quả chấm, kỳ thi mở, điểm công bố |
 | FR-NTF-02 | M | Danh sách thông báo, lọc trạng thái, đánh dấu một hoặc tất cả đã đọc qua REST |
 
 ### M10 — Quản trị & giám sát
@@ -216,8 +214,8 @@ Frontend dùng React + TypeScript (SPA); backend dùng Java + Spring Boot. MySQL
 | BR8 | Submission bất biến (không sửa/xóa); regrade tạo grading_result mới gắn cùng submission và dùng đúng phiên bản câu hỏi/test case mà submission đã tham chiếu |
 | BR9 | Đề thi chỉ hiển thị sau thời điểm bắt đầu phiên của thí sinh đó |
 | BR10 | Code sinh viên chỉ chạy trong sandbox: không mạng, giới hạn CPU/RAM/PID/thời gian/đầu ra, filesystem chỉ đọc |
-| BR11 | Tự ghi danh: chỉ trong `[enroll_from, enroll_until]` theo **giờ server** (không tin client) và chỉ khi sĩ số < max_students; ngoài khung giờ hoặc đầy → lỗi rõ (ENROLL_CLOSED / CLASS_FULL); lecturer/admin thêm tay **được ngoài khung giờ**, chỉ admin bypass được khi đầy |
-| BR12 | Sửa `max_students` không được nhỏ hơn sĩ số hiện tại; nếu cả hai đầu có, `enroll_until` > `enroll_from`; thay đổi sĩ số/khung giờ/trạng thái lớp → audit |
+| BR11 | Sĩ số: chỉ thêm sinh viên khi sĩ số hiện tại < `max_students` (NULL = không giới hạn) và lớp `active`; vượt → lỗi rõ `CLASS_FULL`. Muốn thêm tiếp phải tăng `max_students` |
+| BR12 | Sửa `max_students` không được nhỏ hơn sĩ số hiện tại; thay đổi sĩ số/trạng thái lớp → audit |
 | BR13 | Lớp `locked`: chặn ghi danh mới, sinh viên không truy cập nội dung lớp (học liệu) |
 | BR14 | Khi xuất bản assessment, hệ thống lưu snapshot bất biến của câu hỏi và phiên bản nội dung/đáp án/test case/giới hạn chấm, điểm tối đa và thứ tự. Sửa hoặc xóa câu trong ngân hàng không thay đổi assessment đã xuất bản; muốn thay đổi phải tạo assessment nháp mới. Bài nộp và mọi lần chấm lại giữ tham chiếu snapshot đã dùng |
 | BR15 | Chỉ assessment đã xuất bản được tính điểm. Assessment không có submission sau khi hạn/cửa sổ đóng có điểm 0. Submission code đang `pending`/`grading` không tính là 0; tổng điểm lớp ở trạng thái `pending` cho tới khi tất cả assessment đã xuất bản đóng và các submission của chúng đã chấm xong |
