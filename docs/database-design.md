@@ -77,13 +77,15 @@ erDiagram
 
 ### 2.2 Khóa học & lớp (M2)
 
-**courses** — id, code VARCHAR(20) UNIQUE, name NVARCHAR(200), description TEXT, created_by FK users, created_at.
-**classes** — id, course_id FK, code VARCHAR(30), name NVARCHAR(200), semester VARCHAR(20) (vd '2026.1'), lecturer_id FK users, max_students INT UNSIGNED NULL (NULL = không giới hạn; BR12: không được < sĩ số hiện tại), room VARCHAR(50) NULL, schedule VARCHAR(100) NULL, status ENUM('active','locked') default 'active', grade_policy JSON NULL (`{"quiz":0.2,"assignment":0.3,"midterm":0.2,"final":0.3}`), created_at. UNIQUE(course_id, code); index (semester).
+**courses** — id, code VARCHAR(20) UNIQUE, name NVARCHAR(200), description TEXT, credits TINYINT UNSIGNED NULL, created_by FK users, created_at.
+**classes** — id, course_id FK, code VARCHAR(30), name NVARCHAR(200), semester VARCHAR(20) (vd '2026.1'), lecturer_id FK users, co_lecturer_id FK users NULL (GV phụ), max_students INT UNSIGNED NULL (NULL = không giới hạn; BR12: không được < sĩ số hiện tại), room VARCHAR(50) NULL, status ENUM('active','locked') default 'active', grade_policy JSON NULL (`{"quiz":0.2,"assignment":0.3,"midterm":0.2,"final":0.3}`), created_at. UNIQUE(course_id, code); index (semester).
+
+**class_sessions** — id, class_id FK, session_date DATE, period_start TINYINT, period_end TINYINT, start_time TIME, end_time TIME (suy từ tiết theo bảng tiết chuẩn hoá, lưu sẵn để query), room VARCHAR(50) NULL (NULL = dùng `classes.room`), mode ENUM('ly_thuyet','thuc_hanh') default 'ly_thuyet', delivery ENUM('truc_tiep','truc_tuyen') default 'truc_tiep', title NVARCHAR(200) NULL, created_at. Index (class_id, session_date), (session_date). Chỉ sửa/xóa buổi có session_date ≥ hôm nay.
 **enrollments** — id, class_id FK, student_id FK, status ENUM('active','dropped') default active, enrolled_at. UNIQUE(class_id, student_id); index (student_id).
 
 ### 2.3 Học liệu (M3)
 
-**materials** — id, class_id FK, title NVARCHAR(200), description TEXT NULL, type ENUM('pdf','doc','slide','link','video','archive','other'), file_path VARCHAR(500) NULL (link → URL), size_bytes BIGINT default 0, uploaded_by FK, created_at. Index (class_id, created_at).
+**materials** — id, class_id FK, session_id FK class_sessions NULL (FR-CRS-07: gắn buổi, mặc định NULL = gắn lớp), title NVARCHAR(200), description TEXT NULL, type ENUM('pdf','doc','slide','link','video','archive','other'), file_path VARCHAR(500) NULL (link → URL), size_bytes BIGINT default 0, uploaded_by FK, created_at. Index (class_id, created_at), (session_id).
 
 ### 2.4 Ngân hàng câu hỏi (M4)
 

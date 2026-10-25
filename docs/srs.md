@@ -27,7 +27,7 @@
 - Thông báo in-app; nhật ký kiểm toán; cấu hình hệ thống; thống kê quản trị.
 
 **Ngoài phạm vi (v1) — ghi rõ để không bị "scope creep":**
-- Thanh toán, video streaming quy mô lớn, mobile native, SSO, email, i18n, chống gian lận bằng AI.
+- Thanh toán, video streaming quy mô lớn, mobile native, SSO, email, i18n, chống gian lận bằng AI, điểm danh buổi học (attendance).
 - Redis, replica MySQL, object storage S3/MinIO, Kubernetes, Prometheus/Grafana/ELK.
 → Các mục này nằm ở "Đường mở rộng" trong `system-architecture.md`, KHÔNG xây v1.
 
@@ -90,10 +90,13 @@ Frontend dùng React + TypeScript (SPA); backend dùng Java + Spring Boot. MySQL
 ### M2 — Khóa học & lớp học
 | ID | Ưu tiên | Yêu cầu |
 |---|---|---|
-| FR-CRS-01 | M | CRUD khóa học (lecturer/admin); CRUD lớp học thuộc khóa học, học kỳ, giảng viên phụ trách. Thuộc tính lớp: **sĩ số tối đa** `max_students` (NULL = không giới hạn), phòng học, lịch học (text), trạng thái `active`/`locked` |
+| FR-CRS-01 | M | CRUD khóa học (mã, tên, mô tả, **số tín chỉ** `credits`); CRUD lớp học thuộc khóa học, học kỳ, giảng viên phụ trách + **GV phụ** `co_lecturer_id` (NULL). Thuộc tính lớp: **sĩ số tối đa** `max_students` (NULL = không giới hạn), phòng học, trạng thái `active`/`locked` |
 | FR-CRS-02 | M | Ghi danh **1 chiều**: lecturer/admin **thêm/xóa sinh viên theo mã SV hoặc email**, bulk theo mã SV `[{student_code}]` — validate từng dòng, trả lỗi rõ (không tìm thấy/trùng); chỉ thêm khi còn chỗ (`CLASS_FULL`) và lớp `active`. Sinh viên KHÔNG tự ghi danh, KHÔNG tự rời lớp — chỉ lecturer/admin xóa (enrollment → `dropped`, giữ lịch sử) |
 | FR-CRS-03 | M | Kiểm soát truy cập theo ghi danh (xem BR2) |
 | FR-CRS-04 | M | Danh sách (courses, classes, lớp của tôi, sinh viên lớp, học liệu) hỗ trợ **search + phân trang + sort** theo quy ước chung api-spec |
+| FR-CRS-05 | M | **Quản lý lịch học cấu trúc** (subject: "schedules"): buổi học gồm ngày, tiết bắt đầu/kết thúc (giờ suy từ bảng tiết chuẩn hoá), phòng (override từng buổi), loại hình lý thuyết/thực hành, hình thức trực tiếp/trực tuyến, tiêu đề; tạo lẻ hoặc **lặp theo tuần**; chỉ sửa/xóa buổi chưa diễn ra |
+| FR-CRS-06 | M | Xem lịch: sinh viên xem **lịch tuần** gộp mọi lớp đang học; lecturer xem lịch các lớp mình dạy |
+| FR-CRS-07 | S | Học liệu gắn buổi học (mặc định gắn lớp) |
 
 ### M3 — Học liệu
 | ID | Ưu tiên | Yêu cầu |

@@ -47,7 +47,7 @@
 |---|---|---|---|
 | GET/POST | /courses | lec/adm | List (`q` search mã/tên, sort `code`,`name`,`created_at`) / tạo khóa học |
 | GET/PATCH/DELETE | /courses/{id} | lec/adm | Chi tiết / sửa / xóa |
-| GET/POST | /classes | lec/adm | List (`q`, filter `course_id`, `semester`, sort `code`,`name`,`created_at`) / tạo lớp (`course_id`, `lecturer_id`, `max_students`, `room`, `schedule`) |
+| GET/POST | /classes | lec/adm | List (`q`, filter `course_id`, `semester`, sort `code`,`name`,`created_at`) / tạo lớp (`course_id`, `lecturer_id`, `co_lecturer_id?`, `max_students`, `room`, `status`) |
 | GET/PATCH/DELETE | /classes/{id} | lec/adm | Chi tiết (kèm `enrolled_count`, `seats_left`) / sửa / xóa. Validate BR12: max_students ≥ sĩ số hiện tại |
 | GET | /admin/classes | adm | Mọi lớp (search/filter như trên) — admin xem + override sĩ số/khóa lớp |
 | PATCH | /admin/classes/{id} | adm | Override `max_students`, `status` → audit (BR12) |
@@ -55,6 +55,9 @@
 | DELETE | /classes/{id}/enrollments/{studentId} | lec/adm | Hủy ghi danh (enrollment → `dropped`, giữ lịch sử) |
 | GET | /classes/{id}/students | lec/adm | Danh sách SV lớp: `q` (tên/email/mã SV), sort (`full_name`, `student_code`, `enrolled_at`) + phân trang |
 | GET | /me/classes | student | Lớp đã ghi danh (`q`, sort) (Page envelope) + tiến độ |
+| GET/POST | /classes/{id}/sessions | mem(list) / lec | Buổi học của lớp (filter `from`,`to`) / tạo buổi lẻ hoặc **lặp tuần** `{weekday, period_start, period_end, room?, mode?, delivery?, title?, repeat_from, repeat_weeks}` (FR-CRS-05) |
+| PATCH/DELETE | /classes/{id}/sessions/{sessionId} | lec/adm | Sửa / xóa buổi **chưa diễn ra** |
+| GET | /me/schedule | student | Lịch tuần của tôi: gộp buổi học mọi lớp đang ghi danh (`from`, `to`) (FR-CRS-06); lecturer dùng `/me/teaching-schedule` tương tự |
 
 ## 4. Materials (M3)
 
