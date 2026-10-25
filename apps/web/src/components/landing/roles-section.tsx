@@ -12,7 +12,7 @@ const ROLES: Role[] = [
     title: "Quản trị",
     duties: [
       "Quản lý tài khoản và phân quyền theo vai trò",
-      "Cấu hình khóa học, học kỳ và hệ thống",
+      "Cấu hình học phần, học kỳ và hệ thống",
       "Theo dõi nhật ký hoạt động của toàn hệ thống",
     ],
   },

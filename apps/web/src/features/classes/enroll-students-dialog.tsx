@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DataTablePagination } from "@/components/data-table-pagination";
 import { FieldError } from "@/components/form-field-error";
@@ -16,17 +15,12 @@ import { queryKeys } from "@/lib/query-keys";
 import type { Paginated, StudentCandidate } from "@/types/api";
 
 interface Props { onOpenChange: (open: boolean) => void; classId: string; onEnrolled: () => void }
-type Target = { student_code: string } | { email: string };
 type RowCheck = { row: number; identifier: string | null; full_name: string | null; valid: boolean; reason: string | null };
 type CsvPreview = { eligible: number; rows: RowCheck[] };
-const identify = (value: string): Target => value.includes("@") ? { email: value } : { student_code: value };
 const sampleCsv = "data:text/csv;charset=utf-8,student_code%2Cemail%0A23IT001%2C";
 
 export function EnrollStudentsDialog({ onOpenChange, classId, onEnrolled }: Props) {
-  const [single, setSingle] = useState("");
-  const [bulk, setBulk] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
   const [csvError, setCsvError] = useState("");
   const [csvTargets, setCsvTargets] = useState<EnrollmentCsvTarget[]>([]);
   const [preview, setPreview] = useState<CsvPreview | null>(null);
@@ -41,15 +35,15 @@ export function EnrollStudentsDialog({ onOpenChange, classId, onEnrolled }: Prop
     enabled: candidateTerm.length >= 2,
   });
 
-  async function enroll(values: Target[]) {
-    setSubmitting(true); setError("");
+  async function enroll(studentIds: number[]) {
+    setSubmitting(true);
     try {
       const result = await api.post<{ added: number; errors: { row: number; reason: string }[] }>(
-        `/classes/${classId}/enrollments`, { students: values }
+        `/classes/${classId}/enrollments`, { student_ids: studentIds }
       );
       if (result.added) toast.success(`Đã ghi danh ${result.added} sinh viên.`);
       if (result.errors.length) toast.error(result.errors.map((item) => `Dòng ${item.row}: ${item.reason}`).join(" · "));
-      setSingle(""); setBulk(""); setSelectedCandidates([]); onEnrolled();
+      setSelectedCandidates([]); onEnrolled();
       if (!result.errors.length) onOpenChange(false);
     } catch (cause) { toast.error(errorText(cause)); }
     finally { setSubmitting(false); }
@@ -81,38 +75,13 @@ export function EnrollStudentsDialog({ onOpenChange, classId, onEnrolled }: Prop
     finally { setSubmitting(false); }
   }
 
-  function handleSingle(event: React.FormEvent) {
-    event.preventDefault(); const value = single.trim();
-    if (!value) { setError("Nhập mã sinh viên hoặc email."); return; }
-    void enroll([identify(value)]);
-  }
-
-  function handleBulk(event: React.FormEvent) {
-    event.preventDefault();
-    const values = bulk.split(/[\n,;]+/).map((value) => value.trim()).filter(Boolean);
-    if (!values.length) { setError("Dán danh sách mã sinh viên hoặc email."); return; }
-    void enroll(values.map(identify));
-  }
-
   return (
     <Dialog open onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-xl">
         <DialogHeader><DialogTitle className="font-heading">Thêm sinh viên vào lớp</DialogTitle>
-          <DialogDescription>Nhập mã SV/email hoặc nhập danh sách CSV. Hệ thống kiểm tra từng sinh viên trước khi thêm.</DialogDescription></DialogHeader>
-        <Tabs defaultValue="single">
-          <TabsList className="grid w-full grid-cols-4"><TabsTrigger value="single">Một người</TabsTrigger><TabsTrigger value="bulk">Dán DS</TabsTrigger><TabsTrigger value="search">Tìm SV</TabsTrigger><TabsTrigger value="csv">CSV</TabsTrigger></TabsList>
-          <TabsContent value="single"><form onSubmit={handleSingle} className="space-y-4 pt-2">
-            <div className="space-y-2"><Label htmlFor="enroll-single">Mã sinh viên hoặc email</Label>
-              <Input id="enroll-single" value={single} onChange={(e) => setSingle(e.target.value)} placeholder="VD: 23IT001 hoặc sv@example.edu" />
-              {error ? <FieldError text={error} /> : null}</div>
-            <Button type="submit" disabled={submitting}>{submitting ? "Đang ghi danh…" : "Ghi danh"}</Button>
-          </form></TabsContent>
-          <TabsContent value="bulk"><form onSubmit={handleBulk} className="space-y-4 pt-2">
-            <div className="space-y-2"><Label htmlFor="enroll-bulk">Danh sách mã SV hoặc email</Label>
-              <Textarea id="enroll-bulk" value={bulk} onChange={(e) => setBulk(e.target.value)} rows={6} className="font-mono text-sm" placeholder={"Mỗi dòng một mã SV hoặc email:\n23IT001\nsv@example.edu"} />
-              {error ? <FieldError text={error} /> : null}</div>
-            <Button type="submit" disabled={submitting}>{submitting ? "Đang ghi danh…" : "Ghi danh danh sách"}</Button>
-          </form></TabsContent>
+          <DialogDescription>Tìm sinh viên theo tên, mã hoặc email, hoặc nhập danh sách bằng CSV. Hệ thống kiểm tra từng sinh viên trước khi thêm.</DialogDescription></DialogHeader>
+        <Tabs defaultValue="search">
+          <TabsList className="grid w-full grid-cols-2"><TabsTrigger value="search">Tìm sinh viên</TabsTrigger><TabsTrigger value="csv">Nhập CSV</TabsTrigger></TabsList>
           <TabsContent value="search" className="space-y-3 pt-4">
             <Input value={candidateSearch} onChange={(event) => { setCandidateSearch(event.target.value); setCandidatePage(1); }} placeholder="Tìm theo tên, mã SV hoặc email" aria-label="Tìm sinh viên để xếp lớp" />
             {candidateTerm.length < 2 ? <p className="text-sm text-muted-foreground">Nhập ít nhất 2 ký tự để tìm sinh viên.</p> : candidateQuery.isPending ? <p className="text-sm text-muted-foreground">Đang tìm sinh viên…</p> : candidateQuery.isError ? <p className="text-sm text-destructive">Không tìm được sinh viên. Thử lại sau.</p> : candidateQuery.data?.items.length === 0 ? <p className="text-sm text-muted-foreground">Không có sinh viên phù hợp chưa thuộc lớp này.</p> : <>
@@ -126,7 +95,7 @@ export function EnrollStudentsDialog({ onOpenChange, classId, onEnrolled }: Prop
               {candidateQuery.data ? <DataTablePagination page={candidateQuery.data.page} limit={candidateQuery.data.limit} total={candidateQuery.data.total} onPageChange={setCandidatePage} /> : null}
             </>}
             <div className="flex items-center justify-between gap-3"><span className="text-sm text-muted-foreground">Đã chọn {selectedCandidates.length} sinh viên</span>
-              <Button disabled={submitting || selectedCandidates.length === 0} onClick={() => void enroll(selectedCandidates.map((student) => student.student_code ? { student_code: student.student_code } : { email: student.email }))}>{submitting ? "Đang thêm…" : "Thêm vào lớp"}</Button></div>
+              <Button disabled={submitting || selectedCandidates.length === 0} onClick={() => void enroll(selectedCandidates.map((student) => student.user_id))}>{submitting ? "Đang thêm…" : "Thêm vào lớp"}</Button></div>
           </TabsContent>
           <TabsContent value="csv" className="space-y-4 pt-4">
             <div className="flex flex-wrap items-center justify-between gap-3">

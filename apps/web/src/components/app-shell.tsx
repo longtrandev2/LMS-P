@@ -88,7 +88,7 @@ function UserMenu() {
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { pathname } = useLocation();
-  const section = pathname.startsWith("/questions") ? "Ngân hàng câu hỏi" : pathname.startsWith("/admin/users") ? "Quản lý người dùng" : pathname.startsWith("/admin/audit") ? "Nhật ký kiểm toán" : pathname.startsWith("/me/profile") ? "Hồ sơ cá nhân" : pathname.startsWith("/me/classes") ? "Lớp của tôi" : "Khóa học & lớp";
+  const section = pathname.startsWith("/questions") ? "Ngân hàng câu hỏi" : pathname.startsWith("/admin/academics") ? "Học phần & phân công" : pathname.startsWith("/admin/users") ? "Quản lý người dùng" : pathname.startsWith("/admin/audit") ? "Nhật ký kiểm toán" : pathname.startsWith("/me/profile") ? "Hồ sơ cá nhân" : pathname.startsWith("/me/classes") ? "Lớp của tôi" : pathname.startsWith("/courses") ? "Lớp được giao" : "Lớp học phần";
 
   return (
     <div className="flex min-h-dvh">

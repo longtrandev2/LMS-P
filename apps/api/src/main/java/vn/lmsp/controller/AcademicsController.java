@@ -1,8 +1,6 @@
 package vn.lmsp.controller;
 
 import jakarta.validation.Valid;
-import com.fasterxml.jackson.databind.JsonNode;
-import java.util.ArrayList;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,47 +22,50 @@ public class AcademicsController {
 
     @GetMapping("/courses") @PreAuthorize("hasAnyRole('ADMIN','LECTURER')")
     public Page<CourseView> courses(@RequestParam(defaultValue="1") int page, @RequestParam(defaultValue="20") int limit,
-                                    @RequestParam(required=false) String q, @RequestParam(defaultValue="code") String sort) {
-        return service.courses(checkedPage(page), checkedLimit(limit), q, sort);
+                                    @RequestParam(required=false) String q, @RequestParam(defaultValue="code") String sort,
+                                    @AuthenticationPrincipal String actor, Authentication auth) {
+        return service.courses(checkedPage(page), checkedLimit(limit), q, sort, Long.valueOf(actor), hasRole(auth, "ROLE_ADMIN"));
     }
-    @PostMapping("/courses") @ResponseStatus(HttpStatus.CREATED) @PreAuthorize("hasAnyRole('ADMIN','LECTURER')")
+    @PostMapping("/courses") @ResponseStatus(HttpStatus.CREATED) @PreAuthorize("hasRole('ADMIN')")
     public CourseView createCourse(@Valid @RequestBody CourseInput body, @AuthenticationPrincipal String actor) { return service.createCourse(body, Long.valueOf(actor)); }
     @GetMapping("/courses/{id}") @PreAuthorize("hasAnyRole('ADMIN','LECTURER')")
-    public CourseView course(@PathVariable Long id) { return service.course(id); }
-    @PatchMapping("/courses/{id}") @PreAuthorize("hasAnyRole('ADMIN','LECTURER')")
+    public CourseView course(@PathVariable Long id, @AuthenticationPrincipal String actor, Authentication auth) { return service.course(id, Long.valueOf(actor), hasRole(auth, "ROLE_ADMIN")); }
+    @PatchMapping("/courses/{id}") @PreAuthorize("hasRole('ADMIN')")
     public CourseView updateCourse(@PathVariable Long id, @Valid @RequestBody CourseInput body, @AuthenticationPrincipal String actor) { return service.updateCourse(id, body, Long.valueOf(actor)); }
-    @DeleteMapping("/courses/{id}") @ResponseStatus(HttpStatus.NO_CONTENT) @PreAuthorize("hasAnyRole('ADMIN','LECTURER')")
+    @DeleteMapping("/courses/{id}") @ResponseStatus(HttpStatus.NO_CONTENT) @PreAuthorize("hasRole('ADMIN')")
     public void deleteCourse(@PathVariable Long id, @AuthenticationPrincipal String actor) { service.deleteCourse(id, Long.valueOf(actor)); }
 
     @GetMapping("/classes")
     @PreAuthorize("hasAnyRole('ADMIN','LECTURER')")
     public Page<ClassView> classes(@RequestParam(required=false) Long course_id, @RequestParam(required=false) String semester,
                                    @RequestParam(required=false) String q, @RequestParam(defaultValue="code") String sort,
-                                   @RequestParam(defaultValue="1") int page, @RequestParam(defaultValue="20") int limit) {
-        return service.classes(course_id, semester, q, sort, checkedPage(page), checkedLimit(limit));
+                                   @RequestParam(defaultValue="1") int page, @RequestParam(defaultValue="20") int limit,
+                                   @AuthenticationPrincipal String actor, Authentication auth) {
+        return service.classes(course_id, semester, q, sort, checkedPage(page), checkedLimit(limit), Long.valueOf(actor), hasRole(auth, "ROLE_ADMIN"));
     }
     @GetMapping("/admin/classes") @PreAuthorize("hasRole('ADMIN')")
     public Page<ClassView> adminClasses(@RequestParam(required=false) Long course_id, @RequestParam(required=false) String semester,
                                         @RequestParam(required=false) String q, @RequestParam(defaultValue="code") String sort,
                                         @RequestParam(defaultValue="1") int page, @RequestParam(defaultValue="20") int limit) {
-        return service.classes(course_id, semester, q, sort, checkedPage(page), checkedLimit(limit));
+        return service.classes(course_id, semester, q, sort, checkedPage(page), checkedLimit(limit), null, true);
     }
-    @PostMapping("/classes") @ResponseStatus(HttpStatus.CREATED) @PreAuthorize("hasAnyRole('ADMIN','LECTURER')")
+    @PostMapping("/classes") @ResponseStatus(HttpStatus.CREATED) @PreAuthorize("hasRole('ADMIN')")
     public ClassView createClass(@Valid @RequestBody ClassInput body, @AuthenticationPrincipal String actor) { return service.createClass(body, Long.valueOf(actor)); }
     @GetMapping("/classes/{id}")
     public ClassView getClass(@PathVariable Long id, @AuthenticationPrincipal String actor, Authentication auth) {
-        return service.getClass(id, Long.valueOf(actor), isPrivileged(auth));
+        return service.getClass(id, Long.valueOf(actor), hasRole(auth, "ROLE_ADMIN"), hasRole(auth, "ROLE_LECTURER"));
     }
-    @PatchMapping("/classes/{id}") @PreAuthorize("hasAnyRole('ADMIN','LECTURER')")
+    @PatchMapping("/classes/{id}") @PreAuthorize("hasRole('ADMIN')")
     public ClassView updateClass(@PathVariable Long id, @Valid @RequestBody ClassPatch body, @AuthenticationPrincipal String actor) { return service.updateClass(id, body, Long.valueOf(actor)); }
     @PatchMapping("/admin/classes/{id}") @PreAuthorize("hasRole('ADMIN')")
     public ClassView adminUpdateClass(@PathVariable Long id, @Valid @RequestBody ClassPatch body, @AuthenticationPrincipal String actor) { return service.adminUpdateClass(id, body, Long.valueOf(actor)); }
-    @DeleteMapping("/classes/{id}") @ResponseStatus(HttpStatus.NO_CONTENT) @PreAuthorize("hasAnyRole('ADMIN','LECTURER')")
+    @DeleteMapping("/classes/{id}") @ResponseStatus(HttpStatus.NO_CONTENT) @PreAuthorize("hasRole('ADMIN')")
     public void deleteClass(@PathVariable Long id, @AuthenticationPrincipal String actor) { service.deleteClass(id, Long.valueOf(actor)); }
 
     @PostMapping("/classes/{id}/enrollments") @ResponseStatus(HttpStatus.CREATED) @PreAuthorize("hasAnyRole('ADMIN','LECTURER')")
-    public EnrollResult enroll(@PathVariable Long id, @RequestBody JsonNode body, @AuthenticationPrincipal String actor, Authentication auth) {
-        return enrollmentService.enroll(id, targets(body), Long.valueOf(actor), hasRole(auth, "ROLE_ADMIN"));
+    public EnrollResult enroll(@PathVariable Long id, @Valid @RequestBody EnrollIdsRequest body, @AuthenticationPrincipal String actor, Authentication auth) {
+        List<EnrollTarget> selected = body.student_ids().stream().map(EnrollTarget::new).toList();
+        return enrollmentService.enroll(id, selected, Long.valueOf(actor), hasRole(auth, "ROLE_ADMIN"));
     }
     @GetMapping("/classes/{id}/student-candidates") @PreAuthorize("hasAnyRole('ADMIN','LECTURER')")
     public Page<StudentCandidateView> candidates(@PathVariable Long id, @RequestParam(required=false) String q,
@@ -102,22 +103,6 @@ public class AcademicsController {
         return enrollmentService.myClasses(Long.valueOf(actor), checkedPage(page), checkedLimit(limit), q, sort);
     }
 
-    private List<EnrollTarget> targets(JsonNode body) {
-        JsonNode rows = body != null && body.isObject() && body.has("students") ? body.get("students") : body;
-        if (rows != null && !rows.isArray()) rows = body;
-        List<EnrollTarget> result = new ArrayList<>();
-        if (rows != null && rows.isArray()) rows.forEach(row -> result.add(target(row)));
-        else if (rows != null && rows.isObject()) result.add(target(rows));
-        return result;
-    }
-    private EnrollTarget target(JsonNode row) {
-        if (row == null || !row.isObject()) return new EnrollTarget(null, null, null);
-        Long id = row.hasNonNull("student_id") ? row.get("student_id").asLong() : null;
-        String code = row.hasNonNull("student_code") ? row.get("student_code").asText() : null;
-        String email = row.hasNonNull("email") ? row.get("email").asText() : null;
-        return new EnrollTarget(id, code, email);
-    }
-    private boolean isPrivileged(Authentication auth) { return hasRole(auth, "ROLE_ADMIN") || hasRole(auth, "ROLE_LECTURER"); }
     private boolean hasRole(Authentication auth, String role) { return auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals(role)); }
     private int checkedPage(int page) { if (page < 1) throw new IllegalArgumentException("page phải lớn hơn hoặc bằng 1"); return page; }
     private int checkedLimit(int limit) { if (limit < 1 || limit > 100) throw new IllegalArgumentException("limit phải từ 1 đến 100"); return limit; }

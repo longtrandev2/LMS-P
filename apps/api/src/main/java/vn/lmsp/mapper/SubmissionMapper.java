@@ -16,7 +16,8 @@ public class SubmissionMapper {
     public SubmissionView toView(Submission submission) {
         return new SubmissionView(submission.getId(), submission.getAssignmentId(), submission.getStudentId(),
                 submission.getQuestionId(), submission.getAttemptNo(), submission.getSelectedOptionIds(),
-                submission.getScore(), submission.isLate(), submission.getSubmittedAt());
+                submission.getScore(), submission.isLate(), submission.getSubmittedAt(),
+                submission.getStatus(), submission.getType(), submission.getLanguage());
     }
 
     public QuizAttemptView toAttemptView(AssignmentAttempt attempt, List<AssignmentQuestion> questions,

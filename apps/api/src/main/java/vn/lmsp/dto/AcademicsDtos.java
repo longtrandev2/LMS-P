@@ -1,6 +1,7 @@
 package vn.lmsp.dto;
 
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.util.List;
@@ -26,7 +27,8 @@ public final class AcademicsDtos {
                             String course_code, String course_name, String lecturer_name, Integer max_students,
                             LocalDateTime enroll_from, LocalDateTime enroll_until, String room, String schedule,
                             ClassStatus status, long enrolled_count, Integer seats_left) { }
-    public record EnrollTarget(Long student_id, String student_code, String email) { }
+    public record EnrollTarget(Long studentId) { }
+    public record EnrollIdsRequest(@NotNull @Size(min=1, max=500) List<@NotNull @Positive Long> student_ids) { }
     public record CsvEnrollTarget(int row, String student_code, String email) { }
     public record CsvEnrollRequest(@NotNull @Size(min=1, max=1000) List<CsvEnrollTarget> students) { }
     public record EnrollPreviewRow(int row, String identifier, Long user_id, String full_name, String email,

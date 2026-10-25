@@ -26,10 +26,12 @@ import { api } from "@/lib/api";
 import { errorText } from "@/lib/error-messages";
 import { queryKeys } from "@/lib/query-keys";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
+import { hasRole, useAuthStore } from "@/stores/auth";
 import type { ClassSummary, Course, Paginated } from "@/types/api";
 
 export function CourseClassesPage({ courseId }: { courseId: string }) {
   const { status: guard } = useAuthGuard(["admin", "lecturer"]);
+  const isAdmin = hasRole(useAuthStore((state) => state.user), "admin");
   const queryClient = useQueryClient();
   const [formOpen, setFormOpen] = useState(false);
   const [editingClass, setEditingClass] = useState<ClassSummary | null>(null);
@@ -75,24 +77,22 @@ export function CourseClassesPage({ courseId }: { courseId: string }) {
   return (
     <div className="space-y-6">
       <Link
-        to="/courses"
+        to={isAdmin ? "/admin/academics" : "/courses"}
         className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
       >
-        <ArrowLeft className="size-4" aria-hidden /> Tất cả khóa học
+        <ArrowLeft className="size-4" aria-hidden /> {isAdmin ? "Quản lý học phần" : "Lớp được giao"}
       </Link>
 
       <PageHeader
-        title={course ? course.name : "Khóa học"}
+        title={course ? course.name : "Học phần"}
         description={
           course
-            ? `Mã ${course.code} — quản lý các lớp học phần của khóa.`
-            : "Đang tải thông tin khóa học…"
+            ? `Mã học phần ${course.code} — ${isAdmin ? "quản lý các lớp theo từng học kỳ." : "các lớp học phần được phân công cho bạn."}`
+            : "Đang tải thông tin học phần…"
         }
-        actions={
-          <Button onClick={() => { setEditingClass(null); setFormOpen(true); }}>
+        actions={isAdmin ? <Button onClick={() => { setEditingClass(null); setFormOpen(true); }}>
             <Plus aria-hidden /> Tạo lớp học phần
-          </Button>
-        }
+          </Button> : undefined}
       />
 
       <div className="flex flex-wrap gap-3"><ClassSearchField value={search} onChange={setSearch} />
@@ -108,17 +108,18 @@ export function CourseClassesPage({ courseId }: { courseId: string }) {
           ) : classes && classes.length === 0 ? (
             <EmptyState
               title="Chưa có lớp học phần nào"
-              description="Tạo lớp đầu tiên cho khóa học này để bắt đầu ghi danh sinh viên."
-              action={
+              description={isAdmin ? "Tạo lớp đầu tiên cho học phần này." : "Bạn chưa được phân công vào lớp nào thuộc học phần này."}
+              action={isAdmin ? (
                 <Button onClick={() => { setEditingClass(null); setFormOpen(true); }}>
                   <Plus aria-hidden /> Tạo lớp học phần
                 </Button>
-              }
+              ) : undefined}
             />
           ) : classes ? (
             <>
               <CourseClassesTable
                 classes={classes}
+                isAdmin={isAdmin}
                 onEdit={(clazz) => { setEditingClass(clazz); setFormOpen(true); }}
                 onDelete={setDeletingClass}
               />
@@ -128,7 +129,7 @@ export function CourseClassesPage({ courseId }: { courseId: string }) {
         </CardContent>
       </Card>
 
-      {formOpen ? (
+      {isAdmin && formOpen ? (
         <ClassFormDialog
           key={editingClass?.id ?? "new"}
           onOpenChange={setFormOpen}

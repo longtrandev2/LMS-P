@@ -1,3 +1,4 @@
+import { submissionResult } from "./submission-result";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -41,7 +42,7 @@ export function AssignmentPracticePanel({ details }: { details: AssignmentDetail
           <div className="space-y-2">{question.options.map((option) => <label key={option.id} className="flex cursor-pointer items-start gap-2 rounded-lg border p-3 text-sm hover:bg-muted/50"><input type="radio" name={`assignment-${question.question_id}`} checked={answers[question.question_id] === option.id} disabled={locked || busyId === question.question_id} onChange={() => setAnswers((current) => ({ ...current, [question.question_id]: option.id }))} /><span>{option.content}</span></label>)}</div>
           <Button size="sm" disabled={history.isPending || locked || window === "closed" || busyId === question.question_id} onClick={() => submit(question.question_id)}>{busyId === question.question_id ? "Đang nộp…" : locked ? "Đã hết lượt nộp" : "Nộp câu này"}</Button>
         </> : <div className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">Câu lập trình đã lưu trong bài; chạy thử và chấm tự động sẽ khả dụng khi worker sandbox được triển khai.</div>}
-        {attempts.length ? <p className="text-xs text-muted-foreground">Lịch sử: {attempts.map((row) => `lượt ${row.attempt_no}: ${row.score ?? 0} điểm`).join(" · ")}</p> : null}
+        {attempts.length ? <p className="text-xs text-muted-foreground">Lịch sử: {attempts.map((row) => `lượt ${row.attempt_no}: ${submissionResult(row)}`).join(" · ")}</p> : null}
       </fieldset>;
     })}
     {history.isError ? <p className="text-sm text-destructive">Không tải được lịch sử nộp bài.</p> : null}

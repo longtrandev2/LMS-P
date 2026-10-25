@@ -17,6 +17,6 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     Optional<Course> findLockedById(@Param("id") Long id);
 
     @EntityGraph(attributePaths = "creator")
-    @Query("select c from Course c where (:q is null or lower(c.code) like lower(concat('%',:q,'%')) or lower(c.name) like lower(concat('%',:q,'%')))")
-    Page<Course> search(@Param("q") String query, Pageable pageable);
+    @Query("select c from Course c where (:q is null or lower(c.code) like lower(concat('%',:q,'%')) or lower(c.name) like lower(concat('%',:q,'%'))) and (:lecturerId is null or exists (select cl.id from LmsClass cl where cl.course=c and cl.lecturer.id=:lecturerId))")
+    Page<Course> search(@Param("q") String query, @Param("lecturerId") Long lecturerId, Pageable pageable);
 }

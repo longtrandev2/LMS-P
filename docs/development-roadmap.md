@@ -12,9 +12,9 @@ Trạng thái bản Java ngày 2026-10-25:
 
 - P0/P1: đã có Docker Compose, auth/user/profile, học phần/lớp/xếp sinh viên, học liệu, thông báo và audit. Các luồng cần tiếp tục có kiểm thử tích hợp theo từng nghiệp vụ.
 - P2: đã có ngân hàng câu hỏi theo học phần, danh mục tùy chọn, CSV MCQ, snapshot, bài tập và quiz MCQ. Sổ điểm M8 chưa triển khai.
-- P3: worker hiện nhận/validate message và ACK; API chưa nhận nộp code/chạy thử vì sandbox chưa có. Đây là phần ưu tiên tiếp theo.
+- P3 phần 1: API nhận code, outbox publish confirm, nhận/lưu kết quả và WS đã có; contract V2 và kiểm tra bằng worker giả lập nằm trong docs/grading-api-handoff.md. Worker mẫu tắt listener để giữ job, phần 2 triển khai sandbox và retry/ACK thật. Run/regrade chưa có.
 - P4: kỳ thi M7 chưa triển khai.
-- P5: đã chuẩn hóa mapping DTO toàn bộ backend và thêm 18 kiểm thử Java cho response/snapshot/quiz. Cấu hình hệ thống, thống kê quản trị và bộ kiểm thử tích hợp đầy đủ còn thiếu.
+- P5: đã chuẩn hóa mapping DTO và có 34 kiểm thử Java cho response/snapshot/quiz/API chấm code; thêm kiểm tra tích hợp M6 với DB/broker riêng và worker giả lập. Cấu hình hệ thống, thống kê quản trị và kiểm thử các nghiệp vụ còn lại tiếp tục bổ sung.
 
 Các wave dùng Python/Next.js bên dưới là lịch sử dự án; kết quả pytest cũ không xác nhận trạng thái bản Java hiện tại. Yêu cầu xếp sinh viên hiện hành lấy từ SRS: sinh viên không tự ghi danh/rời lớp.
 
@@ -47,7 +47,7 @@ Nếu gấp show giữa chừng: P0 → P1 → nhảy P3 (P2 đưa về sau) —
 - Xong khi: `max_attempts`/deadline/late enforce theo lượt toàn bài quiz hoặc từng câu bài khác; nộp trùng Idempotency-Key không tăng lượt; điểm tổng khớp công thức FR-GB-02 (case test tay).
 
 ## P3 ⭐ — Chấm lập trình (M6)
-- Việc: submit code → pending + publish Spring AMQP + Idempotency-Key; worker consumer (manual ack, retry, DLQ, priority); runner Docker sandbox (limits đầy đủ BR10); grader compare + score trọng số; grading_results/test_results; API consume q.events → WS push `submission.status/graded`; UI Monaco editor + panel kết quả từng test live + trạng thái; regrade; (S nếu kịp: Run thử, verify đề).
+- Việc: submit code → pending + publish Spring AMQP + Idempotency-Key; worker consumer (manual ack, retry, DLQ, priority); runner Docker sandbox (limits đầy đủ BR10); grader compare + score trọng số; grading_results/test_results; API consume q.grading.events → WS push `submission.status/graded`; UI Monaco editor + panel kết quả từng test live + trạng thái; regrade; (S nếu kịp: Run thử, verify đề).
 - Xong khi: nộp code Python đúng/sai/compile error/timeout → đúng trạng thái + điểm; test ẩn không lộ (check response); kill worker giữa chừng → redeliver chấm tiếp; `--scale worker=2` hai worker cùng kéo queue.
 
 ## P4 — Kỳ thi (M7)

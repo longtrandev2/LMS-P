@@ -73,7 +73,7 @@ export function ClassesSection() {
         <div className="flex flex-wrap items-end justify-between gap-6">
           <SectionHeading
             title="Lớp học phần"
-            description="Mỗi lớp học phần gắn với một khóa học, một giảng viên phụ trách và danh sách sinh viên ghi danh theo học kỳ."
+            description="Mỗi lớp học phần thuộc một học phần, có giảng viên được phân công và danh sách sinh viên theo học kỳ."
           />
           <Button asChild variant="outline" size="sm" data-reveal>
             <Link to="/login">

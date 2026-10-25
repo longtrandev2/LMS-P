@@ -18,6 +18,7 @@ function navFor(user: CurrentUser | null): { group: string; items: NavItem[] }[]
     groups.push({
       group: "Quản trị",
       items: [
+        { href: "/admin/academics", label: "Học phần & phân công", icon: BookOpen },
         { href: "/admin/users", label: "Người dùng", icon: Users },
         { href: "/admin/audit-logs", label: "Nhật ký kiểm toán", icon: History },
         { href: "/questions", label: "Ngân hàng câu hỏi", icon: ListChecks },
@@ -28,7 +29,7 @@ function navFor(user: CurrentUser | null): { group: string; items: NavItem[] }[]
     groups.push({
       group: "Giảng dạy",
       items: [
-        { href: "/courses", label: "Khóa học & lớp", icon: BookOpen },
+        ...(!hasRole(user, "admin") ? [{ href: "/courses", label: "Lớp được giao", icon: BookOpen }] : []),
         { href: "/questions", label: "Ngân hàng câu hỏi", icon: ListChecks },
       ],
     });

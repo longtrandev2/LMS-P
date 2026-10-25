@@ -1,30 +1,31 @@
 package vn.lmsp.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.validation.Validator;
+import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
-import vn.lmsp.security.GradingWebSocketHandler;
-import java.time.Instant;
-import java.util.Map;
+import vn.lmsp.dto.GradingDtos.WorkerEvent;
 
 @Component
 public class GradingEventListener {
-    private final ObjectMapper mapper;
-    private final GradingWebSocketHandler sockets;
-    public GradingEventListener(ObjectMapper mapper, GradingWebSocketHandler sockets) {
-        this.mapper = mapper;
-        this.sockets = sockets;
+    private final ObjectMapper json;
+    private final Validator validator;
+    private final GradingEventService events;
+
+    public GradingEventListener(ObjectMapper json, Validator validator, GradingEventService events) {
+        this.json = json; this.validator = validator; this.events = events;
     }
 
-    @RabbitListener(queues = "q.events")
-    public void onEvent(byte[] body) throws Exception {
-        JsonNode event = mapper.readTree(body);
-        String name = event.path("event").asText(event.path("type").asText(""));
-        String userId = event.path("user_id").asText("");
-        if (userId.isBlank() || !name.startsWith("submission.")) return;
-        JsonNode payload = event.path("payload").isMissingNode() ? mapper.createObjectNode() : event.path("payload");
-        sockets.sendToUser(userId, mapper.writeValueAsString(Map.of(
-                "type", name, "ts", Instant.now().toEpochMilli(), "data", payload)));
+    @RabbitListener(queues = "q.grading.events")
+    public void onEvent(byte[] body) {
+        try {
+            if (body.length > 16 * 1024 * 1024) throw new IllegalArgumentException("Worker event too large");
+            WorkerEvent event = json.readValue(body, WorkerEvent.class);
+            if (event == null || !validator.validate(event).isEmpty()) throw new IllegalArgumentException("Invalid worker event");
+            events.apply(event);
+        } catch (java.io.IOException | IllegalArgumentException error) {
+            throw new AmqpRejectAndDontRequeueException("Invalid grading event", error);
+        }
     }
 }

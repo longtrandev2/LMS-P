@@ -40,7 +40,7 @@ class QuizSubmissionServiceTest {
         var snapshots = new QuestionVersionService(mock(QuestionVersionRepository.class),
                 mock(QuestionReadService.class), new ObjectMapper());
         service = new AssignmentSubmissionService(access, links, attempts, submissions, users,
-                snapshots, new SubmissionMapper(), mock(AuditService.class));
+                snapshots, new SubmissionMapper(), mock(AuditService.class), new SubmissionPolicy());
         for (int i = 0; i < 2; i++) {
             var question = question(100 + i, QuestionType.mcq);
             var link = link(assignment, question, i == 0 ? "2.50" : "4.00", i + 1);

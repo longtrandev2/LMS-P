@@ -13,11 +13,12 @@ import type { ClassSummary } from "@/types/api";
 
 interface CourseClassesTableProps {
   classes: ClassSummary[];
+  isAdmin: boolean;
   onEdit: (clazz: ClassSummary) => void;
   onDelete: (clazz: ClassSummary) => void;
 }
 
-export function CourseClassesTable({ classes, onEdit, onDelete }: CourseClassesTableProps) {
+export function CourseClassesTable({ classes, isAdmin, onEdit, onDelete }: CourseClassesTableProps) {
   return (
     <Table>
       <TableHeader>
@@ -52,15 +53,15 @@ export function CourseClassesTable({ classes, onEdit, onDelete }: CourseClassesT
                     <Users aria-hidden />
                   </Link>
                 </Button>
-                <Button
+                {isAdmin ? <Button
                   variant="ghost"
                   size="icon-sm"
                   aria-label={`Sửa lớp ${clazz.code}`}
                   onClick={() => onEdit(clazz)}
                 >
                   <Pencil aria-hidden />
-                </Button>
-                <Button
+                </Button> : null}
+                {isAdmin ? <Button
                   variant="ghost"
                   size="icon-sm"
                   aria-label={`Xóa lớp ${clazz.code}`}
@@ -68,7 +69,7 @@ export function CourseClassesTable({ classes, onEdit, onDelete }: CourseClassesT
                   onClick={() => onDelete(clazz)}
                 >
                   <Trash2 aria-hidden />
-                </Button>
+                </Button> : null}
               </span>
             </TableCell>
           </TableRow>

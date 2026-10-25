@@ -27,11 +27,14 @@ public class AssignmentService {
     private final AssignmentMapper mapper;
     private final AuditService audit;
     private final QuestionBankService banks;
+    private final QuestionVersionService snapshots;
+    private final GradingScoreService grading;
     public AssignmentService(AssignmentRepository assignments, AssignmentQuestionRepository links, AssignmentAccess access,
             AssignmentReadService reader, QuestionRepository questions, QuestionVersionRepository versions,
-            UserRepository users, AssignmentMapper mapper, AuditService audit, QuestionBankService banks) {
+            UserRepository users, AssignmentMapper mapper, AuditService audit, QuestionBankService banks,
+            QuestionVersionService snapshots, GradingScoreService grading) {
         this.assignments = assignments; this.links = links; this.access = access; this.reader = reader;
-        this.questions = questions; this.versions = versions; this.users = users; this.mapper = mapper; this.audit = audit; this.banks = banks;
+        this.questions = questions; this.versions = versions; this.users = users; this.mapper = mapper; this.audit = audit; this.banks = banks; this.snapshots = snapshots; this.grading = grading;
     }
     @Transactional(readOnly = true)
     public AssignmentPage list(Long classId, Long actor, boolean student, boolean admin, int page, int limit) {
@@ -86,6 +89,10 @@ public class AssignmentService {
             banks.requireQuestionUsage(question, item.getLmsClass(), actorId, admin);
             if (item.getCategory() == AssignmentCategory.QUIZ && question.getType() != QuestionType.mcq) throw bad("Quiz chỉ được chứa câu trắc nghiệm");
             QuestionVersion version = versions.findTopByQuestion_IdOrderByVersionNoDesc(question.getId()).orElseThrow(() -> bad("Câu hỏi chưa có phiên bản"));
+            if (question.getType() == QuestionType.programming) {
+                try { grading.validateProblem(snapshots.read(version)); }
+                catch (IllegalArgumentException error) { throw bad(error.getMessage()); }
+            }
             row.pin(version);
         }
         item.publish();

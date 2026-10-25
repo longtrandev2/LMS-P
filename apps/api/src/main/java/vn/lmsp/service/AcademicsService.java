@@ -37,9 +37,9 @@ public class AcademicsService {
     }
 
     @Transactional(readOnly = true)
-    public Page<CourseView> courses(int page, int limit, String query, String sort) {
+    public Page<CourseView> courses(int page, int limit, String query, String sort, Long actorId, boolean admin) {
         String field = "created_at".equals(sort) ? "createdAt" : sort;
-        var result = courses.search(clean(query), pageRequest(page, limit, field, List.of("code", "name", "createdAt")));
+        var result = courses.search(clean(query), admin ? null : actorId, pageRequest(page, limit, field, List.of("code", "name", "createdAt")));
         return new Page<>(result.getContent().stream().map(mapper::toCourseView).toList(), result.getTotalElements(), page, limit);
     }
 
@@ -52,7 +52,11 @@ public class AcademicsService {
     }
 
     @Transactional(readOnly = true)
-    public CourseView course(Long id) { return mapper.toCourseView(courseEntity(id)); }
+    public CourseView course(Long id, Long actorId, boolean admin) {
+        Course item = courseEntity(id);
+        if (!admin && !classes.existsByCourse_IdAndLecturer_Id(id, actorId)) throw forbidden();
+        return mapper.toCourseView(item);
+    }
 
     @Transactional
     public CourseView updateCourse(Long id, CourseInput input, Long actorId) {
@@ -69,9 +73,11 @@ public class AcademicsService {
     }
 
     @Transactional(readOnly = true)
-    public Page<ClassView> classes(Long courseId, String semester, String query, String sort, int page, int limit) {
+    public Page<ClassView> classes(Long courseId, String semester, String query, String sort, int page, int limit, Long actorId, boolean admin) {
         String field = "created_at".equals(sort) ? "createdAt" : sort;
-        var result = classes.search(clean(query), courseId, clean(semester), pageRequest(page, limit, field, List.of("code", "name", "createdAt")));
+        var pageable = pageRequest(page, limit, field, List.of("code", "name", "createdAt"));
+        var result = admin ? classes.search(clean(query), courseId, clean(semester), pageable)
+                : classes.searchForLecturer(clean(query), courseId, clean(semester), actorId, pageable);
         Map<Long, Long> counts = enrollmentCounts(result.getContent().stream().map(LmsClass::getId).toList());
         return new Page<>(result.getContent().stream().map(c -> mapper.toClassView(c, counts.getOrDefault(c.getId(), 0L))).toList(), result.getTotalElements(), page, limit);
     }
@@ -88,8 +94,10 @@ public class AcademicsService {
     }
 
     @Transactional(readOnly = true)
-    public ClassView getClass(Long id, Long userId, boolean unrestricted) {
+    public ClassView getClass(Long id, Long userId, boolean admin, boolean lecturerRole) {
         LmsClass item = classEntity(id);
+        if (lecturerRole && !admin && !item.getLecturerId().equals(userId)) throw forbidden();
+        boolean unrestricted = admin || lecturerRole;
         if (!unrestricted && item.getStatus() == ClassStatus.locked) throw failure("CLASS_LOCKED", "Lớp học đang bị khóa", HttpStatus.FORBIDDEN);
         if (!unrestricted && !enrollments.existsByLmsClass_IdAndStudent_IdAndStatus(id, userId, EnrollmentStatus.active))
             throw failure("ENROLLMENT_REQUIRED", "Bạn chưa tham gia lớp học", HttpStatus.FORBIDDEN);
@@ -154,5 +162,6 @@ public class AcademicsService {
     private static String nullableText(String value) { return value.isBlank() ? null : value.trim(); }
     private static void requireText(String value, String field) { if (value == null || value.isBlank()) throw failure("VALIDATION_ERROR", field + " là bắt buộc", HttpStatus.BAD_REQUEST); }
     private static LmsException notFound(String message) { return failure("NOT_FOUND", message, HttpStatus.NOT_FOUND); }
+    private static LmsException forbidden() { return failure("FORBIDDEN", "Chỉ quản trị viên hoặc giảng viên được phân công mới có quyền truy cập", HttpStatus.FORBIDDEN); }
     private static LmsException failure(String code, String message, HttpStatus status) { return new LmsException(code, message, status, null); }
 }

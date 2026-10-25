@@ -3,6 +3,7 @@ import RootPage from "@/app/page";
 import { LoginPage } from "@/features/auth/login-page";
 import { UsersPage } from "@/features/users/users-page";
 import { CoursesPage } from "@/features/courses/courses-page";
+import { AdminAcademicsPage } from "@/features/courses/admin-academics-page";
 import { CourseClassesPage } from "@/features/classes/course-classes-page";
 import { ClassDetailPage } from "@/features/classes/class-detail-page";
 import { MyClassesPage } from "@/features/me/my-classes-page";
@@ -29,6 +30,7 @@ export function AppRouter() {
     <Route path="/login" element={<LoginPage />} />
     <Route element={<ProtectedLayout />}>
       <Route path="/admin/users" element={<UsersPage />} />
+      <Route path="/admin/academics" element={<AdminAcademicsPage />} />
       <Route path="/admin/audit-logs" element={<AuditLogsPage />} />
       <Route path="/me/profile" element={<ProfilePage />} />
       <Route path="/courses" element={<CoursesPage />} />

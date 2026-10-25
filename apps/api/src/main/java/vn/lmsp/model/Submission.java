@@ -31,6 +31,8 @@ public class Submission {
     @Column(name = "is_late", nullable = false) private boolean late;
     @Column(name = "idempotency_key", columnDefinition = "char(36)") private String idempotencyKey;
     @Column(name = "submitted_at", nullable = false) private LocalDateTime submittedAt;
+    @Column(name = "max_score", nullable = false, precision = 6, scale = 2) private BigDecimal maxScore;
+    @Column(name = "late_penalty_percent", nullable = false) private int latePenaltyPercent;
     protected Submission() { }
     public Submission(User student, Assignment assignment, AssignmentAttempt attempt, AssignmentQuestion link,
             List<Long> selected, int attemptNo, BigDecimal score, boolean late, String key, LocalDateTime submittedAt) {
@@ -39,6 +41,17 @@ public class Submission {
         this.type = SubmissionType.mcq; this.selectedOptionIds = selected; this.attemptNo = attemptNo;
         this.status = SubmissionStatus.completed; this.score = score; this.late = late;
         this.idempotencyKey = key; this.submittedAt = submittedAt;
+        this.maxScore = link.getPoints(); this.latePenaltyPercent = late ? assignment.getLatePenaltyPercent() : 0;
+    }
+    public static Submission programming(User student, Assignment assignment, AssignmentQuestion link, int attemptNo,
+            String language, String sourceCode, boolean late, int penalty, String key, LocalDateTime now) {
+        Submission item = new Submission();
+        item.student = student; item.assignment = assignment; item.question = link.getQuestion();
+        item.questionVersion = link.getQuestionVersion(); item.type = SubmissionType.code;
+        item.attemptNo = attemptNo; item.language = language; item.sourceCode = sourceCode;
+        item.status = SubmissionStatus.pending; item.late = late; item.latePenaltyPercent = penalty;
+        item.maxScore = link.getPoints(); item.idempotencyKey = key; item.submittedAt = now;
+        return item;
     }
     public Long getId() { return id; }
     public Long getAssignmentId() { return assignment.getId(); }
@@ -50,4 +63,14 @@ public class Submission {
     public List<Long> getSelectedOptionIds() { return selectedOptionIds; }
     public boolean isLate() { return late; }
     public LocalDateTime getSubmittedAt() { return submittedAt; }
+    public SubmissionStatus getStatus() { return status; }
+    public SubmissionType getType() { return type; }
+    public String getLanguage() { return language; }
+    public String getSourceCode() { return sourceCode; }
+    public QuestionVersion getQuestionVersion() { return questionVersion; }
+    public BigDecimal getMaxScore() { return maxScore; }
+    public int getLatePenaltyPercent() { return latePenaltyPercent; }
+    public boolean isTerminal() { return status == SubmissionStatus.completed || status == SubmissionStatus.failed; }
+    public void startGrading() { if (status == SubmissionStatus.pending) status = SubmissionStatus.grading; }
+    public void finish(SubmissionStatus status, BigDecimal score) { this.status = status; this.score = score; }
 }

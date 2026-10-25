@@ -2,7 +2,7 @@
 
 | Thuộc tính | Giá trị |
 |---|---|
-| Phiên bản | 1.5 — 2026-10-24 |
+| Phiên bản | 1.7 — 2026-10-25 |
 | Trạng thái | Baseline (spec-first, chuẩn đối chiếu cho DB/API/kiến trúc/plan) |
 | Nguồn требования | Subject gốc của giảng viên (English, bản gốc trong repo docs) |
 | Tham khảo mở rộng | `LMS – Phân tích nghiệp vụ và kiến trúc công nghệ.md` — CHỈ tham khảo, phạm vi lấy theo Subject + tài liệu này |
@@ -87,15 +87,17 @@ Frontend dùng React + TypeScript (SPA); backend dùng Java + Spring Boot. MySQL
 | FR-AUTH-06 | S | WebSocket xác thực bằng token khi kết nối |
 | FR-AUTH-07 | S | Admin (nên có): import CSV có bước **preview + validate trước commit** (báo trùng email/mã SV từng dòng, file mẫu), xuất CSV danh sách user, ép đăng xuất 1 user bất kỳ (revoke sessions) |
 
-### M2 — Khóa học & lớp học
+### M2 — Học phần & lớp học phần
 | ID | Ưu tiên | Yêu cầu |
 |---|---|---|
-| FR-CRS-01 | M | CRUD khóa học (lecturer/admin); CRUD lớp học thuộc khóa học, học kỳ, giảng viên phụ trách. Thuộc tính lớp: **sĩ số tối đa** `max_students` (NULL = không giới hạn), **khung giờ ghi danh** `enroll_from`/`enroll_until` (NULL = luôn mở, lecturer đặt — admin override), phòng học, lịch học (text), trạng thái `active`/`locked` |
-| FR-CRS-02 | M | Xếp sinh viên vào lớp do nhà trường quản lý: admin có thể thêm/xóa ở mọi lớp; lecturer chỉ quản lý danh sách lớp mình phụ trách. Có thể tìm sinh viên active chưa thuộc lớp theo tên/mã SV/email rồi chọn nhiều người; hỗ trợ thêm lẻ, dán danh sách và nhập CSV có xem trước. Lớp giới hạn sĩ số, admin được vượt giới hạn. Sinh viên chỉ xem lớp đã được xếp, không tự ghi danh/rời lớp. Xóa chuyển enrollment sang `dropped`, giữ lịch sử |
+| FR-CRS-01 | M | Admin quản lý CRUD học phần (course) và CRUD lớp học phần thuộc học phần, học kỳ; admin phân một giảng viên phụ trách khi tạo/sửa lớp. Lecturer chỉ xem và quản lý nghiệp vụ của các lớp được phân công, không tạo/sửa/xóa học phần hoặc lớp. Thuộc tính lớp: **sĩ số tối đa** `max_students` (NULL = không giới hạn), **khung giờ ghi danh** `enroll_from`/`enroll_until`, phòng học, lịch học (text), trạng thái `active`/`locked` |
+| FR-CRS-02 | M | Xếp sinh viên vào lớp do nhà trường quản lý: admin có thể thêm/xóa ở mọi lớp; lecturer chỉ quản lý danh sách lớp mình phụ trách. Có thể tìm sinh viên active chưa thuộc lớp theo tên/mã SV/email, xem gợi ý và chọn nhiều người; hoặc nhập CSV có xem trước. Không hỗ trợ nhập định danh đơn lẻ qua form hoặc dán danh sách. Lớp giới hạn sĩ số, admin được vượt giới hạn. Sinh viên chỉ xem lớp đã được xếp, không tự ghi danh/rời lớp. Xóa chuyển enrollment sang `dropped`, giữ lịch sử |
 | FR-CRS-03 | M | Kiểm soát truy cập theo ghi danh (xem BR2) |
 | FR-CRS-04 | M | Sinh viên xem danh sách lớp đã được xếp và học liệu/bài tập tương ứng; không hiển thị catalog lớp mở để tự ghi danh |
 | FR-CRS-05 | S | Import CSV danh sách lớp hỗ trợ tải file mẫu, xem trước sinh viên nhận diện được, báo dòng lỗi/trùng và xác nhận nhập |
 | FR-CRS-06 | M | Danh sách (courses, classes, lớp của tôi, sinh viên lớp, học liệu) hỗ trợ **search + phân trang + sort** theo quy ước chung api-spec |
+
+Giao diện admin có khu quản lý học phần và khu quản lý lớp riêng: từ học phần có hành động **Mở lớp và phân công giảng viên**; ở danh sách lớp hiện giảng viên phụ trách và có hành động **Đổi giảng viên**. Giao diện giảng viên tập trung vào danh sách lớp được phân công và đường vào lớp, không hiển thị thao tác quản trị.
 
 ### M3 — Học liệu
 | ID | Ưu tiên | Yêu cầu |
@@ -136,6 +138,8 @@ Frontend dùng React + TypeScript (SPA); backend dùng Java + Spring Boot. MySQL
 | FR-GRD-06 | S | Nút "Run" chạy thử với test công khai, không ghi điểm |
 | FR-GRD-07 | S | Lecturer regrade — tạo kết quả mới, giữ lịch sử (BR8); lecturer thấy cả test ẩn |
 | FR-GRD-08 | M | Retry có giới hạn → DLQ khi lỗi hệ thống; submission `failed` + thông báo |
+
+Triển khai phần API M6: lưu bài nộp và job outbox trong cùng transaction; publisher dùng confirm và retry khi broker chưa sẵn sàng. Worker đọc code/snapshot đã ghim từ DB, gửi kết quả theo `docs/message-contracts.md` v2; API kiểm tra kết quả, tính điểm theo trọng số/phạt muộn, lưu transaction rồi mới ACK và phát WebSocket. Worker mẫu tắt listener để giữ job trong queue cho tới khi sandbox ở phần 2 được triển khai. Run thử, regrade và thực thi sandbox thuộc phần tiếp theo.
 
 ### M7 — Kỳ thi
 | ID | Ưu tiên | Yêu cầu |

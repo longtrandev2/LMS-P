@@ -128,9 +128,7 @@ public class EnrollmentService {
     private LmsClass lockedClass(Long id) { return classes.findLockedById(id).orElseThrow(() -> failure("NOT_FOUND", "Không tìm thấy lớp học", HttpStatus.NOT_FOUND)); }
     private long activeCount(Long id) { return enrollments.countByLmsClass_IdAndStatus(id, EnrollmentStatus.active); }
     private User resolve(EnrollTarget target) {
-        if (target.student_id() != null) return users.findWithRolesById(target.student_id()).orElse(null);
-        if (target.student_code() != null && !target.student_code().isBlank()) return users.findByStudentCodeIgnoreCase(target.student_code().trim()).orElse(null);
-        return users.findByEmailIgnoreCase(target.email().trim()).orElse(null);
+        return target.studentId() == null ? null : users.findWithRolesById(target.studentId()).orElse(null);
     }
     private List<PendingCsvRow> evaluateCsv(LmsClass clazz, List<CsvEnrollTarget> targets, boolean admin) {
         List<PendingCsvRow> result = new ArrayList<>(); Set<Long> seen = new HashSet<>(); long count = activeCount(clazz.getId());
@@ -161,9 +159,7 @@ public class EnrollmentService {
         if (!admin && !clazz.getLecturerId().equals(actorId)) throw failure("FORBIDDEN", "Giảng viên chỉ được quản lý sinh viên trong lớp mình phụ trách", HttpStatus.FORBIDDEN);
     }
     private static String validateTarget(EnrollTarget target) {
-        if (target == null) return "Dòng ghi danh trống";
-        int values = (target.student_id() == null ? 0 : 1) + (blank(target.student_code()) ? 0 : 1) + (blank(target.email()) ? 0 : 1);
-        return values == 1 ? null : "Cần cung cấp đúng một trong mã sinh viên, email hoặc ID";
+        return target == null || target.studentId() == null ? "Cần chọn sinh viên từ kết quả tìm kiếm" : null;
     }
     private static boolean isStudent(User user) { return user.getRoles().stream().anyMatch(role -> role.getName().equals("student")); }
     private static boolean blank(String value) { return value == null || value.isBlank(); }

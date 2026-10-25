@@ -1,6 +1,6 @@
 # LMS-P — Hệ thống quản lý học tập
 
-Monorepo LMS dùng **React + TypeScript + Vite**, **Java 21 + Spring Boot**, MySQL 8.4 và RabbitMQ. WebSocket dành cho tiến độ/kết quả chấm bài; các nghiệp vụ khác dùng REST. Backend có xác thực, quản lý người dùng, học phần/lớp/xếp sinh viên, học liệu, ngân hàng câu hỏi, bài tập/quiz MCQ, thông báo và audit log. Worker hiện mới xác thực message và ACK; chấm code bằng sandbox, kỳ thi và sổ điểm là các phần tiếp theo. Mã Python được giữ để đối chiếu trong giai đoạn chuyển đổi; bộ test Python cũ không thay thế kiểm thử backend Java.
+Monorepo LMS dùng **React + TypeScript + Vite**, **Java 21 + Spring Boot**, MySQL 8.4 và RabbitMQ. Backend có quản lý người dùng/lớp/học liệu/ngân hàng câu hỏi, quiz MCQ, thông báo, audit và phần API chấm code (nhận bài → outbox → nhận kết quả → WS). Worker mẫu tắt listener; sandbox, Run/regrade, kỳ thi và sổ điểm là các bước tiếp theo. Mã Python cũ được giữ để đối chiếu, bộ test Python không thay thế kiểm thử Java.
 
 ## Cấu trúc
 
@@ -50,6 +50,22 @@ docker compose --env-file infra/.env -f infra/docker-compose.yml build api worke
 ```
 
 Các kiểm thử Java hiện bảo vệ trường dữ liệu trả về, dữ liệu nhạy cảm, phiên bản câu hỏi đã ghim, điểm quiz, phạt nộp muộn và idempotency. Kiểm thử tích hợp với MySQL/RabbitMQ và các tính năng chưa triển khai cần được bổ sung theo từng feature.
+
+## Chấm code — phần 1
+
+Đọc [hợp đồng worker V2](docs/message-contracts.md) và [bàn giao phần API](docs/grading-api-handoff.md). Listener mẫu không xử lý job; bài code sẽ chờ pending cho đến khi phần 2 có sandbox.
+
+Kiểm tra API bằng DB/broker riêng và kết quả worker giả lập (Node.js 22+); chạy trong cùng một cửa sổ PowerShell, sau khi build image API:
+
+```powershell
+$env:GRADING_CHECK_PASSWORD = [Guid]::NewGuid().ToString('N')
+$env:GRADING_CHECK_SECRET = [Guid]::NewGuid().ToString('N') + [Guid]::NewGuid().ToString('N')
+docker compose -f infra/docker-compose.grading-check.yml up -d --wait
+node scripts/check-grading-api.mjs
+docker compose -f infra/docker-compose.grading-check.yml down -v
+```
+
+Stack `lms-grading-check` dùng API cổng 18000 và RabbitMQ Management 15673; volume kiểm tra riêng. Script kiểm tra request đồng thời, idempotency, quyền truy cập, trạng thái/điểm, test ẩn, WS đúng user, DLQ và giới hạn lượt. Các kiểm tra này xác nhận phần API, không xác nhận thực thi sandbox.
 
 ## Tài liệu
 

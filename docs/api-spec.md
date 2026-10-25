@@ -2,8 +2,8 @@
 
 | | |
 |---|---|
-| Phiên bản | 1.2 — 2026-10-23 |
-| Base URL | `/api/v1` (OpenAPI tự sinh tại `/docs` — tài liệu sống) |
+| Phiên bản | 1.4 — 2026-10-25 |
+| Base URL | `/api/v1` (Swagger UI `/swagger-ui/index.html`, OpenAPI `/v3/api-docs`) |
 | Nguồn FR | `srs.md` |
 
 ## 1. Quy ước chung
@@ -45,13 +45,17 @@
 
 | Method | Path | Role | Mô tả |
 |---|---|---|---|
-| GET/POST | /courses | lec/adm | List (`q` search mã/tên, sort `code`,`name`,`created_at`) / tạo khóa học |
-| GET/PATCH/DELETE | /courses/{id} | lec/adm | Chi tiết / sửa / xóa |
-| GET/POST | /classes | lec/adm | List (`q`, filter `course_id`, `semester`, sort `code`,`name`,`created_at`) / tạo lớp (`course_id`, `lecturer_id`, `max_students`, `enroll_from`, `enroll_until`, `room`, `schedule`) |
-| GET/PATCH/DELETE | /classes/{id} | lec/adm | Chi tiết (kèm `max_students`, `enroll_from/until`, `room`, `schedule`, `status`, `enrolled_count`, `seats_left`) / sửa / xóa. Validate BR12: max_students ≥ sĩ số hiện tại, enroll_until > enroll_from |
+| GET | /courses | lec/adm | Admin xem mọi học phần; lecturer chỉ xem học phần có lớp được phân công (`q` search mã/tên, sort `code`,`name`,`created_at`) |
+| POST | /courses | adm | Tạo học phần |
+| GET | /courses/{id} | lec/adm | Admin xem mọi học phần; lecturer chỉ xem học phần có lớp được phân công |
+| PATCH/DELETE | /courses/{id} | adm | Sửa / xóa học phần |
+| GET | /classes | lec/adm | Admin xem mọi lớp; lecturer chỉ xem lớp được phân công (`q`, filter `course_id`, `semester`, sort `code`,`name`,`created_at`) |
+| POST | /classes | adm | Tạo lớp, chọn học phần và giảng viên phụ trách (`course_id`, `lecturer_id`, `max_students`, `enroll_from`, `enroll_until`, `room`, `schedule`) |
+| GET | /classes/{id} | lec/adm | Chi tiết lớp; lecturer chỉ xem lớp được phân công |
+| PATCH/DELETE | /classes/{id} | adm | Sửa / xóa lớp; phân công giảng viên tại đây. Validate BR12: max_students ≥ sĩ số hiện tại, enroll_until > enroll_from |
 | GET | /admin/classes | adm | Mọi lớp (search/filter như trên) — admin xem + override sĩ số/khung giờ/khóa lớp |
 | PATCH | /admin/classes/{id} | adm | Override `max_students` (bypass khi đầy), `enroll_from/until`, `status` → audit |
-| POST | /classes/{id}/enrollments | lec/adm | Thêm một hoặc nhiều SV theo mã SV/email. Lecturer chỉ thao tác lớp mình phụ trách; admin thao tác mọi lớp. Validate từng dòng, trả `{added, errors: [{row, code, reason}]}`. Lecturer thêm ngoài khung thời gian; chỉ admin vượt sĩ số |
+| POST | /classes/{id}/enrollments | lec/adm | Nhận `{student_ids: [id, ...]}` (1–500 id) để thêm SV đã chọn từ gợi ý tìm kiếm theo mã SV/tên/email. Lecturer chỉ thao tác lớp mình phụ trách; admin thao tác mọi lớp. Validate từng dòng, trả `{added, errors: [{row, code, reason}]}`. Lecturer thêm ngoài khung thời gian; chỉ admin vượt sĩ số |
 | GET | /classes/{id}/student-candidates | lec/adm | Tìm SV active chưa thuộc lớp theo `q` (ít nhất 2 ký tự, tên/mã/email), có phân trang; lecturer chỉ trong lớp mình phụ trách |
 | POST | /classes/{id}/enrollments/import/preview | lec/adm | Xem trước danh sách CSV đã đọc ở trình duyệt: `{students: [{row, student_code?, email?}]}`. Trả từng dòng gồm định danh, hồ sơ khớp, `valid`, `code`, `reason`; không ghi DB |
 | POST | /classes/{id}/enrollments/import | lec/adm | Xác nhận cùng payload preview; backend kiểm tra lại quyền, tài khoản, trùng và sĩ số rồi thêm các dòng hợp lệ. Trả `{added, errors: [{row, code, reason}]}`; dòng lỗi không làm mất các dòng hợp lệ |
@@ -96,6 +100,14 @@
 | GET | /me/submissions?assignment_id= | student | Lịch sử nộp từng câu; lịch sử quiz theo `/assignments/{id}/quiz-attempts` |
 | GET | /assignments/{id}/submissions | lec | Danh sách các lần nộp đã chấm, có mã sinh viên/câu hỏi; v1 chưa có bộ lọc |
 | POST | /submissions/{id}/regrade | lec | Chấm lại (BR8) → 202 |
+
+### Phần API chấm code (M6, 2026-10-25)
+
+- POST code ở đường dẫn submissions trên nhận `language` (`python/c/cpp/java`, phải nằm trong snapshot), `source_code` (UTF-8 tối đa 128KiB, không rỗng), không kèm đáp án MCQ. Trả `202 {submission_id, status:"pending"}` sau khi lưu bài nộp và outbox; key trùng cùng nội dung trả bản gốc `200`, key trùng khác nội dung/phạm vi trả `409 IDEMPOTENCY_CONFLICT`.
+- API khóa bài tập khi kiểm tra lượt/hạn; chỉ nhận bài của lớp đang học và assessment đã publish. Điểm tối đa và phần trăm phạt muộn được ghim vào submission. Code không được sửa sau khi nộp.
+- GET `/submissions/{id}` trả metadata, status, score, code của bài nộp và kết quả chấm mới nhất. Chủ bài nộp, giảng viên phụ trách hoặc admin được đọc. Student chỉ nhận `passed/failed` cho test ẩn; input/expected/output/time/memory/điểm test ẩn là null. Đáp án mẫu không xuất hiện trong response.
+- Lịch sử `/me/submissions` và `/assignments/{id}/submissions` bổ sung `status`, `type`, `language`; điểm bài đang chờ là null.
+- WebSocket chỉ báo thay đổi sau khi kết quả đã commit, lấy người nhận từ submission trong DB. Client đọc lại GET khi reconnect. Run thử/regrade chưa triển khai trong phần 1.
 
 ## 7. Exams (M7)
 

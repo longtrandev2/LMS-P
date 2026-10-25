@@ -9,6 +9,8 @@ import vn.lmsp.enums.AssignmentCategory;
 import vn.lmsp.enums.QuestionDifficulty;
 import vn.lmsp.enums.QuestionType;
 import vn.lmsp.enums.ScorePolicy;
+import vn.lmsp.enums.SubmissionStatus;
+import vn.lmsp.enums.SubmissionType;
 
 public final class AssignmentDtos {
     private AssignmentDtos() { }
@@ -20,7 +22,9 @@ public final class AssignmentDtos {
                                          @Min(1) Integer position) { }
     public record QuizAnswerInput(@NotNull Long question_id, List<Long> selected_option_ids) { }
     public record QuizSubmitInput(@Valid List<QuizAnswerInput> answers) { }
-    public record QuestionSubmissionInput(List<Long> selected_option_ids) { }
+    public record QuestionSubmissionInput(List<Long> selected_option_ids, String language, String source_code) {
+        public QuestionSubmissionInput(List<Long> selectedOptionIds) { this(selectedOptionIds, null, null); }
+    }
     public record AssignmentSummary(Long id, Long class_id, String title, String description, AssignmentCategory category,
             LocalDateTime available_from, LocalDateTime due_at, boolean allow_late, LocalDateTime late_due_at,
             int late_penalty_percent, Integer max_attempts, ScorePolicy score_policy, boolean is_published,
@@ -35,6 +39,7 @@ public final class AssignmentDtos {
     public record QuizAttemptView(Long attempt_id, int attempt_no, BigDecimal score, boolean is_late,
             int late_penalty_percent, LocalDateTime submitted_at, List<QuestionScore> question_scores) { }
     public record SubmissionView(Long id, Long assignment_id, Long student_id, Long question_id, int attempt_no,
-            List<Long> selected_option_ids, BigDecimal score, boolean is_late, LocalDateTime submitted_at) { }
+            List<Long> selected_option_ids, BigDecimal score, boolean is_late, LocalDateTime submitted_at,
+            SubmissionStatus status, SubmissionType type, String language) { }
     public record AssignmentPage(List<AssignmentSummary> items, long total, int page, int limit) { }
 }

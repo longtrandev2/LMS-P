@@ -16,7 +16,8 @@ public class GradingConsumer {
 
     public GradingConsumer(ObjectMapper mapper) { this.mapper = mapper; }
 
-    @RabbitListener(queues = "q.grading")
+    // Enable only after the sandbox worker processes/publishes results instead of merely acknowledging jobs.
+    @RabbitListener(queues = "q.grading", autoStartup = "false")
     public void consume(Message message, Channel channel) throws Exception {
         long tag = message.getMessageProperties().getDeliveryTag();
         try {

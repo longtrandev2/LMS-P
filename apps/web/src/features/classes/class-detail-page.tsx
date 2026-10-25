@@ -68,11 +68,11 @@ export function ClassDetailPage({ classId }: { classId: string }) {
   return (
     <div className="space-y-6">
       <Link
-        to={clazz ? `/courses/${clazz.course_id}` : "/courses"}
+        to={hasRole(user, "admin") ? "/admin/academics" : "/courses"}
         className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
       >
         <ArrowLeft className="size-4" aria-hidden />
-        {clazz ? `Khóa học ${clazz.course_code}` : "Khóa học"}
+        {hasRole(user, "admin") ? "Quản lý học phần" : "Lớp được giao"}
       </Link>
 
       <PageHeader

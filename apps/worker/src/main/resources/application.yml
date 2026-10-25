@@ -3,6 +3,7 @@ spring:
     name: lms-worker
   main:
     web-application-type: none
+    keep-alive: true
   rabbitmq:
     host: ${RABBITMQ_HOST:rabbitmq}
     port: ${RABBITMQ_PORT:5672}

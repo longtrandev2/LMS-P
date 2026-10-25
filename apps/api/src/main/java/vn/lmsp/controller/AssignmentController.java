@@ -2,6 +2,8 @@ package vn.lmsp.controller;
 
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import vn.lmsp.service.ProgrammingSubmissionService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -16,8 +18,9 @@ import java.util.List;
 public class AssignmentController {
     private final AssignmentService assignments;
     private final AssignmentSubmissionService submissions;
-    public AssignmentController(AssignmentService assignments, AssignmentSubmissionService submissions) {
-        this.assignments = assignments; this.submissions = submissions;
+    private final ProgrammingSubmissionService programming;
+    public AssignmentController(AssignmentService assignments, AssignmentSubmissionService submissions, ProgrammingSubmissionService programming) {
+        this.assignments = assignments; this.submissions = submissions; this.programming = programming;
     }
     @GetMapping("/classes/{classId}/assignments")
     @PreAuthorize("hasAnyRole('ADMIN','LECTURER','STUDENT')")
@@ -59,10 +62,14 @@ public class AssignmentController {
         return submissions.submitQuiz(id, Long.valueOf(actor), key, body);
     }
     @PostMapping("/assignments/{id}/questions/{questionId}/submissions") @PreAuthorize("hasRole('STUDENT')")
-    public SubmissionView submitQuestion(@PathVariable Long id, @PathVariable Long questionId,
+    public ResponseEntity<?> submitQuestion(@PathVariable Long id, @PathVariable Long questionId,
             @RequestHeader("Idempotency-Key") String key, @RequestBody(required=false) QuestionSubmissionInput body,
             @AuthenticationPrincipal String actor) {
-        return submissions.submitQuestion(id, questionId, Long.valueOf(actor), key, body);
+        if (body != null && (body.language() != null || body.source_code() != null)) {
+            var receipt = programming.submit(id, questionId, Long.valueOf(actor), key, body);
+            return ResponseEntity.status(receipt.replayed() ? HttpStatus.OK : HttpStatus.ACCEPTED).body(receipt.accepted());
+        }
+        return ResponseEntity.ok(submissions.submitQuestion(id, questionId, Long.valueOf(actor), key, body));
     }
     @PostMapping("/assignments/{id}/questions/{questionId}/run") @PreAuthorize("hasRole('STUDENT')")
     public void runQuestion(@PathVariable Long id, @PathVariable Long questionId, @AuthenticationPrincipal String actor) {

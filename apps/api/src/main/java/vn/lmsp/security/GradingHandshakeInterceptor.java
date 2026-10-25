@@ -13,7 +13,10 @@ import java.util.Map;
 @Component
 public class GradingHandshakeInterceptor implements HandshakeInterceptor {
     private final JwtTokenService tokens;
-    public GradingHandshakeInterceptor(JwtTokenService tokens) { this.tokens = tokens; }
+    private final vn.lmsp.repository.UserRepository users;
+    public GradingHandshakeInterceptor(JwtTokenService tokens, vn.lmsp.repository.UserRepository users) {
+        this.tokens = tokens; this.users = users;
+    }
     @Override
     public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response, WebSocketHandler handler, Map<String, Object> attributes) {
         try {
@@ -21,7 +24,9 @@ public class GradingHandshakeInterceptor implements HandshakeInterceptor {
             String token = java.util.Arrays.stream(java.util.Optional.ofNullable(uri.getRawQuery()).orElse("").split("&"))
                     .filter(part -> part.startsWith("token=")).map(part -> java.net.URLDecoder.decode(part.substring(6), java.nio.charset.StandardCharsets.UTF_8))
                     .findFirst().orElseThrow();
-            attributes.put("userId", tokens.parseAccessToken(token).getSubject());
+            String userId = tokens.parseAccessToken(token).getSubject();
+            users.findById(Long.valueOf(userId)).filter(user -> user.getStatus() == vn.lmsp.enums.UserStatus.active).orElseThrow();
+            attributes.put("userId", userId);
             return true;
         } catch (RuntimeException error) {
             response.setStatusCode(org.springframework.http.HttpStatus.UNAUTHORIZED);

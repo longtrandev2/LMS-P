@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Phiên bản | 2.1 — 2026-10-25 |
+| Phiên bản | 2.2 — 2026-10-25 |
 | Nguồn | `srs.md`, quyết định chuyển stack của chủ dự án |
 | Nguyên tắc | Modular monolith; ưu tiên dễ hiểu, dễ demo và có thể mở rộng khi cần |
 
@@ -26,7 +26,7 @@
    ├── MySQL 8.4 (Spring Data JPA + Flyway)
    ├── RabbitMQ ── grading.submit ──▶ [Spring/Java grading worker ×N]
    │                                      │ Docker sandbox one-shot
-   │                 ◀── events.ws ───────┘
+   │                 ◀── grading.events ──┘
    └── local storage volume (qua StorageService)
 ```
 
@@ -35,7 +35,7 @@
 |---|---|---|
 | Web | React, TypeScript, Vite, React Router, TanStack Query, Tailwind, Monaco | UI cho student/lecturer/admin; REST; WS chỉ nhận tiến độ chấm |
 | API | Java 21, Spring Boot, Spring Web, Validation, Security, Data JPA, Flyway, Spring AMQP | REST `/api/v1`; auth/RBAC; nghiệp vụ; WS hub; sweeper kỳ thi |
-| Worker | Java 21, Spring AMQP, Docker Java client | Nhận tác vụ, lấy snapshot đề, điều phối sandbox, lưu kết quả và phát event |
+| Worker | Java 21, Spring AMQP, Docker Java client | Nhận tác vụ, SELECT code/snapshot đã ghim, điều phối sandbox và publish kết quả; API ghi DB |
 | Sandbox | Docker container dùng một lần | Chạy code không mạng, giới hạn tài nguyên và thời gian |
 | Database | MySQL 8.4 InnoDB | Dữ liệu giao dịch; schema do Flyway quản lý |
 | Broker | RabbitMQ 3.13 | Queue chấm bài, event hoàn tất, retry và DLQ |
@@ -99,6 +99,7 @@ Feature sở hữu API client và UI nghiệp vụ riêng; `components/` chỉ c
 ## 7. Thi và chấm bài
 - Spring scheduled task chạy mỗi 10 giây tìm session quá hạn; cập nhật/nộp tự động theo transaction và hợp đồng message.
 - API lưu submission pending rồi publish queue; worker xử lý theo snapshot phiên bản câu hỏi đã ghim.
+- M6 phần 1: submission và grading_jobs outbox được lưu cùng transaction, publisher confirm + retry; worker trả event V2 qua grading.events. API khóa submission, kiểm tra kết quả/tính điểm, ghi grading_results/test_results/notification rồi phát WS sau commit. Listener worker mẫu tắt cho đến khi phần 2 có sandbox; Run/regrade chưa triển khai.
 - Sandbox: no-network, read-only root, tmpfs giới hạn, non-root, CPU/RAM/PID/time/output caps.
 - Queue ưu tiên thi > bài tập > run thử; worker có thể scale riêng.
 

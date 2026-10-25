@@ -34,8 +34,8 @@ export function CourseFormDialog({ onOpenChange, course, onSaved }: CourseFormDi
 
   function validate(): boolean {
     const next: Record<string, string> = {};
-    if (!code.trim()) next.code = "Vui lòng nhập mã khóa học.";
-    if (name.trim().length < 3) next.name = "Tên khóa học tối thiểu 3 ký tự.";
+    if (!code.trim()) next.code = "Vui lòng nhập mã học phần.";
+    if (name.trim().length < 3) next.name = "Tên học phần tối thiểu 3 ký tự.";
     setErrors(next);
     return Object.keys(next).length === 0;
   }
@@ -48,10 +48,10 @@ export function CourseFormDialog({ onOpenChange, course, onSaved }: CourseFormDi
     try {
       if (isEdit) {
         await api.patch(`/courses/${course.id}`, payload);
-        toast.success("Đã cập nhật khóa học.");
+        toast.success("Đã cập nhật học phần.");
       } else {
         await api.post("/courses", payload);
-        toast.success("Đã tạo khóa học mới.");
+        toast.success("Đã tạo học phần mới.");
       }
       onOpenChange(false);
       onSaved();
@@ -67,13 +67,13 @@ export function CourseFormDialog({ onOpenChange, course, onSaved }: CourseFormDi
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="font-heading">
-            {isEdit ? "Sửa khóa học" : "Tạo khóa học"}
+            {isEdit ? "Sửa học phần" : "Tạo học phần"}
           </DialogTitle>
-          <DialogDescription>Khóa học là nơi chứa các lớp học phần.</DialogDescription>
+          <DialogDescription>Học phần là môn học; mỗi học phần có thể mở nhiều lớp theo từng học kỳ.</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4" noValidate>
           <div className="space-y-2">
-            <Label htmlFor="course-code">Mã khóa học</Label>
+            <Label htmlFor="course-code">Mã học phần</Label>
             <Input
               id="course-code"
               value={code}
@@ -85,7 +85,7 @@ export function CourseFormDialog({ onOpenChange, course, onSaved }: CourseFormDi
             {errors.code ? <FieldError text={errors.code} /> : null}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="course-name">Tên khóa học</Label>
+            <Label htmlFor="course-name">Tên học phần</Label>
             <Input
               id="course-name"
               value={name}
@@ -104,7 +104,7 @@ export function CourseFormDialog({ onOpenChange, course, onSaved }: CourseFormDi
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
-              placeholder="Giới thiệu ngắn về nội dung khóa học"
+              placeholder="Giới thiệu ngắn về học phần"
             />
           </div>
           <DialogFooter>
@@ -112,7 +112,7 @@ export function CourseFormDialog({ onOpenChange, course, onSaved }: CourseFormDi
               Hủy
             </Button>
             <Button type="submit" disabled={submitting}>
-              {submitting ? "Đang lưu…" : isEdit ? "Lưu thay đổi" : "Tạo khóa học"}
+              {submitting ? "Đang lưu…" : isEdit ? "Lưu thay đổi" : "Tạo học phần"}
             </Button>
           </DialogFooter>
         </form>

@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Phiên bản | 1.3 — 2026-10-24 |
+| Phiên bản | 1.4 — 2026-10-25 |
 | Nguồn yêu cầu | `srs.md` (M1–M10, BR1–BR15) |
 | Công nghệ | MySQL 8.4, InnoDB, utf8mb4, Spring Data JPA + Flyway migration |
 
@@ -150,9 +150,11 @@ erDiagram
 
 Index: UNIQUE(assignment_id, student_id, question_id, attempt_no); UNIQUE(assignment_attempt_id, question_id); (student_id, submitted_at); (exam_session_id). Với quiz, mọi câu trong cùng lượt dùng chung `assignment_attempt_id` và `attempt_no`, kể cả câu bỏ trống (`selected_option_ids` NULL, điểm 0); bài khác để `assignment_attempt_id` NULL. Bài thi không thuộc `assignment_attempts`.
 
-**grading_results** — id, submission_id FK, attempt_no INT (số lần chấm, regrade ++), status ENUM('graded','failed'), total_score DECIMAL(6,2), compile_output TEXT NULL, error_message TEXT NULL, graded_at, duration_ms INT. Index (submission_id).
+**grading_results** — id, submission_id FK, grading_job_id FK unique, attempt_no INT (số lần chấm, regrade ++), status VARCHAR(20) ('graded'/'failed'), total_score DECIMAL(8,2) NULL, compile_error BOOLEAN, compile_output MEDIUMTEXT NULL, error_message TEXT NULL, graded_at, duration_ms INT. Unique (submission_id, attempt_no).
 
-**test_results** — id, grading_result_id FK, test_case_position SMALLINT (vị trí trong `question_versions.snapshot` của submission), status ENUM('passed','wrong_answer','runtime_error','timeout','memory_limit','internal_error'), output TEXT (stdout truncate 64KB), time_ms INT, memory_kb INT NULL, score DECIMAL(6,2). Index (grading_result_id). Kết hợp `submission.question_version_id` + `test_case_position` để truy vết chính xác test đã dùng mà không tham chiếu test case mutable trong ngân hàng.
+M6 API (Flyway V14): `submissions` bổ sung `max_score` và `late_penalty_percent` để ghim chính sách lúc nộp. `grading_jobs` là outbox với job_id UUID unique, FK submission, attempt_no, priority, created_at/next_attempt_at/published_at, publish_attempts; unique (submission_id, attempt_no). `grading_results` có FK grading_job_id unique, compile_error và unique (submission_id, attempt_no); `test_results` unique (grading_result_id, test_case_position). API là tiến trình ghi kết quả; worker chỉ cần SELECT bài nộp/snapshot và publish message. Không dùng SQL update trực tiếp từ worker.
+
+**test_results** — id, grading_result_id FK, test_case_position INT (vị trí trong `question_versions.snapshot`), status ENUM('passed','wrong_answer','runtime_error','timeout','memory_limit'), output MEDIUMTEXT (truncate 64KiB UTF-8), time_ms INT, memory_kb INT NULL, score DECIMAL(8,2). Unique (grading_result_id, test_case_position). Lỗi hạ tầng được lưu ở cấp grading_result failed. Kết hợp submission.question_version_id và vị trí test để truy vết snapshot bất biến.
 
 ### 2.8 Điểm (M8)
 

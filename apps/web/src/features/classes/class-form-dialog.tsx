@@ -14,7 +14,6 @@ import { Label } from "@/components/ui/label";
 import { FieldError } from "@/components/form-field-error";
 import { api } from "@/lib/api";
 import { errorText } from "@/lib/error-messages";
-import { hasRole, useAuthStore } from "@/stores/auth";
 import type { ClassSummary } from "@/types/api";
 import { ClassSettingsFields, type ClassSettings } from "@/features/classes/class-settings-fields";
 import { ClassLecturerField } from "@/features/classes/class-lecturer-field";
@@ -32,14 +31,10 @@ const dateInput = (value?: string | null) => value?.slice(0, 16) ?? "";
 
 /**
  * State khởi tạo từ props — mount có điều kiện kèm `key`, không cần effect sync.
- * lecturer_id bắt buộc theo ClassCreateIn (BE): lecturer mặc định là chính mình;
- * admin chọn từ danh sách giảng viên (GET /users?role=lecturer — admin-only).
+ * Chỉ admin tạo/sửa lớp và phân công giảng viên từ gợi ý tài khoản.
  */
 export function ClassFormDialog({ onOpenChange, courseId, clazz, onSaved }: ClassFormDialogProps) {
   const isEdit = !!clazz;
-  const currentUser = useAuthStore((s) => s.user);
-  const isAdmin = hasRole(currentUser, "admin");
-  const isLecturer = hasRole(currentUser, "lecturer");
 
   const [code, setCode] = useState(clazz?.code ?? "");
   const [name, setName] = useState(clazz?.name ?? "");
@@ -49,9 +44,7 @@ export function ClassFormDialog({ onOpenChange, courseId, clazz, onSaved }: Clas
     enrollUntil: dateInput(clazz?.enroll_until), room: clazz?.room ?? "", schedule: clazz?.schedule ?? "",
     status: clazz?.status ?? "active",
   });
-  const [lecturerId, setLecturerId] = useState<number | null>(
-    clazz?.lecturer_id ?? (isLecturer ? currentUser?.id ?? null : null)
-  );
+  const [lecturerId, setLecturerId] = useState<number | null>(clazz?.lecturer_id ?? null);
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -94,7 +87,7 @@ export function ClassFormDialog({ onOpenChange, courseId, clazz, onSaved }: Clas
         toast.success("Đã cập nhật lớp học phần.");
       } else {
         await api.post("/classes", payload);
-        toast.success("Đã tạo lớp học phần.");
+        toast.success("Đã mở lớp và phân công giảng viên.");
       }
       onOpenChange(false);
       onSaved();
@@ -110,9 +103,9 @@ export function ClassFormDialog({ onOpenChange, courseId, clazz, onSaved }: Clas
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="font-heading">
-            {isEdit ? "Sửa lớp học phần" : "Tạo lớp học phần"}
+            {isEdit ? "Sửa lớp học phần" : "Mở lớp & phân công giảng viên"}
           </DialogTitle>
-          <DialogDescription>Lớp thuộc khóa học hiện tại, theo học kỳ.</DialogDescription>
+          <DialogDescription>Nhập thông tin lớp và chọn giảng viên phụ trách trước khi lưu.</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4" noValidate>
           <div className="space-y-2">
@@ -151,18 +144,20 @@ export function ClassFormDialog({ onOpenChange, courseId, clazz, onSaved }: Clas
             {errors.semester ? <FieldError text={errors.semester} /> : null}
           </div>
 
+          <div className="rounded-xl border border-primary/25 bg-primary/5 p-4">
+            <ClassLecturerField lecturerId={lecturerId} initialName={clazz?.lecturer_name ?? ""}
+              error={errors.lecturer} onChange={setLecturerId} />
+          </div>
+
           <ClassSettingsFields value={settings} onChange={setSettings} />
           {errors.capacity || errors.window ? <FieldError text={errors.capacity ?? errors.window} /> : null}
-
-          <ClassLecturerField isAdmin={isAdmin} lecturerId={lecturerId} fullName={currentUser?.full_name ?? ""}
-            error={errors.lecturer} onChange={setLecturerId} />
 
           <DialogFooter>
             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
               Hủy
             </Button>
             <Button type="submit" disabled={submitting}>
-              {submitting ? "Đang lưu…" : isEdit ? "Lưu thay đổi" : "Tạo lớp"}
+              {submitting ? "Đang lưu…" : isEdit ? "Lưu thay đổi" : "Mở lớp"}
             </Button>
           </DialogFooter>
         </form>

@@ -20,7 +20,7 @@ const CAPABILITIES: Capability[] = [
     number: "01",
     title: "Quản trị lớp học & học phần",
     description:
-      "Tạo lớp học phần theo học kỳ, ghi danh sinh viên và phân công giảng viên phụ trách — mỗi lớp gắn với một khóa học duy nhất.",
+      "Tạo lớp học phần theo học kỳ, ghi danh sinh viên và phân công giảng viên phụ trách — mỗi lớp gắn với một học phần.",
     fragment: <SectionListFragment />,
   },
   {

@@ -26,20 +26,21 @@ public class AssignmentSubmissionService {
     private final QuestionVersionService snapshots;
     private final SubmissionMapper mapper;
     private final AuditService audit;
+    private final SubmissionPolicy policy;
     public AssignmentSubmissionService(AssignmentAccess access, AssignmentQuestionRepository links,
             AssignmentAttemptRepository attempts, SubmissionRepository submissions, UserRepository users,
-            QuestionVersionService snapshots, SubmissionMapper mapper, AuditService audit) {
+            QuestionVersionService snapshots, SubmissionMapper mapper, AuditService audit, SubmissionPolicy policy) {
         this.access = access; this.links = links; this.attempts = attempts; this.submissions = submissions;
-        this.users = users; this.snapshots = snapshots; this.mapper = mapper; this.audit = audit;
+        this.users = users; this.snapshots = snapshots; this.mapper = mapper; this.audit = audit; this.policy = policy;
     }
     @Transactional
     public QuizAttemptView submitQuiz(Long assignmentId, Long studentId, String rawKey, QuizSubmitInput body) {
         Assignment assignment = access.studentAssignment(assignmentId, studentId, true);
         if (assignment.getCategory() != AssignmentCategory.QUIZ) throw bad("Bài này không phải quiz");
-        String key = idempotencyKey(rawKey);
+        String key = policy.key(rawKey);
         var old = attempts.findByIdempotencyKey(key);
         if (old.isPresent()) { ensureAttemptOwner(old.get(), assignmentId, studentId); return attemptView(old.get()); }
-        SubmissionWindow window = window(assignment, LocalDateTime.now());
+        SubmissionPolicy.Window window = policy.window(assignment, LocalDateTime.now());
         long count = attempts.countByAssignment_IdAndStudent_Id(assignmentId, studentId);
         if (assignment.getMaxAttempts() != null && count >= assignment.getMaxAttempts()) throw conflict("Bạn đã dùng hết số lượt làm quiz");
         List<AssignmentQuestion> questionLinks = links.findAllByAssignment_IdOrderByPositionAscIdAsc(assignmentId);
@@ -65,10 +66,10 @@ public class AssignmentSubmissionService {
         Assignment assignment = access.studentAssignment(assignmentId, studentId, true);
         if (assignment.getCategory() == AssignmentCategory.QUIZ) throw bad("Quiz phải nộp toàn bộ đáp án trong một lượt");
         AssignmentQuestion link = links.findByAssignment_IdAndQuestion_Id(assignmentId, questionId).orElseThrow(() -> bad("Câu hỏi không thuộc bài này"));
-        if (link.getQuestion().getType() != QuestionType.mcq) throw unavailable("Nộp bài lập trình cần worker chấm code");
-        String key = idempotencyKey(rawKey); var old = submissions.findByIdempotencyKey(key);
+        if (link.getQuestion().getType() != QuestionType.mcq) throw bad("Bài lập trình cần language và source_code");
+        String key = policy.key(rawKey); var old = submissions.findByIdempotencyKey(key);
         if (old.isPresent()) { ensureSubmissionOwner(old.get(), assignmentId, questionId, studentId); return mapper.toView(old.get()); }
-        SubmissionWindow window = window(assignment, LocalDateTime.now());
+        SubmissionPolicy.Window window = policy.window(assignment, LocalDateTime.now());
         long count = submissions.countByAssignment_IdAndStudent_IdAndQuestion_Id(assignmentId, studentId, questionId);
         if (assignment.getMaxAttempts() != null && count >= assignment.getMaxAttempts()) throw conflict("Bạn đã dùng hết số lượt nộp câu hỏi");
         List<Long> selected = body == null ? null : body.selected_option_ids();
@@ -125,16 +126,6 @@ public class AssignmentSubmissionService {
         if (link.getQuestionVersion() == null) throw conflict("Bài chưa được xuất bản");
         return snapshots.read(link.getQuestionVersion());
     }
-    private SubmissionWindow window(Assignment assignment, LocalDateTime now) {
-        if (assignment.getAvailableFrom() != null && now.isBefore(assignment.getAvailableFrom())) throw conflict("Bài chưa mở");
-        if (!now.isAfter(assignment.getDueAt())) return new SubmissionWindow(false, 0);
-        if (!assignment.isAllowLate() || assignment.getLateDueAt() == null || now.isAfter(assignment.getLateDueAt())) throw conflict("Đã hết hạn nộp bài");
-        return new SubmissionWindow(true, assignment.getLatePenaltyPercent());
-    }
-    private String idempotencyKey(String key) {
-        if (key == null || !key.matches("(?i)[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")) throw bad("Idempotency-Key phải là UUID hợp lệ");
-        return key.toLowerCase(Locale.ROOT);
-    }
     private void ensureAttemptOwner(AssignmentAttempt old, Long assignmentId, Long studentId) {
         if (!old.getAssignmentId().equals(assignmentId) || !old.getStudentId().equals(studentId)) throw conflict("Idempotency-Key đã được dùng cho yêu cầu khác");
     }
@@ -146,5 +137,4 @@ public class AssignmentSubmissionService {
     private LmsException conflict(String message) { return new LmsException("CONFLICT", message, HttpStatus.CONFLICT, null); }
     private LmsException unavailable(String message) { return new LmsException("RUNNER_UNAVAILABLE", message, HttpStatus.NOT_IMPLEMENTED, null); }
     private record PendingAnswer(AssignmentQuestion link, List<Long> selected, BigDecimal score) { }
-    private record SubmissionWindow(boolean late, int penalty) { }
 }
