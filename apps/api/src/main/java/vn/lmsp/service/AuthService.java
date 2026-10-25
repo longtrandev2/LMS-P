@@ -18,36 +18,33 @@ import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.Base64;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class AuthService {
-    private record Attempt(int failures, LocalDateTime blockedUntil) { }
-    private final ConcurrentHashMap<String, Attempt> attempts = new ConcurrentHashMap<>();
     private final UserRepository users;
     private final RefreshTokenRepository refreshTokens;
     private final PasswordEncoder passwords;
     private final JwtTokenService jwt;
+    private final LoginThrottle throttle;
     private final int refreshTtlDays;
     private final SecureRandom random = new SecureRandom();
 
     public AuthService(UserRepository users, RefreshTokenRepository refreshTokens, PasswordEncoder passwords,
-                       JwtTokenService jwt, @Value("${lms.jwt.refresh-ttl-days:7}") int refreshTtlDays) {
+                       JwtTokenService jwt, LoginThrottle throttle,
+                       @Value("${lms.jwt.refresh-ttl-days:7}") int refreshTtlDays) {
         this.users = users; this.refreshTokens = refreshTokens; this.passwords = passwords;
-        this.jwt = jwt; this.refreshTtlDays = refreshTtlDays;
+        this.jwt = jwt; this.throttle = throttle; this.refreshTtlDays = refreshTtlDays;
     }
 
     @Transactional
-    public TokenPair login(String email, String password) {
-        Attempt attempt = attempts.get(email.toLowerCase());
-        if (attempt != null && attempt.blockedUntil() != null && attempt.blockedUntil().isAfter(LocalDateTime.now()))
-            throw new LmsException("RATE_LIMITED", "Tài khoản tạm khóa do đăng nhập sai nhiều lần.", HttpStatus.TOO_MANY_REQUESTS, null);
-        User user = users.findByEmailIgnoreCase(email).orElse(null);
+    public TokenPair login(String account, String password) {
+        throttle.assertNotBlocked(account);
+        User user = resolve(account);
         if (user == null || user.getStatus() != UserStatus.active || !passwords.matches(password, user.getPasswordHash())) {
-            recordFailure(email);
-            throw new LmsException("UNAUTHENTICATED", "Email hoặc mật khẩu không đúng", HttpStatus.UNAUTHORIZED, null);
+            throttle.recordFailure(account);
+            throw new LmsException("UNAUTHENTICATED", "Tài khoản hoặc mật khẩu không đúng", HttpStatus.UNAUTHORIZED, null);
         }
-        attempts.remove(email.toLowerCase());
+        throttle.reset(account);
         user.setLastLoginAt(LocalDateTime.now());
         return issuePair(user);
     }
@@ -80,18 +77,14 @@ public class AuthService {
                 .orElseThrow(() -> new LmsException("NOT_FOUND", "Không tìm thấy người dùng", HttpStatus.NOT_FOUND, null));
     }
 
+    private User resolve(String account) {
+        return users.findByEmailIgnoreCase(account).orElseGet(() -> users.findByStudentCodeIgnoreCase(account).orElse(null));
+    }
     private TokenPair issuePair(User user) {
         byte[] bytes = new byte[48]; random.nextBytes(bytes);
         String refresh = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
         refreshTokens.save(new RefreshToken(user, hash(refresh), LocalDateTime.now().plusDays(refreshTtlDays)));
         return new TokenPair(jwt.issueAccessToken(user), refresh, UserSummary.from(user));
-    }
-    private void recordFailure(String email) {
-        String key = email.toLowerCase();
-        attempts.compute(key, (ignored, old) -> {
-            int failures = old == null || old.blockedUntil() != null ? 1 : old.failures() + 1;
-            return failures >= 5 ? new Attempt(failures, LocalDateTime.now().plusMinutes(15)) : new Attempt(failures, null);
-        });
     }
     private String hash(String token) {
         try { return java.util.HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(token.getBytes(StandardCharsets.UTF_8))); }
@@ -101,4 +94,3 @@ public class AuthService {
         return new LmsException("UNAUTHENTICATED", message, HttpStatus.UNAUTHORIZED, null);
     }
 }
-

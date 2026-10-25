@@ -1,6 +1,6 @@
 package vn.lmsp.dto;
 
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
-public record LoginRequest(@Email @NotBlank String email, @NotBlank String password) { }
+/** `account` = email hoặc mã sinh viên (FR-AUTH-01). */
+public record LoginRequest(@NotBlank String account, @NotBlank String password) { }
