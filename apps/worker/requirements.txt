@@ -1,7 +1,0 @@
-# Grading worker runtime deps — pinned for reproducible builds
-aio-pika==9.4.2
-SQLAlchemy==2.1.5
-# Phải là bản có wheel cp312 — bản cũ (vd 0.2.9) build từ source, cần gcc
-# mà slim không có → docker build fail
-asyncmy==0.2.16
-docker==7.1.0
