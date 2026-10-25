@@ -1,0 +1,66 @@
+package vn.lmsp.controller;
+
+import jakarta.validation.Valid;
+import java.util.List;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+import vn.lmsp.dto.QuestionDtos.*;
+import vn.lmsp.service.QuestionBankService;
+import vn.lmsp.service.QuestionCsvService;
+
+@RestController
+@RequestMapping("/api/v1")
+@PreAuthorize("hasAnyRole('ADMIN','LECTURER')")
+public class QuestionBankController {
+    private final QuestionBankService service;
+    private final QuestionCsvService csv;
+    public QuestionBankController(QuestionBankService service, QuestionCsvService csv) { this.service = service; this.csv = csv; }
+
+    @GetMapping("/question-banks")
+    public List<QuestionBankView> banks(@AuthenticationPrincipal String actor, Authentication auth,
+                                        @RequestParam(required=false) Long course_id) {
+        return service.list(Long.valueOf(actor), isAdmin(auth), course_id);
+    }
+    @PostMapping("/question-banks") @ResponseStatus(HttpStatus.CREATED)
+    public QuestionBankView createBank(@Valid @RequestBody QuestionBankInput body,
+                                       @AuthenticationPrincipal String actor, Authentication auth) {
+        return service.create(body, Long.valueOf(actor), isAdmin(auth));
+    }
+    @PutMapping("/courses/{courseId}/question-bank")
+    public QuestionBankView ensureCourseBank(@PathVariable Long courseId,
+            @AuthenticationPrincipal String actor, Authentication auth) {
+        return service.ensureCourseBank(courseId, Long.valueOf(actor), isAdmin(auth));
+    }
+    @GetMapping("/question-banks/{id}/categories")
+    public List<CategoryView> categories(@PathVariable Long id, @AuthenticationPrincipal String actor, Authentication auth) {
+        return service.categories(id, Long.valueOf(actor), isAdmin(auth));
+    }
+    @PostMapping("/question-banks/{id}/categories") @ResponseStatus(HttpStatus.CREATED)
+    public CategoryView createCategory(@PathVariable Long id, @Valid @RequestBody CategoryInput body,
+                                       @AuthenticationPrincipal String actor, Authentication auth) {
+        return service.createCategory(id, body, Long.valueOf(actor), isAdmin(auth));
+    }
+    @PatchMapping("/question-categories/{id}")
+    public CategoryView renameCategory(@PathVariable Long id, @Valid @RequestBody CategoryInput body,
+                                       @AuthenticationPrincipal String actor, Authentication auth) {
+        return service.renameCategory(id, body, Long.valueOf(actor), isAdmin(auth));
+    }
+    @DeleteMapping("/question-categories/{id}") @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteCategory(@PathVariable Long id, @AuthenticationPrincipal String actor, Authentication auth) {
+        service.deleteCategory(id, Long.valueOf(actor), isAdmin(auth));
+    }
+    @PostMapping("/question-banks/{bankId}/categories/{categoryId}/questions/import/preview")
+    public QuestionCsvPreview previewCsv(@PathVariable Long bankId, @PathVariable Long categoryId,
+            @Valid @RequestBody QuestionCsvRequest body, @AuthenticationPrincipal String actor, Authentication auth) {
+        return csv.preview(bankId, categoryId, body, Long.valueOf(actor), isAdmin(auth));
+    }
+    @PostMapping("/question-banks/{bankId}/categories/{categoryId}/questions/import")
+    public QuestionImportResult importCsv(@PathVariable Long bankId, @PathVariable Long categoryId,
+            @Valid @RequestBody QuestionCsvRequest body, @AuthenticationPrincipal String actor, Authentication auth) {
+        return csv.importRows(bankId, categoryId, body, Long.valueOf(actor), isAdmin(auth));
+    }
+    private boolean isAdmin(Authentication auth) { return auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN")); }
+}

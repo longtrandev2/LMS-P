@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { CalendarRange, GraduationCap, UserRound } from "lucide-react";
@@ -9,6 +10,9 @@ import { queryKeys } from "@/lib/query-keys";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
 import type { ClassSummary, Paginated } from "@/types/api";
 import { cn } from "@/lib/utils";
+import { DataTablePagination } from "@/components/data-table-pagination";
+import { SortSelect } from "@/components/sort-select";
+import { ClassSearchField } from "@/features/classes/class-search-field";
 
 /** Vạch màu nhận diện khóa học — xoay theo mã, giúp phân biệt nhanh thẻ lớp */
 const COURSE_STRIPES = [
@@ -26,23 +30,19 @@ function stripeFor(code: string): string {
 
 export function MyClassesPage() {
   const { status: guard } = useAuthGuard(["student"]);
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [sort, setSort] = useState("code");
+  useEffect(() => setPage(1), [search]);
   const query = useQuery({
-    queryKey: queryKeys.me.classes(),
-    queryFn: async ({ signal }) => {
-      // BE đang transition sang Page envelope — chấp nhận cả array và {items}
-      const data = await api.get<ClassSummary[] | Paginated<ClassSummary>>(
-        "/me/classes",
-        { page: 1, limit: 50 },
-        signal
-      );
-      return Array.isArray(data) ? data : data.items;
-    },
+    queryKey: queryKeys.me.classes({ page, limit: 12, q: search.trim() || undefined, sort }),
+    queryFn: ({ signal }) => api.get<Paginated<ClassSummary>>("/me/classes", { page, limit: 12, q: search.trim() || undefined, sort }, signal),
     enabled: guard === "ok",
   });
 
   if (guard !== "ok") return null;
 
-  const classes = query.data;
+  const classes = query.data?.items;
 
   return (
     <div className="space-y-6">
@@ -50,6 +50,9 @@ export function MyClassesPage() {
         title="Lớp của tôi"
         description="Các lớp học phần bạn đang ghi danh trong học kỳ này."
       />
+      <div className="flex flex-wrap gap-3"><ClassSearchField value={search} onChange={setSearch} />
+        <SortSelect value={sort} onChange={(value) => { setSort(value); setPage(1); }} options={[{ value: "code", label: "Theo mã lớp" }, { value: "name", label: "Theo tên" }, { value: "semester", label: "Theo học kỳ" }]} />
+      </div>
 
       {query.isPending ? (
         <CardGridSkeleton />
@@ -64,12 +67,12 @@ export function MyClassesPage() {
           <CardContent className="p-0">
             <EmptyState
               title="Bạn chưa được ghi danh vào lớp nào"
-              description="Hãy liên hệ giảng viên hoặc quản trị khoa để được thêm vào lớp học phần."
+              description="Liên hệ giảng viên hoặc phòng đào tạo để được xếp vào lớp học phần."
             />
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {classes?.map((clazz) => (
             <Link
               key={clazz.id}
@@ -113,7 +116,7 @@ export function MyClassesPage() {
             </Card>
             </Link>
           ))}
-        </div>
+        </div>{query.data ? <DataTablePagination page={query.data.page} limit={query.data.limit} total={query.data.total} onPageChange={setPage} /> : null}</>
       )}
     </div>
   );

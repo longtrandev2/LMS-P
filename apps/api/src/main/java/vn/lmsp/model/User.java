@@ -19,6 +19,10 @@ public class User {
     private String fullName;
     @Column(name = "student_code", unique = true, length = 20)
     private String studentCode;
+    @Column(length = 20)
+    private String phone;
+    @Column(name = "avatar_path", length = 255)
+    private String avatarPath;
     @Enumerated(EnumType.STRING) @Column(nullable = false)
     private UserStatus status = UserStatus.active;
     @Column(name = "last_login_at")
@@ -44,11 +48,18 @@ public class User {
     public LocalDateTime getLastLoginAt() { return lastLoginAt; }
     public String getFullName() { return fullName; }
     public String getStudentCode() { return studentCode; }
+    public String getPhone() { return phone; }
+    public String getAvatarPath() { return avatarPath; }
     public UserStatus getStatus() { return status; }
     public String getPasswordHash() { return passwordHash; }
     public Set<Role> getRoles() { return roles; }
     public void setLastLoginAt(LocalDateTime value) { lastLoginAt = value; }
     public void updateProfile(String fullName, String studentCode) { if(fullName!=null) this.fullName=fullName; if(studentCode!=null) this.studentCode=studentCode; }
+    public void updatePersonalProfile(String fullName, String phone) {
+        if (fullName != null) this.fullName = fullName;
+        if (phone != null) this.phone = phone.isBlank() ? null : phone.trim();
+    }
+    public void setAvatarPath(String value) { avatarPath = value; }
     public void setPasswordHash(String value) { passwordHash=value; }
     public void setStatus(UserStatus value) { status=value; }
     public void setStudentCode(String value) { studentCode=value; }

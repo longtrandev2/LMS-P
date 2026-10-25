@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Phiên bản | 2.0 — 2026-10-23 |
+| Phiên bản | 2.1 — 2026-10-25 |
 | Nguồn | `srs.md`, quyết định chuyển stack của chủ dự án |
 | Nguyên tắc | Modular monolith; ưu tiên dễ hiểu, dễ demo và có thể mở rộng khi cần |
 
@@ -60,6 +60,17 @@ apps/api/src/main/java/vn/lmsp/
 ```
 
 Tất cả REST controller nằm trong package `controller/`; tất cả service nghiệp vụ nằm trong package `service/`. Controller xác thực đầu vào và quyền; service áp dụng nghiệp vụ; repository truy cập dữ liệu. Entity không được lộ thành API response. Giữ file ngắn, tách theo trách nhiệm.
+
+### Quy ước mapping và truy vấn dữ liệu
+
+- DTO chỉ khai báo cấu trúc request/response và validation; không phụ thuộc JPA entity hoặc tự chuyển đổi entity.
+- Mọi chuyển đổi entity sang DTO đặt trong các lớp `*Mapper` thuộc package `mapper`, đăng ký bằng `@Component` và dùng constructor injection.
+- Mapper nhận đủ dữ liệu qua tham số, không inject repository/service, không ghi database và không kiểm tra quyền truy cập. Giữ nguyên tên trường JSON theo hợp đồng API.
+- Service kiểm tra quyền, đọc dữ liệu và thực thi transaction trước khi gọi mapper. Với câu hỏi/bài tập nhiều bảng, `QuestionReadService` và `AssignmentReadService` gom dữ liệu; `QuestionVersionService` lưu/đọc snapshot phiên bản.
+- Khi xuất response cho sinh viên, service truyền chế độ hiển thị phù hợp; mapper chỉ chiếu các trường được phép: không có đáp án đúng, solution mẫu hoặc test case ẩn. Snapshot nội bộ vẫn giữ đầy đủ dữ liệu để chấm bài.
+- Query lấy câu hỏi của một bài tập được dùng chung cho summary và details trong một lần đọc. Bài đã xuất bản luôn đọc phiên bản ghim, bản nháp mới dùng phiên bản câu hỏi hiện tại.
+- DTO kết quả nghiệp vụ như số dòng import hợp lệ, lỗi CSV, phân trang và kết quả thu hồi phiên được tạo tại service; chúng không phải mapping entity.
+- Kiểm thử Java bảo vệ hợp đồng response, dữ liệu nhạy cảm, snapshot và chấm quiz; Docker build API chạy Maven test trước khi đóng gói.
 
 Worker là ứng dụng Spring Boot riêng tại `apps/worker`, để scale độc lập. Khi grading được triển khai, consumer dùng manual ack, retry có giới hạn, DLQ và xử lý idempotent theo submission/attempt.
 

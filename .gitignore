@@ -11,6 +11,10 @@ node_modules/
 .next/
 out/
 
+# Java / Maven
+target/
+*.class
+
 # Env & secrets
 .env
 .env.*

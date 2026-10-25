@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { Upload, UserPlus } from "lucide-react";
+import { Download, Upload, UserPlus } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -16,7 +18,8 @@ import { EmptyState, ErrorState, TableSkeleton } from "@/components/state-blocks
 import { UsersTable } from "@/features/users/users-table";
 import { UserFormDialog } from "@/features/users/user-form-dialog";
 import { ResetPasswordDialog } from "@/features/users/reset-password-dialog";
-import { ImportUsersDialog } from "@/features/users/import-users-dialog";
+import { ImportUsersPreviewDialog } from "@/features/users/import-users-preview-dialog";
+import { UserSortSelect } from "@/features/users/user-sort-select";
 import { api } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
@@ -33,13 +36,25 @@ export function UsersPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [resettingUser, setResettingUser] = useState<User | null>(null);
   const [importOpen, setImportOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sort, setSort] = useState("-created_at");
+  useEffect(() => { const timer=setTimeout(()=>{setSearchQuery(search);setPage(1);},300); return ()=>clearTimeout(timer); },[search]);
 
   const filters = {
     page,
     limit: PAGE_SIZE,
     role: roleFilter === "all" ? undefined : roleFilter,
     status: statusFilter === "all" ? undefined : statusFilter,
+    q: searchQuery.trim() || undefined,
+    sort,
   };
+  async function exportCsv() {
+    try {
+      const { blob, filename } = await api.download("/users/export", { role: filters.role, status: filters.status, q: filters.q, sort });
+      const url=URL.createObjectURL(blob); const anchor=document.createElement("a"); anchor.href=url; anchor.download=filename??"users.csv"; anchor.click(); URL.revokeObjectURL(url);
+    } catch(error) { toast.error(error instanceof Error ? error.message : "Không thể xuất CSV."); }
+  }
 
   const query = useQuery({
     queryKey: queryKeys.users.list(filters),
@@ -59,6 +74,7 @@ export function UsersPage() {
         description="Tài khoản sinh viên, giảng viên và quản trị trong hệ thống."
         actions={
           <>
+            <Button variant="outline" onClick={exportCsv}><Download aria-hidden /> Xuất CSV</Button>
             <Button variant="outline" onClick={() => setImportOpen(true)}>
               <Upload aria-hidden /> Nhập CSV
             </Button>
@@ -78,6 +94,8 @@ export function UsersPage() {
         <CardContent className="space-y-0 p-0">
           {/* Bộ lọc */}
           <div className="flex flex-wrap items-center gap-3 border-b px-4 py-3">
+            <Input aria-label="Tìm theo tên, email hoặc mã sinh viên" className="w-full sm:w-64" placeholder="Tìm người dùng…" value={search} onChange={(event)=>setSearch(event.target.value)} />
+            <UserSortSelect value={sort} onChange={setSort} />
             <Select
               value={roleFilter}
               onValueChange={(v) => {
@@ -165,7 +183,7 @@ export function UsersPage() {
         onOpenChange={(o) => !o && setResettingUser(null)}
         onDone={() => query.refetch()}
       />
-      <ImportUsersDialog
+      <ImportUsersPreviewDialog
         open={importOpen}
         onOpenChange={setImportOpen}
         onImported={() => query.refetch()}

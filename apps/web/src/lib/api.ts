@@ -101,6 +101,7 @@ interface RequestOptions {
   /** Bỏ qua attach token (login, refresh) */
   anonymous?: boolean;
   signal?: AbortSignal;
+  headers?: Record<string, string>;
 }
 
 function buildUrl(path: string, query?: RequestOptions["query"]): string {
@@ -116,12 +117,13 @@ function buildUrl(path: string, query?: RequestOptions["query"]): string {
 }
 
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const { method = "GET", body, form, query, anonymous, signal } = options;
+  const { method = "GET", body, form, query, anonymous, signal, headers: extraHeaders } = options;
 
   const doFetch = async (token: string | null): Promise<Response> => {
     const headers: Record<string, string> = {};
     if (!anonymous && token) headers.Authorization = `Bearer ${token}`;
     if (body !== undefined) headers["Content-Type"] = "application/json";
+    if (extraHeaders) Object.assign(headers, extraHeaders);
     return fetch(buildUrl(path, query), {
       method,
       headers,
@@ -158,9 +160,9 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
  * GET trả về blob (tải học liệu…) — giữ cùng flow auth + refresh 1 lần như request().
  * Filename lấy từ Content-Disposition nếu server gửi.
  */
-async function requestBlob(path: string): Promise<{ blob: Blob; filename: string | null }> {
+async function requestBlob(path: string, query?: RequestOptions["query"]): Promise<{ blob: Blob; filename: string | null }> {
   const doFetch = (token: string | null): Promise<Response> =>
-    fetch(buildUrl(path), {
+    fetch(buildUrl(path, query), {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
 
@@ -194,5 +196,5 @@ export const api = {
   put: <T>(path: string, body?: unknown) => request<T>(path, { method: "PUT", body }),
   delete: <T>(path: string) => request<T>(path, { method: "DELETE" }),
   upload: <T>(path: string, form: FormData) => request<T>(path, { method: "POST", form }),
-  download: (path: string) => requestBlob(path),
+  download: (path: string, query?: RequestOptions["query"]) => requestBlob(path, query),
 };

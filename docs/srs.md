@@ -2,7 +2,7 @@
 
 | Thuộc tính | Giá trị |
 |---|---|
-| Phiên bản | 1.3 — 2026-10-23 |
+| Phiên bản | 1.5 — 2026-10-24 |
 | Trạng thái | Baseline (spec-first, chuẩn đối chiếu cho DB/API/kiến trúc/plan) |
 | Nguồn требования | Subject gốc của giảng viên (English, bản gốc trong repo docs) |
 | Tham khảo mở rộng | `LMS – Phân tích nghiệp vụ và kiến trúc công nghệ.md` — CHỈ tham khảo, phạm vi lấy theo Subject + tài liệu này |
@@ -91,10 +91,10 @@ Frontend dùng React + TypeScript (SPA); backend dùng Java + Spring Boot. MySQL
 | ID | Ưu tiên | Yêu cầu |
 |---|---|---|
 | FR-CRS-01 | M | CRUD khóa học (lecturer/admin); CRUD lớp học thuộc khóa học, học kỳ, giảng viên phụ trách. Thuộc tính lớp: **sĩ số tối đa** `max_students` (NULL = không giới hạn), **khung giờ ghi danh** `enroll_from`/`enroll_until` (NULL = luôn mở, lecturer đặt — admin override), phòng học, lịch học (text), trạng thái `active`/`locked` |
-| FR-CRS-02 | M | Ghi danh: (a) lecturer/admin **thêm/xóa sinh viên theo mã SV hoặc email**, bulk theo mã SV `[{student_code}]` — validate từng dòng, trả lỗi rõ (không tìm thấy/trùng); (b) **sinh viên tự ghi danh** (không cần duyệt) khi còn chỗ + trong khung giờ; sinh viên KHÔNG tự rời lớp — chỉ lecturer/admin xóa (enrollment → `dropped`, giữ lịch sử) |
+| FR-CRS-02 | M | Xếp sinh viên vào lớp do nhà trường quản lý: admin có thể thêm/xóa ở mọi lớp; lecturer chỉ quản lý danh sách lớp mình phụ trách. Có thể tìm sinh viên active chưa thuộc lớp theo tên/mã SV/email rồi chọn nhiều người; hỗ trợ thêm lẻ, dán danh sách và nhập CSV có xem trước. Lớp giới hạn sĩ số, admin được vượt giới hạn. Sinh viên chỉ xem lớp đã được xếp, không tự ghi danh/rời lớp. Xóa chuyển enrollment sang `dropped`, giữ lịch sử |
 | FR-CRS-03 | M | Kiểm soát truy cập theo ghi danh (xem BR2) |
-| FR-CRS-04 | M | **Catalog lớp mở ghi danh** cho sinh viên: duyệt/tìm kiếm lớp, thấy sĩ số còn trống (`45/50`), trạng thái khung giờ (sắp mở / đang mở / đã đóng / đã đầy), nút tham gia |
-| FR-CRS-05 | S | Thông báo cho lecturer khi sinh viên tự ghi danh vào lớp (type `enrollment.created`) |
+| FR-CRS-04 | M | Sinh viên xem danh sách lớp đã được xếp và học liệu/bài tập tương ứng; không hiển thị catalog lớp mở để tự ghi danh |
+| FR-CRS-05 | S | Import CSV danh sách lớp hỗ trợ tải file mẫu, xem trước sinh viên nhận diện được, báo dòng lỗi/trùng và xác nhận nhập |
 | FR-CRS-06 | M | Danh sách (courses, classes, lớp của tôi, sinh viên lớp, học liệu) hỗ trợ **search + phân trang + sort** theo quy ước chung api-spec |
 
 ### M3 — Học liệu
@@ -107,17 +107,18 @@ Frontend dùng React + TypeScript (SPA); backend dùng Java + Spring Boot. MySQL
 ### M4 — Ngân hàng câu hỏi
 | ID | Ưu tiên | Yêu cầu |
 |---|---|---|
-| FR-QB-01 | M | CRUD câu hỏi MCQ (nội dung, ≥2 lựa chọn, 1 đáp án đúng v1), chủ đề, độ khó |
-| FR-QB-02 | M | CRUD câu hỏi lập trình: đề bài, starter code, ngôn ngữ, giới hạn thời gian/bộ nhớ |
+| FR-QB-01 | M | Mỗi học phần có tối đa một ngân hàng câu hỏi dùng chung, được hệ thống tạo khi giảng viên thêm câu hỏi đầu tiên; giảng viên phụ trách và admin được dùng. Ngân hàng cá nhân là luồng nâng cao. Danh mục tùy chọn để phân loại; câu mới mặc định vào danh mục hệ thống “Chưa phân loại”. CRUD câu hỏi MCQ (nội dung, ≥2 lựa chọn, 1 đáp án đúng v1), chủ đề, độ khó và danh mục |
+| FR-QB-02 | M | CRUD câu hỏi lập trình: đề bài, starter code, ngôn ngữ, giới hạn thời gian/bộ nhớ; thuộc ngân hàng học phần (hoặc ngân hàng cá nhân nâng cao) và danh mục mặc định/tự chọn |
 | FR-QB-03 | M | CRUD test case: input, expected output, công khai/ẩn, trọng số, thứ tự |
-| FR-QB-04 | M | Lọc theo loại/chủ đề/độ khó; câu hỏi tái sử dụng cho nhiều bài |
+| FR-QB-04 | M | Tìm/lọc theo ngân hàng, danh mục, nội dung, loại/chủ đề/độ khó; giảng viên phụ trách học phần được dùng chung ngân hàng học phần; câu hỏi tái sử dụng cho nhiều bài |
 | FR-QB-05 | S | Lecturer chạy thử solution mẫu để kiểm tra đề |
 | FR-QB-06 | M | Mỗi lần xuất bản bài tập/kỳ thi phải ghim nội dung và phiên bản các câu hỏi, lựa chọn/đáp án, giới hạn code, test case, điểm và thứ tự. Sửa ngân hàng sau đó không đổi assessment đã xuất bản; muốn đổi assessment phải tạo bản nháp mới |
+| FR-QB-07 | M | Nhập hàng loạt câu MCQ từ CSV vào danh mục đã chọn; nếu không chọn danh mục thì dùng “Chưa phân loại”. Có file mẫu, xem trước và báo lỗi/trùng từng dòng trước khi xác nhận. CSV v1 không nhập câu lập trình/test case |
 
 ### M5 — Bài tập & Quiz
 | ID | Ưu tiên | Yêu cầu |
 |---|---|---|
-| FR-ASG-01 | M | Tạo bài tập trong lớp: gắn câu hỏi từ bank, điểm từng câu, thứ tự, xuất bản. Khi xuất bản, cố định danh sách câu, phiên bản câu hỏi, điểm và thứ tự. Bài có hạng mục `quiz` chỉ gồm câu MCQ trong v1 |
+| FR-ASG-01 | M | Tạo bài tập trong lớp: tìm câu theo ngân hàng/danh mục, gắn nhiều câu, điểm từng câu, thứ tự, xuất bản. Khi xuất bản, cố định danh sách câu, phiên bản câu hỏi, điểm và thứ tự. Bài có hạng mục `quiz` chỉ gồm câu MCQ trong v1 |
 | FR-ASG-02 | M | Chính sách: available_from, due_at, max_attempts (NULL = không giới hạn), nộp muộn (late_due_at + phạt %), score_policy (best/last), hạng mục điểm (quiz/assignment/midterm/final). Với quiz, lượt và best/last áp dụng cho **toàn bài**; với bài khác, áp dụng cho **từng câu** |
 | FR-ASG-03 | M | Làm quiz: nộp đáp án của cả bài trong một request có Idempotency-Key; câu bỏ trống được 0 điểm; server lưu một lượt quiz cùng các đáp án trong một transaction, chấm MCQ đồng bộ và trả điểm của lượt ngay |
 | FR-ASG-04 | M | Server kiểm tra hạn nộp + lượt nộp theo BR3; quá hạn từ chối hoặc đánh dấu muộn trừ %. Chỉ nộp chính thức mới tính lượt; mở đề và Run thử test công khai không tính lượt |
@@ -139,7 +140,7 @@ Frontend dùng React + TypeScript (SPA); backend dùng Java + Spring Boot. MySQL
 ### M7 — Kỳ thi
 | ID | Ưu tiên | Yêu cầu |
 |---|---|---|
-| FR-EXM-01 | M | Tạo kỳ thi: đề từ bank, hạng mục điểm `midterm` hoặc `final`, thời lượng, opens_at/closes_at, nội dung quy chế, shuffle, xuất bản. Khi xuất bản, cố định danh sách câu, phiên bản câu hỏi, điểm và thứ tự |
+| FR-EXM-01 | M | Tạo kỳ thi: tìm/chọn câu từ ngân hàng và danh mục, hạng mục điểm `midterm` hoặc `final`, thời lượng, opens_at/closes_at, nội dung quy chế, shuffle, xuất bản. Khi xuất bản, cố định danh sách câu, phiên bản câu hỏi, điểm và thứ tự |
 | FR-EXM-02 | M | Vào thi trong [opens_at, closes_at): xác nhận quy chế → tạo phiên; `ends_at = min(started_at + duration, closes_at)`; 1 phiên/thí sinh |
 | FR-EXM-03 | M | Đề chỉ hiển thị sau khi phiên bắt đầu (BR9); shuffle thứ tự câu theo thí sinh nếu bật |
 | FR-EXM-04 | M | Thời gian chuẩn do server; client hiển thị đếm ngược từ `remaining_seconds` định kỳ |
@@ -163,7 +164,7 @@ Frontend dùng React + TypeScript (SPA); backend dùng Java + Spring Boot. MySQL
 ### M9 — Thông báo
 | ID | Ưu tiên | Yêu cầu |
 |---|---|---|
-| FR-NTF-01 | M | Thông báo in-app: bài mới, kết quả chấm, kỳ thi mở, điểm công bố, sinh viên tự ghi danh (gửi lecturer) |
+| FR-NTF-01 | M | Thông báo in-app: bài mới, kết quả chấm, kỳ thi mở và điểm công bố |
 | FR-NTF-02 | M | Danh sách thông báo, lọc trạng thái, đánh dấu một hoặc tất cả đã đọc qua REST |
 
 ### M10 — Quản trị & giám sát
@@ -216,7 +217,7 @@ Frontend dùng React + TypeScript (SPA); backend dùng Java + Spring Boot. MySQL
 | BR8 | Submission bất biến (không sửa/xóa); regrade tạo grading_result mới gắn cùng submission và dùng đúng phiên bản câu hỏi/test case mà submission đã tham chiếu |
 | BR9 | Đề thi chỉ hiển thị sau thời điểm bắt đầu phiên của thí sinh đó |
 | BR10 | Code sinh viên chỉ chạy trong sandbox: không mạng, giới hạn CPU/RAM/PID/thời gian/đầu ra, filesystem chỉ đọc |
-| BR11 | Tự ghi danh: chỉ trong `[enroll_from, enroll_until]` theo **giờ server** (không tin client) và chỉ khi sĩ số < max_students; ngoài khung giờ hoặc đầy → lỗi rõ (ENROLL_CLOSED / CLASS_FULL); lecturer/admin thêm tay **được ngoài khung giờ**, chỉ admin bypass được khi đầy |
+| BR11 | Admin/lecturer được xếp sinh viên bất kể `enroll_from`/`enroll_until`; lecturer chỉ được thêm/xóa trong lớp mình phụ trách. Khi đạt `max_students`, thêm sinh viên trả `CLASS_FULL`; chỉ admin được vượt sĩ số. Import CSV validate từng dòng, không tạo ghi danh trùng, và kiểm tra lại các điều kiện ở thời điểm xác nhận |
 | BR12 | Sửa `max_students` không được nhỏ hơn sĩ số hiện tại; nếu cả hai đầu có, `enroll_until` > `enroll_from`; thay đổi sĩ số/khung giờ/trạng thái lớp → audit |
 | BR13 | Lớp `locked`: chặn ghi danh mới, sinh viên không truy cập nội dung lớp (học liệu) |
 | BR14 | Khi xuất bản assessment, hệ thống lưu snapshot bất biến của câu hỏi và phiên bản nội dung/đáp án/test case/giới hạn chấm, điểm tối đa và thứ tự. Sửa hoặc xóa câu trong ngân hàng không thay đổi assessment đã xuất bản; muốn thay đổi phải tạo assessment nháp mới. Bài nộp và mọi lần chấm lại giữ tham chiếu snapshot đã dùng |

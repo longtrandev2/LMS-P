@@ -1,5 +1,5 @@
 import { MoreHorizontal, Pencil, KeyRound, Lock, LockOpen } from "lucide-react";
-import { toast } from "sonner";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -17,9 +17,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { RoleBadge, StatusBadge } from "@/components/role-status-badges";
-import { api } from "@/lib/api";
-import { errorText } from "@/lib/error-messages";
 import type { User } from "@/types/api";
+import { UserDetailsDialog } from "@/features/users/user-details-dialog";
+import { UserLockDialog } from "@/features/users/user-lock-dialog";
 
 interface UsersTableProps {
   users: User[];
@@ -33,20 +33,11 @@ function formatDate(iso: string): string {
 }
 
 export function UsersTable({ users, onEdit, onResetPassword, onChanged }: UsersTableProps) {
-  async function toggleStatus(user: User) {
-    const action = user.status === "active" ? "khóa" : "mở";
-    try {
-      await api.patch(`/users/${user.id}`, {
-        status: user.status === "active" ? "locked" : "active",
-      });
-      toast.success(`Đã ${action} tài khoản ${user.email}.`);
-      onChanged();
-    } catch (error) {
-      toast.error(errorText(error));
-    }
-  }
+  const [lockingUser, setLockingUser] = useState<User | null>(null);
+  const [detailsUser, setDetailsUser] = useState<User | null>(null);
 
   return (
+    <>
     <Table>
       <TableHeader>
         <TableRow className="bg-muted/50">
@@ -91,6 +82,8 @@ export function UsersTable({ users, onEdit, onResetPassword, onChanged }: UsersT
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={() => setDetailsUser(user)}>Xem chi tiết</DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => onEdit(user)}>
                     <Pencil aria-hidden /> Chỉnh sửa
                   </DropdownMenuItem>
@@ -99,7 +92,7 @@ export function UsersTable({ users, onEdit, onResetPassword, onChanged }: UsersT
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    onClick={() => toggleStatus(user)}
+                    onClick={() => setLockingUser(user)}
                     className={user.status === "active" ? "text-destructive" : "text-success"}
                   >
                     {user.status === "active" ? (
@@ -119,5 +112,8 @@ export function UsersTable({ users, onEdit, onResetPassword, onChanged }: UsersT
         ))}
       </TableBody>
     </Table>
+    <UserLockDialog user={lockingUser} onOpenChange={(open) => !open && setLockingUser(null)} onDone={onChanged} />
+    <UserDetailsDialog user={detailsUser} onOpenChange={(open) => !open && setDetailsUser(null)} />
+    </>
   );
 }

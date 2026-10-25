@@ -3,21 +3,39 @@
 export const queryKeys = {
   users: {
     all: ["users"] as const,
-    list: (filters: { page: number; limit: number; role?: string; status?: string }) =>
+    list: (filters: { page: number; limit: number; role?: string; status?: string; q?: string; sort?: string }) =>
       ["users", "list", filters] as const,
   },
   audit: { list: (filters: Record<string, string | number | undefined>) => ["audit", "list", filters] as const },
   courses: {
     all: ["courses"] as const,
-    list: () => ["courses", "list"] as const,
+    list: (filters?: { page?: number; limit?: number; q?: string; sort?: string }) => ["courses", "list", filters] as const,
     detail: (id: string) => ["courses", "detail", id] as const,
+  },
+  questions: {
+    all: ["questions"] as const,
+    list: (filters: Record<string, string | number | undefined>) => ["questions", "list", filters] as const,
+    detail: (id: number) => ["questions", "detail", id] as const,
+  },
+  questionBanks: {
+    all: ["question-banks"] as const,
+    list: (courseId?: number) => ["question-banks", "list", courseId] as const,
+    categories: (bankId?: number) => ["question-banks", bankId, "categories"] as const,
+  },
+  assignments: {
+    all: ["assignments"] as const,
+    class: (classId: string) => ["assignments", "class", classId] as const,
+    details: (id: number) => ["assignments", "detail", id] as const,
+    quizAttempts: (id: number) => ["assignments", id, "quiz-attempts"] as const,
+    submissions: (id: number) => ["assignments", id, "submissions"] as const,
   },
   classes: {
     all: ["classes"] as const,
-    list: (filters: { course_id?: string; page?: number; limit?: number }) =>
+    list: (filters: { course_id?: string; semester?: string; page?: number; limit?: number; q?: string; sort?: string }) =>
       ["classes", "list", filters] as const,
     detail: (id: string) => ["classes", "detail", id] as const,
-    students: (id: string) => ["classes", "students", id] as const,
+    students: (id: string, filters?: { q?: string; sort?: string; page?: number; limit?: number }) => ["classes", "students", id, filters] as const,
+    candidates: (id: string, filters?: { q?: string; page?: number; limit?: number }) => ["classes", "student-candidates", id, filters] as const,
   },
   materials: {
     list: (classId: string) => ["classes", classId, "materials"] as const,
@@ -26,6 +44,6 @@ export const queryKeys = {
     list: () => ["notifications", "list"] as const,
   },
   me: {
-    classes: () => ["me", "classes"] as const,
+    classes: (filters?: { q?: string; sort?: string; page?: number; limit?: number }) => ["me", "classes", filters] as const,
   },
 } as const;

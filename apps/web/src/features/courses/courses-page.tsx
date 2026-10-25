@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { BookOpen, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { DataTablePagination } from "@/components/data-table-pagination";
+import { SortSelect } from "@/components/sort-select";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   AlertDialog,
@@ -24,17 +27,24 @@ import { queryKeys } from "@/lib/query-keys";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
 import type { Course, Paginated } from "@/types/api";
 
+const PAGE_SIZE = 12;
+
 export function CoursesPage() {
   const { status: guard } = useAuthGuard(["admin", "lecturer"]);
   const queryClient = useQueryClient();
   const [formOpen, setFormOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
   const [deletingCourse, setDeletingCourse] = useState<Course | null>(null);
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [sort, setSort] = useState("code");
+  useEffect(() => setPage(1), [search]);
 
   const query = useQuery({
-    queryKey: queryKeys.courses.list(),
+    queryKey: queryKeys.courses.list({ page, limit: PAGE_SIZE, q: search.trim() || undefined, sort }),
     queryFn: ({ signal }) =>
-      api.get<Paginated<Course>>("/courses", { page: 1, limit: 50 }, signal),
+      api.get<Paginated<Course>>("/courses", { page, limit: PAGE_SIZE, q: search.trim() || undefined, sort }, signal),
+    placeholderData: keepPreviousData,
     enabled: guard === "ok",
   });
 
@@ -66,6 +76,11 @@ export function CoursesPage() {
         }
       />
 
+      <div className="flex flex-wrap gap-3">
+        <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Tìm theo mã hoặc tên khóa học" aria-label="Tìm khóa học" className="max-w-md" />
+        <SortSelect value={sort} onChange={(value) => { setSort(value); setPage(1); }} options={[{ value: "code", label: "Theo mã khóa học" }, { value: "name", label: "Theo tên" }, { value: "created_at", label: "Theo ngày tạo" }]} />
+      </div>
+
       {query.isPending ? (
         <CardGridSkeleton />
       ) : query.isError ? (
@@ -85,6 +100,7 @@ export function CoursesPage() {
           </CardContent>
         </Card>
       ) : (
+        <>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {courses?.map((course) => (
             <Card
@@ -128,6 +144,8 @@ export function CoursesPage() {
             </Card>
           ))}
         </div>
+        {query.data ? <DataTablePagination page={query.data.page} limit={query.data.limit} total={query.data.total} onPageChange={setPage} /> : null}
+        </>
       )}
 
       {formOpen ? (

@@ -2,7 +2,7 @@ FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /workspace
 COPY pom.xml .
 COPY src ./src
-RUN mvn -B -DskipTests package
+RUN --mount=type=cache,id=lmsp-maven,target=/root/.m2,sharing=locked mvn -B package
 
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app

@@ -13,9 +13,13 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, Long> {
     @EntityGraph(attributePaths = "roles") Optional<User> findByEmailIgnoreCase(String email);
     boolean existsByStudentCode(String studentCode);
+    @EntityGraph(attributePaths = "roles") Optional<User> findByStudentCodeIgnoreCase(String studentCode);
     @EntityGraph(attributePaths = "roles") Optional<User> findWithRolesById(Long id);
     @EntityGraph(attributePaths = "roles")
-    @Query(value="select distinct u from User u left join u.roles r where (:status is null or u.status=:status) and (:role is null or r.name=:role) and (:q is null or lower(u.email) like lower(concat('%',:q,'%')) or lower(u.fullName) like lower(concat('%',:q,'%'))) order by u.id",
-           countQuery="select count(distinct u) from User u left join u.roles r where (:status is null or u.status=:status) and (:role is null or r.name=:role) and (:q is null or lower(u.email) like lower(concat('%',:q,'%')) or lower(u.fullName) like lower(concat('%',:q,'%')))")
+    @Query(value="select distinct u from User u left join u.roles r where (:status is null or u.status=:status) and (:role is null or r.name=:role) and (:q is null or lower(u.email) like lower(concat('%',:q,'%')) or lower(u.fullName) like lower(concat('%',:q,'%')) or lower(coalesce(u.studentCode,'')) like lower(concat('%',:q,'%'))) ",
+           countQuery="select count(distinct u) from User u left join u.roles r where (:status is null or u.status=:status) and (:role is null or r.name=:role) and (:q is null or lower(u.email) like lower(concat('%',:q,'%')) or lower(u.fullName) like lower(concat('%',:q,'%')) or lower(coalesce(u.studentCode,'')) like lower(concat('%',:q,'%')))")
     Page<User> search(@Param("role") String role,@Param("status") UserStatus status,@Param("q") String query,Pageable pageable);
+    @Query(value="select distinct u from User u join u.roles r where r.name='student' and u.status=vn.lmsp.enums.UserStatus.active and (:q is null or lower(u.email) like lower(concat('%',:q,'%')) or lower(u.fullName) like lower(concat('%',:q,'%')) or lower(coalesce(u.studentCode,'')) like lower(concat('%',:q,'%'))) and not exists (select e.id from Enrollment e where e.student=u and e.lmsClass.id=:classId and e.status=vn.lmsp.enums.EnrollmentStatus.active)",
+           countQuery="select count(distinct u.id) from User u join u.roles r where r.name='student' and u.status=vn.lmsp.enums.UserStatus.active and (:q is null or lower(u.email) like lower(concat('%',:q,'%')) or lower(u.fullName) like lower(concat('%',:q,'%')) or lower(coalesce(u.studentCode,'')) like lower(concat('%',:q,'%'))) and not exists (select e.id from Enrollment e where e.student=u and e.lmsClass.id=:classId and e.status=vn.lmsp.enums.EnrollmentStatus.active)")
+    Page<User> searchEnrollCandidates(@Param("classId") Long classId, @Param("q") String query, Pageable pageable);
 }

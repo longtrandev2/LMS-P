@@ -34,11 +34,11 @@
 | GET | /users/{id}/avatar | auth | Serve file avatar (stream; 404 nếu chưa có) |
 | GET | /users | admin | List: `q` (tên/email/mã SV), filter `role`, `status`, sort (`full_name`, `created_at`, `last_login_at`) + phân trang |
 | POST | /users | admin | Tạo user (`role_names`) → `{user, temporary_password}` |
-| POST | /users/import/preview | admin | Validate CSV KHÔNG commit → `{valid_rows, errors: [{row, reason}], duplicates: [{row, email}]}` |
+| POST | /users/import/preview | admin | Validate CSV KHÔNG commit → `{valid_rows, errors: [{row, reason}], duplicates: [{row, email, student_code}]}`; phát hiện trùng trong DB và trong chính tệp |
 | POST | /users/import | admin | Import CSV (email, họ tên, mã SV, role) → `{created, skipped: [email], errors: [{row, reason}], temp_passwords}` |
 | GET | /users/export | admin | Xuất CSV danh sách user (theo filter hiện tại) |
 | GET | /users/{id} | admin | Chi tiết: user + roles + (SV: enrollments; GV: classes đang dạy) |
-| PATCH | /users/{id} | admin | Sửa (`role_names`, status: khóa kèm `lock_reason` → audit + revoke toàn bộ refresh; reset mật khẩu → `{user, temporary_password}`; reset/đổi pw revoke refresh) |
+| PATCH | /users/{id} | admin | Sửa (`role_names`, status: chuyển sang khóa phải có `lock_reason` → audit + revoke toàn bộ refresh; reset mật khẩu → `{user, temporary_password}`; reset/đổi pw revoke refresh) |
 | POST | /users/{id}/revoke-sessions | admin | Ép đăng xuất user (revoke toàn bộ refresh token) → audit |
 
 ## 3. Courses / Classes / Enrollment (M2)
@@ -48,14 +48,15 @@
 | GET/POST | /courses | lec/adm | List (`q` search mã/tên, sort `code`,`name`,`created_at`) / tạo khóa học |
 | GET/PATCH/DELETE | /courses/{id} | lec/adm | Chi tiết / sửa / xóa |
 | GET/POST | /classes | lec/adm | List (`q`, filter `course_id`, `semester`, sort `code`,`name`,`created_at`) / tạo lớp (`course_id`, `lecturer_id`, `max_students`, `enroll_from`, `enroll_until`, `room`, `schedule`) |
-| GET/PATCH/DELETE | /classes/{id} | lec/adm | Chi tiết (kèm `enrolled_count`, `seats_left`) / sửa / xóa. Validate BR12: max_students ≥ sĩ số hiện tại, enroll_until > enroll_from |
+| GET/PATCH/DELETE | /classes/{id} | lec/adm | Chi tiết (kèm `max_students`, `enroll_from/until`, `room`, `schedule`, `status`, `enrolled_count`, `seats_left`) / sửa / xóa. Validate BR12: max_students ≥ sĩ số hiện tại, enroll_until > enroll_from |
 | GET | /admin/classes | adm | Mọi lớp (search/filter như trên) — admin xem + override sĩ số/khung giờ/khóa lớp |
 | PATCH | /admin/classes/{id} | adm | Override `max_students` (bypass khi đầy), `enroll_from/until`, `status` → audit |
-| POST | /classes/{id}/enrollments | lec/adm | Thêm SV theo **mã SV hoặc email**: lẻ `{student_code \| email}` hoặc bulk `{students: [{student_code}]}` → validate từng dòng, trả `errors: [{row, reason}]` (`ENROLLMENT_INVALID`/`ALREADY_ENROLLED`/`CLASS_FULL`). Lecturer thêm tay được ngoài khung giờ; chỉ admin bypass khi đầy |
-| DELETE | /classes/{id}/enrollments/{studentId} | lec/adm | Hủy ghi danh (enrollment → `dropped`, giữ lịch sử) |
-| GET | /classes/{id}/students | lec/adm | Danh sách SV lớp: `q` (tên/email/mã SV), sort (`full_name`, `student_code`, `enrolled_at`) + phân trang |
-| POST | /classes/{id}/self-enroll | student | Sinh viên tự ghi danh (BR11: giờ server, còn chỗ, lớp active, chưa ghi danh) → 201; lỗi `ENROLL_CLOSED`/`CLASS_FULL`/`ALREADY_ENROLLED`; notify lecturer (FR-CRS-05) |
-| GET | /catalog/classes | student | Lớp mở ghi danh: `q`, sort + phân trang; mỗi item có `enrolled_count/max_students`, `seats_left`, `enroll_state` (`upcoming/open/closed/full`), `is_enrolled` |
+| POST | /classes/{id}/enrollments | lec/adm | Thêm một hoặc nhiều SV theo mã SV/email. Lecturer chỉ thao tác lớp mình phụ trách; admin thao tác mọi lớp. Validate từng dòng, trả `{added, errors: [{row, code, reason}]}`. Lecturer thêm ngoài khung thời gian; chỉ admin vượt sĩ số |
+| GET | /classes/{id}/student-candidates | lec/adm | Tìm SV active chưa thuộc lớp theo `q` (ít nhất 2 ký tự, tên/mã/email), có phân trang; lecturer chỉ trong lớp mình phụ trách |
+| POST | /classes/{id}/enrollments/import/preview | lec/adm | Xem trước danh sách CSV đã đọc ở trình duyệt: `{students: [{row, student_code?, email?}]}`. Trả từng dòng gồm định danh, hồ sơ khớp, `valid`, `code`, `reason`; không ghi DB |
+| POST | /classes/{id}/enrollments/import | lec/adm | Xác nhận cùng payload preview; backend kiểm tra lại quyền, tài khoản, trùng và sĩ số rồi thêm các dòng hợp lệ. Trả `{added, errors: [{row, code, reason}]}`; dòng lỗi không làm mất các dòng hợp lệ |
+| DELETE | /classes/{id}/enrollments/{studentId} | lec/adm | Hủy ghi danh (enrollment → `dropped`, giữ lịch sử); lecturer chỉ trong lớp mình phụ trách |
+| GET | /classes/{id}/students | lec/adm | Danh sách SV lớp: `q` (tên/email/mã SV), sort (`full_name`, `student_code`, `enrolled_at`) + phân trang; lecturer chỉ xem lớp mình phụ trách |
 | GET | /me/classes | student | Lớp đã ghi danh (`q`, sort) (Page envelope) + tiến độ |
 
 ## 4. Materials (M3)
@@ -70,24 +71,30 @@
 
 | Method | Path | Role | Mô tả |
 |---|---|---|---|
-| GET/POST | /questions | lec | List (filter type/topic/difficulty) / tạo (MCQ kèm options, code kèm limits); trả version hiện hành |
-| GET/PATCH/DELETE | /questions/{id} | owner/adm | Chi tiết / sửa (tạo nội dung phiên bản mới) / soft-delete; các bản đã publish giữ snapshot cũ |
-| PUT | /questions/{id}/test-cases | owner | Thay toàn bộ test cases (input, expected, is_public, weight), tạo revision cho lần publish kế tiếp |
-| POST | /questions/{id}/verify | owner | Chạy thử solution mẫu → kết quả từng test |
+| GET/POST | /question-banks | lec/adm | List ngân hàng cá nhân và ngân hàng thuộc học phần được phụ trách. POST không có `course_id` tạo ngân hàng cá nhân nâng cao; có `course_id` trả về ngân hàng dùng chung duy nhất của học phần (tạo nếu chưa có) |
+| PUT | /courses/{courseId}/question-bank | lec/adm | Đảm bảo ngân hàng dùng chung của học phần tồn tại và trả về ngân hàng đó; chỉ admin, người tạo học phần hoặc giảng viên được phân công mới có quyền |
+| GET/POST | /question-banks/{id}/categories | bank manager | List / tạo danh mục trong ngân hàng |
+| PATCH/DELETE | /question-categories/{id} | bank manager | Đổi tên / xóa danh mục rỗng |
+| GET/POST | /questions | bank manager | List theo `bank_id`, `category_id`, `q`, type/topic/difficulty; tạo một câu MCQ/code bằng `{bank_id, category_id?}`. Bỏ `category_id` thì backend tự gán “Chưa phân loại” |
+| GET/PATCH/DELETE | /questions/{id} | bank manager | Chi tiết / sửa (tạo nội dung phiên bản mới) / soft-delete; các bản đã publish giữ snapshot cũ |
+| PUT | /questions/{id}/test-cases | bank manager | Thay toàn bộ test cases (input, expected, is_public, weight), tạo revision cho lần publish kế tiếp |
+| POST | /questions/{id}/verify | bank manager | Chạy thử solution mẫu → kết quả từng test; hiện trả `501 RUNNER_UNAVAILABLE` đến khi worker có sandbox chạy code |
+| POST | /question-banks/{id}/categories/{categoryId}/questions/import/preview | bank manager | Preview CSV MCQ đã đọc ở trình duyệt: `{rows: [{row, content, difficulty, topic, options, correct_option}]}`; tối đa 500 dòng, báo trùng/lỗi; không ghi DB |
+| POST | /question-banks/{id}/categories/{categoryId}/questions/import | bank manager | Xác nhận payload preview; backend kiểm tra lại, tạo các dòng hợp lệ thành MCQ có version đầu tiên; trả `{created, errors: [{row, code, reason}]}`. UI mặc định truyền danh mục “Chưa phân loại” nếu người dùng không chọn danh mục khác |
 
 ## 6. Assignments & Submissions (M5/M6)
 
 | Method | Path | Role | Mô tả |
 |---|---|---|---|
-| GET/POST | /classes/{id}/assignments | mem / lec | List (kèm trạng thái của tôi) / tạo |
-| GET/PATCH/DELETE | /assignments/{id} | mem / lec | Chi tiết (câu hỏi + điểm; test ẩn ẩn) / sửa / xóa |
-| POST | /assignments/{id}/publish | lec | Xuất bản + ghim snapshot phiên bản câu hỏi/điểm/thứ tự + notify lớp; assessment đã publish không sửa trực tiếp |
-| GET/POST | /assignments/{id}/quiz-attempts | student | Chỉ `category=quiz`: GET lịch sử lượt của tôi; POST nộp cả bài `{answers: [{question_id, selected_option_ids}]}` + Idempotency-Key → chấm MCQ đồng bộ, trả `{attempt_id, attempt_no, score, question_scores}`. Câu không có trong `answers` = bỏ trống, 0 điểm; câu lạ/trùng bị từ chối; một POST chỉ tính một lượt |
-| POST | /assignments/{id}/questions/{qid}/submissions | student | Chỉ bài **không phải quiz**: nộp từng câu (mcq: `{selected_option_ids}`; code: `{language, source_code}`) + Idempotency-Key. `max_attempts` và best/last tính riêng cho câu; MCQ chấm đồng bộ, code 202 |
-| POST | /assignments/{id}/questions/{qid}/run | student | Run thử test công khai → 202 (priority thấp, không tính lượt, không điểm) |
+| GET/POST | /classes/{id}/assignments | mem / lec | List bài đã publish cho sinh viên / list của lớp cho giảng viên; POST tạo nháp với metadata và `questions: [{question_id, points, position}]` |
+| GET/PATCH/DELETE | /assignments/{id} | mem / lec | Chi tiết câu hỏi theo snapshot (sinh viên không nhận đáp án đúng/test ẩn; không đọc được đề trước `available_from`) / chỉ sửa hoặc xóa khi còn nháp |
+| POST | /assignments/{id}/publish | lec | Kiểm tra câu hỏi, ghim version hiện hành cùng điểm/thứ tự; sau đó bài bất biến |
+| GET/POST | /assignments/{id}/quiz-attempts | student | Chỉ `category=quiz`: GET lịch sử lượt của tôi; POST nộp `{answers: [{question_id, selected_option_ids}]}` + Idempotency-Key → chấm MCQ đồng bộ, trả `{attempt_id, attempt_no, score, question_scores}`. Câu không có trong `answers` = bỏ trống, 0 điểm; câu lạ/trùng bị từ chối; một POST chỉ tính một lượt |
+| POST | /assignments/{id}/questions/{qid}/submissions | student | Chỉ bài **không phải quiz**: nộp từng câu (mcq: `{selected_option_ids}`; code: `{language, source_code}`) + Idempotency-Key. `max_attempts` và best/last tính riêng cho câu; MCQ chấm đồng bộ; code cần worker sandbox |
+| POST | /assignments/{id}/questions/{qid}/run | student | Run thử test công khai không tính lượt/điểm; hiện trả `501 RUNNER_UNAVAILABLE` đến khi worker có sandbox |
 | GET | /submissions/{id} | owner/lec | Trạng thái + kết quả (BR4: test ẩn chỉ pass/fail) |
 | GET | /me/submissions?assignment_id= | student | Lịch sử nộp từng câu; lịch sử quiz theo `/assignments/{id}/quiz-attempts` |
-| GET | /assignments/{id}/submissions | lec | Toàn bộ bài nộp (filter student/question/status) |
+| GET | /assignments/{id}/submissions | lec | Danh sách các lần nộp đã chấm, có mã sinh viên/câu hỏi; v1 chưa có bộ lọc |
 | POST | /submissions/{id}/regrade | lec | Chấm lại (BR8) → 202 |
 
 ## 7. Exams (M7)

@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Phiên bản | 1.2 — 2026-10-23 |
+| Phiên bản | 1.3 — 2026-10-24 |
 | Nguồn yêu cầu | `srs.md` (M1–M10, BR1–BR15) |
 | Công nghệ | MySQL 8.4, InnoDB, utf8mb4, Spring Data JPA + Flyway migration |
 
@@ -21,6 +21,10 @@ erDiagram
     users ||--o{ enrollments : "student"
     classes ||--o{ materials : ""
     users ||--o{ questions : "owner"
+    courses ||--o{ question_banks : "optional course scope"
+    users ||--o{ question_banks : "creator"
+    question_banks ||--o{ question_categories : ""
+    question_categories ||--o{ questions : ""
     questions ||--o{ question_versions : ""
     questions ||--o{ question_options : "mcq"
     questions ||--o| question_programming : "code"
@@ -87,23 +91,27 @@ erDiagram
 
 ### 2.4 Ngân hàng câu hỏi (M4)
 
-**questions** — id, owner_id FK users, type ENUM('mcq','programming'), content TEXT, topic VARCHAR(100) NULL, difficulty ENUM('easy','medium','hard') default 'medium', is_deleted BOOL default 0, created_at, updated_at. Đây là bản hiện hành trong ngân hàng; chỉnh sửa tạo nội dung cho phiên bản mới, không sửa snapshot đã được assessment xuất bản sử dụng. Index (owner_id, type).
+**question_banks** — id, course_id FK courses NULL UNIQUE, owner_id FK users, name VARCHAR(100), description TEXT NULL, created_by FK users, created_at. Tối đa một ngân hàng dùng chung cho mỗi học phần; hệ thống tạo khi thêm câu hỏi đầu tiên. `course_id` NULL là ngân hàng cá nhân nâng cao; có thể có nhiều ngân hàng cá nhân. Ngân hàng theo học phần được dùng chung bởi admin và giảng viên phụ trách các lớp của học phần.
+
+**question_categories** — id, bank_id FK question_banks, name VARCHAR(100), created_by FK users, created_at. UNIQUE(bank_id, name). Mỗi ngân hàng có danh mục hệ thống “Chưa phân loại” (không đổi tên/xóa); danh mục phẳng khác là tùy chọn, dùng để nhóm theo chương/chủ đề. Không dùng chuỗi `topic` tự do để thay thế danh mục.
+
+**questions** — id, owner_id FK users (người tạo), category_id FK question_categories NOT NULL (backend tự gán danh mục “Chưa phân loại” nếu request không chọn), type ENUM('mcq','programming'), content TEXT, topic VARCHAR(100) NULL, difficulty ENUM('easy','medium','hard') default 'medium', is_deleted BOOL default 0, created_at, updated_at. Đây là bản hiện hành trong ngân hàng; chỉnh sửa tạo nội dung cho phiên bản mới, không sửa snapshot đã được assessment xuất bản sử dụng. Index (owner_id, type), (category_id, type, difficulty, is_deleted).
 
 **question_versions** — id, question_id FK, version_no INT, snapshot JSON, created_by FK users, created_at. UNIQUE(question_id, version_no). `snapshot` giữ toàn bộ dữ liệu cần để hiển thị/chấm phiên bản đó: type, content, options kèm đáp án đúng, starter code, ngôn ngữ/giới hạn chạy, test case theo thứ tự kèm input/expected/public/weight. Bản ghi là append-only; không cập nhật/xóa sau khi tạo.
 
-**question_options** — id, question_id FK, content TEXT, is_correct BOOL, position TINYINT. Index (question_id).
+**question_options** — id, question_id FK, content TEXT, is_correct BOOL, position INT UNSIGNED. Index (question_id).
 
-**question_programming** — question_id PK/FK; starter_code TEXT NULL, solution_code TEXT NULL (lecturer verify đề), allowed_languages JSON NULL (NULL = tất cả), time_limit_ms INT default 5000, memory_limit_mb INT default 256.
+**question_programming** — question_id PK/FK; starter_code TEXT NULL, solution_code MEDIUMTEXT NULL (lecturer verify đề), allowed_languages JSON NULL (NULL = tất cả), time_limit_ms INT UNSIGNED default 5000, memory_limit_mb INT UNSIGNED default 256.
 
-**test_cases** — id, question_id FK, input MEDIUMTEXT, expected_output MEDIUMTEXT, is_public BOOL default 1, weight DECIMAL(5,2) default 1.0, position SMALLINT. Index (question_id).
+**test_cases** — id, question_id FK, input MEDIUMTEXT, expected_output MEDIUMTEXT, is_public BOOL default 1, weight DECIMAL(5,2) default 1.0, position INT UNSIGNED. Index (question_id).
 
 ### 2.5 Bài tập (M5)
 
-**assignments** — id, class_id FK, title NVARCHAR(200), description TEXT, category ENUM('quiz','assignment','midterm','final') default 'assignment', available_from DATETIME NULL, due_at DATETIME, allow_late BOOL default 0, late_due_at DATETIME NULL, late_penalty_percent TINYINT default 0, max_attempts INT NULL (NULL = không giới hạn), score_policy ENUM('best','last') default 'best', is_published BOOL default 0, created_by FK, created_at, updated_at. `category='quiz'` chỉ nhận câu MCQ trong v1; `max_attempts` tính theo toàn bài quiz, còn các hạng mục khác tính theo từng câu. Index (class_id, due_at).
+**assignments** — id, class_id FK, title NVARCHAR(200), description TEXT, category VARCHAR(20) CHECK IN ('quiz','assignment','midterm','final') default 'assignment', available_from DATETIME NULL, due_at DATETIME, allow_late BOOL default 0, late_due_at DATETIME NULL, late_penalty_percent INT UNSIGNED default 0, max_attempts INT NULL (NULL = không giới hạn), score_policy ENUM('best','last') default 'best', is_published BOOL default 0, created_by FK, created_at, updated_at. `category='quiz'` chỉ nhận câu MCQ trong v1; `max_attempts` tính theo toàn bài quiz, còn các hạng mục khác tính theo từng câu. Index (class_id, due_at).
 
-**assignment_questions** — id, assignment_id FK, question_id FK (nguồn trong bank), question_version_id FK NULL (được ghim khi publish), points DECIMAL(6,2), position SMALLINT. UNIQUE(assignment_id, question_id). Sau publish, assessment và các dòng câu hỏi/snapshot/điểm/thứ tự bất biến; thay đổi cần tạo assignment nháp mới.
+**assignment_questions** — id, assignment_id FK, question_id FK (nguồn trong bank), question_version_id FK NULL (được ghim khi publish), points DECIMAL(6,2), position INT UNSIGNED. UNIQUE(assignment_id, question_id). Sau publish, assessment và các dòng câu hỏi/snapshot/điểm/thứ tự bất biến; thay đổi cần tạo assignment nháp mới.
 
-**assignment_attempts** — lượt nộp **toàn bài quiz**: id, assignment_id FK, student_id FK users, attempt_no INT, is_late BOOL default 0, idempotency_key CHAR(36) UNIQUE, submitted_at DATETIME. UNIQUE(assignment_id, student_id, attempt_no); index (student_id, submitted_at). Chỉ tạo khi nộp quiz chính thức; tạo lượt và toàn bộ submission MCQ của lượt trong cùng transaction. Điểm lượt = tổng điểm các câu, câu không trả lời = 0.
+**assignment_attempts** — lượt nộp **toàn bài quiz**: id, assignment_id FK, student_id FK users, attempt_no INT, is_late BOOL default 0, late_penalty_percent INT UNSIGNED, score DECIMAL(8,2), idempotency_key CHAR(36) UNIQUE, submitted_at DATETIME. UNIQUE(assignment_id, student_id, attempt_no); index (student_id, submitted_at). Chỉ tạo khi nộp quiz chính thức; tạo lượt và toàn bộ submission MCQ của lượt trong cùng transaction. Điểm lượt = tổng điểm các câu sau phạt muộn, câu không trả lời = 0.
 
 ### 2.6 Kỳ thi (M7)
 
@@ -119,7 +127,7 @@ erDiagram
 
 ### 2.7 Nộp bài & chấm (M5/M6) ⭐
 
-**submissions** — bảng thống nhất 2 loại bài nộp (quiz + code):
+**submissions** — bảng thống nhất 2 loại bài nộp (quiz + code). Migration M5 tạo các cột assignment bên dưới; migration M7 bổ sung `exam_session_id` và ràng buộc bài nộp thuộc assignment hoặc phiên thi:
 | Cột | Kiểu | Ghi chú |
 |---|---|---|
 | id | BIGINT PK AI | |
@@ -135,7 +143,7 @@ erDiagram
 | source_code | MEDIUMTEXT NULL | code (≤16MB đủ; đường mở rộng: object storage) |
 | attempt_no | INT | quiz: bằng `assignment_attempts.attempt_no`; bài khác: đếm theo (assignment, student, question); bài thi: 1 |
 | status | ENUM('pending','grading','completed','failed') | code; MCQ tạo xong là completed |
-| score | DECIMAL(6,2) NULL | điểm câu theo thang points |
+| score | DECIMAL(8,2) NULL | điểm câu theo thang points |
 | is_late | BOOL default 0 | |
 | idempotency_key | CHAR(36) UNIQUE NULL | bài nộp từng câu; quiz lưu key ở `assignment_attempts`, các dòng câu để NULL |
 | submitted_at | DATETIME | |

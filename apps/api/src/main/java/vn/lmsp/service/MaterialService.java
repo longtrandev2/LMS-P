@@ -9,6 +9,8 @@ import org.springframework.web.multipart.MultipartFile;
 import vn.lmsp.common.LmsException;
 import vn.lmsp.dto.MaterialDtos.*;
 import vn.lmsp.enums.EnrollmentStatus;
+import vn.lmsp.enums.ClassStatus;
+import vn.lmsp.mapper.MaterialMapper;
 import vn.lmsp.model.*;
 import vn.lmsp.repository.*;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -22,23 +24,24 @@ public class MaterialService {
     private final MaterialRepository materials; private final ClassRepository classes; private final EnrollmentRepository enrollments;
     private final UserRepository users; private final NotificationService notifications; private final Path root; private final long maxBytes;
     private final AuditService audit;
+    private final MaterialMapper mapper;
     public MaterialService(MaterialRepository materials, ClassRepository classes, EnrollmentRepository enrollments,
-                          UserRepository users, NotificationService notifications,AuditService audit,
+                          UserRepository users, NotificationService notifications,AuditService audit, MaterialMapper mapper,
                           @Value("${lms.storage-dir:./storage}") String root, @Value("${lms.upload.max-mb:20}") int maxMb) {
         this.materials=materials; this.classes=classes; this.enrollments=enrollments; this.users=users;
-        this.notifications=notifications; this.audit=audit; this.root=Path.of(root).toAbsolutePath().normalize(); this.maxBytes=maxMb*1024L*1024L;
+        this.notifications=notifications; this.audit=audit; this.mapper=mapper; this.root=Path.of(root).toAbsolutePath().normalize(); this.maxBytes=maxMb*1024L*1024L;
     }
     @Transactional(readOnly=true) public Page list(Long classId, Long userId, boolean privileged, int page, int limit) {
         LmsClass clazz=clazz(classId); checkAccess(clazz, userId, privileged);
         var result=materials.findByLmsClass_IdOrderByCreatedAtDescIdDesc(classId, PageRequest.of(page-1,limit));
-        return new Page(result.getContent().stream().map(MaterialService::view).toList(), result.getTotalElements(), page, limit);
+        return new Page(result.getContent().stream().map(mapper::toView).toList(), result.getTotalElements(), page, limit);
     }
     @Transactional public Item createLink(Long classId, Long actorId, String title, String description, String url) {
         LmsClass clazz=clazz(classId); checkOwner(clazz, actorId);
         if(title==null || title.isBlank() || url==null || !(url.startsWith("https://") || url.startsWith("http://"))) throw invalid("Tiêu đề hoặc liên kết không hợp lệ");
         Material item=materials.save(new Material(clazz,title,description,"link",url,0,user(actorId)));
         audit.record(actorId,"material.create","material",item.getId(),null,Map.of("title",title,"type","link","class_id",classId,"url",url));
-        notifyStudents(clazz,item); return view(item);
+        notifyStudents(clazz,item); return mapper.toView(item);
     }
     @Transactional public Item upload(Long classId, Long actorId, String title, String description, MultipartFile file) {
         LmsClass clazz=clazz(classId); checkOwner(clazz,actorId);
@@ -52,7 +55,7 @@ public class MaterialService {
         catch(Exception error) { throw new LmsException("STORAGE_ERROR","Không thể lưu tệp học liệu",HttpStatus.INTERNAL_SERVER_ERROR,null); }
         Material item=materials.save(new Material(clazz,title,description,TYPES.get(ext),"materials/"+classId+"/"+name,file.getSize(),user(actorId)));
         audit.record(actorId,"material.create","material",item.getId(),null,Map.of("title",title,"type",TYPES.get(ext),"class_id",classId,"size_bytes",file.getSize()));
-        notifyStudents(clazz,item); return view(item);
+        notifyStudents(clazz,item); return mapper.toView(item);
     }
     @Transactional(readOnly=true) public Material download(Long id, Long userId, boolean privileged) {
         Material m=material(id); checkAccess(clazz(m.getClassId()),userId,privileged);
@@ -65,9 +68,9 @@ public class MaterialService {
     @Transactional public Item update(Long id, Long actorId, String title, String description) {
         Material m=material(id); checkOwner(clazz(m.getClassId()),actorId);
         if(title!=null && (title.isBlank() || title.length()>200)) throw invalid("Tiêu đề không hợp lệ");
-        Map<String,Object> old=new LinkedHashMap<>(); old.put("title",m.getTitle()); old.put("description",m.getDescription()); m.update(title,description);
-        Map<String,Object> next=new LinkedHashMap<>(); next.put("title",m.getTitle()); next.put("description",m.getDescription());
-        audit.record(actorId,"material.update","material",id,old,next); return view(m);
+        Map<String,Object> old=mapper.toAuditValue(m); m.update(title,description);
+        Map<String,Object> next=mapper.toAuditValue(m);
+        audit.record(actorId,"material.update","material",id,old,next); return mapper.toView(m);
     }
     @Transactional public void delete(Long id, Long actorId) {
         Material m=material(id); checkOwner(clazz(m.getClassId()),actorId); materials.delete(m);
@@ -84,6 +87,7 @@ public class MaterialService {
             notifications.create(e.getStudent().getId(),"material.created","Học liệu mới: "+m.getTitle(),m.getDescription(),Map.of("material_id",m.getId(),"class_id",clazz.getId()));
     }
     private void checkAccess(LmsClass c, Long userId, boolean privileged) {
+        if (!privileged && c.getStatus() == ClassStatus.locked) throw new LmsException("CLASS_LOCKED","Lớp học đang bị khóa",HttpStatus.FORBIDDEN,null);
         if(privileged || c.getLecturerId().equals(userId) || enrollments.existsByLmsClass_IdAndStudent_IdAndStatus(c.getId(),userId,EnrollmentStatus.active)) return;
         throw new LmsException("ENROLLMENT_REQUIRED","Bạn chưa tham gia lớp học",HttpStatus.FORBIDDEN,null);
     }
@@ -91,6 +95,5 @@ public class MaterialService {
     private LmsClass clazz(Long id) { return classes.findById(id).orElseThrow(()->new LmsException("NOT_FOUND","Không tìm thấy lớp học",HttpStatus.NOT_FOUND,null)); }
     private Material material(Long id) { return materials.findById(id).orElseThrow(()->new LmsException("NOT_FOUND","Không tìm thấy học liệu",HttpStatus.NOT_FOUND,null)); }
     private User user(Long id) { return users.findById(id).orElseThrow(()->new LmsException("NOT_FOUND","Không tìm thấy người dùng",HttpStatus.NOT_FOUND,null)); }
-    private static Item view(Material m) { return new Item(m.getId(),m.getClassId(),m.getTitle(),m.getDescription(),m.getType(),m.getFilePath(),m.getSizeBytes(),m.getUploadedBy(),m.getCreatedAt()); }
     private static LmsException invalid(String message) { return new LmsException("VALIDATION_ERROR",message,HttpStatus.BAD_REQUEST,null); }
 }

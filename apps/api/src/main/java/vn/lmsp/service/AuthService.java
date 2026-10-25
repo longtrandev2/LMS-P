@@ -9,6 +9,7 @@ import vn.lmsp.common.LmsException;
 import vn.lmsp.dto.TokenPair;
 import vn.lmsp.dto.UserSummary;
 import vn.lmsp.enums.UserStatus;
+import vn.lmsp.mapper.UserMapper;
 import vn.lmsp.model.RefreshToken;
 import vn.lmsp.model.User;
 import vn.lmsp.repository.RefreshTokenRepository;
@@ -28,13 +29,14 @@ public class AuthService {
     private final RefreshTokenRepository refreshTokens;
     private final PasswordEncoder passwords;
     private final JwtTokenService jwt;
+    private final UserMapper mapper;
     private final int refreshTtlDays;
     private final SecureRandom random = new SecureRandom();
 
     public AuthService(UserRepository users, RefreshTokenRepository refreshTokens, PasswordEncoder passwords,
-                       JwtTokenService jwt, @Value("${lms.jwt.refresh-ttl-days:7}") int refreshTtlDays) {
+                       JwtTokenService jwt, UserMapper mapper, @Value("${lms.jwt.refresh-ttl-days:7}") int refreshTtlDays) {
         this.users = users; this.refreshTokens = refreshTokens; this.passwords = passwords;
-        this.jwt = jwt; this.refreshTtlDays = refreshTtlDays;
+        this.jwt = jwt; this.mapper = mapper; this.refreshTtlDays = refreshTtlDays;
     }
 
     @Transactional
@@ -76,7 +78,7 @@ public class AuthService {
 
     @Transactional(readOnly = true)
     public UserSummary me(Long id) {
-        return users.findWithRolesById(id).map(UserSummary::from)
+        return users.findWithRolesById(id).map(mapper::toSummary)
                 .orElseThrow(() -> new LmsException("NOT_FOUND", "Không tìm thấy người dùng", HttpStatus.NOT_FOUND, null));
     }
 
@@ -84,7 +86,7 @@ public class AuthService {
         byte[] bytes = new byte[48]; random.nextBytes(bytes);
         String refresh = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
         refreshTokens.save(new RefreshToken(user, hash(refresh), LocalDateTime.now().plusDays(refreshTtlDays)));
-        return new TokenPair(jwt.issueAccessToken(user), refresh, UserSummary.from(user));
+        return new TokenPair(jwt.issueAccessToken(user), refresh, mapper.toSummary(user));
     }
     private void recordFailure(String email) {
         String key = email.toLowerCase();

@@ -34,13 +34,14 @@ interface EmptyStateProps {
   title: string;
   description?: string;
   action?: React.ReactNode;
+  compact?: boolean;
 }
 
-export function EmptyState({ title, description, action }: EmptyStateProps) {
+export function EmptyState({ title, description, action, compact = false }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center gap-3 px-6 py-16 text-center">
-      <div className="flex size-12 items-center justify-center rounded-full bg-muted">
-        <Inbox className="size-6 text-muted-foreground" aria-hidden />
+    <div className={`flex flex-col items-center justify-center gap-3 px-6 text-center ${compact ? "py-10" : "py-16"}`}>
+      <div className={`flex items-center justify-center rounded-full bg-muted ${compact ? "size-10" : "size-12"}`}>
+        <Inbox className={`text-muted-foreground ${compact ? "size-5" : "size-6"}`} aria-hidden />
       </div>
       <div className="space-y-1">
         <p className="font-heading text-base font-semibold">{title}</p>

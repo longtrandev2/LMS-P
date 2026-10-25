@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Plus } from "lucide-react";
@@ -15,10 +15,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Card, CardContent } from "@/components/ui/card";
+import { DataTablePagination } from "@/components/data-table-pagination";
+import { SortSelect } from "@/components/sort-select";
 import { PageHeader } from "@/components/page-header";
 import { EmptyState, ErrorState, TableSkeleton } from "@/components/state-blocks";
 import { ClassFormDialog } from "@/features/classes/class-form-dialog";
 import { CourseClassesTable } from "@/features/classes/course-classes-table";
+import { ClassSearchField } from "@/features/classes/class-search-field";
 import { api } from "@/lib/api";
 import { errorText } from "@/lib/error-messages";
 import { queryKeys } from "@/lib/query-keys";
@@ -31,6 +34,10 @@ export function CourseClassesPage({ courseId }: { courseId: string }) {
   const [formOpen, setFormOpen] = useState(false);
   const [editingClass, setEditingClass] = useState<ClassSummary | null>(null);
   const [deletingClass, setDeletingClass] = useState<ClassSummary | null>(null);
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [sort, setSort] = useState("code");
+  useEffect(() => setPage(1), [search]);
 
   const courseQuery = useQuery({
     queryKey: queryKeys.courses.detail(courseId),
@@ -38,9 +45,9 @@ export function CourseClassesPage({ courseId }: { courseId: string }) {
     enabled: guard === "ok",
   });
   const classesQuery = useQuery({
-    queryKey: queryKeys.classes.list({ course_id: courseId }),
+    queryKey: queryKeys.classes.list({ course_id: courseId, page, limit: 20, q: search.trim() || undefined, sort }),
     queryFn: ({ signal }) =>
-      api.get<Paginated<ClassSummary>>("/classes", { course_id: courseId, page: 1, limit: 50 }, signal),
+      api.get<Paginated<ClassSummary>>("/classes", { course_id: courseId, page, limit: 20, q: search.trim() || undefined, sort }, signal),
     enabled: guard === "ok",
   });
 
@@ -88,10 +95,14 @@ export function CourseClassesPage({ courseId }: { courseId: string }) {
         }
       />
 
+      <div className="flex flex-wrap gap-3"><ClassSearchField value={search} onChange={setSearch} />
+        <SortSelect value={sort} onChange={(value) => { setSort(value); setPage(1); }} options={[{ value: "code", label: "Theo mã lớp" }, { value: "name", label: "Theo tên" }, { value: "created_at", label: "Theo ngày tạo" }]} />
+      </div>
+
       <Card>
         <CardContent className="p-0">
           {classesQuery.isPending ? (
-            <TableSkeleton cols={4} />
+            <TableSkeleton cols={6} />
           ) : classesQuery.isError ? (
             <ErrorState error={classesQuery.error} onRetry={() => classesQuery.refetch()} />
           ) : classes && classes.length === 0 ? (
@@ -105,11 +116,14 @@ export function CourseClassesPage({ courseId }: { courseId: string }) {
               }
             />
           ) : classes ? (
-            <CourseClassesTable
-              classes={classes}
-              onEdit={(clazz) => { setEditingClass(clazz); setFormOpen(true); }}
-              onDelete={setDeletingClass}
-            />
+            <>
+              <CourseClassesTable
+                classes={classes}
+                onEdit={(clazz) => { setEditingClass(clazz); setFormOpen(true); }}
+                onDelete={setDeletingClass}
+              />
+              {classesQuery.data ? <DataTablePagination page={classesQuery.data.page} limit={classesQuery.data.limit} total={classesQuery.data.total} onPageChange={setPage} /> : null}
+            </>
           ) : null}
         </CardContent>
       </Card>

@@ -1,0 +1,62 @@
+package vn.lmsp.model;
+
+import jakarta.persistence.*;
+import vn.lmsp.enums.AssignmentCategory;
+import vn.lmsp.enums.ScorePolicy;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "assignments")
+public class Assignment {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
+    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "class_id", nullable = false) private LmsClass lmsClass;
+    @Column(nullable = false, length = 200) private String title;
+    @Column(columnDefinition = "TEXT") private String description;
+    @Convert(converter = AssignmentCategoryConverter.class) @Column(nullable = false, length = 20) private AssignmentCategory category;
+    @Column(name = "available_from") private LocalDateTime availableFrom;
+    @Column(name = "due_at", nullable = false) private LocalDateTime dueAt;
+    @Column(name = "allow_late", nullable = false) private boolean allowLate;
+    @Column(name = "late_due_at") private LocalDateTime lateDueAt;
+    @Column(name = "late_penalty_percent", nullable = false) private int latePenaltyPercent;
+    @Column(name = "max_attempts") private Integer maxAttempts;
+    @Enumerated(EnumType.STRING) @Column(name = "score_policy", nullable = false) private ScorePolicy scorePolicy;
+    @Column(name = "is_published", nullable = false) private boolean published;
+    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "created_by", nullable = false) private User creator;
+    @Column(name = "created_at", nullable = false) private LocalDateTime createdAt;
+    @Column(name = "updated_at", nullable = false) private LocalDateTime updatedAt;
+
+    protected Assignment() { }
+    public Assignment(LmsClass clazz, String title, String description, AssignmentCategory category,
+            LocalDateTime availableFrom, LocalDateTime dueAt, boolean allowLate, LocalDateTime lateDueAt,
+            int latePenaltyPercent, Integer maxAttempts, ScorePolicy scorePolicy, User creator) {
+        this.lmsClass = clazz; this.title = title; this.description = description; this.category = category;
+        this.availableFrom = availableFrom; this.dueAt = dueAt; this.allowLate = allowLate; this.lateDueAt = lateDueAt;
+        this.latePenaltyPercent = latePenaltyPercent; this.maxAttempts = maxAttempts; this.scorePolicy = scorePolicy; this.creator = creator;
+    }
+    @PrePersist void onCreate() { createdAt = LocalDateTime.now(); updatedAt = createdAt; }
+    @PreUpdate void onUpdate() { updatedAt = LocalDateTime.now(); }
+    public Long getId() { return id; }
+    public LmsClass getLmsClass() { return lmsClass; }
+    public Long getClassId() { return lmsClass.getId(); }
+    public Long getLecturerId() { return lmsClass.getLecturerId(); }
+    public String getTitle() { return title; }
+    public String getDescription() { return description; }
+    public AssignmentCategory getCategory() { return category; }
+    public LocalDateTime getAvailableFrom() { return availableFrom; }
+    public LocalDateTime getDueAt() { return dueAt; }
+    public boolean isAllowLate() { return allowLate; }
+    public LocalDateTime getLateDueAt() { return lateDueAt; }
+    public int getLatePenaltyPercent() { return latePenaltyPercent; }
+    public Integer getMaxAttempts() { return maxAttempts; }
+    public ScorePolicy getScorePolicy() { return scorePolicy; }
+    public boolean isPublished() { return published; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void update(String title, String description, AssignmentCategory category, LocalDateTime availableFrom,
+            LocalDateTime dueAt, boolean allowLate, LocalDateTime lateDueAt, int penalty, Integer maxAttempts, ScorePolicy policy) {
+        this.title = title; this.description = description; this.category = category; this.availableFrom = availableFrom;
+        this.dueAt = dueAt; this.allowLate = allowLate; this.lateDueAt = lateDueAt; this.latePenaltyPercent = penalty;
+        this.maxAttempts = maxAttempts; this.scorePolicy = policy;
+    }
+    public void publish() { published = true; }
+}

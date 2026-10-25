@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,20 +11,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
 import { FieldError } from "@/components/form-field-error";
 import { api } from "@/lib/api";
 import { errorText } from "@/lib/error-messages";
-import { queryKeys } from "@/lib/query-keys";
 import { hasRole, useAuthStore } from "@/stores/auth";
-import type { ClassSummary, Paginated, User } from "@/types/api";
+import type { ClassSummary } from "@/types/api";
+import { ClassSettingsFields, type ClassSettings } from "@/features/classes/class-settings-fields";
+import { ClassLecturerField } from "@/features/classes/class-lecturer-field";
 
 interface ClassFormDialogProps {
   onOpenChange: (open: boolean) => void;
@@ -36,6 +28,7 @@ interface ClassFormDialogProps {
 }
 
 const SEMESTER_PATTERN = /^\d{4}\.\d$/;
+const dateInput = (value?: string | null) => value?.slice(0, 16) ?? "";
 
 /**
  * State khởi tạo từ props — mount có điều kiện kèm `key`, không cần effect sync.
@@ -51,18 +44,16 @@ export function ClassFormDialog({ onOpenChange, courseId, clazz, onSaved }: Clas
   const [code, setCode] = useState(clazz?.code ?? "");
   const [name, setName] = useState(clazz?.name ?? "");
   const [semester, setSemester] = useState(clazz?.semester ?? "");
+  const [settings, setSettings] = useState<ClassSettings>({
+    maxStudents: clazz?.max_students?.toString() ?? "", enrollFrom: dateInput(clazz?.enroll_from),
+    enrollUntil: dateInput(clazz?.enroll_until), room: clazz?.room ?? "", schedule: clazz?.schedule ?? "",
+    status: clazz?.status ?? "active",
+  });
   const [lecturerId, setLecturerId] = useState<number | null>(
     clazz?.lecturer_id ?? (isLecturer ? currentUser?.id ?? null : null)
   );
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-
-  const lecturersQuery = useQuery({
-    queryKey: queryKeys.users.list({ page: 1, limit: 100, role: "lecturer" }),
-    queryFn: ({ signal }) =>
-      api.get<Paginated<User>>("/users", { page: 1, limit: 100, role: "lecturer" }, signal),
-    enabled: isAdmin, // GET /users là admin-only — lecturer dùng chính mình
-  });
 
   function validate(): boolean {
     const next: Record<string, string> = {};
@@ -71,6 +62,8 @@ export function ClassFormDialog({ onOpenChange, courseId, clazz, onSaved }: Clas
     if (!SEMESTER_PATTERN.test(semester.trim()))
       next.semester = 'Học kỳ theo dạng "2026.1" hoặc "2026.2".';
     if (lecturerId == null) next.lecturer = "Chọn giảng viên phụ trách.";
+    if (settings.maxStudents && (!/^\d+$/.test(settings.maxStudents) || Number(settings.maxStudents) < 1)) next.capacity = "Sĩ số tối đa phải là số nguyên lớn hơn 0.";
+    if (settings.enrollFrom && settings.enrollUntil && settings.enrollUntil <= settings.enrollFrom) next.window = "Thời gian đóng ghi danh phải sau thời gian mở.";
     setErrors(next);
     return Object.keys(next).length === 0;
   }
@@ -85,6 +78,15 @@ export function ClassFormDialog({ onOpenChange, courseId, clazz, onSaved }: Clas
       semester: semester.trim(),
       course_id: Number(courseId),
       lecturer_id: lecturerId as number,
+      max_students: settings.maxStudents ? Number(settings.maxStudents) : null,
+      enroll_from: settings.enrollFrom || null,
+      enroll_until: settings.enrollUntil || null,
+      room: settings.room.trim(),
+      schedule: settings.schedule.trim(),
+      status: settings.status,
+      clear_capacity: !settings.maxStudents,
+      clear_enroll_from: !settings.enrollFrom,
+      clear_enroll_until: !settings.enrollUntil,
     };
     try {
       if (isEdit) {
@@ -105,7 +107,7 @@ export function ClassFormDialog({ onOpenChange, courseId, clazz, onSaved }: Clas
 
   return (
     <Dialog open onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="font-heading">
             {isEdit ? "Sửa lớp học phần" : "Tạo lớp học phần"}
@@ -149,45 +151,11 @@ export function ClassFormDialog({ onOpenChange, courseId, clazz, onSaved }: Clas
             {errors.semester ? <FieldError text={errors.semester} /> : null}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="class-lecturer">Giảng viên phụ trách</Label>
-            {isAdmin ? (
-              lecturersQuery.isPending ? (
-                <Skeleton className="h-9 w-full" />
-              ) : lecturersQuery.isError ? (
-                <FieldError text="Không tải được danh sách giảng viên." />
-              ) : (
-                <Select
-                  value={lecturerId != null ? String(lecturerId) : undefined}
-                  onValueChange={(v) => setLecturerId(Number(v))}
-                >
-                  <SelectTrigger id="class-lecturer" aria-invalid={!!errors.lecturer}>
-                    <SelectValue placeholder="Chọn giảng viên" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {lecturersQuery.data?.items.map((lecturer) => (
-                      <SelectItem key={lecturer.id} value={String(lecturer.id)}>
-                        {lecturer.full_name} ({lecturer.email})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )
-            ) : (
-              <Input
-                id="class-lecturer"
-                value={currentUser?.full_name ?? ""}
-                disabled
-                aria-describedby="class-lecturer-hint"
-              />
-            )}
-            {!isAdmin ? (
-              <p id="class-lecturer-hint" className="text-xs text-muted-foreground">
-                Bạn là giảng viên phụ trách lớp này.
-              </p>
-            ) : null}
-            {errors.lecturer ? <FieldError text={errors.lecturer} /> : null}
-          </div>
+          <ClassSettingsFields value={settings} onChange={setSettings} />
+          {errors.capacity || errors.window ? <FieldError text={errors.capacity ?? errors.window} /> : null}
+
+          <ClassLecturerField isAdmin={isAdmin} lecturerId={lecturerId} fullName={currentUser?.full_name ?? ""}
+            error={errors.lecturer} onChange={setLecturerId} />
 
           <DialogFooter>
             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>

@@ -1,7 +1,10 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AssignmentsSection } from "@/features/assignments/assignments-section";
 import { MaterialsSection } from "@/features/materials/materials-section";
 import { api } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
@@ -14,6 +17,7 @@ import type { ClassSummary, Paginated } from "@/types/api";
  */
 export function MyClassMaterialsPage({ classId }: { classId: string }) {
   const { status: guard } = useAuthGuard(["student"]);
+  const [tab, setTab] = useState("assignments");
 
   const classesQuery = useQuery({
     queryKey: queryKeys.me.classes(),
@@ -51,7 +55,11 @@ export function MyClassMaterialsPage({ classId }: { classId: string }) {
         }
       />
 
-      <MaterialsSection classId={classId} canManage={false} />
+      <Tabs value={tab} onValueChange={setTab}>
+        <TabsList><TabsTrigger value="assignments">Bài tập & Quiz</TabsTrigger><TabsTrigger value="materials">Học liệu</TabsTrigger></TabsList>
+        <TabsContent value="assignments" className="mt-4"><AssignmentsSection classId={classId} canManage={false} /></TabsContent>
+        <TabsContent value="materials" className="mt-4"><MaterialsSection classId={classId} canManage={false} /></TabsContent>
+      </Tabs>
     </div>
   );
 }

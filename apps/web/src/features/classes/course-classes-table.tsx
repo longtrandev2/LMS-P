@@ -25,6 +25,8 @@ export function CourseClassesTable({ classes, onEdit, onDelete }: CourseClassesT
           <TableHead>Mã lớp</TableHead>
           <TableHead>Tên lớp</TableHead>
           <TableHead>Học kỳ</TableHead>
+          <TableHead>Sĩ số</TableHead>
+          <TableHead>Trạng thái</TableHead>
           <TableHead className="w-28 text-right">Thao tác</TableHead>
         </TableRow>
       </TableHeader>
@@ -41,6 +43,8 @@ export function CourseClassesTable({ classes, onEdit, onDelete }: CourseClassesT
               </Link>
             </TableCell>
             <TableCell className="font-mono text-sm">{clazz.semester}</TableCell>
+            <TableCell className="text-sm tabular-nums">{clazz.enrolled_count ?? 0}{clazz.max_students ? ` / ${clazz.max_students}` : ""}</TableCell>
+            <TableCell className="text-sm">{clazz.status === "locked" ? "Đã khóa" : "Đang hoạt động"}</TableCell>
             <TableCell className="text-right">
               <span className="flex justify-end gap-1">
                 <Button variant="ghost" size="icon-sm" asChild>

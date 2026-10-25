@@ -2,11 +2,21 @@
 
 | | |
 |---|---|
-| Phiên bản | 1.2 — 2026-10-23 |
+| Phiên bản | 1.3 — 2026-10-25 |
 | Nguồn | `srs.md`, `system-architecture.md` |
 | Nguyên tắc | Mỗi phase chốt được một mảng demo chạy thật; spec-first, code theo spec |
 
 ## Tổng quan phase
+
+Trạng thái bản Java ngày 2026-10-25:
+
+- P0/P1: đã có Docker Compose, auth/user/profile, học phần/lớp/xếp sinh viên, học liệu, thông báo và audit. Các luồng cần tiếp tục có kiểm thử tích hợp theo từng nghiệp vụ.
+- P2: đã có ngân hàng câu hỏi theo học phần, danh mục tùy chọn, CSV MCQ, snapshot, bài tập và quiz MCQ. Sổ điểm M8 chưa triển khai.
+- P3: worker hiện nhận/validate message và ACK; API chưa nhận nộp code/chạy thử vì sandbox chưa có. Đây là phần ưu tiên tiếp theo.
+- P4: kỳ thi M7 chưa triển khai.
+- P5: đã chuẩn hóa mapping DTO toàn bộ backend và thêm 18 kiểm thử Java cho response/snapshot/quiz. Cấu hình hệ thống, thống kê quản trị và bộ kiểm thử tích hợp đầy đủ còn thiếu.
+
+Các wave dùng Python/Next.js bên dưới là lịch sử dự án; kết quả pytest cũ không xác nhận trạng thái bản Java hiện tại. Yêu cầu xếp sinh viên hiện hành lấy từ SRS: sinh viên không tự ghi danh/rời lớp.
 
 | Phase | Nội dung | Kết quả demo | Ước lượng |
 |---|---|---|---|
@@ -24,8 +34,8 @@ Nếu gấp show giữa chừng: P0 → P1 → nhảy P3 (P2 đưa về sau) —
 **Wave 2.5 (khởi động 2026-10-21) — bổ sung nghiệp vụ M1–M3 theo review user:** hồ sơ cá nhân + avatar (FR-AUTH-03), admin quản trị user đầy đủ (FR-AUTH-05/07), thuộc tính lớp: sĩ số tối đa + khung giờ ghi danh + phòng/lịch + trạng thái (FR-CRS-01, BR11–13), ghi danh theo mã SV + sinh viên tự ghi danh + catalog (FR-CRS-02/04/05), search/phân trang/sort mọi danh sách (FR-CRS-06). Spec đã cập nhật trước (srs/api-spec/db-design) — code theo branch `feat/profile-enrollment-and-list-ux` sau khi wave 2 được PR.
 
 ## P0 — Scaffold
-- Việc: monorepo `apps/api`, `apps/web`, `apps/worker`, `infra/` (compose: mysql, rabbitmq-management, api, worker, web; profile prod: nginx); app factory FastAPI + `/health`; Next.js init + layout + AuthProvider khung; worker entry print.consume;
-- Migration rỗng Alembic; `.env.example`; seed admin.
+- Việc: monorepo `apps/api`, `apps/web`, `apps/worker`, `infra/` (compose: mysql, rabbitmq-management, api, worker, web; profile prod: nginx); Spring Boot + `/health`; React Router/Vite + layout/auth store; Spring AMQP consumer khung;
+- JPA/Flyway migrations; `infra/.env.example`; seed tài khoản demo.
 - Xong khi: compose up xanh cả 5 service; /health 200 (check DB+AMQP); login admin được (seed).
 
 ## P1 — Nền tảng (M1–M3)
@@ -37,7 +47,7 @@ Nếu gấp show giữa chừng: P0 → P1 → nhảy P3 (P2 đưa về sau) —
 - Xong khi: `max_attempts`/deadline/late enforce theo lượt toàn bài quiz hoặc từng câu bài khác; nộp trùng Idempotency-Key không tăng lượt; điểm tổng khớp công thức FR-GB-02 (case test tay).
 
 ## P3 ⭐ — Chấm lập trình (M6)
-- Việc: submit code → pending + publish AMQP (aio-pika) + Idempotency-Key; worker consumer (manual ack, retry, DLQ, priority); runner docker-py sandbox (limits đầy đủ BR10); grader compare + score trọng số; grading_results/test_results; API consume q.events → WS push `submission.status/graded`; UI Monaco editor + panel kết quả từng test live + trạng thái; regrade; (S nếu kịp: Run thử, verify đề).
+- Việc: submit code → pending + publish Spring AMQP + Idempotency-Key; worker consumer (manual ack, retry, DLQ, priority); runner Docker sandbox (limits đầy đủ BR10); grader compare + score trọng số; grading_results/test_results; API consume q.events → WS push `submission.status/graded`; UI Monaco editor + panel kết quả từng test live + trạng thái; regrade; (S nếu kịp: Run thử, verify đề).
 - Xong khi: nộp code Python đúng/sai/compile error/timeout → đúng trạng thái + điểm; test ẩn không lộ (check response); kill worker giữa chừng → redeliver chấm tiếp; `--scale worker=2` hai worker cùng kéo queue.
 
 ## P4 — Kỳ thi (M7)
@@ -51,7 +61,7 @@ Nếu gấp show giữa chừng: P0 → P1 → nhảy P3 (P2 đưa về sau) —
 ## Kịch bản demo (chuẩn bị từ P5, dùng suốt)
 1. Admin import CSV sinh viên → gán vào lớp (P1).
 2. Lecturer upload học liệu, tạo quiz → sinh viên làm → điểm hiện (P2).
-3. Lecturer tạo bài code + test công khai/ẩn → sinh viên code trong Monaco → Run thử → Submit → Flower/RabbitMQ UI thấy message → kết quả từng test + điểm hiện **live** (P3).
+3. Lecturer tạo bài code + test công khai/ẩn → sinh viên code trong Monaco → Run thử → Submit → RabbitMQ Management thấy message → kết quả từng test + điểm hiện **live** (P3).
 4. `--scale worker=3` trước giờ thi → mở kỳ thi → 2 sinh viên thi cùng lúc, countdown server, autosave, hết giờ auto-submit, code thi ưu tiên chấm trước (P4).
 5. Lecturer mở gradebook, điều chỉnh điểm (có audit) → admin xem audit log + stats (P5).
 

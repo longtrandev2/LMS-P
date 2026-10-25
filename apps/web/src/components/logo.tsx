@@ -26,10 +26,10 @@ export function LogoMark({ size = 32, className }: { size?: number; className?: 
       aria-label="LMS-P"
       className={cn("shrink-0", className)}
     >
-      <rect x="2" y="2" width="44" height="44" rx="12" fill="var(--foreground)" />
-      <rect x="13" y="28" width="6" height="8" rx="1.5" fill="var(--background)" />
-      <rect x="21" y="21" width="6" height="15" rx="1.5" fill="var(--background)" />
-      <rect x="29" y="14" width="6" height="22" rx="1.5" fill="var(--background)" />
+      <rect x="2" y="2" width="44" height="44" rx="12" fill="var(--primary)" />
+      <rect x="13" y="28" width="6" height="8" rx="1.5" fill="var(--primary-foreground)" />
+      <rect x="21" y="21" width="6" height="15" rx="1.5" fill="var(--primary-foreground)" />
+      <rect x="29" y="14" width="6" height="22" rx="1.5" fill="var(--primary-foreground)" />
     </svg>
   );
 }
@@ -57,7 +57,7 @@ export function Logo({
           LMS-P
         </span>
         {caption ? (
-          <span className="mt-1 block text-xs font-normal opacity-60">
+          <span className="mt-1 block text-xs font-normal text-muted-foreground">
             {caption}
           </span>
         ) : null}
