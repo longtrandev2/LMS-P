@@ -1,7 +1,6 @@
 package vn.lmsp.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.time.LocalDateTime;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,6 +10,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import vn.lmsp.common.UtcTime;
 import vn.lmsp.mapper.GradingMapper;
 import vn.lmsp.repository.GradingJobRepository;
 
@@ -28,11 +28,11 @@ public class GradingOutboxDispatcher {
 
     @Transactional
     public boolean publishNext() {
-        var pending = jobs.findPending(LocalDateTime.now(), PageRequest.of(0, 1));
+        var pending = jobs.findPending(UtcTime.now(), PageRequest.of(0, 1));
         if (pending.isEmpty()) return false;
         var job = pending.getFirst();
         if (job.getSubmission().isTerminal()) {
-            job.published(LocalDateTime.now());
+            job.published(UtcTime.now());
             return true;
         }
         try {
@@ -43,10 +43,10 @@ public class GradingOutboxDispatcher {
             rabbit.send("lms", "grading.submit", message, correlation);
             var confirm = correlation.getFuture().get(5, TimeUnit.SECONDS);
             if (!confirm.isAck() || correlation.getReturned() != null) throw new IllegalStateException("Publish not routed/confirmed");
-            job.published(LocalDateTime.now());
+            job.published(UtcTime.now());
         } catch (Exception error) {
             if (error instanceof InterruptedException) Thread.currentThread().interrupt();
-            job.retryLater(LocalDateTime.now());
+            job.retryLater(UtcTime.now());
             log.warn("Grading job {} remains in outbox: {}", job.getJobId(), error.getClass().getSimpleName());
         }
         return true;

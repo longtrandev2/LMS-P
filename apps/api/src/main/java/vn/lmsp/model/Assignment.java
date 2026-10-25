@@ -1,6 +1,7 @@
 package vn.lmsp.model;
 
 import jakarta.persistence.*;
+import vn.lmsp.common.UtcTime;
 import vn.lmsp.enums.AssignmentCategory;
 import vn.lmsp.enums.ScorePolicy;
 import java.time.LocalDateTime;
@@ -33,8 +34,8 @@ public class Assignment {
         this.availableFrom = availableFrom; this.dueAt = dueAt; this.allowLate = allowLate; this.lateDueAt = lateDueAt;
         this.latePenaltyPercent = latePenaltyPercent; this.maxAttempts = maxAttempts; this.scorePolicy = scorePolicy; this.creator = creator;
     }
-    @PrePersist void onCreate() { createdAt = LocalDateTime.now(); updatedAt = createdAt; }
-    @PreUpdate void onUpdate() { updatedAt = LocalDateTime.now(); }
+    @PrePersist void onCreate() { createdAt = UtcTime.now(); updatedAt = createdAt; }
+    @PreUpdate void onUpdate() { updatedAt = UtcTime.now(); }
     public Long getId() { return id; }
     public LmsClass getLmsClass() { return lmsClass; }
     public Long getClassId() { return lmsClass.getId(); }
@@ -57,6 +58,12 @@ public class Assignment {
         this.title = title; this.description = description; this.category = category; this.availableFrom = availableFrom;
         this.dueAt = dueAt; this.allowLate = allowLate; this.lateDueAt = lateDueAt; this.latePenaltyPercent = penalty;
         this.maxAttempts = maxAttempts; this.scorePolicy = policy;
+    }
+    public void updatePublishedSettings(String title, String description, LocalDateTime availableFrom,
+            LocalDateTime dueAt, boolean allowLate, LocalDateTime lateDueAt, int penalty) {
+        if (!published) throw new IllegalStateException("Assignment must be published");
+        this.title = title; this.description = description; this.availableFrom = availableFrom; this.dueAt = dueAt;
+        this.allowLate = allowLate; this.lateDueAt = lateDueAt; this.latePenaltyPercent = penalty;
     }
     public void publish() { published = true; }
 }

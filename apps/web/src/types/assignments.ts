@@ -63,6 +63,8 @@ export interface AssignmentSubmission {
   id: number;
   assignment_id: number;
   student_id: number;
+  student_full_name?: string | null;
+  student_code?: string | null;
   question_id: number;
   attempt_no: number;
   selected_option_ids?: number[] | null;

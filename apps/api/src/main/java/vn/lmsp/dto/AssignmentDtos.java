@@ -18,6 +18,12 @@ public final class AssignmentDtos {
             @NotNull AssignmentCategory category, LocalDateTime available_from, @NotNull LocalDateTime due_at,
             Boolean allow_late, LocalDateTime late_due_at, @Min(0) @Max(100) Integer late_penalty_percent,
             @Min(1) Integer max_attempts, ScorePolicy score_policy, @Valid List<QuestionSelectionInput> questions) { }
+    public record PublishedSettingsInput(@NotBlank @Size(max=200) String title, String description,
+            LocalDateTime available_from, @NotNull LocalDateTime due_at, @NotNull Boolean allow_late,
+            LocalDateTime late_due_at, @NotNull @Min(0) @Max(100) Integer late_penalty_percent,
+            @NotBlank @Size(max=500) String reason) { }
+    public record BulkAssignmentInput(@NotEmpty List<@NotNull Long> class_ids,
+                                      @NotNull @Valid AssignmentInput assignment, boolean publish) { }
     public record QuestionSelectionInput(@NotNull Long question_id, @NotNull @DecimalMin("0.01") @DecimalMax("9999.99") BigDecimal points,
                                          @Min(1) Integer position) { }
     public record QuizAnswerInput(@NotNull Long question_id, List<Long> selected_option_ids) { }
@@ -38,7 +44,8 @@ public final class AssignmentDtos {
     public record QuestionScore(Long question_id, BigDecimal score, BigDecimal max_score, List<Long> selected_option_ids) { }
     public record QuizAttemptView(Long attempt_id, int attempt_no, BigDecimal score, boolean is_late,
             int late_penalty_percent, LocalDateTime submitted_at, List<QuestionScore> question_scores) { }
-    public record SubmissionView(Long id, Long assignment_id, Long student_id, Long question_id, int attempt_no,
+    public record SubmissionView(Long id, Long assignment_id, Long student_id, String student_full_name,
+            String student_code, Long question_id, int attempt_no,
             List<Long> selected_option_ids, BigDecimal score, boolean is_late, LocalDateTime submitted_at,
             SubmissionStatus status, SubmissionType type, String language) { }
     public record AssignmentPage(List<AssignmentSummary> items, long total, int page, int limit) { }

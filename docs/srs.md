@@ -109,23 +109,24 @@ Giao diện admin có khu quản lý học phần và khu quản lý lớp riên
 ### M4 — Ngân hàng câu hỏi
 | ID | Ưu tiên | Yêu cầu |
 |---|---|---|
-| FR-QB-01 | M | Mỗi học phần có tối đa một ngân hàng câu hỏi dùng chung, được hệ thống tạo khi giảng viên thêm câu hỏi đầu tiên; giảng viên phụ trách và admin được dùng. Ngân hàng cá nhân là luồng nâng cao. Danh mục tùy chọn để phân loại; câu mới mặc định vào danh mục hệ thống “Chưa phân loại”. CRUD câu hỏi MCQ (nội dung, ≥2 lựa chọn, 1 đáp án đúng v1), chủ đề, độ khó và danh mục |
-| FR-QB-02 | M | CRUD câu hỏi lập trình: đề bài, starter code, ngôn ngữ, giới hạn thời gian/bộ nhớ; thuộc ngân hàng học phần (hoặc ngân hàng cá nhân nâng cao) và danh mục mặc định/tự chọn |
+| FR-QB-01 | M | Giảng viên được phân công lớp của học phần có thể tạo nhiều ngân hàng câu hỏi trong học phần đó; mỗi ngân hàng có chủ sở hữu, phạm vi `private` hoặc `shared`, và danh mục “Chưa phân loại” mặc định. Ngân hàng cũ không gắn học phần được giữ để tương thích dữ liệu. |
+| FR-QB-02 | M | CRUD câu hỏi lập trình: đề bài, starter code, ngôn ngữ, giới hạn thời gian/bộ nhớ; thuộc một ngân hàng của học phần và danh mục mặc định/tự chọn. Ngân hàng cá nhân cũ vẫn đọc và dùng được để tương thích dữ liệu. |
 | FR-QB-03 | M | CRUD test case: input, expected output, công khai/ẩn, trọng số, thứ tự |
-| FR-QB-04 | M | Tìm/lọc theo ngân hàng, danh mục, nội dung, loại/chủ đề/độ khó; giảng viên phụ trách học phần được dùng chung ngân hàng học phần; câu hỏi tái sử dụng cho nhiều bài |
+| FR-QB-04 | M | Tìm/lọc theo ngân hàng, danh mục, nội dung, loại/chủ đề/độ khó. Chủ ngân hàng được sửa; giảng viên được phân công cùng học phần chỉ xem và dùng ngân hàng `shared`, trừ khi được cấp quyền `edit`; quyền `view`/`edit` có thể cấp cho từng giảng viên. Ngân hàng `private` chỉ chủ sở hữu và người được cấp quyền truy cập. Câu hỏi tái sử dụng cho nhiều bài. Admin chỉ giám sát và xử lý đặc biệt, không tạo nội dung chuyên môn thường ngày. |
 | FR-QB-05 | S | Lecturer chạy thử solution mẫu để kiểm tra đề |
-| FR-QB-06 | M | Mỗi lần xuất bản bài tập/kỳ thi phải ghim nội dung và phiên bản các câu hỏi, lựa chọn/đáp án, giới hạn code, test case, điểm và thứ tự. Sửa ngân hàng sau đó không đổi assessment đã xuất bản; muốn đổi assessment phải tạo bản nháp mới |
+| FR-QB-06 | M | Mỗi lần xuất bản bài tập/kỳ thi phải ghim nội dung và phiên bản các câu hỏi, lựa chọn/đáp án, giới hạn code, test case, điểm và thứ tự. Sửa ngân hàng sau đó không đổi assessment đã xuất bản; muốn đổi nội dung/cấu trúc đề phải tạo bản nháp mới. Giảng viên được điều chỉnh metadata và lịch đã xuất bản theo FR-ASG-07; mọi thay đổi được audit |
 | FR-QB-07 | M | Nhập hàng loạt câu MCQ từ CSV vào danh mục đã chọn; nếu không chọn danh mục thì dùng “Chưa phân loại”. Có file mẫu, xem trước và báo lỗi/trùng từng dòng trước khi xác nhận. CSV v1 không nhập câu lập trình/test case |
 
 ### M5 — Bài tập & Quiz
 | ID | Ưu tiên | Yêu cầu |
 |---|---|---|
-| FR-ASG-01 | M | Tạo bài tập trong lớp: tìm câu theo ngân hàng/danh mục, gắn nhiều câu, điểm từng câu, thứ tự, xuất bản. Khi xuất bản, cố định danh sách câu, phiên bản câu hỏi, điểm và thứ tự. Bài có hạng mục `quiz` chỉ gồm câu MCQ trong v1 |
-| FR-ASG-02 | M | Chính sách: available_from, due_at, max_attempts (NULL = không giới hạn), nộp muộn (late_due_at + phạt %), score_policy (best/last), hạng mục điểm (quiz/assignment/midterm/final). Với quiz, lượt và best/last áp dụng cho **toàn bài**; với bài khác, áp dụng cho **từng câu** |
+| FR-ASG-01 | M | Giảng viên tạo đề từ câu hỏi trong ngân hàng mình được phép dùng, chọn một hoặc nhiều lớp được phân công trong cùng học phần; mỗi lớp nhận một bản bài riêng để theo dõi điểm và hạn nộp. Giảng viên đặt điểm/thứ tự/hạn nộp rồi xuất bản; khi xuất bản cố định danh sách câu, phiên bản câu hỏi, điểm và thứ tự. Bài có hạng mục `quiz` chỉ gồm câu MCQ trong v1. Admin không tạo/xuất bản đề thường ngày. |
+| FR-ASG-02 | M | Chính sách: available_from, due_at, max_attempts (NULL = không giới hạn), nộp muộn (late_due_at + phạt %), score_policy (best/last), hạng mục điểm (quiz/assignment/midterm/final). Các mốc thời gian được chuẩn hóa và kiểm tra theo UTC; giao diện nhận/hiển thị giờ địa phương. Với quiz, lượt và best/last áp dụng cho **toàn bài**; với bài khác, áp dụng cho **từng câu** |
 | FR-ASG-03 | M | Làm quiz: nộp đáp án của cả bài trong một request có Idempotency-Key; câu bỏ trống được 0 điểm; server lưu một lượt quiz cùng các đáp án trong một transaction, chấm MCQ đồng bộ và trả điểm của lượt ngay |
 | FR-ASG-04 | M | Server kiểm tra hạn nộp + lượt nộp theo BR3; quá hạn từ chối hoặc đánh dấu muộn trừ %. Chỉ nộp chính thức mới tính lượt; mở đề và Run thử test công khai không tính lượt |
 | FR-ASG-05 | M | Student xem lịch sử lượt quiz hoặc lần nộp từng câu, kết quả từng test công khai, điểm |
 | FR-ASG-06 | S | Lecturer xem danh sách bài nộp theo bài/lớp |
+| FR-ASG-07 | M | Sau khi xuất bản, giảng viên phụ trách vẫn có thể sửa tiêu đề, mô tả, thời điểm mở, hạn nộp và chính sách nộp muộn; nhập lý do và ghi audit before/after. Không được thay hạng mục, câu hỏi, phiên bản câu hỏi, điểm, thứ tự, số lượt hoặc cách tính điểm. Thay đổi chỉ ảnh hưởng các lượt nộp tiếp theo; các bài đã nộp giữ nguyên dữ liệu và điểm đã ghim |
 
 ### M6 — Chấm bài lập trình tự động ⭐
 | ID | Ưu tiên | Yêu cầu |
@@ -224,7 +225,7 @@ Triển khai phần API M6: lưu bài nộp và job outbox trong cùng transacti
 | BR11 | Admin/lecturer được xếp sinh viên bất kể `enroll_from`/`enroll_until`; lecturer chỉ được thêm/xóa trong lớp mình phụ trách. Khi đạt `max_students`, thêm sinh viên trả `CLASS_FULL`; chỉ admin được vượt sĩ số. Import CSV validate từng dòng, không tạo ghi danh trùng, và kiểm tra lại các điều kiện ở thời điểm xác nhận |
 | BR12 | Sửa `max_students` không được nhỏ hơn sĩ số hiện tại; nếu cả hai đầu có, `enroll_until` > `enroll_from`; thay đổi sĩ số/khung giờ/trạng thái lớp → audit |
 | BR13 | Lớp `locked`: chặn ghi danh mới, sinh viên không truy cập nội dung lớp (học liệu) |
-| BR14 | Khi xuất bản assessment, hệ thống lưu snapshot bất biến của câu hỏi và phiên bản nội dung/đáp án/test case/giới hạn chấm, điểm tối đa và thứ tự. Sửa hoặc xóa câu trong ngân hàng không thay đổi assessment đã xuất bản; muốn thay đổi phải tạo assessment nháp mới. Bài nộp và mọi lần chấm lại giữ tham chiếu snapshot đã dùng |
+| BR14 | Khi xuất bản assessment, hệ thống lưu snapshot bất biến của câu hỏi và phiên bản nội dung/đáp án/test case/giới hạn chấm, điểm tối đa và thứ tự. Sửa hoặc xóa câu trong ngân hàng không thay đổi assessment đã xuất bản; muốn đổi nội dung/cấu trúc phải tạo assessment nháp mới. Giảng viên phụ trách có thể điều chỉnh metadata và lịch theo FR-ASG-07, phải nhập lý do và ghi audit. Bài nộp và mọi lần chấm lại giữ tham chiếu snapshot cùng chính sách đã ghim lúc nộp |
 | BR15 | Chỉ assessment đã xuất bản được tính điểm. Assessment không có submission sau khi hạn/cửa sổ đóng có điểm 0. Submission code đang `pending`/`grading` không tính là 0; tổng điểm lớp ở trạng thái `pending` cho tới khi tất cả assessment đã xuất bản đóng và các submission của chúng đã chấm xong |
 
 ## 6. Yêu cầu phi chức năng (đúng quy mô môn học)

@@ -57,6 +57,8 @@ public class Submission {
     public Long getAssignmentId() { return assignment.getId(); }
     public Long getAssignmentAttemptId() { return assignmentAttempt == null ? null : assignmentAttempt.getId(); }
     public Long getStudentId() { return student.getId(); }
+    public String getStudentFullName() { return student.getFullName(); }
+    public String getStudentCode() { return student.getStudentCode(); }
     public Long getQuestionId() { return question.getId(); }
     public int getAttemptNo() { return attemptNo; }
     public BigDecimal getScore() { return score; }

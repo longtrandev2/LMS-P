@@ -69,6 +69,7 @@ Tất cả REST controller nằm trong package `controller/`; tất cả service
 - Service kiểm tra quyền, đọc dữ liệu và thực thi transaction trước khi gọi mapper. Với câu hỏi/bài tập nhiều bảng, `QuestionReadService` và `AssignmentReadService` gom dữ liệu; `QuestionVersionService` lưu/đọc snapshot phiên bản.
 - Khi xuất response cho sinh viên, service truyền chế độ hiển thị phù hợp; mapper chỉ chiếu các trường được phép: không có đáp án đúng, solution mẫu hoặc test case ẩn. Snapshot nội bộ vẫn giữ đầy đủ dữ liệu để chấm bài.
 - Query lấy câu hỏi của một bài tập được dùng chung cho summary và details trong một lần đọc. Bài đã xuất bản luôn đọc phiên bản ghim, bản nháp mới dùng phiên bản câu hỏi hiện tại.
+- Ngân hàng câu hỏi thuộc học phần và có thể có nhiều ngân hàng trong một học phần. Giảng viên sở hữu ngân hàng; `private` chỉ chủ và người được cấp quyền, `shared` cho giảng viên cùng học phần xem. Quyền `edit` được cấp riêng; service kiểm tra cả phân công học phần lẫn quyền ngân hàng trước khi sửa hoặc đưa câu vào đề. Tạo đề cho nhiều lớp tạo các assignment độc lập trong cùng giao dịch.
 - DTO kết quả nghiệp vụ như số dòng import hợp lệ, lỗi CSV, phân trang và kết quả thu hồi phiên được tạo tại service; chúng không phải mapping entity.
 - Kiểm thử Java bảo vệ hợp đồng response, dữ liệu nhạy cảm, snapshot và chấm quiz; Docker build API chạy Maven test trước khi đóng gói.
 
@@ -92,6 +93,7 @@ Feature sở hữu API client và UI nghiệp vụ riêng; `components/` chỉ c
 
 ## 6. Hợp đồng API và realtime
 - REST base `/api/v1`; giữ request/response và error envelope theo `api-spec.md`.
+- Các mốc lịch bài tập lưu và so sánh theo UTC; web chuyển đổi từ/đến giờ địa phương khi dùng `datetime-local`.
 - WebSocket `/ws`: xác thực khi bắt tay, chỉ push sự kiện trạng thái/kết quả grading tới đúng user.
 - WebSocket không thay thế REST cho notification, dashboard, đồng hồ thi hoặc autosave. Client reconnect thì refetch trạng thái qua REST.
 - RabbitMQ mang tác vụ chấm và event worker → API. Worker không gọi browser/client.

@@ -9,7 +9,7 @@
 ## 1. Quy ước chung
 
 - **Auth:** header `Authorization: Bearer <access_token>` (trừ login/refresh). WS: `GET /ws?token=...`.
-- **Format:** JSON, UTF-8. Datetime ISO 8601 UTC.
+- **Format:** JSON, UTF-8. Datetime ISO 8601 UTC. Assignment schedule fields (`available_from`, `due_at`, `late_due_at`) are UTC instants; because their Java DTO type is `LocalDateTime`, the API serializes them without a zone suffix and clients must interpret them as UTC. Convert browser-local `datetime-local` values to UTC before sending, and convert UTC values back to local time for display/editing.
 - **Phân trang:** `?page=1&limit=20` → response `{items, total, page, limit}`. Limit max 100.
 - **Search/sort (mọi route list):** `?q=` (search theo trường nghiệp vụ của từng resource — ghi rõ ở route), `?sort=field` / `?sort=-field` (tiền tố `-` = giảm dần; chỉ các trường cho phép của từng resource). Server whitelist trường sort, sai tên → 400 `VALIDATION_ERROR`.
 - **Envelope lỗi thống nhất:**
@@ -75,12 +75,14 @@
 
 | Method | Path | Role | Mô tả |
 |---|---|---|---|
-| GET/POST | /question-banks | lec/adm | List ngân hàng cá nhân và ngân hàng thuộc học phần được phụ trách. POST không có `course_id` tạo ngân hàng cá nhân nâng cao; có `course_id` trả về ngân hàng dùng chung duy nhất của học phần (tạo nếu chưa có) |
-| PUT | /courses/{courseId}/question-bank | lec/adm | Đảm bảo ngân hàng dùng chung của học phần tồn tại và trả về ngân hàng đó; chỉ admin, người tạo học phần hoặc giảng viên được phân công mới có quyền |
-| GET/POST | /question-banks/{id}/categories | bank manager | List / tạo danh mục trong ngân hàng |
+| GET/POST | /question-banks | lec/adm | GET list ngân hàng được phép xem, lọc `course_id` (vẫn trả ngân hàng cá nhân cũ của chính người dùng); POST lecturer tạo ngân hàng mới trong học phần được phân công bằng `{course_id,name,description?,visibility?:private|shared}`. Một học phần có thể có nhiều ngân hàng. Response có `can_edit`, `can_manage` |
+| PATCH | /question-banks/{id}/visibility | owner/adm | Đổi `private`/`shared`; admin chỉ xử lý đặc biệt |
+| GET/PUT/DELETE | /question-banks/{id}/permissions[/{lecturerId}] | owner/adm | Xem, cấp `{permission:view|edit}`, thu hồi quyền giảng viên cùng học phần |
+| GET | /question-banks/{id}/eligible-lecturers | owner/adm | Danh sách giảng viên đang được phân công vào học phần để cấp quyền |
+| GET/POST | /question-banks/{id}/categories | bank viewer/editor | Xem danh mục; chỉ lecturer có quyền sửa ngân hàng được tạo |
 | PATCH/DELETE | /question-categories/{id} | bank manager | Đổi tên / xóa danh mục rỗng |
-| GET/POST | /questions | bank manager | List theo `bank_id`, `category_id`, `q`, type/topic/difficulty; tạo một câu MCQ/code bằng `{bank_id, category_id?}`. Bỏ `category_id` thì backend tự gán “Chưa phân loại” |
-| GET/PATCH/DELETE | /questions/{id} | bank manager | Chi tiết / sửa (tạo nội dung phiên bản mới) / soft-delete; các bản đã publish giữ snapshot cũ |
+| GET/POST | /questions | bank viewer / editor | List theo `bank_id`, `category_id`, `q`, type/topic/difficulty; chỉ owner/người có quyền `edit` được tạo MCQ/code bằng `{bank_id, category_id?}`. Bỏ `category_id` thì backend tự gán “Chưa phân loại” |
+| GET/PATCH/DELETE | /questions/{id} | bank viewer/editor | Người có quyền xem đọc chi tiết; lecturer có quyền sửa được cập nhật; admin có thể soft-delete để xử lý đặc biệt. Bản đã publish giữ snapshot cũ |
 | PUT | /questions/{id}/test-cases | bank manager | Thay toàn bộ test cases (input, expected, is_public, weight), tạo revision cho lần publish kế tiếp |
 | POST | /questions/{id}/verify | bank manager | Chạy thử solution mẫu → kết quả từng test; hiện trả `501 RUNNER_UNAVAILABLE` đến khi worker có sandbox chạy code |
 | POST | /question-banks/{id}/categories/{categoryId}/questions/import/preview | bank manager | Preview CSV MCQ đã đọc ở trình duyệt: `{rows: [{row, content, difficulty, topic, options, correct_option}]}`; tối đa 500 dòng, báo trùng/lỗi; không ghi DB |
@@ -90,15 +92,17 @@
 
 | Method | Path | Role | Mô tả |
 |---|---|---|---|
-| GET/POST | /classes/{id}/assignments | mem / lec | List bài đã publish cho sinh viên / list của lớp cho giảng viên; POST tạo nháp với metadata và `questions: [{question_id, points, position}]` |
-| GET/PATCH/DELETE | /assignments/{id} | mem / lec | Chi tiết câu hỏi theo snapshot (sinh viên không nhận đáp án đúng/test ẩn; không đọc được đề trước `available_from`) / chỉ sửa hoặc xóa khi còn nháp |
-| POST | /assignments/{id}/publish | lec | Kiểm tra câu hỏi, ghim version hiện hành cùng điểm/thứ tự; sau đó bài bất biến |
+| GET/POST | /classes/{id}/assignments | mem / lec | List bài đã publish cho sinh viên / list của lớp cho giảng viên; POST lecturer tạo nháp với metadata và `questions: [{question_id, points, position}]` |
+| POST | /assignments/bulk | lec | Tạo đề cho một hoặc nhiều `class_ids` thuộc cùng học phần và do giảng viên phụ trách: `{class_ids, assignment, publish}`. Tạo bản riêng từng lớp trong một giao dịch; `publish=true` ghim phiên bản và xuất bản ngay |
+| GET/PATCH/DELETE | /assignments/{id} | mem / lec | Chi tiết câu hỏi theo snapshot (sinh viên không nhận đáp án đúng/test ẩn; không đọc được đề trước `available_from`) / PATCH và DELETE thông thường chỉ áp dụng khi còn nháp |
+| PATCH | /assignments/{id}/published-settings | lec | Giảng viên phụ trách sửa tiêu đề, mô tả, lịch mở/hạn và chính sách nộp muộn, kèm `reason`; không nhận trường câu hỏi/điểm/cách chấm. Ghi audit before/after; submission đã có giữ điểm và chính sách đã ghim |
+| POST | /assignments/{id}/publish | lec | Kiểm tra câu hỏi, ghim version hiện hành cùng điểm/thứ tự; sau đó nội dung assessment bất biến, metadata/lịch có thể điều chỉnh qua endpoint riêng |
 | GET/POST | /assignments/{id}/quiz-attempts | student | Chỉ `category=quiz`: GET lịch sử lượt của tôi; POST nộp `{answers: [{question_id, selected_option_ids}]}` + Idempotency-Key → chấm MCQ đồng bộ, trả `{attempt_id, attempt_no, score, question_scores}`. Câu không có trong `answers` = bỏ trống, 0 điểm; câu lạ/trùng bị từ chối; một POST chỉ tính một lượt |
 | POST | /assignments/{id}/questions/{qid}/submissions | student | Chỉ bài **không phải quiz**: nộp từng câu (mcq: `{selected_option_ids}`; code: `{language, source_code}`) + Idempotency-Key. `max_attempts` và best/last tính riêng cho câu; MCQ chấm đồng bộ; code cần worker sandbox |
 | POST | /assignments/{id}/questions/{qid}/run | student | Run thử test công khai không tính lượt/điểm; hiện trả `501 RUNNER_UNAVAILABLE` đến khi worker có sandbox |
 | GET | /submissions/{id} | owner/lec | Trạng thái + kết quả (BR4: test ẩn chỉ pass/fail) |
 | GET | /me/submissions?assignment_id= | student | Lịch sử nộp từng câu; lịch sử quiz theo `/assignments/{id}/quiz-attempts` |
-| GET | /assignments/{id}/submissions | lec | Danh sách các lần nộp đã chấm, có mã sinh viên/câu hỏi; v1 chưa có bộ lọc |
+| GET | /assignments/{id}/submissions | lec | Danh sách lượt nộp có tên/mã sinh viên, câu hỏi, trạng thái và điểm; giao diện giảng viên hỗ trợ lọc theo sinh viên/trạng thái |
 | POST | /submissions/{id}/regrade | lec | Chấm lại (BR8) → 202 |
 
 ### Phần API chấm code (M6, 2026-10-25)

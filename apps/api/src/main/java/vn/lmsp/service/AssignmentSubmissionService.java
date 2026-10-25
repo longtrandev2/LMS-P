@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.lmsp.common.LmsException;
+import vn.lmsp.common.UtcTime;
 import vn.lmsp.dto.AssignmentDtos.*;
 import vn.lmsp.dto.QuestionDtos.QuestionSnapshot;
 import vn.lmsp.enums.AssignmentCategory;
@@ -40,7 +41,8 @@ public class AssignmentSubmissionService {
         String key = policy.key(rawKey);
         var old = attempts.findByIdempotencyKey(key);
         if (old.isPresent()) { ensureAttemptOwner(old.get(), assignmentId, studentId); return attemptView(old.get()); }
-        SubmissionPolicy.Window window = policy.window(assignment, LocalDateTime.now());
+        LocalDateTime now = UtcTime.now();
+        SubmissionPolicy.Window window = policy.window(assignment, now);
         long count = attempts.countByAssignment_IdAndStudent_Id(assignmentId, studentId);
         if (assignment.getMaxAttempts() != null && count >= assignment.getMaxAttempts()) throw conflict("Bạn đã dùng hết số lượt làm quiz");
         List<AssignmentQuestion> questionLinks = links.findAllByAssignment_IdOrderByPositionAscIdAsc(assignmentId);
@@ -48,7 +50,7 @@ public class AssignmentSubmissionService {
         List<PendingAnswer> pending = questionLinks.stream().map(link -> score(link, answerMap.get(link.getQuestionId()), window.penalty())).toList();
         BigDecimal total = pending.stream().map(PendingAnswer::score).reduce(BigDecimal.ZERO, BigDecimal::add);
         AssignmentAttempt attempt = attempts.saveAndFlush(new AssignmentAttempt(assignment, user(studentId), (int) count + 1,
-                window.late(), window.penalty(), total, key, LocalDateTime.now()));
+                window.late(), window.penalty(), total, key, now));
         for (PendingAnswer row : pending) submissions.save(new Submission(user(studentId), assignment, attempt, row.link(),
                 row.selected(), attempt.getAttemptNo(), row.score(), window.late(), null, attempt.getSubmittedAt()));
         audit.record(studentId, "quiz.submit", "assignment", assignmentId, null,
@@ -69,13 +71,14 @@ public class AssignmentSubmissionService {
         if (link.getQuestion().getType() != QuestionType.mcq) throw bad("Bài lập trình cần language và source_code");
         String key = policy.key(rawKey); var old = submissions.findByIdempotencyKey(key);
         if (old.isPresent()) { ensureSubmissionOwner(old.get(), assignmentId, questionId, studentId); return mapper.toView(old.get()); }
-        SubmissionPolicy.Window window = policy.window(assignment, LocalDateTime.now());
+        LocalDateTime now = UtcTime.now();
+        SubmissionPolicy.Window window = policy.window(assignment, now);
         long count = submissions.countByAssignment_IdAndStudent_IdAndQuestion_Id(assignmentId, studentId, questionId);
         if (assignment.getMaxAttempts() != null && count >= assignment.getMaxAttempts()) throw conflict("Bạn đã dùng hết số lượt nộp câu hỏi");
         List<Long> selected = body == null ? null : body.selected_option_ids();
         PendingAnswer scored = score(link, new QuizAnswerInput(questionId, selected), window.penalty());
         Submission row = submissions.save(new Submission(user(studentId), assignment, null, link, scored.selected(), (int) count + 1,
-                scored.score(), window.late(), key, LocalDateTime.now()));
+                scored.score(), window.late(), key, now));
         return mapper.toView(row);
     }
     @Transactional(readOnly = true)

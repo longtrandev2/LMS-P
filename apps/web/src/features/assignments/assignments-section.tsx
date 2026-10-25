@@ -10,12 +10,15 @@ import { AssignmentSubmissionsDialog } from "@/features/assignments/assignment-s
 import { assignmentWindow } from "@/features/assignments/submission-window";
 import { api } from "@/lib/api";
 import { errorText } from "@/lib/error-messages";
+import { formatUtcDateTime } from "@/lib/date-time";
 import { queryKeys } from "@/lib/query-keys";
 import type { AssignmentDetails, AssignmentSummary, Paginated } from "@/types/api";
 
 const categoryLabel = { quiz: "Quiz", assignment: "Bài tập", midterm: "Giữa kỳ", final: "Cuối kỳ" };
 
-export function AssignmentsSection({ classId, canManage }: { classId: string; canManage: boolean }) {
+export function AssignmentsSection({ classId, canManage, canTake = false }: {
+  classId: string; canManage: boolean; canTake?: boolean;
+}) {
   const client = useQueryClient();
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<AssignmentDetails | null>(null);
@@ -59,14 +62,17 @@ export function AssignmentsSection({ classId, canManage }: { classId: string; ca
       {list.data?.items.map((item) => <Card key={item.id}><CardContent className="flex flex-wrap items-center justify-between gap-4 p-4">
         <div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><h3 className="font-semibold">{item.title}</h3><span className="rounded-full bg-muted px-2 py-0.5 text-xs">{categoryLabel[item.category]}</span><span className={`rounded-full px-2 py-0.5 text-xs ${item.is_published ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"}`}>{item.is_published ? "Đã xuất bản" : "Bản nháp"}</span></div>
           {item.description ? <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{item.description}</p> : null}
-          <p className="mt-2 text-xs text-muted-foreground">{item.question_count} câu · {item.total_points} điểm · Hạn {new Date(item.due_at).toLocaleString("vi-VN")}</p>
+          <p className="mt-2 text-xs text-muted-foreground">{item.question_count} câu · {item.total_points} điểm{item.available_from ? ` · Mở ${formatUtcDateTime(item.available_from)}` : ""} · Hạn {formatUtcDateTime(item.due_at)}</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          {!canManage ? <Button size="sm" disabled={assignmentWindow(item) === "upcoming"} onClick={() => setStudentItem(item)}>{assignmentWindow(item) === "upcoming" ? "Chưa mở" : "Mở bài"}</Button> : item.is_published ? <Button size="sm" variant="outline" onClick={() => setSubmissionItem(item)}>Bài nộp</Button> : <>
+          {canTake ? <Button size="sm" disabled={assignmentWindow(item) === "upcoming"} onClick={() => setStudentItem(item)}>{assignmentWindow(item) === "upcoming" ? "Chưa mở" : "Mở bài"}</Button> : item.is_published ? <>
+            {canManage ? <Button size="sm" variant="outline" disabled={loadingId === item.id} onClick={() => edit(item)}>Điều chỉnh</Button> : null}
+            <Button size="sm" variant="outline" onClick={() => setSubmissionItem(item)}>Bài nộp</Button>
+          </> : canManage ? <>
             <Button size="sm" variant="outline" disabled={loadingId === item.id} onClick={() => edit(item)}>Sửa</Button>
             <Button size="sm" disabled={loadingId === item.id || item.question_count === 0} onClick={() => publish(item)}>Xuất bản</Button>
             <Button size="sm" variant="ghost" disabled={loadingId === item.id} onClick={() => remove(item)}>Xóa</Button>
-          </>}
+          </> : null}
         </div>
       </CardContent></Card>)}
     </div>

@@ -57,7 +57,7 @@ public class QuestionService {
         User actor = user(actorId);
         QuestionCategory category = input.category_id() == null
                 ? banks.defaultCategory(input.bank_id(), actorId, admin)
-                : banks.requireCategory(input.category_id(), actorId, admin);
+                : banks.requireEditableCategory(input.category_id(), actorId, admin);
         if (!category.getBankId().equals(input.bank_id())) throw bad("Danh mục không thuộc ngân hàng đã chọn");
         Question q = questions.save(new Question(actor, category, input.type(), text(input.content(), "Nội dung câu hỏi"),
                 blankNull(input.topic()), input.difficulty() == null ? QuestionDifficulty.medium : input.difficulty()));
@@ -72,7 +72,7 @@ public class QuestionService {
         String content = input.content() == null ? q.getContent() : text(input.content(), "Nội dung câu hỏi");
         String topic = input.topic() == null ? q.getTopic() : blankNull(input.topic());
         QuestionDifficulty difficulty = input.difficulty() == null ? q.getDifficulty() : input.difficulty();
-        QuestionCategory category = input.category_id() == null ? q.getCategory() : banks.requireCategory(input.category_id(), actorId, admin);
+        QuestionCategory category = input.category_id() == null ? q.getCategory() : banks.requireEditableCategory(input.category_id(), actorId, admin);
         var old = mapper.toAuditValue(q); q.update(content, topic, difficulty, category);
         if (q.getType() == QuestionType.mcq && input.options() != null) replaceOptions(q, input.options());
         if (q.getType() == QuestionType.programming && input.programming() != null) saveProgramming(q, input.programming());
@@ -104,6 +104,7 @@ public class QuestionService {
     @Transactional(readOnly = true)
     public void requireVerifyOwner(Long id, Long actorId, boolean admin) {
         Question q = access(id, actorId, admin, false);
+        banks.requireEditableCategory(q.getCategoryId(), actorId, admin);
         if (q.getType() != QuestionType.programming) throw bad("Chỉ chạy thử câu hỏi lập trình");
         throw new LmsException("RUNNER_UNAVAILABLE", "Chức năng chạy thử cần worker sandbox; worker hiện chưa có bộ chạy code.", HttpStatus.NOT_IMPLEMENTED, null);
     }
@@ -135,7 +136,8 @@ public class QuestionService {
     private Question access(Long id, Long actorId, boolean admin, boolean lock) {
         Question q = (lock ? questions.findLockedById(id) : questions.findByIdAndDeletedFalse(id))
                 .orElseThrow(() -> new LmsException("NOT_FOUND", "Không tìm thấy câu hỏi", HttpStatus.NOT_FOUND, null));
-        banks.requireCategory(q.getCategoryId(), actorId, admin);
+        if (lock) banks.requireEditableCategory(q.getCategoryId(), actorId, admin);
+        else banks.requireCategory(q.getCategoryId(), actorId, admin);
         return q;
     }
     private User user(Long id) { return users.findById(id).orElseThrow(() -> new LmsException("NOT_FOUND", "Không tìm thấy người dùng", HttpStatus.NOT_FOUND, null)); }

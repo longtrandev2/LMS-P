@@ -7,6 +7,7 @@ import java.util.Objects;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import vn.lmsp.common.UtcTime;
 import vn.lmsp.common.LmsException;
 import vn.lmsp.dto.AssignmentDtos.QuestionSubmissionInput;
 import vn.lmsp.dto.GradingDtos.Accepted;
@@ -60,7 +61,7 @@ public class ProgrammingSubmissionService {
         try { scores.validateProblem(snapshot); } catch (IllegalArgumentException error) { throw invalid(error.getMessage()); }
         if (snapshot.programming().allowed_languages() == null || !snapshot.programming().allowed_languages().contains(body.language()))
             throw invalid("Ngôn ngữ không được phép trong phiên bản đề này");
-        var now = LocalDateTime.now();
+        var now = UtcTime.now();
         var window = policy.window(assignment, now);
         long count = submissions.countByAssignment_IdAndStudent_IdAndQuestion_Id(assignmentId, studentId, questionId);
         if (assignment.getMaxAttempts() != null && count >= assignment.getMaxAttempts())

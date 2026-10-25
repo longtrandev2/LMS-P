@@ -29,7 +29,7 @@ public class QuestionController {
         return service.list(Long.valueOf(actor), isAdmin(auth), bank_id, category_id, type, topic, difficulty, q,
                 checkedPage(page), checkedLimit(limit), sort);
     }
-    @PostMapping @ResponseStatus(HttpStatus.CREATED)
+    @PostMapping @ResponseStatus(HttpStatus.CREATED) @PreAuthorize("hasRole('LECTURER')")
     public QuestionView create(@Valid @RequestBody QuestionInput body, @AuthenticationPrincipal String actor, Authentication auth) {
         return service.create(body, Long.valueOf(actor), isAdmin(auth));
     }
@@ -37,7 +37,7 @@ public class QuestionController {
     public QuestionView get(@PathVariable Long id, @AuthenticationPrincipal String actor, Authentication auth) {
         return service.get(id, Long.valueOf(actor), isAdmin(auth));
     }
-    @PatchMapping("/{id}")
+    @PatchMapping("/{id}") @PreAuthorize("hasRole('LECTURER')")
     public QuestionView update(@PathVariable Long id, @Valid @RequestBody QuestionPatch body,
             @AuthenticationPrincipal String actor, Authentication auth) {
         return service.update(id, body, Long.valueOf(actor), isAdmin(auth));
@@ -46,12 +46,12 @@ public class QuestionController {
     public void delete(@PathVariable Long id, @AuthenticationPrincipal String actor, Authentication auth) {
         service.delete(id, Long.valueOf(actor), isAdmin(auth));
     }
-    @PutMapping("/{id}/test-cases")
+    @PutMapping("/{id}/test-cases") @PreAuthorize("hasRole('LECTURER')")
     public QuestionView replaceTestCases(@PathVariable Long id, @Valid @RequestBody List<@Valid TestCaseInput> body,
             @AuthenticationPrincipal String actor, Authentication auth) {
         return service.replaceCases(id, body, Long.valueOf(actor), isAdmin(auth));
     }
-    @PostMapping("/{id}/verify")
+    @PostMapping("/{id}/verify") @PreAuthorize("hasRole('LECTURER')")
     public void verify(@PathVariable Long id, @AuthenticationPrincipal String actor, Authentication auth) {
         service.requireVerifyOwner(id, Long.valueOf(actor), isAdmin(auth));
     }

@@ -8,9 +8,10 @@ import vn.lmsp.model.QuestionCategory;
 
 @Component
 public class QuestionBankMapper {
-    public QuestionBankView toView(QuestionBank bank) {
+    public QuestionBankView toView(QuestionBank bank, boolean canEdit, boolean canManage) {
         return new QuestionBankView(bank.getId(), bank.getCourseId(), bank.getCourseName(),
-                bank.getOwnerId(), bank.getName(), bank.getDescription(), bank.getCreatedAt());
+                bank.getOwnerId(), bank.getName(), bank.getDescription(), bank.getVisibility(), canEdit, canManage,
+                bank.getCreatedAt());
     }
 
     public CategoryView toCategoryView(QuestionCategory category) {

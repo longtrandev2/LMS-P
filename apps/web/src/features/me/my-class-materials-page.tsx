@@ -57,7 +57,7 @@ export function MyClassMaterialsPage({ classId }: { classId: string }) {
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList><TabsTrigger value="assignments">Bài tập & Quiz</TabsTrigger><TabsTrigger value="materials">Học liệu</TabsTrigger></TabsList>
-        <TabsContent value="assignments" className="mt-4"><AssignmentsSection classId={classId} canManage={false} /></TabsContent>
+        <TabsContent value="assignments" className="mt-4"><AssignmentsSection classId={classId} canManage={false} canTake /></TabsContent>
         <TabsContent value="materials" className="mt-4"><MaterialsSection classId={classId} canManage={false} /></TabsContent>
       </Tabs>
     </div>

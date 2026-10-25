@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.lmsp.common.LmsException;
+import vn.lmsp.common.UtcTime;
 import vn.lmsp.dto.AssignmentDtos.*;
 import vn.lmsp.enums.AssignmentCategory;
 import vn.lmsp.enums.QuestionType;
@@ -52,10 +53,29 @@ public class AssignmentService {
         audit.record(actorId, "assignment.create", "assignment", item.getId(), null, mapper.toAuditValue(item));
         return reader.details(item, true);
     }
+    @Transactional
+    public List<AssignmentDetails> createForClasses(BulkAssignmentInput body, Long actorId) {
+        List<Long> ids = body.class_ids().stream().distinct().toList();
+        if (ids.size() != body.class_ids().size() || ids.size() > 100)
+            throw bad("Chọn tối đa 100 lớp và không chọn trùng lớp");
+        Long courseId = null;
+        for (Long classId : ids) {
+            LmsClass clazz = access.lecturerClass(classId, actorId, false);
+            if (courseId != null && !courseId.equals(clazz.getCourseId()))
+                throw bad("Các lớp nhận cùng một đề phải thuộc cùng học phần");
+            courseId = clazz.getCourseId();
+        }
+        List<AssignmentDetails> created = new ArrayList<>();
+        for (Long classId : ids) {
+            AssignmentDetails draft = create(classId, body.assignment(), actorId, false);
+            created.add(body.publish() ? publish(draft.assignment().id(), actorId, false) : draft);
+        }
+        return created;
+    }
     @Transactional(readOnly = true)
     public AssignmentDetails get(Long id, Long actorId, boolean student, boolean admin) {
         Assignment item = student ? access.studentAssignment(id, actorId, false) : access.lecturerAssignment(id, actorId, admin, false);
-        if (student && item.getAvailableFrom() != null && LocalDateTime.now().isBefore(item.getAvailableFrom()))
+        if (student && item.getAvailableFrom() != null && UtcTime.now().isBefore(item.getAvailableFrom()))
             throw conflict("Bài chưa mở");
         return reader.details(item, !student);
     }
@@ -69,6 +89,19 @@ public class AssignmentService {
                 penalty(input), input.max_attempts(), policy(input));
         if (input.questions() != null) replaceQuestions(item, input.questions(), actorId, admin);
         audit.record(actorId, "assignment.update", "assignment", id, old, mapper.toAuditValue(item));
+        return reader.details(item, true);
+    }
+    @Transactional
+    public AssignmentDetails updatePublishedSettings(Long id, PublishedSettingsInput input, Long actorId, boolean admin) {
+        Assignment item = access.lecturerAssignment(id, actorId, admin, true);
+        if (!item.isPublished()) throw conflict("Bản nháp cần dùng chức năng sửa bài nháp");
+        validatePublishedSettings(input);
+        var old = mapper.toAuditValue(item);
+        item.updatePublishedSettings(input.title().trim(), input.description(), input.available_from(), input.due_at(),
+                input.allow_late(), input.allow_late() ? input.late_due_at() : null,
+                input.allow_late() ? input.late_penalty_percent() : 0);
+        var updated = mapper.toAuditValue(item); updated.put("reason", input.reason().trim());
+        audit.record(actorId, "assignment.published_settings.update", "assignment", id, old, updated);
         return reader.details(item, true);
     }
     @Transactional
@@ -133,6 +166,13 @@ public class AssignmentService {
         }
         if (input.max_attempts() != null && input.max_attempts() < 1) throw bad("Số lượt tối đa phải lớn hơn 0");
         if (input.late_penalty_percent() != null && (input.late_penalty_percent() < 0 || input.late_penalty_percent() > 100)) throw bad("Mức phạt muộn phải từ 0 đến 100%");
+    }
+    private void validatePublishedSettings(PublishedSettingsInput input) {
+        if (input.due_at() == null) throw bad("Hạn nộp là bắt buộc");
+        if (input.available_from() != null && !input.available_from().isBefore(input.due_at()))
+            throw bad("Thời điểm mở bài phải trước hạn nộp");
+        if (input.allow_late() && (input.late_due_at() == null || !input.late_due_at().isAfter(input.due_at())))
+            throw bad("Hạn nộp muộn phải sau hạn nộp chính thức");
     }
     private int penalty(AssignmentInput input) { return Boolean.TRUE.equals(input.allow_late()) && input.late_penalty_percent() != null ? input.late_penalty_percent() : 0; }
     private ScorePolicy policy(AssignmentInput input) { return input.score_policy() == null ? ScorePolicy.best : input.score_policy(); }

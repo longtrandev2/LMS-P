@@ -36,5 +36,7 @@ public interface ClassRepository extends JpaRepository<LmsClass, Long> {
     @EntityGraph(attributePaths={"course"})
     List<LmsClass> findAllByLecturer_IdOrderByIdDesc(Long lecturerId);
     boolean existsByCourse_IdAndLecturer_Id(Long courseId, Long lecturerId);
+    @Query("select distinct c.lecturer from LmsClass c where c.course.id=:courseId and c.lecturer.id<>:ownerId order by c.lecturer.fullName")
+    List<vn.lmsp.model.User> findOtherLecturers(@Param("courseId") Long courseId, @Param("ownerId") Long ownerId);
     boolean existsByIdAndLecturer_Id(Long id, Long lecturerId);
 }

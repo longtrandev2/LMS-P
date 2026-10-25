@@ -48,8 +48,12 @@ export interface QuestionBank {
   owner_id: number;
   name: string;
   description?: string | null;
+  visibility: "private" | "shared";
+  can_edit: boolean;
+  can_manage: boolean;
   created_at: string;
 }
+export interface QuestionBankPermission { lecturer_id: number; permission: "view" | "edit" }
 export interface QuestionCategory { id: number; bank_id: number; name: string }
 export interface QuestionCsvRow {
   row: number; content: string; difficulty?: string; topic?: string;

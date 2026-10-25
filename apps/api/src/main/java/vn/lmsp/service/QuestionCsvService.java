@@ -72,7 +72,7 @@ public class QuestionCsvService {
     }
 
     private QuestionCategory requireTarget(Long bankId, Long categoryId, Long actor, boolean admin) {
-        QuestionCategory category = banks.requireCategory(categoryId, actor, admin);
+        QuestionCategory category = banks.requireEditableCategory(categoryId, actor, admin);
         if (!category.getBankId().equals(bankId)) throw invalid("Danh mục không thuộc ngân hàng đã chọn");
         return category;
     }

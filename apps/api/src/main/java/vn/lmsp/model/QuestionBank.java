@@ -11,12 +11,17 @@ public class QuestionBank {
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "owner_id", nullable = false) private User owner;
     @Column(nullable = false, length = 100) private String name;
     @Column(columnDefinition = "TEXT") private String description;
+    @Column(nullable = false, length = 16) private String visibility = "private";
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "created_by", nullable = false) private User creator;
     @Column(name = "created_at", nullable = false) private LocalDateTime createdAt;
 
     protected QuestionBank() { }
+    public QuestionBank(Course course, User owner, String name, String description, String visibility, User creator) {
+        this.course = course; this.owner = owner; this.name = name; this.description = description;
+        this.visibility = visibility; this.creator = creator;
+    }
     public QuestionBank(Course course, User owner, String name, String description, User creator) {
-        this.course = course; this.owner = owner; this.name = name; this.description = description; this.creator = creator;
+        this(course, owner, name, description, course == null ? "private" : "shared", creator);
     }
     @PrePersist void timestamp() { createdAt = LocalDateTime.now(); }
     public Long getId() { return id; }
@@ -25,5 +30,7 @@ public class QuestionBank {
     public Long getOwnerId() { return owner.getId(); }
     public String getName() { return name; }
     public String getDescription() { return description; }
+    public String getVisibility() { return visibility; }
+    public void setVisibility(String value) { visibility = value; }
     public LocalDateTime getCreatedAt() { return createdAt; }
 }

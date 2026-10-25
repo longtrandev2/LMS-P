@@ -8,8 +8,9 @@ const difficulty: Record<QuestionDifficulty, { label: string; className: string 
   hard: { label: "Khó", className: "bg-destructive/10 text-destructive" },
 };
 
-export function QuestionListItem({ item, position, busy, onEdit, onDelete }: {
-  item: QuestionSummary; position: number; busy: boolean; onEdit: () => void; onDelete: () => void;
+export function QuestionListItem({ item, position, busy, canEdit, canDelete, onEdit, onDelete }: {
+  item: QuestionSummary; position: number; busy: boolean; canEdit: boolean; canDelete: boolean;
+  onEdit: () => void; onDelete: () => void;
 }) {
   const Icon = item.type === "mcq" ? ListChecks : Code2;
   const level = difficulty[item.difficulty];
@@ -23,8 +24,8 @@ export function QuestionListItem({ item, position, busy, onEdit, onDelete }: {
       </div>
     </div>
     <div className="flex shrink-0 items-center gap-1 self-end sm:self-center">
-      <Button variant="outline" size="sm" disabled={busy} onClick={onEdit}><Pencil aria-hidden />{busy ? "Đang mở…" : "Chỉnh sửa"}</Button>
-      <Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive" aria-label={`Xóa câu hỏi ${item.id}`} onClick={onDelete}><Trash2 aria-hidden /></Button>
+      {canEdit ? <Button variant="outline" size="sm" disabled={busy} onClick={onEdit}><Pencil aria-hidden />{busy ? "Đang mở…" : "Chỉnh sửa"}</Button> : null}
+      {canDelete ? <Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive" aria-label={`Xóa câu hỏi ${item.id}`} onClick={onDelete}><Trash2 aria-hidden /></Button> : null}
     </div>
   </article>;
 }

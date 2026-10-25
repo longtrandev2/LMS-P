@@ -1,89 +1,121 @@
 import { useState } from "react";
+import { BookOpen, Check, FolderPlus, LibraryBig, Plus, Share2, Upload } from "lucide-react";
 import { toast } from "sonner";
-import { FolderPlus, LibraryBig, Plus, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { QuestionBankSharingDialog } from "@/features/questions/question-bank-sharing-dialog";
 import { QuestionCsvImportDialog } from "@/features/questions/question-csv-import-dialog";
 import { api } from "@/lib/api";
 import { errorText } from "@/lib/error-messages";
 import type { Course, QuestionBank, QuestionCategory } from "@/types/api";
 
-export function QuestionBankControls({ courses, banks, categories, courseId, bankId, categoryId, onCourseChange,
-  onPersonalBankChange, onCategoryChange, onEnsureCourseBank, onChanged }: {
-  courses: Course[]; banks: QuestionBank[]; categories: QuestionCategory[]; courseId: number | null;
-  bankId: number | null; categoryId: number | null; onCourseChange: (id: number | null) => void;
-  onPersonalBankChange: (id: number | null) => void; onCategoryChange: (id: number | null) => void;
-  onEnsureCourseBank: () => Promise<QuestionBank>; onChanged: () => void;
-}) {
-  const [categoryOpen, setCategoryOpen] = useState(false); const [bankOpen, setBankOpen] = useState(false);
-  const [importTarget, setImportTarget] = useState<{ bankId: number; categoryId: number } | null>(null);
-  const [name, setName] = useState(""); const [busy, setBusy] = useState(false);
-  const personalBanks = banks.filter((bank) => bank.course_id == null);
+type SharedProps = {
+  courses: Course[]; banks: QuestionBank[]; courseId: number | null; bankId: number | null;
+  canCreate: boolean; coursesLoading: boolean; banksLoading: boolean;
+  onCourseChange: (id: number | null) => void; onBankChange: (id: number) => void;
+  onBankCreated: (bank: QuestionBank) => void; onChanged: () => void;
+};
 
-  async function targetBank() {
-    if (bankId != null) return bankId;
-    if (courseId == null) throw new Error("Chọn học phần hoặc ngân hàng cá nhân trước.");
-    return (await onEnsureCourseBank()).id;
+export function QuestionBankSidebar(props: SharedProps) {
+  const [createOpen, setCreateOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [visibility, setVisibility] = useState<"private" | "shared">("private");
+  const [busy, setBusy] = useState(false);
+  const visibleBanks = props.banks.filter((bank) => props.courseId == null || bank.course_id === props.courseId);
+
+  async function createBank(event: React.FormEvent) {
+    event.preventDefault();
+    if (props.courseId == null) return;
+    setBusy(true);
+    try {
+      const bank = await api.post<QuestionBank>("/question-banks", { course_id: props.courseId, name: name.trim(), visibility });
+      props.onBankCreated(bank); props.onChanged(); setCreateOpen(false); setName(""); setVisibility("private");
+      toast.success("Đã tạo ngân hàng câu hỏi.");
+    } catch (error) { toast.error(errorText(error)); }
+    finally { setBusy(false); }
   }
+
+  return <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
+    <section className="space-y-3 rounded-xl border bg-card p-4" aria-labelledby="question-course-title">
+      <div className="flex items-center gap-3"><span className="grid size-9 place-items-center rounded-lg bg-primary/10 text-primary"><BookOpen className="size-4" aria-hidden /></span><div><h2 id="question-course-title" className="text-sm font-semibold">Học phần</h2><p className="text-xs text-muted-foreground">Lọc ngân hàng theo môn học</p></div></div>
+      <select value={props.courseId ?? ""} onChange={(event) => props.onCourseChange(event.target.value ? Number(event.target.value) : null)} aria-label="Chọn học phần" disabled={props.coursesLoading} className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm focus-visible:outline-2 focus-visible:outline-ring">
+        <option value="">{props.coursesLoading ? "Đang tải học phần…" : "Tất cả học phần"}</option>{props.courses.map((course) => <option key={course.id} value={course.id}>{course.code} · {course.name}</option>)}
+      </select>
+    </section>
+    <section className="overflow-hidden rounded-xl border bg-card" aria-labelledby="question-banks-title">
+      <div className="flex items-center justify-between gap-2 border-b px-4 py-3"><div className="flex items-center gap-2"><LibraryBig className="size-4 text-primary" aria-hidden /><h2 id="question-banks-title" className="text-sm font-semibold">Ngân hàng</h2><span className="rounded-md bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">{visibleBanks.length}</span></div>
+        {props.canCreate ? <Button type="button" size="sm" variant="ghost" disabled={props.courseId == null} onClick={() => setCreateOpen(true)} aria-label="Tạo ngân hàng"><Plus aria-hidden /></Button> : null}
+      </div>
+      {props.banksLoading ? <div className="space-y-2 p-3"><div className="h-14 animate-pulse rounded-lg bg-muted" /><div className="h-14 animate-pulse rounded-lg bg-muted" /></div> : visibleBanks.length ? <div className="max-h-[min(55dvh,620px)] space-y-1 overflow-y-auto p-2">
+        {visibleBanks.map((bank) => <button key={bank.id} type="button" aria-pressed={bank.id === props.bankId} onClick={() => props.onBankChange(bank.id)} className={`w-full rounded-lg border p-3 text-left transition-colors ${bank.id === props.bankId ? "border-primary/50 bg-primary/10" : "border-transparent hover:border-border hover:bg-muted/60"}`}>
+          <span className="flex items-start justify-between gap-2"><span className="min-w-0 truncate text-sm font-medium">{bank.name}</span>{bank.id === props.bankId ? <Check className="size-4 shrink-0 text-primary" aria-hidden /> : null}</span>
+          <span className="mt-1 block truncate text-xs text-muted-foreground">{bank.course_name ?? "Ngân hàng cá nhân"}</span>
+          <span className="mt-2 inline-flex rounded-md bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">{bank.visibility === "shared" ? "Đã chia sẻ" : "Riêng tư"}</span>
+        </button>)}
+      </div> : <div className="px-4 py-8 text-center"><p className="text-sm font-medium">Chưa có ngân hàng</p><p className="mt-1 text-xs text-muted-foreground">{props.courseId == null ? "Chọn học phần để xem hoặc tạo ngân hàng." : "Tạo ngân hàng đầu tiên cho học phần này."}</p>{props.canCreate && props.courseId != null ? <Button className="mt-3" size="sm" onClick={() => setCreateOpen(true)}><Plus aria-hidden /> Tạo ngân hàng</Button> : null}</div>}
+    </section>
+    <Dialog open={createOpen} onOpenChange={setCreateOpen}><DialogContent>
+      <DialogHeader><DialogTitle className="font-heading">Tạo ngân hàng câu hỏi</DialogTitle><DialogDescription>Ngân hàng này sẽ thuộc học phần đang chọn. Bạn có thể chia sẻ với giảng viên khác sau khi tạo.</DialogDescription></DialogHeader>
+      <form onSubmit={createBank} className="space-y-4"><div className="space-y-2"><Label htmlFor="question-bank-name">Tên ngân hàng</Label><Input id="question-bank-name" value={name} maxLength={100} onChange={(event) => setName(event.target.value)} placeholder="Ví dụ: Chương 1 – Cơ sở dữ liệu" required /></div>
+        <div className="space-y-2"><Label htmlFor="question-bank-visibility">Phạm vi ban đầu</Label><select id="question-bank-visibility" value={visibility} onChange={(event) => setVisibility(event.target.value as "private" | "shared")} className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm"><option value="private">Riêng tư</option><option value="shared">Chia sẻ cho giảng viên cùng học phần</option></select></div>
+        <DialogFooter><Button type="button" variant="ghost" onClick={() => setCreateOpen(false)}>Hủy</Button><Button disabled={busy || !name.trim()}>{busy ? "Đang tạo…" : "Tạo ngân hàng"}</Button></DialogFooter>
+      </form>
+    </DialogContent></Dialog>
+  </aside>;
+}
+
+type ToolbarProps = {
+  bank: QuestionBank | undefined; categories: QuestionCategory[]; categoryId: number | null;
+  categoriesLoading: boolean; canAuthor: boolean; onCategoryChange: (id: number | null) => void;
+  onCategoryCreated: (category: QuestionCategory) => void; onChanged: () => void;
+};
+
+export function QuestionBankToolbar(props: ToolbarProps) {
+  const [categoryOpen, setCategoryOpen] = useState(false);
+  const [sharingOpen, setSharingOpen] = useState(false);
+  const [importTarget, setImportTarget] = useState<{ bankId: number; categoryId: number } | null>(null);
+  const [name, setName] = useState("");
+  const [busy, setBusy] = useState(false);
+  const bank = props.bank;
+  const canEdit = props.canAuthor && !!bank?.can_edit;
 
   async function createCategory(event: React.FormEvent) {
-    event.preventDefault(); setBusy(true);
+    event.preventDefault(); if (!bank) return; setBusy(true);
     try {
-      const target = await targetBank();
-      const created = await api.post<QuestionCategory>(`/question-banks/${target}/categories`, { name: name.trim() });
-      onCategoryChange(created.id); onChanged(); setCategoryOpen(false); setName(""); toast.success("Đã tạo danh mục.");
+      const category = await api.post<QuestionCategory>(`/question-banks/${bank.id}/categories`, { name: name.trim() });
+      props.onCategoryCreated(category); props.onChanged(); setCategoryOpen(false); setName(""); toast.success("Đã tạo danh mục.");
     } catch (error) { toast.error(errorText(error)); }
     finally { setBusy(false); }
   }
 
-  async function createPersonalBank(event: React.FormEvent) {
-    event.preventDefault(); setBusy(true);
-    try {
-      const created = await api.post<QuestionBank>("/question-banks", { name: name.trim() });
-      onPersonalBankChange(created.id); onChanged(); setBankOpen(false); setName("");
-      toast.success("Đã tạo ngân hàng cá nhân.");
-    } catch (error) { toast.error(errorText(error)); }
-    finally { setBusy(false); }
+  function openImport() {
+    if (!bank) return;
+    const targetCategory = props.categoryId ?? props.categories.find((item) => item.name === "Chưa phân loại")?.id;
+    if (targetCategory == null) { toast.error("Ngân hàng chưa có danh mục nhận câu hỏi."); return; }
+    setImportTarget({ bankId: bank.id, categoryId: targetCategory });
   }
 
-  async function openImport() {
-    try {
-      const target = await targetBank();
-      const categoriesForBank = target === bankId ? categories
-        : await api.get<QuestionCategory[]>(`/question-banks/${target}/categories`);
-      const targetCategory = categoryId ?? categoriesForBank.find((item) => item.name === "Chưa phân loại")?.id;
-      if (targetCategory == null) throw new Error("Ngân hàng chưa có danh mục nhận câu hỏi.");
-      setImportTarget({ bankId: target, categoryId: targetCategory });
-    } catch (error) { toast.error(errorText(error)); }
-  }
-
-  return <>
-    <section className="space-y-4 rounded-xl border bg-card p-5" aria-labelledby="question-source-title">
-      <div className="flex items-center gap-3"><span className="grid size-10 place-items-center rounded-xl bg-primary/10 text-primary"><LibraryBig className="size-5" aria-hidden /></span><div><h2 id="question-source-title" className="text-base font-semibold">Học phần</h2><p className="mt-0.5 text-xs text-muted-foreground">Câu hỏi được dùng chung trong ngân hàng của học phần.</p></div></div>
-      <div className="grid items-end gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
-        <div className="min-w-0 space-y-2"><Label htmlFor="question-course">Chọn học phần</Label><select id="question-course" value={courseId ?? ""} onChange={(event) => onCourseChange(event.target.value ? Number(event.target.value) : null)} className="h-10 w-full min-w-0 rounded-lg border border-input bg-background/50 px-3 text-sm focus-visible:outline-2 focus-visible:outline-ring"><option value="">Chọn học phần</option>{courses.map((course) => <option key={course.id} value={course.id}>{course.code} · {course.name}</option>)}</select></div>
-        <div className="min-w-0 space-y-2"><Label htmlFor="question-category">Danh mục (tùy chọn)</Label><select id="question-category" value={categoryId ?? ""} onChange={(event) => onCategoryChange(event.target.value ? Number(event.target.value) : null)} disabled={!bankId} className="h-10 w-full min-w-0 rounded-lg border border-input bg-background/50 px-3 text-sm focus-visible:outline-2 focus-visible:outline-ring"><option value="">Tất cả danh mục</option>{categories.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></div>
-        <div className="flex flex-wrap gap-2"><Button type="button" variant="outline" disabled={!courseId && !bankId} onClick={() => setCategoryOpen(true)}><FolderPlus aria-hidden />Thêm danh mục</Button><Button type="button" variant="secondary" disabled={!courseId && !bankId} onClick={() => void openImport()}><Upload aria-hidden />Nhập CSV</Button></div>
+  return <section className="overflow-hidden rounded-xl border bg-card" aria-label="Công cụ ngân hàng câu hỏi">
+    <div className="flex flex-wrap items-center justify-between gap-3 p-4 sm:p-5">
+      <div className="flex min-w-0 items-center gap-3"><span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary"><LibraryBig className="size-5" aria-hidden /></span><div className="min-w-0"><h2 className="truncate text-base font-semibold">{bank?.name ?? "Chọn ngân hàng câu hỏi"}</h2><p className="truncate text-xs text-muted-foreground">{bank?.course_name ?? (bank ? "Ngân hàng cá nhân" : "Chọn một ngân hàng ở danh sách bên trái để xem câu hỏi.")}</p></div></div>
+      <div className="flex flex-wrap items-center gap-2">
+        {canEdit ? <><Button type="button" variant="outline" size="sm" onClick={() => setCategoryOpen(true)} disabled={!bank}><FolderPlus aria-hidden /> Danh mục</Button><Button type="button" variant="secondary" size="sm" onClick={openImport} disabled={!bank || props.categoriesLoading}><Upload aria-hidden /> Nhập CSV</Button></> : null}
+        {bank?.can_manage ? <Button type="button" variant="outline" size="sm" onClick={() => setSharingOpen(true)}><Share2 aria-hidden /> Chia sẻ</Button> : null}
       </div>
-      {courseId != null && bankId == null ? <p className="text-xs text-muted-foreground">Ngân hàng học phần sẽ được tạo tự động khi bạn thêm câu hỏi hoặc tạo danh mục.</p> : null}
-      <details className="border-t pt-3 text-sm">
-        <summary className="w-fit cursor-pointer font-medium text-muted-foreground">Ngân hàng cá nhân (nâng cao)</summary>
-        <div className="mt-3 flex flex-wrap items-end gap-3">
-          <div className="min-w-0 flex-1 space-y-2"><Label htmlFor="personal-question-bank">Ngân hàng cá nhân</Label><select id="personal-question-bank" value={courseId == null ? bankId ?? "" : ""} onChange={(event) => onPersonalBankChange(event.target.value ? Number(event.target.value) : null)} className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm"><option value="">Chọn ngân hàng cá nhân</option>{personalBanks.map((bank) => <option key={bank.id} value={bank.id}>{bank.name}</option>)}</select></div>
-          <Button type="button" variant="outline" onClick={() => setBankOpen(true)}><Plus aria-hidden />Tạo ngân hàng cá nhân</Button>
-        </div>
-      </details>
-    </section>
-    <Dialog open={categoryOpen} onOpenChange={setCategoryOpen}><DialogContent>
-      <DialogHeader><DialogTitle className="font-heading">Thêm danh mục</DialogTitle><DialogDescription>Ví dụ: Chương 1, Mạng OSI hoặc Cấu trúc dữ liệu. Câu hỏi không cần danh mục vẫn được lưu trong “Chưa phân loại”.</DialogDescription></DialogHeader>
-      <form onSubmit={createCategory} className="space-y-4"><div className="space-y-2"><Label htmlFor="category-name">Tên danh mục</Label><Input id="category-name" value={name} maxLength={100} onChange={(event) => setName(event.target.value)} required /></div><DialogFooter><Button type="button" variant="ghost" onClick={() => setCategoryOpen(false)}>Hủy</Button><Button disabled={busy}>{busy ? "Đang tạo…" : "Tạo danh mục"}</Button></DialogFooter></form>
-    </DialogContent></Dialog>
-    <Dialog open={bankOpen} onOpenChange={setBankOpen}><DialogContent>
-      <DialogHeader><DialogTitle className="font-heading">Tạo ngân hàng cá nhân</DialogTitle><DialogDescription>Dùng kho riêng cho câu hỏi chưa gắn với học phần. Câu hỏi dùng chung của lớp nên được thêm vào ngân hàng học phần.</DialogDescription></DialogHeader>
-      <form onSubmit={createPersonalBank} className="space-y-4"><div className="space-y-2"><Label htmlFor="personal-bank-name">Tên ngân hàng</Label><Input id="personal-bank-name" value={name} maxLength={100} onChange={(event) => setName(event.target.value)} required /></div><DialogFooter><Button type="button" variant="ghost" onClick={() => setBankOpen(false)}>Hủy</Button><Button disabled={busy}>{busy ? "Đang tạo…" : "Tạo ngân hàng"}</Button></DialogFooter></form>
-    </DialogContent></Dialog>
-    {importTarget ? <QuestionCsvImportDialog bankId={importTarget.bankId} categoryId={importTarget.categoryId} onOpenChange={(open) => !open && setImportTarget(null)} onImported={onChanged} /> : null}
-  </>;
+    </div>
+    <div className="grid gap-3 border-t bg-muted/20 p-4 sm:grid-cols-[minmax(0,260px)_1fr] sm:items-center">
+      <Label htmlFor="question-category-filter" className="text-xs text-muted-foreground">Lọc theo danh mục</Label>
+      <select id="question-category-filter" value={props.categoryId ?? ""} onChange={(event) => props.onCategoryChange(event.target.value ? Number(event.target.value) : null)} disabled={!bank || props.categoriesLoading} className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm focus-visible:outline-2 focus-visible:outline-ring">
+        <option value="">{props.categoriesLoading ? "Đang tải danh mục…" : "Tất cả danh mục"}</option>{props.categories.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+      </select>
+    </div>
+    {categoryOpen && bank ? <Dialog open onOpenChange={setCategoryOpen}><DialogContent>
+      <DialogHeader><DialogTitle className="font-heading">Thêm danh mục</DialogTitle><DialogDescription>Sắp xếp câu hỏi theo chương, chủ đề hoặc nội dung học tập.</DialogDescription></DialogHeader>
+      <form onSubmit={createCategory} className="space-y-4"><div className="space-y-2"><Label htmlFor="question-category-name">Tên danh mục</Label><Input id="question-category-name" value={name} maxLength={100} onChange={(event) => setName(event.target.value)} required /></div><DialogFooter><Button type="button" variant="ghost" onClick={() => setCategoryOpen(false)}>Hủy</Button><Button disabled={busy || !name.trim()}>{busy ? "Đang tạo…" : "Tạo danh mục"}</Button></DialogFooter></form>
+    </DialogContent></Dialog> : null}
+    {sharingOpen && bank ? <QuestionBankSharingDialog bank={bank} onClose={() => setSharingOpen(false)} onChanged={props.onChanged} /> : null}
+    {importTarget ? <QuestionCsvImportDialog bankId={importTarget.bankId} categoryId={importTarget.categoryId} onOpenChange={(open) => !open && setImportTarget(null)} onImported={props.onChanged} /> : null}
+  </section>;
 }

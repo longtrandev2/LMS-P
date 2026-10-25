@@ -46,8 +46,13 @@ public class AssignmentMapper {
     public Map<String, Object> toAuditValue(Assignment assignment) {
         Map<String, Object> value = new LinkedHashMap<>();
         value.put("title", assignment.getTitle());
+        value.put("description", assignment.getDescription());
         value.put("category", assignment.getCategory());
+        value.put("available_from", assignment.getAvailableFrom());
         value.put("due_at", assignment.getDueAt());
+        value.put("allow_late", assignment.isAllowLate());
+        value.put("late_due_at", assignment.getLateDueAt());
+        value.put("late_penalty_percent", assignment.getLatePenaltyPercent());
         value.put("is_published", assignment.isPublished());
         return value;
     }

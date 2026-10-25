@@ -7,12 +7,19 @@ import java.time.LocalDateTime;
 import java.util.List;
 import vn.lmsp.enums.QuestionDifficulty;
 import vn.lmsp.enums.QuestionType;
+import vn.lmsp.enums.BankPermission;
 
 public final class QuestionDtos {
     private QuestionDtos() { }
-    public record QuestionBankInput(@NotBlank @Size(max=100) String name, String description, Long course_id) { }
+    public record QuestionBankInput(@NotBlank @Size(max=100) String name, String description,
+                                    @NotNull Long course_id, @Pattern(regexp="private|shared") String visibility) { }
     public record QuestionBankView(Long id, Long course_id, String course_name, Long owner_id,
-                                   String name, String description, LocalDateTime created_at) { }
+                                   String name, String description, String visibility, boolean can_edit, boolean can_manage,
+                                   LocalDateTime created_at) { }
+    public record BankPermissionInput(@NotNull BankPermission permission) { }
+    public record QuestionBankVisibilityInput(@Pattern(regexp="private|shared") String visibility) { }
+    public record BankPermissionView(Long lecturer_id, BankPermission permission) { }
+    public record BankLecturerView(Long id, String full_name, String email) { }
     public record CategoryInput(@NotBlank @Size(max=100) String name) { }
     public record CategoryView(Long id, Long bank_id, String name) { }
     public record QuestionInput(@NotNull Long bank_id, Long category_id, @NotNull QuestionType type, @NotBlank String content, @Size(max=100) String topic,

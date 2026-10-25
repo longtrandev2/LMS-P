@@ -15,6 +15,7 @@ import vn.lmsp.model.Submission;
 public class SubmissionMapper {
     public SubmissionView toView(Submission submission) {
         return new SubmissionView(submission.getId(), submission.getAssignmentId(), submission.getStudentId(),
+                submission.getStudentFullName(), submission.getStudentCode(),
                 submission.getQuestionId(), submission.getAttemptNo(), submission.getSelectedOptionIds(),
                 submission.getScore(), submission.isLate(), submission.getSubmittedAt(),
                 submission.getStatus(), submission.getType(), submission.getLanguage());

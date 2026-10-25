@@ -29,26 +29,37 @@ public class AssignmentController {
         return assignments.list(classId, Long.valueOf(actor), isStudent(auth), isAdmin(auth), checkedPage(page), checkedLimit(limit));
     }
     @PostMapping("/classes/{classId}/assignments") @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAnyRole('ADMIN','LECTURER')")
+    @PreAuthorize("hasRole('LECTURER')")
     public AssignmentDetails create(@PathVariable Long classId, @Valid @RequestBody AssignmentInput body,
             @AuthenticationPrincipal String actor, Authentication auth) {
         return assignments.create(classId, body, Long.valueOf(actor), isAdmin(auth));
+    }
+    @PostMapping("/assignments/bulk") @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasRole('LECTURER')")
+    public List<AssignmentDetails> createForClasses(@Valid @RequestBody BulkAssignmentInput body,
+            @AuthenticationPrincipal String actor) {
+        return assignments.createForClasses(body, Long.valueOf(actor));
     }
     @GetMapping("/assignments/{id}") @PreAuthorize("hasAnyRole('ADMIN','LECTURER','STUDENT')")
     public AssignmentDetails get(@PathVariable Long id, @AuthenticationPrincipal String actor, Authentication auth) {
         return assignments.get(id, Long.valueOf(actor), isStudent(auth), isAdmin(auth));
     }
-    @PatchMapping("/assignments/{id}") @PreAuthorize("hasAnyRole('ADMIN','LECTURER')")
+    @PatchMapping("/assignments/{id}") @PreAuthorize("hasRole('LECTURER')")
     public AssignmentDetails update(@PathVariable Long id, @Valid @RequestBody AssignmentInput body,
             @AuthenticationPrincipal String actor, Authentication auth) {
         return assignments.update(id, body, Long.valueOf(actor), isAdmin(auth));
     }
+    @PatchMapping("/assignments/{id}/published-settings") @PreAuthorize("hasAnyRole('ADMIN','LECTURER')")
+    public AssignmentDetails updatePublishedSettings(@PathVariable Long id, @Valid @RequestBody PublishedSettingsInput body,
+            @AuthenticationPrincipal String actor, Authentication auth) {
+        return assignments.updatePublishedSettings(id, body, Long.valueOf(actor), isAdmin(auth));
+    }
     @DeleteMapping("/assignments/{id}") @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasAnyRole('ADMIN','LECTURER')")
+    @PreAuthorize("hasRole('LECTURER')")
     public void delete(@PathVariable Long id, @AuthenticationPrincipal String actor, Authentication auth) {
         assignments.delete(id, Long.valueOf(actor), isAdmin(auth));
     }
-    @PostMapping("/assignments/{id}/publish") @PreAuthorize("hasAnyRole('ADMIN','LECTURER')")
+    @PostMapping("/assignments/{id}/publish") @PreAuthorize("hasRole('LECTURER')")
     public AssignmentDetails publish(@PathVariable Long id, @AuthenticationPrincipal String actor, Authentication auth) {
         return assignments.publish(id, Long.valueOf(actor), isAdmin(auth));
     }

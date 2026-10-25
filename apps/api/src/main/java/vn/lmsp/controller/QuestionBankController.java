@@ -24,21 +24,44 @@ public class QuestionBankController {
                                         @RequestParam(required=false) Long course_id) {
         return service.list(Long.valueOf(actor), isAdmin(auth), course_id);
     }
-    @PostMapping("/question-banks") @ResponseStatus(HttpStatus.CREATED)
+    @PostMapping("/question-banks") @ResponseStatus(HttpStatus.CREATED) @PreAuthorize("hasRole('LECTURER')")
     public QuestionBankView createBank(@Valid @RequestBody QuestionBankInput body,
                                        @AuthenticationPrincipal String actor, Authentication auth) {
         return service.create(body, Long.valueOf(actor), isAdmin(auth));
     }
-    @PutMapping("/courses/{courseId}/question-bank")
-    public QuestionBankView ensureCourseBank(@PathVariable Long courseId,
+    @PatchMapping("/question-banks/{id}/visibility")
+    public QuestionBankView visibility(@PathVariable Long id, @RequestBody QuestionBankVisibilityInput body,
             @AuthenticationPrincipal String actor, Authentication auth) {
-        return service.ensureCourseBank(courseId, Long.valueOf(actor), isAdmin(auth));
+        return service.setVisibility(id, body.visibility(), Long.valueOf(actor), isAdmin(auth));
+    }
+
+    @GetMapping("/question-banks/{id}/permissions")
+    public List<BankPermissionView> permissions(@PathVariable Long id,
+            @AuthenticationPrincipal String actor, Authentication auth) {
+        return service.permissions(id, Long.valueOf(actor), isAdmin(auth));
+    }
+    @GetMapping("/question-banks/{id}/eligible-lecturers")
+    public List<BankLecturerView> eligibleLecturers(@PathVariable Long id,
+            @AuthenticationPrincipal String actor, Authentication auth) {
+        return service.eligibleLecturers(id, Long.valueOf(actor), isAdmin(auth));
+    }
+
+    @PutMapping("/question-banks/{id}/permissions/{lecturerId}")
+    public BankPermissionView grant(@PathVariable Long id, @PathVariable Long lecturerId,
+            @Valid @RequestBody BankPermissionInput body, @AuthenticationPrincipal String actor, Authentication auth) {
+        return service.grant(id, lecturerId, body.permission(), Long.valueOf(actor), isAdmin(auth));
+    }
+
+    @DeleteMapping("/question-banks/{id}/permissions/{lecturerId}") @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void revoke(@PathVariable Long id, @PathVariable Long lecturerId,
+            @AuthenticationPrincipal String actor, Authentication auth) {
+        service.revoke(id, lecturerId, Long.valueOf(actor), isAdmin(auth));
     }
     @GetMapping("/question-banks/{id}/categories")
     public List<CategoryView> categories(@PathVariable Long id, @AuthenticationPrincipal String actor, Authentication auth) {
         return service.categories(id, Long.valueOf(actor), isAdmin(auth));
     }
-    @PostMapping("/question-banks/{id}/categories") @ResponseStatus(HttpStatus.CREATED)
+    @PostMapping("/question-banks/{id}/categories") @ResponseStatus(HttpStatus.CREATED) @PreAuthorize("hasRole('LECTURER')")
     public CategoryView createCategory(@PathVariable Long id, @Valid @RequestBody CategoryInput body,
                                        @AuthenticationPrincipal String actor, Authentication auth) {
         return service.createCategory(id, body, Long.valueOf(actor), isAdmin(auth));
@@ -52,12 +75,12 @@ public class QuestionBankController {
     public void deleteCategory(@PathVariable Long id, @AuthenticationPrincipal String actor, Authentication auth) {
         service.deleteCategory(id, Long.valueOf(actor), isAdmin(auth));
     }
-    @PostMapping("/question-banks/{bankId}/categories/{categoryId}/questions/import/preview")
+    @PostMapping("/question-banks/{bankId}/categories/{categoryId}/questions/import/preview") @PreAuthorize("hasRole('LECTURER')")
     public QuestionCsvPreview previewCsv(@PathVariable Long bankId, @PathVariable Long categoryId,
             @Valid @RequestBody QuestionCsvRequest body, @AuthenticationPrincipal String actor, Authentication auth) {
         return csv.preview(bankId, categoryId, body, Long.valueOf(actor), isAdmin(auth));
     }
-    @PostMapping("/question-banks/{bankId}/categories/{categoryId}/questions/import")
+    @PostMapping("/question-banks/{bankId}/categories/{categoryId}/questions/import") @PreAuthorize("hasRole('LECTURER')")
     public QuestionImportResult importCsv(@PathVariable Long bankId, @PathVariable Long categoryId,
             @Valid @RequestBody QuestionCsvRequest body, @AuthenticationPrincipal String actor, Authentication auth) {
         return csv.importRows(bankId, categoryId, body, Long.valueOf(actor), isAdmin(auth));

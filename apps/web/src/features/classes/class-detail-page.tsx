@@ -42,7 +42,7 @@ export function ClassDetailPage({ classId }: { classId: string }) {
   const [studentSort, setStudentSort] = useState("full_name");
   useEffect(() => setStudentPage(1), [studentSearch]);
   const canManageMaterials = hasRole(user, "lecturer");
-  const canManageAssignments = hasRole(user, "lecturer") || hasRole(user, "admin");
+  const canManageAssignments = hasRole(user, "lecturer");
 
   const classQuery = useQuery({
     queryKey: queryKeys.classes.detail(classId),
