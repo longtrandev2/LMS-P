@@ -1,0 +1,52 @@
+name: lms-grading-check
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: ${GRADING_CHECK_PASSWORD:?Set a temporary test password}
+      MYSQL_DATABASE: lms_check
+      MYSQL_USER: lms_check
+      MYSQL_PASSWORD: ${GRADING_CHECK_PASSWORD}
+    volumes: [check-mysql:/var/lib/mysql]
+    healthcheck:
+      test: [CMD, mysqladmin, ping, --protocol=tcp, -h, 127.0.0.1, -u, root, '-p${GRADING_CHECK_PASSWORD}']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    environment:
+      RABBITMQ_DEFAULT_USER: lms_check
+      RABBITMQ_DEFAULT_PASS: ${GRADING_CHECK_PASSWORD}
+    ports: ['127.0.0.1:15673:15672']
+    healthcheck:
+      test: [CMD, rabbitmq-diagnostics, -q, ping]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  api:
+    image: lms-api:latest
+    pull_policy: never
+    environment:
+      SERVER_PORT: 8000
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/lms_check?serverTimezone=UTC
+      MYSQL_USER: lms_check
+      MYSQL_PASSWORD: ${GRADING_CHECK_PASSWORD}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_USER: lms_check
+      RABBITMQ_PASSWORD: ${GRADING_CHECK_PASSWORD}
+      JWT_SECRET: ${GRADING_CHECK_SECRET:?Set a temporary test secret}
+      STORAGE_DIR: /tmp/lms-check-storage
+    ports: ['127.0.0.1:18000:8000']
+    depends_on:
+      mysql: {condition: service_healthy}
+      rabbitmq: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, curl, -fsS, http://localhost:8000/health]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+volumes:
+  check-mysql:
