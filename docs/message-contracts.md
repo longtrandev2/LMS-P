@@ -8,8 +8,10 @@ Phiên bản 4.0 — 2026-10-27. Kết quả từng test, checker, verdict OLE, 
 |---|---|---|---|
 | Job chấm bài nộp | `lms` / `grading.submit` | `q.grading` (durable, priority 10) | `lms.dlx` → `q.grading.dead` |
 | Kết quả chấm | `lms` / `grading.events` | `q.grading.events` (durable) | `lms.events.dlx` → `q.grading.events.dead` |
-| Job chạy thử | `lms` / `run.submit` | `q.runs` (durable) | `lms.dlx` → `q.runs.dead` |
-| Kết quả chạy thử | `lms` / `run.events` | `q.run.events` (durable) | `lms.events.dlx` → `q.run.events.dead` |
+| Job chạy thử | `lms` / `run.submit` | `q.runs` (durable) | `lms.runs.dlx` (fanout) → `q.runs.dead` |
+| Kết quả chạy thử | `lms` / `run.events` | `q.run.events` (durable) | `lms.run-events.dlx` (fanout) → `q.run.events.dead` |
+
+DLX là fanout nên mỗi queue chính có DLX riêng. API khai báo toàn bộ topology; worker khai báo lại `q.runs` cùng tham số vì là consumer.
 
 API là tiến trình duy nhất ghi `submissions`, `grading_results`, `test_results`, `run_jobs`. Worker chỉ có quyền SELECT; mọi kết quả về qua event. Code và test không đi trong job message: worker đọc từ DB.
 
