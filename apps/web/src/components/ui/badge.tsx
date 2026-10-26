@@ -3,18 +3,25 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "cn"
 import { Slot } from "radix-ui"
 
+/**
+ * Badge chữ — DESIGN.md §6: viền 1px + chữ màu trạng thái trên nền 10% cùng màu.
+ * Trạng thái: `success` | `warning` | `destructive`; trung tính: `default` | `outline` | `secondary`;
+ * `solid` (nền đen/trắng) dùng cho vai trò Quản trị.
+ */
 const badgeVariants = cva(
-  "group/badge inline-flex w-fit shrink-0 items-center justify-center gap-1.5 overflow-hidden rounded-md border bg-transparent px-2 py-0.5 text-xs font-medium whitespace-nowrap transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 has-data-[icon=inline-end]:pr-1 has-data-[icon=inline-start]:pl-1 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&>svg]:pointer-events-none [&>svg]:size-3!",
+  "group/badge inline-flex h-5 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-md border px-1.5 text-xs font-medium whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:ring-ring [&>svg]:pointer-events-none [&>svg]:size-3!",
   {
     variants: {
       variant: {
-        default: "text-foreground [a]:hover:text-foreground/70",
-        secondary: "text-muted-foreground [a]:hover:text-foreground",
-        destructive:
-          "text-destructive focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 [a]:hover:text-destructive/70",
-        outline: "text-foreground [a]:hover:text-foreground/70",
-        ghost: "text-muted-foreground hover:text-foreground",
-        link: "text-foreground underline-offset-4 hover:underline",
+        default: "border-border bg-card text-foreground [a]:hover:bg-accent",
+        secondary: "border-transparent bg-muted text-muted-foreground [a]:hover:text-foreground",
+        outline: "border-border text-foreground [a]:hover:bg-accent",
+        solid: "border-transparent bg-foreground text-background",
+        success: "border-success/30 bg-success/10 text-success",
+        warning: "border-warning/30 bg-warning/10 text-warning",
+        destructive: "border-destructive/30 bg-destructive/10 text-destructive",
+        ghost: "border-transparent text-muted-foreground hover:text-foreground",
+        link: "border-transparent text-foreground underline-offset-4 hover:underline",
       },
     },
     defaultVariants: {

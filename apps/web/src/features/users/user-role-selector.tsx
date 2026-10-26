@@ -17,8 +17,8 @@ export function UserRoleSelector({ roles, onChange, error }: {
         {ALL_ROLES.map((role) => {
           const active = roles.includes(role);
           return <button key={role} type="button" aria-pressed={active} onClick={() => toggle(role)}
-            className={cn("cursor-pointer rounded-full border px-3 py-1.5 text-sm transition-colors duration-200",
-              active ? "border-primary bg-primary text-primary-foreground" : "border-border text-muted-foreground hover:border-primary/40 hover:text-foreground")}>
+            className={cn("h-8 cursor-pointer rounded-md border px-3 text-sm font-medium transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+              active ? "border-primary bg-primary text-primary-foreground" : "border-input bg-card text-muted-foreground hover:bg-accent hover:text-foreground")}>
             {ROLE_LABELS[role]}
           </button>;
         })}

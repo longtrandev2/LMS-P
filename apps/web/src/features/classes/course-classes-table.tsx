@@ -1,14 +1,11 @@
-import { Link } from "react-router-dom";
-import { Pencil, Trash2, Users } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { MoreHorizontal, Pencil, SquareArrowOutUpRight, Trash2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { ClassSummary } from "@/types/api";
 
 interface CourseClassesTableProps {
@@ -19,58 +16,46 @@ interface CourseClassesTableProps {
 }
 
 export function CourseClassesTable({ classes, isAdmin, onEdit, onDelete }: CourseClassesTableProps) {
+  const navigate = useNavigate();
   return (
     <Table>
       <TableHeader>
-        <TableRow className="bg-muted/50">
-          <TableHead>Mã lớp</TableHead>
-          <TableHead>Tên lớp</TableHead>
+        <TableRow>
+          <TableHead>Lớp</TableHead>
           <TableHead>Học kỳ</TableHead>
-          <TableHead>Sĩ số</TableHead>
+          <TableHead className="hidden sm:table-cell">Giảng viên</TableHead>
+          <TableHead className="text-right">Sĩ số</TableHead>
           <TableHead>Trạng thái</TableHead>
-          <TableHead className="w-28 text-right">Thao tác</TableHead>
+          <TableHead className="w-px"><span className="sr-only">Thao tác</span></TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {classes.map((clazz) => (
           <TableRow key={clazz.id}>
-            <TableCell className="font-mono text-sm">{clazz.code}</TableCell>
-            <TableCell className="font-medium">
-              <Link
-                to={`/classes/${clazz.id}`}
-                className="underline-offset-4 transition-colors hover:text-primary hover:underline"
-              >
-                {clazz.name}
-              </Link>
+            <TableCell>
+              <Link to={`/classes/${clazz.id}`} className="font-medium underline-offset-4 hover:underline">{clazz.name}</Link>
+              <span className="block font-mono text-xs text-muted-foreground">{clazz.code}</span>
             </TableCell>
-            <TableCell className="font-mono text-sm">{clazz.semester}</TableCell>
-            <TableCell className="text-sm tabular-nums">{clazz.enrolled_count ?? 0}{clazz.max_students ? ` / ${clazz.max_students}` : ""}</TableCell>
-            <TableCell className="text-sm">{clazz.status === "locked" ? "Đã khóa" : "Đang hoạt động"}</TableCell>
+            <TableCell className="font-mono text-xs">{clazz.semester}</TableCell>
+            <TableCell className="hidden sm:table-cell">{clazz.lecturer_name || "—"}</TableCell>
+            <TableCell className="text-right tabular-nums">{clazz.enrolled_count ?? 0}{clazz.max_students ? ` / ${clazz.max_students}` : ""}</TableCell>
+            <TableCell>
+              {clazz.status === "locked" ? <Badge variant="destructive">Đã khóa</Badge> : <Badge variant="success">Hoạt động</Badge>}
+            </TableCell>
             <TableCell className="text-right">
-              <span className="flex justify-end gap-1">
-                <Button variant="ghost" size="icon-sm" asChild>
-                  <Link to={`/classes/${clazz.id}`} aria-label={`Xem sinh viên lớp ${clazz.code}`}>
-                    <Users aria-hidden />
-                  </Link>
-                </Button>
-                {isAdmin ? <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label={`Sửa lớp ${clazz.code}`}
-                  onClick={() => onEdit(clazz)}
-                >
-                  <Pencil aria-hidden />
-                </Button> : null}
-                {isAdmin ? <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label={`Xóa lớp ${clazz.code}`}
-                  className="text-destructive hover:text-destructive"
-                  onClick={() => onDelete(clazz)}
-                >
-                  <Trash2 aria-hidden />
-                </Button> : null}
-              </span>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon-sm" aria-label={`Thao tác với lớp ${clazz.code}`}><MoreHorizontal aria-hidden /></Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => navigate(`/classes/${clazz.id}`)}><SquareArrowOutUpRight aria-hidden /> Mở trang lớp</DropdownMenuItem>
+                  {isAdmin ? <>
+                    <DropdownMenuItem onClick={() => onEdit(clazz)}><Pencil aria-hidden /> Sửa lớp</DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem variant="destructive" onClick={() => onDelete(clazz)}><Trash2 aria-hidden /> Xóa lớp</DropdownMenuItem>
+                  </> : null}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </TableCell>
           </TableRow>
         ))}

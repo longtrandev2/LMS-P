@@ -106,7 +106,7 @@ export function UploadMaterialDialog({ onOpenChange, classId }: UploadMaterialDi
     <Dialog open onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="font-heading">Tải lên học liệu</DialogTitle>
+          <DialogTitle>Tải lên học liệu</DialogTitle>
           <DialogDescription>
             Tải tệp (tối đa {MAX_UPLOAD_MB}MB) hoặc dán liên kết tài liệu cho lớp.
           </DialogDescription>
@@ -128,7 +128,7 @@ export function UploadMaterialDialog({ onOpenChange, classId }: UploadMaterialDi
                   accept={FILE_ACCEPT}
                   onChange={(e) => handleFileChange(e.target.files?.[0] ?? null)}
                   aria-invalid={!!errors.file}
-                  className="file:mr-3 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-1.5 file:text-sm file:font-medium"
+                  className="file:mr-3 file:rounded file:bg-muted file:px-2 file:text-xs"
                 />
                 {errors.file ? <FieldError text={errors.file} /> : null}
               </div>

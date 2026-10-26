@@ -54,9 +54,9 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
-  /* Elevation — bóng đen trung tính rất nhẹ, dùng cho card/popover */
-  --shadow-soft: 0 1px 2px oklch(0 0 0 / 0.05), 0 6px 16px oklch(0 0 0 / 0.06);
-  --shadow-glass: 0 2px 6px oklch(0 0 0 / 0.05), 0 16px 40px oklch(0 0 0 / 0.1);
+  /* Elevation — chỉ cho lớp nổi (popover/dialog/dropdown); panel/card KHÔNG đổ bóng */
+  --shadow-soft: 0 1px 2px oklch(0 0 0 / 0.04), 0 4px 12px oklch(0 0 0 / 0.05);
+  --shadow-glass: 0 1px 3px oklch(0 0 0 / 0.06), 0 12px 32px oklch(0 0 0 / 0.12);
 }
 
 @layer base {
@@ -71,6 +71,8 @@
   }
   html {
     @apply font-sans;
+    /* Topbar dính cao 56px — neo cuộn không bị che */
+    scroll-padding-top: 4rem;
   }
   button, input, select, textarea { font: inherit; }
   select { color: inherit; }

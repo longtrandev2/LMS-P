@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Plus } from "lucide-react";
+import { Plus, School } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,7 +13,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Card, CardContent } from "@/components/ui/card";
+import { ListToolbar } from "@/components/list-toolbar";
 import { DataTablePagination } from "@/components/data-table-pagination";
 import { SortSelect } from "@/components/sort-select";
 import { PageHeader } from "@/components/page-header";
@@ -76,37 +75,28 @@ export function CourseClassesPage({ courseId }: { courseId: string }) {
 
   return (
     <div className="space-y-6">
-      <Link
-        to={isAdmin ? "/admin/academics" : "/courses"}
-        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-      >
-        <ArrowLeft className="size-4" aria-hidden /> {isAdmin ? "Quản lý học phần" : "Lớp được giao"}
-      </Link>
 
       <PageHeader
         title={course ? course.name : "Học phần"}
-        description={
-          course
-            ? `Mã học phần ${course.code} — ${isAdmin ? "quản lý các lớp theo từng học kỳ." : "các lớp học phần được phân công cho bạn."}`
-            : "Đang tải thông tin học phần…"
-        }
+        meta={course ? <span className="font-mono">{course.code}</span> : null}
+        description={course ? (isAdmin ? "Các lớp của học phần theo từng học kỳ." : "Các lớp của học phần được phân công cho bạn.") : "Đang tải thông tin học phần…"}
         actions={isAdmin ? <Button onClick={() => { setEditingClass(null); setFormOpen(true); }}>
             <Plus aria-hidden /> Tạo lớp học phần
           </Button> : undefined}
       />
 
-      <div className="flex flex-wrap gap-3"><ClassSearchField value={search} onChange={setSearch} />
-        <SortSelect value={sort} onChange={(value) => { setSort(value); setPage(1); }} options={[{ value: "code", label: "Theo mã lớp" }, { value: "name", label: "Theo tên" }, { value: "created_at", label: "Theo ngày tạo" }]} />
-      </div>
-
-      <Card>
-        <CardContent className="p-0">
+      <section className="overflow-hidden rounded-xl border bg-card">
+        <ListToolbar search={<ClassSearchField value={search} onChange={setSearch} />}>
+          <SortSelect value={sort} onChange={(value) => { setSort(value); setPage(1); }} options={[{ value: "code", label: "Theo mã lớp" }, { value: "name", label: "Theo tên" }, { value: "created_at", label: "Theo ngày tạo" }]} />
+        </ListToolbar>
+        <div>
           {classesQuery.isPending ? (
             <TableSkeleton cols={6} />
           ) : classesQuery.isError ? (
             <ErrorState error={classesQuery.error} onRetry={() => classesQuery.refetch()} />
           ) : classes && classes.length === 0 ? (
             <EmptyState
+              icon={School}
               title="Chưa có lớp học phần nào"
               description={isAdmin ? "Tạo lớp đầu tiên cho học phần này." : "Bạn chưa được phân công vào lớp nào thuộc học phần này."}
               action={isAdmin ? (
@@ -126,8 +116,8 @@ export function CourseClassesPage({ courseId }: { courseId: string }) {
               {classesQuery.data ? <DataTablePagination page={classesQuery.data.page} limit={classesQuery.data.limit} total={classesQuery.data.total} onPageChange={setPage} /> : null}
             </>
           ) : null}
-        </CardContent>
-      </Card>
+        </div>
+      </section>
 
       {isAdmin && formOpen ? (
         <ClassFormDialog
@@ -142,7 +132,7 @@ export function CourseClassesPage({ courseId }: { courseId: string }) {
       <AlertDialog open={!!deletingClass} onOpenChange={(o) => !o && setDeletingClass(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="font-heading">Xóa lớp học phần?</AlertDialogTitle>
+            <AlertDialogTitle>Xóa lớp học phần?</AlertDialogTitle>
             <AlertDialogDescription>
               Lớp <span className="font-mono">{deletingClass?.code}</span> — {deletingClass?.name}{" "}
               và toàn bộ ghi danh sẽ bị xóa. Hành động không thể hoàn tác.
@@ -151,7 +141,7 @@ export function CourseClassesPage({ courseId }: { courseId: string }) {
           <AlertDialogFooter>
             <AlertDialogCancel>Hủy</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-destructive text-white hover:bg-destructive/90"
+              variant="destructive"
               onClick={handleDelete}
             >
               Xóa lớp

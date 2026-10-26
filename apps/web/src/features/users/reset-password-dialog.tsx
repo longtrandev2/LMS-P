@@ -48,7 +48,7 @@ export function ResetPasswordDialog({ user, onOpenChange, onDone }: ResetPasswor
     <Dialog open={open} onOpenChange={(o) => { onOpenChange(o); if (!o) setTempPassword(null); }}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="font-heading">Đặt lại mật khẩu</DialogTitle>
+          <DialogTitle>Đặt lại mật khẩu</DialogTitle>
           <DialogDescription>
             {tempPassword
               ? "Mật khẩu tạm chỉ hiển thị một lần — hãy giao cho người dùng ngay."

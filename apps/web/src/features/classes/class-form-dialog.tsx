@@ -102,7 +102,7 @@ export function ClassFormDialog({ onOpenChange, courseId, clazz, onSaved }: Clas
     <Dialog open onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="font-heading">
+          <DialogTitle>
             {isEdit ? "Sửa lớp học phần" : "Mở lớp & phân công giảng viên"}
           </DialogTitle>
           <DialogDescription>Nhập thông tin lớp và chọn giảng viên phụ trách trước khi lưu.</DialogDescription>
@@ -144,7 +144,7 @@ export function ClassFormDialog({ onOpenChange, courseId, clazz, onSaved }: Clas
             {errors.semester ? <FieldError text={errors.semester} /> : null}
           </div>
 
-          <div className="rounded-xl border border-primary/25 bg-primary/5 p-4">
+          <div className="rounded-lg border bg-muted/40 p-3">
             <ClassLecturerField lecturerId={lecturerId} initialName={clazz?.lecturer_name ?? ""}
               error={errors.lecturer} onChange={setLecturerId} />
           </div>

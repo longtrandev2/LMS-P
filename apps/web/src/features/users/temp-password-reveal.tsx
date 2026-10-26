@@ -26,7 +26,7 @@ export function TempPasswordReveal({
   return (
     <div
       className={cn(
-        "flex items-center justify-between gap-3 rounded-lg border border-gold/40 bg-gold/10 px-4 py-3",
+        "flex items-center justify-between gap-3 rounded-lg border border-warning/30 bg-warning/10 px-4 py-3",
         className
       )}
     >

@@ -27,13 +27,13 @@ function NotificationRow({
       type="button"
       onClick={() => unread && onRead(notification.id)}
       aria-label={unread ? `Đánh dấu đã đọc: ${notification.title}` : notification.title}
-      className="flex w-full items-start gap-2.5 px-4 py-3 text-left transition-colors hover:bg-muted/60"
+      className="flex w-full items-start gap-2.5 px-4 py-3 text-left transition-colors hover:bg-accent focus-visible:bg-accent outline-none"
     >
       <span
         aria-hidden
         className={cn(
           "mt-1.5 size-1.5 shrink-0 rounded-full",
-          unread ? "bg-cta" : "bg-transparent"
+          unread ? "bg-foreground" : "bg-transparent"
         )}
       />
       <span className="min-w-0 flex-1 space-y-0.5">
@@ -68,18 +68,18 @@ export function NotificationsBell() {
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon-sm" aria-label="Thông báo" className="relative">
+        <Button variant="ghost" size="icon-sm" aria-label={unreadCount > 0 ? `Thông báo, ${unreadCount} chưa đọc` : "Thông báo"} className="relative">
           <Bell aria-hidden />
           {unreadCount > 0 ? (
-            <span className="absolute top-0.5 right-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-cta px-1 text-[10px] leading-none font-semibold text-cta-foreground">
+            <span className="absolute top-0.5 right-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-foreground px-1 text-[10px] leading-none font-semibold text-background ring-2 ring-background tabular-nums">
               {unreadCount > 99 ? "99+" : unreadCount}
             </span>
           ) : null}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-88 p-0">
+      <DropdownMenuContent align="end" className="w-[min(22rem,calc(100vw-1.5rem))] p-0">
         <div className="flex items-center justify-between gap-2 px-4 py-2.5">
-          <DropdownMenuLabel className="p-0 text-sm font-semibold">Thông báo</DropdownMenuLabel>
+          <DropdownMenuLabel className="p-0 text-sm font-semibold text-foreground">Thông báo</DropdownMenuLabel>
           {unreadCount > 0 ? (
             <Button
               variant="ghost"

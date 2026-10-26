@@ -5,7 +5,7 @@ import type { GradingVerdict } from "@/types/api";
 const toneClass = {
   success: "border-success/30 bg-success/10 text-success",
   danger: "border-destructive/30 bg-destructive/10 text-destructive",
-  warning: "border-gold/30 bg-gold/10 text-gold",
+  warning: "border-warning/30 bg-warning/10 text-warning",
   neutral: "border-border bg-muted text-muted-foreground",
 };
 

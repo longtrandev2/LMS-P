@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DataTablePagination } from "@/components/data-table-pagination";
@@ -78,7 +79,7 @@ export function EnrollStudentsDialog({ onOpenChange, classId, onEnrolled }: Prop
   return (
     <Dialog open onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-xl">
-        <DialogHeader><DialogTitle className="font-heading">Thêm sinh viên vào lớp</DialogTitle>
+        <DialogHeader><DialogTitle>Thêm sinh viên vào lớp</DialogTitle>
           <DialogDescription>Tìm sinh viên theo tên, mã hoặc email, hoặc nhập danh sách bằng CSV. Hệ thống kiểm tra từng sinh viên trước khi thêm.</DialogDescription></DialogHeader>
         <Tabs defaultValue="search">
           <TabsList className="grid w-full grid-cols-2"><TabsTrigger value="search">Tìm sinh viên</TabsTrigger><TabsTrigger value="csv">Nhập CSV</TabsTrigger></TabsList>
@@ -88,7 +89,7 @@ export function EnrollStudentsDialog({ onOpenChange, classId, onEnrolled }: Prop
               <ul className="max-h-64 divide-y overflow-y-auto rounded-md border">{candidateQuery.data?.items.map((student) => {
                 const checked = selectedCandidates.some((item) => item.user_id === student.user_id);
                 return <li key={student.user_id} className="flex items-center gap-3 px-3 py-2">
-                  <input type="checkbox" checked={checked} aria-label={`Chọn ${student.full_name}`} onChange={() => setSelectedCandidates((items) => checked ? items.filter((item) => item.user_id !== student.user_id) : [...items, student])} />
+                  <Checkbox checked={checked} aria-label={`Chọn ${student.full_name}`} onCheckedChange={() => setSelectedCandidates((items) => checked ? items.filter((item) => item.user_id !== student.user_id) : [...items, student])} />
                   <span className="min-w-0 text-sm"><span className="block truncate font-medium">{student.full_name} · {student.student_code || "Chưa có mã SV"}</span><span className="block truncate text-xs text-muted-foreground">{student.email}</span></span>
                 </li>;
               })}</ul>
@@ -100,7 +101,7 @@ export function EnrollStudentsDialog({ onOpenChange, classId, onEnrolled }: Prop
           <TabsContent value="csv" className="space-y-4 pt-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <Label htmlFor="enrollment-csv">Chọn file CSV (cột student_code hoặc email)</Label>
-              <a className="text-sm text-primary underline-offset-4 hover:underline" href={sampleCsv} download="mau-xep-lop.csv">Tải file mẫu</a>
+              <a className="text-sm font-medium underline underline-offset-4 decoration-border hover:decoration-foreground" href={sampleCsv} download="mau-xep-lop.csv">Tải file mẫu</a>
             </div>
             <Input id="enrollment-csv" type="file" accept=".csv,text/csv" disabled={submitting}
               onChange={(event) => { void readCsv(event.currentTarget.files?.[0]); event.currentTarget.value = ""; }} />

@@ -51,7 +51,7 @@ export function ThemeToggle({ className }: { className?: string }) {
             <option.icon aria-hidden />
             {option.label}
             {current === option.value ? (
-              <CheckIcon className="ml-auto text-gold" aria-hidden />
+              <CheckIcon className="ml-auto text-foreground" aria-hidden />
             ) : null}
           </DropdownMenuItem>
         ))}
