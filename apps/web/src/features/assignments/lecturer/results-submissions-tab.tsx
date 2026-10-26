@@ -1,0 +1,71 @@
+import { useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { EmptyState, ErrorState, TableSkeleton } from "@/components/state-blocks";
+import { formatUtcDateTime } from "@/lib/date-time";
+import { languageLabel } from "@/lib/languages";
+import { SubmissionStatusBadge } from "@/features/assignments/submission/submission-status";
+import { formatPoints } from "./labels";
+import { ALL, EMPTY_FILTERS, SubmissionFilters } from "./submission-filters";
+import type { AssignmentQuestion, AssignmentSubmission } from "@/types/api";
+
+/** Danh sách lượt nộp: lọc theo câu/trạng thái/verdict/tìm kiếm; bấm hàng mở `/submissions/:id`. */
+export function ResultsSubmissionsTab({ query, questions, positionOf }: {
+  query: { data?: AssignmentSubmission[]; isPending: boolean; isError: boolean; error: unknown; refetch: () => unknown };
+  questions: AssignmentQuestion[]; positionOf: Map<number, number>;
+}) {
+  const navigate = useNavigate();
+  const [filters, setFilters] = useState(EMPTY_FILTERS);
+  const rows = useMemo(() => {
+    const term = filters.search.trim().toLowerCase();
+    return (query.data ?? []).filter((row) =>
+      (filters.question === ALL || String(row.question_id) === filters.question)
+      && (filters.status === ALL || row.status === filters.status)
+      && (filters.verdict === ALL || row.verdict === filters.verdict)
+      && (!term || `${row.student_full_name ?? ""} ${row.student_code ?? ""}`.toLowerCase().includes(term)),
+    ).sort((a, b) => b.submitted_at.localeCompare(a.submitted_at));
+  }, [query.data, filters]);
+  const filtered = JSON.stringify(filters) !== JSON.stringify(EMPTY_FILTERS);
+
+  return <div className="space-y-3">
+    <SubmissionFilters value={filters} onChange={setFilters} questions={questions} />
+    <div className="overflow-hidden rounded-xl border bg-card">
+      {query.isPending ? <TableSkeleton rows={6} cols={6} /> : null}
+      {query.isError ? <ErrorState error={query.error} onRetry={() => void query.refetch()} /> : null}
+      {query.data && rows.length === 0 ? <EmptyState compact title={filtered ? "Không có bài nộp phù hợp bộ lọc" : "Chưa có bài nộp"}
+        description={filtered ? "Thử bỏ bớt bộ lọc." : "Bài nộp của sinh viên sẽ hiện ở đây."} /> : null}
+      {rows.length ? <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="min-w-48">Sinh viên</TableHead>
+            <TableHead>Câu</TableHead>
+            <TableHead className="text-right">Lượt</TableHead>
+            <TableHead>Ngôn ngữ</TableHead>
+            <TableHead>Kết quả</TableHead>
+            <TableHead className="text-right">Điểm</TableHead>
+            <TableHead>Thời điểm nộp</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {rows.map((row) => <TableRow key={row.id} className="cursor-pointer" onClick={() => navigate(`/submissions/${row.id}`)}>
+            <TableCell>
+              <Link to={`/submissions/${row.id}`} className="font-medium underline-offset-4 hover:underline" onClick={(event) => event.stopPropagation()}>
+                {row.student_full_name || `Sinh viên #${row.student_id}`}
+              </Link>
+              <p className="font-mono text-xs text-muted-foreground">{row.student_code ?? `ID ${row.student_id}`}</p>
+            </TableCell>
+            <TableCell>Câu {positionOf.get(row.question_id) ?? `#${row.question_id}`}</TableCell>
+            <TableCell className="text-right tabular-nums">{row.attempt_no}</TableCell>
+            <TableCell className="text-sm">{row.type === "code" ? languageLabel(row.language) : <span className="text-muted-foreground">Khách quan</span>}</TableCell>
+            <TableCell><SubmissionStatusBadge status={row.status} verdict={row.verdict} compact /></TableCell>
+            <TableCell className="text-right tabular-nums">{formatPoints(row.score)}</TableCell>
+            <TableCell className="text-sm whitespace-nowrap">
+              {formatUtcDateTime(row.submitted_at)}
+              {row.is_late ? <span className="ml-2 rounded-md bg-gold/10 px-1.5 py-0.5 text-xs font-medium text-gold">Muộn</span> : null}
+            </TableCell>
+          </TableRow>)}
+        </TableBody>
+      </Table> : null}
+    </div>
+  </div>;
+}
