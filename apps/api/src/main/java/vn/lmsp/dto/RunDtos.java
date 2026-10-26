@@ -51,7 +51,7 @@ public final class RunDtos {
                                   @NotBlank @Pattern(regexp = "running|completed|failed") String status,
                                   GradingVerdict verdict, String compile_output, String error_message,
                                   @Min(0) @Max(3600000) Integer duration_ms,
-                                  @Size(max = 101) List<@Valid RunEventTest> tests) { }
+                                  @Size(max = 200) List<@Valid RunEventTest> tests) { }
 
     public record RunEventTest(@Min(0) int position, @NotNull GradingVerdict verdict,
                                @Min(0) Integer time_ms, @Size(max = 65536) String output) { }

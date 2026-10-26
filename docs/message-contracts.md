@@ -59,7 +59,7 @@ Kết quả cuối:
 {"schema_version": 1, "run_id": "…uuid…", "kind": "problem_check"}
 ```
 
-Worker đọc `run_jobs` theo `run_id` (chỉ xử lý khi `status = pending`), lấy `payload`:
+Worker đọc `run_jobs` theo `run_id` (xử lý khi `status` là `pending`, hoặc `running` khi job bị giao lại do worker chết giữa chừng; job đã kết thúc thì ACK bỏ qua), lấy `payload`:
 
 ```json
 {"language":"cpp","source_code":"…","time_limit_ms":1000,"memory_limit_mb":256,

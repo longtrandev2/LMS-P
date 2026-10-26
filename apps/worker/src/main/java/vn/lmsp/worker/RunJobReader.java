@@ -5,7 +5,7 @@ import java.util.Optional;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-/** Đọc `run_jobs` theo `job_id = run_id`; chỉ job `pending` mới được chạy (worker chỉ SELECT). */
+/** Đọc `run_jobs` theo `job_id = run_id`; job `pending` hoặc `running` (giao lại sau khi worker chết) mới được chạy (worker chỉ SELECT). */
 @Repository
 public class RunJobReader {
     private static final String SQL = "SELECT status, payload FROM run_jobs WHERE job_id = ?";
@@ -18,11 +18,12 @@ public class RunJobReader {
         this.json = json;
     }
 
-    /** Rỗng nếu job không còn `pending` (ACK bỏ qua); không có job hoặc payload hỏng ném lỗi. */
+    /** Rỗng nếu job đã kết thúc (ACK bỏ qua); không có job hoặc payload hỏng ném lỗi. */
     public Optional<ExecutionRequest> load(String runId) {
         return jdbc.query(SQL, result -> {
             if (!result.next()) throw new IllegalArgumentException("Unknown run job");
-            if (!"pending".equals(result.getString("status"))) return Optional.empty();
+            String status = result.getString("status");
+            if (!"pending".equals(status) && !"running".equals(status)) return Optional.empty();
             String raw = result.getString("payload");
             if (raw == null || raw.length() > MAX_PAYLOAD_CHARS) throw new IllegalArgumentException("Run payload too large");
             try { return Optional.of(RunPayloadParser.parse(json.readTree(raw))); }
