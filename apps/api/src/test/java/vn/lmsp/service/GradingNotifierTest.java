@@ -8,7 +8,6 @@ import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
-import vn.lmsp.dto.GradingDtos.WorkerPayload;
 import vn.lmsp.enums.*;
 import vn.lmsp.model.Submission;
 import vn.lmsp.security.GradingWebSocketHandler;
@@ -22,11 +21,9 @@ class GradingNotifierTest {
         submission.startGrading();
         var sockets = mock(GradingWebSocketHandler.class);
         var notifier = new GradingNotifier(sockets, new ObjectMapper());
-        var payload = new WorkerPayload("12345678-1234-1234-1234-123456789abc", 90L,
-                SubmissionStatus.grading, null, false, null, null, null);
         TransactionSynchronizationManager.initSynchronization();
         try {
-            notifier.afterCommit(submission, payload);
+            notifier.afterCommit(submission, null, false);
             verifyNoInteractions(sockets);
             TransactionSynchronizationManager.getSynchronizations().forEach(TransactionSynchronization::afterCommit);
             verify(sockets).sendToUser(eq("42"), contains("\"submission.status\""));

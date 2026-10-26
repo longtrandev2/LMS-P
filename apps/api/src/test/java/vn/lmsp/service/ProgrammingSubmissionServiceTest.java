@@ -32,7 +32,7 @@ class ProgrammingSubmissionServiceTest {
         link.pin(version(link.getQuestion(), 1, programmingSnapshot()));
         var snapshots = new QuestionVersionService(mock(QuestionVersionRepository.class), mock(QuestionReadService.class), new ObjectMapper());
         service = new ProgrammingSubmissionService(access, links, submissions, jobs, users, snapshots,
-                new SubmissionPolicy(), new ProgrammingProblemValidator(), new GradingMapper(), mock(AuditService.class));
+                new SubmissionPolicy(), new GradingMapper(), mock(AuditService.class));
         when(access.studentAssignment(50L, 42L, true)).thenReturn(assignment);
         when(links.findByAssignment_IdAndQuestion_Id(50L, 100L)).thenReturn(Optional.of(link));
         when(users.findById(42L)).thenReturn(Optional.of(user(42, "student")));
@@ -79,8 +79,32 @@ class ProgrammingSubmissionServiceTest {
     }
 
     @Test void enforcesAttemptLimitBeforePersisting() {
-        when(submissions.countByAssignment_IdAndStudent_IdAndQuestion_Id(50L, 42L, 100L)).thenReturn(3L);
-        assertThatThrownBy(() -> service.submit(50L, 100L, 42L, KEY, input)).hasMessageContaining("hết số lượt");
+        when(submissions.countByAssignment_IdAndStudent_IdAndQuestion_IdAndStatusNot(50L, 42L, 100L, SubmissionStatus.failed))
+                .thenReturn(3L);
+        assertThatThrownBy(() -> service.submit(50L, 100L, 42L, KEY, input))
+                .isInstanceOfSatisfying(vn.lmsp.common.LmsException.class,
+                        error -> assertThat(error.getCode()).isEqualTo("ATTEMPT_EXCEEDED"))
+                .hasMessageContaining("hết số lượt");
         verifyNoInteractions(jobs);
+    }
+
+    @Test void failedSubmissionsDoNotUseAnAttemptButKeepAttemptNumbersUnique() {
+        when(submissions.countByAssignment_IdAndStudent_IdAndQuestion_IdAndStatusNot(50L, 42L, 100L, SubmissionStatus.failed))
+                .thenReturn(2L);
+        when(submissions.maxAttemptNo(50L, 42L, 100L)).thenReturn(3);
+        service.submit(50L, 100L, 42L, KEY, input);
+        var job = ArgumentCaptor.forClass(GradingJob.class);
+        verify(jobs).save(job.capture());
+        assertThat(job.getValue().getSubmission().getAttemptNo()).isEqualTo(4);
+        assertThat(job.getValue().getAttemptNo()).isEqualTo(1);
+    }
+
+    @Test void submitOnlyChecksLanguageAndSizeNotTheFullProblem() {
+        var broken = programmingSnapshot();
+        broken = new vn.lmsp.dto.QuestionDtos.QuestionSnapshot(broken.type(), broken.content(), broken.topic(),
+                broken.difficulty(), null, null, broken.options(), null, broken.programming(), java.util.List.of());
+        link.pin(version(link.getQuestion(), 2, broken));
+        assertThat(service.submit(50L, 100L, 42L, KEY, input).replayed()).isFalse();
+        verify(jobs).save(any());
     }
 }

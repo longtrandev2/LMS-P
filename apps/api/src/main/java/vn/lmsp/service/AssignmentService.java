@@ -9,6 +9,7 @@ import vn.lmsp.common.UtcTime;
 import vn.lmsp.dto.AssignmentDtos.*;
 import vn.lmsp.enums.AssignmentCategory;
 import vn.lmsp.enums.QuestionType;
+import vn.lmsp.enums.ReviewMode;
 import vn.lmsp.enums.ScorePolicy;
 import vn.lmsp.mapper.AssignmentMapper;
 import vn.lmsp.model.*;
@@ -25,13 +26,12 @@ public class AssignmentService {
     private final AssignmentAccess access;
     private final AssignmentReadService reader;
     private final QuestionRepository questions;
-    private final QuestionVersionRepository versions;
     private final UserRepository users;
     private final AssignmentMapper mapper;
     private final AuditService audit;
     private final QuestionBankService banks;
-    private final QuestionVersionService snapshots;
-    private final ProgrammingProblemValidator problems;
+    private final AssignmentPublishService publisher;
+    private final AssignmentAttemptRepository attempts;
 
     @Transactional(readOnly = true)
     public AssignmentPage list(Long classId, Long actor, boolean student, boolean admin, int page, int limit) {
@@ -45,9 +45,10 @@ public class AssignmentService {
         Assignment item = assignments.save(new Assignment(clazz, input.title().trim(), input.description(), input.category(),
                 input.available_from(), input.due_at(), Boolean.TRUE.equals(input.allow_late()),
                 Boolean.TRUE.equals(input.allow_late()) ? input.late_due_at() : null, penalty(input), input.max_attempts(), policy(input), user(actorId)));
+        configureReview(item, input);
         replaceQuestions(item, input.questions(), actorId, admin);
         audit.record(actorId, "assignment.create", "assignment", item.getId(), null, mapper.toAuditValue(item));
-        return reader.details(item, true);
+        return reader.details(item);
     }
     @Transactional
     public List<AssignmentDetails> createForClasses(BulkAssignmentInput body, Long actorId) {
@@ -64,7 +65,8 @@ public class AssignmentService {
         List<AssignmentDetails> created = new ArrayList<>();
         for (Long classId : ids) {
             AssignmentDetails draft = create(classId, body.assignment(), actorId, false);
-            created.add(body.publish() ? publish(draft.assignment().id(), actorId, false) : draft);
+            created.add(body.publish() ? publisher.publish(draft.assignment().id(), actorId, false,
+                    Boolean.TRUE.equals(body.confirm_unverified())) : draft);
         }
         return created;
     }
@@ -73,7 +75,10 @@ public class AssignmentService {
         Assignment item = student ? access.studentAssignment(id, actorId, false) : access.lecturerAssignment(id, actorId, admin, false);
         if (student && item.getAvailableFrom() != null && UtcTime.now().isBefore(item.getAvailableFrom()))
             throw conflict("Bài chưa mở");
-        return reader.details(item, !student);
+        if (!student) return reader.details(item);
+        int n = item.getCategory() == AssignmentCategory.QUIZ
+                ? (int) attempts.countByAssignment_IdAndStudent_Id(id, actorId) + 1 : 0;
+        return reader.studentDetails(item, actorId, n);
     }
     @Transactional
     public AssignmentDetails update(Long id, AssignmentInput input, Long actorId, boolean admin) {
@@ -83,9 +88,10 @@ public class AssignmentService {
         item.update(input.title().trim(), input.description(), input.category(), input.available_from(), input.due_at(),
                 Boolean.TRUE.equals(input.allow_late()), Boolean.TRUE.equals(input.allow_late()) ? input.late_due_at() : null,
                 penalty(input), input.max_attempts(), policy(input));
+        configureReview(item, input);
         if (input.questions() != null) replaceQuestions(item, input.questions(), actorId, admin);
         audit.record(actorId, "assignment.update", "assignment", id, old, mapper.toAuditValue(item));
-        return reader.details(item, true);
+        return reader.details(item);
     }
     @Transactional
     public AssignmentDetails updatePublishedSettings(Long id, PublishedSettingsInput input, Long actorId, boolean admin) {
@@ -95,10 +101,12 @@ public class AssignmentService {
         var old = mapper.toAuditValue(item);
         item.updatePublishedSettings(input.title().trim(), input.description(), input.available_from(), input.due_at(),
                 input.allow_late(), input.allow_late() ? input.late_due_at() : null,
-                input.allow_late() ? input.late_penalty_percent() : 0);
+                input.allow_late() ? input.late_penalty_percent() : 0,
+                input.review_mode() == null ? item.getReviewMode() : input.review_mode(),
+                input.review_shows_answers() == null ? item.isReviewShowsAnswers() : input.review_shows_answers());
         var updated = mapper.toAuditValue(item); updated.put("reason", input.reason().trim());
         audit.record(actorId, "assignment.published_settings.update", "assignment", id, old, updated);
-        return reader.details(item, true);
+        return reader.details(item);
     }
     @Transactional
     public void delete(Long id, Long actorId, boolean admin) {
@@ -108,25 +116,8 @@ public class AssignmentService {
         audit.record(actorId, "assignment.delete", "assignment", id, old, null);
     }
     @Transactional
-    public AssignmentDetails publish(Long id, Long actorId, boolean admin) {
-        Assignment item = access.lecturerAssignment(id, actorId, admin, true);
-        if (item.isPublished()) return reader.details(item, true);
-        List<AssignmentQuestion> rows = links.findAllByAssignment_IdOrderByPositionAscIdAsc(id);
-        if (rows.isEmpty()) throw bad("Thêm ít nhất một câu hỏi trước khi xuất bản");
-        for (AssignmentQuestion row : rows) {
-            Question question = questions.findByIdAndDeletedFalse(row.getQuestionId()).orElseThrow(() -> bad("Một câu hỏi đã bị xóa khỏi ngân hàng"));
-            banks.requireQuestionUsage(question, item.getLmsClass(), actorId, admin);
-            if (item.getCategory() == AssignmentCategory.QUIZ && question.getType() != QuestionType.mcq) throw bad("Quiz chỉ được chứa câu trắc nghiệm");
-            QuestionVersion version = versions.findTopByQuestion_IdOrderByVersionNoDesc(question.getId()).orElseThrow(() -> bad("Câu hỏi chưa có phiên bản"));
-            if (question.getType() == QuestionType.programming) {
-                try { problems.validateProblem(snapshots.read(version)); }
-                catch (IllegalArgumentException error) { throw bad(error.getMessage()); }
-            }
-            row.pin(version);
-        }
-        item.publish();
-        audit.record(actorId, "assignment.publish", "assignment", id, Map.of("is_published", false), Map.of("is_published", true, "question_count", rows.size()));
-        return reader.details(item, true);
+    public AssignmentDetails publish(Long id, Long actorId, boolean admin, boolean confirmUnverified) {
+        return publisher.publish(id, actorId, admin, confirmUnverified);
     }
 
     private void replaceQuestions(Assignment item, List<QuestionSelectionInput> input, Long actorId, boolean admin) {
@@ -143,7 +134,8 @@ public class AssignmentService {
         for (int i = 0; i < rows.size(); i++) {
             var row = rows.get(i); Question q = questions.findByIdAndDeletedFalse(row.question_id()).orElseThrow(() -> bad("Không tìm thấy câu hỏi trong ngân hàng"));
             banks.requireQuestionUsage(q, item.getLmsClass(), actorId, admin);
-            if (item.getCategory() == AssignmentCategory.QUIZ && q.getType() != QuestionType.mcq) throw bad("Quiz chỉ được chứa câu trắc nghiệm");
+            if (item.getCategory() == AssignmentCategory.QUIZ && q.getType() == QuestionType.programming)
+                throw bad("Quiz không được chứa câu lập trình");
             int position = row.position() == null ? i + 1 : row.position();
             links.save(new AssignmentQuestion(item, q, row.points(), position));
         }
@@ -169,6 +161,11 @@ public class AssignmentService {
             throw bad("Thời điểm mở bài phải trước hạn nộp");
         if (input.allow_late() && (input.late_due_at() == null || !input.late_due_at().isAfter(input.due_at())))
             throw bad("Hạn nộp muộn phải sau hạn nộp chính thức");
+    }
+    private void configureReview(Assignment item, AssignmentInput input) {
+        item.configureReview(input.review_mode() == null ? ReviewMode.after_close : input.review_mode(),
+                input.review_shows_answers() == null || input.review_shows_answers(),
+                Boolean.TRUE.equals(input.shuffle_questions()), Boolean.TRUE.equals(input.shuffle_options()));
     }
     private int penalty(AssignmentInput input) { return Boolean.TRUE.equals(input.allow_late()) && input.late_penalty_percent() != null ? input.late_penalty_percent() : 0; }
     private ScorePolicy policy(AssignmentInput input) { return input.score_policy() == null ? ScorePolicy.best : input.score_policy(); }
