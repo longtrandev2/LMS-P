@@ -16,7 +16,7 @@ public class AuthController {
     private final AuthService auth;
     public AuthController(AuthService auth) { this.auth = auth; }
     @PostMapping("/login") public TokenPair login(@Valid @RequestBody LoginRequest request) {
-        return auth.login(request.email(), request.password());
+        return auth.login(request.account(), request.password());
     }
     @PostMapping("/refresh") public TokenPair refresh(@Valid @RequestBody RefreshRequest request) {
         return auth.refresh(request.refreshToken());

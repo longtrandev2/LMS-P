@@ -19,7 +19,7 @@ import type { LoginResponse } from "@/types/api";
 export function LoginForm() {
   const navigate = useNavigate();
   const setSession = useAuthStore((s) => s.setSession);
-  const [email, setEmail] = useState("");
+  const [account, setAccount] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -28,14 +28,14 @@ export function LoginForm() {
     e.preventDefault();
     setFormError(null);
 
-    if (!email.trim() || !password) {
-      setFormError("Vui lòng nhập đầy đủ email và mật khẩu.");
+    if (!account.trim() || !password) {
+      setFormError("Vui lòng nhập đầy đủ tài khoản và mật khẩu.");
       return;
     }
 
     setSubmitting(true);
     try {
-      const data = await api.post<LoginResponse>("/auth/login", { email, password }, { anonymous: true });
+      const data = await api.post<LoginResponse>("/auth/login", { account: account.trim(), password }, { anonymous: true });
       setSession(data);
       toast.success(`Xin chào, ${data.user.full_name}!`);
       navigate(homePathFor(data.user), { replace: true });
@@ -60,14 +60,14 @@ export function LoginForm() {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4" noValidate>
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="account">Email hoặc mã sinh viên</Label>
             <Input
-              id="email"
-              type="email"
-              autoComplete="email"
-              placeholder="ten@truong.edu.vn"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              id="account"
+              type="text"
+              autoComplete="username"
+              placeholder="ten@truong.edu.vn hoặc SV000001"
+              value={account}
+              onChange={(e) => setAccount(e.target.value)}
               required
               aria-invalid={!!formError}
             />

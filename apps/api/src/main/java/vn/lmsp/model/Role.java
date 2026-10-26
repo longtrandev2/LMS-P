@@ -12,5 +12,6 @@ public class Role {
     @Column(length = 255)
     private String description;
     protected Role() { }
+    public Role(String name, String description) { this.name = name; this.description = description; }
     public String getName() { return name; }
 }
