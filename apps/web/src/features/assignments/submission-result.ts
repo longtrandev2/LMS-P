@@ -8,5 +8,6 @@ const labels: Record<AssignmentSubmission["status"], string> = {
 };
 
 export function submissionResult(submission: AssignmentSubmission): string {
+  if (submission.verdict) return submission.verdict;
   return submission.score == null ? labels[submission.status] ?? "Chưa có điểm" : `${submission.score} điểm`;
 }

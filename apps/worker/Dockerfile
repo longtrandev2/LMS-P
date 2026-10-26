@@ -6,7 +6,7 @@ RUN --mount=type=cache,id=lmsp-maven,target=/root/.m2,sharing=locked mvn -B pack
 
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
-RUN addgroup -S lms && adduser -S worker -G lms
+RUN apk add --no-cache docker-cli
 COPY --from=build /workspace/target/lms-worker-1.0.0-SNAPSHOT.jar app.jar
-USER worker
+# Docker socket access is deliberately isolated to this trusted worker service.
 ENTRYPOINT ["java", "-jar", "app.jar"]

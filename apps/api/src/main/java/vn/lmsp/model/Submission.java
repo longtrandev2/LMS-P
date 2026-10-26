@@ -6,6 +6,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import vn.lmsp.enums.SubmissionStatus;
 import vn.lmsp.enums.SubmissionType;
+import vn.lmsp.enums.GradingVerdict;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -29,6 +30,7 @@ public class Submission {
     @Column(name = "source_code", columnDefinition = "MEDIUMTEXT") private String sourceCode;
     @Column(name = "attempt_no", nullable = false) private int attemptNo;
     @Enumerated(EnumType.STRING) @Column(nullable = false) private SubmissionStatus status;
+    @Enumerated(EnumType.STRING) @Column(length = 16) private GradingVerdict verdict;
     @Column(precision = 8, scale = 2) private BigDecimal score;
     @Column(name = "is_late", nullable = false) private boolean late;
     @Column(name = "idempotency_key", columnDefinition = "char(36)") private String idempotencyKey;
@@ -63,5 +65,9 @@ public class Submission {
     public Long getQuestionId() { return question.getId(); }
     public boolean isTerminal() { return status == SubmissionStatus.completed || status == SubmissionStatus.failed; }
     public void startGrading() { if (status == SubmissionStatus.pending) status = SubmissionStatus.grading; }
-    public void finish(SubmissionStatus status, BigDecimal score) { this.status = status; this.score = score; }
+    public void finish(SubmissionStatus status, GradingVerdict verdict) {
+        this.status = status;
+        this.verdict = verdict;
+        this.score = null;
+    }
 }

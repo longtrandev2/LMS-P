@@ -31,7 +31,7 @@ public class AssignmentService {
     private final AuditService audit;
     private final QuestionBankService banks;
     private final QuestionVersionService snapshots;
-    private final GradingScoreService grading;
+    private final ProgrammingProblemValidator problems;
 
     @Transactional(readOnly = true)
     public AssignmentPage list(Long classId, Long actor, boolean student, boolean admin, int page, int limit) {
@@ -119,7 +119,7 @@ public class AssignmentService {
             if (item.getCategory() == AssignmentCategory.QUIZ && question.getType() != QuestionType.mcq) throw bad("Quiz chỉ được chứa câu trắc nghiệm");
             QuestionVersion version = versions.findTopByQuestion_IdOrderByVersionNoDesc(question.getId()).orElseThrow(() -> bad("Câu hỏi chưa có phiên bản"));
             if (question.getType() == QuestionType.programming) {
-                try { grading.validateProblem(snapshots.read(version)); }
+                try { problems.validateProblem(snapshots.read(version)); }
                 catch (IllegalArgumentException error) { throw bad(error.getMessage()); }
             }
             row.pin(version);

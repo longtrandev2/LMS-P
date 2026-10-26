@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import vn.lmsp.common.Utf8Text;
+import vn.lmsp.enums.GradingVerdict;
 
 @Entity
 @Table(name = "grading_results", uniqueConstraints = {
@@ -17,6 +18,7 @@ public class GradingResult {
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "grading_job_id", nullable = false) private GradingJob job;
     @Column(name = "attempt_no", nullable = false) private int attemptNo;
     @Column(nullable = false, length = 20) private String status;
+    @Enumerated(EnumType.STRING) @Column(length = 16) private GradingVerdict verdict;
     @Column(name = "total_score", precision = 8, scale = 2) private BigDecimal totalScore;
     @Column(name = "compile_error", nullable = false) private boolean compileError;
     @Column(name = "compile_output", columnDefinition = "MEDIUMTEXT") private String compileOutput;
@@ -25,13 +27,14 @@ public class GradingResult {
     @Column(name = "duration_ms", nullable = false) private int durationMs;
 
     protected GradingResult() { }
-    public GradingResult(GradingJob job, BigDecimal score, boolean failed, boolean compileError,
+    public GradingResult(GradingJob job, GradingVerdict verdict, boolean failed, boolean compileError,
             String compileOutput, String errorMessage, int durationMs, LocalDateTime now) {
         this.job = job;
         this.submission = job.getSubmission();
         this.attemptNo = job.getAttemptNo();
         this.status = failed ? "failed" : "graded";
-        this.totalScore = score;
+        this.verdict = verdict;
+        this.totalScore = null;
         this.compileError = compileError;
         this.compileOutput = Utf8Text.truncate(compileOutput, 65536);
         this.errorMessage = Utf8Text.truncate(errorMessage, 8192);

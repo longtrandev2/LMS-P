@@ -75,7 +75,7 @@ Java dùng Lombok `@RequiredArgsConstructor` cho dependency `final`, `@Getter` c
 - DTO kết quả nghiệp vụ như số dòng import hợp lệ, lỗi CSV, phân trang và kết quả thu hồi phiên được tạo tại service; chúng không phải mapping entity.
 - Kiểm thử Java bảo vệ hợp đồng response, dữ liệu nhạy cảm, snapshot và chấm quiz; Docker build API chạy Maven test trước khi đóng gói.
 
-Worker là ứng dụng Spring Boot riêng tại `apps/worker`, để scale độc lập. Khi grading được triển khai, consumer dùng manual ack, retry có giới hạn, DLQ và xử lý idempotent theo submission/attempt.
+Worker là ứng dụng Spring Boot riêng tại `apps/worker`, để scale độc lập. Consumer dùng manual ack, retry có giới hạn, DLQ và xử lý idempotent theo submission/attempt. Worker đọc dữ liệu qua tài khoản MySQL chỉ có quyền `SELECT`; sandbox không nhận thông tin kết nối DB hoặc Docker socket. Worker là dịch vụ tin cậy duy nhất có quyền gọi Docker daemon, nên production phải đặt worker trên node chấm riêng.
 
 ## 5. Frontend — React SPA theo feature
 
@@ -103,8 +103,8 @@ Feature sở hữu API client và UI nghiệp vụ riêng; `components/` chỉ c
 ## 7. Thi và chấm bài
 - Spring scheduled task chạy mỗi 10 giây tìm session quá hạn; cập nhật/nộp tự động theo transaction và hợp đồng message.
 - API lưu submission pending rồi publish queue; worker xử lý theo snapshot phiên bản câu hỏi đã ghim.
-- M6 phần 1: submission và grading_jobs outbox được lưu cùng transaction, publisher confirm + retry; worker trả event V2 qua grading.events. API khóa submission, kiểm tra kết quả/tính điểm, ghi grading_results/test_results/notification rồi phát WS sau commit. Listener worker mẫu tắt cho đến khi phần 2 có sandbox; Run/regrade chưa triển khai.
-- Sandbox: no-network, read-only root, tmpfs giới hạn, non-root, CPU/RAM/PID/time/output caps.
+- M6: submission và grading_jobs outbox được lưu cùng transaction; worker đọc code/snapshot đã ghim, biên dịch/chạy trong sandbox không mạng, rồi trả verdict AC/WA/CE/TLE/MLE/RE qua grading.events. API là nơi duy nhất ghi verdict, khóa submission, lưu kết quả/notification rồi phát WS sau commit. V1 không tính điểm từng test; Run/regrade chưa triển khai.
+- Sandbox: no-network, read-only root, tmpfs giới hạn, non-root, CPU/RAM/PID/time/output caps. Worker điều phối được phép gọi Docker daemon; chỉ job runner mới chạy code sinh viên, không mount Docker socket hay secrets vào sandbox. Môi trường production đặt worker trên node riêng.
 - Queue ưu tiên thi > bài tập > run thử; worker có thể scale riêng.
 
 ## 8. Triển khai

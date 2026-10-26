@@ -1,23 +1,33 @@
 import { submissionResult } from "./submission-result";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import { errorText } from "@/lib/error-messages";
 import { queryKeys } from "@/lib/query-keys";
+import { useWebSocket } from "@/lib/ws";
+import { useAuthStore } from "@/stores/auth";
+import { AssignmentCodePanel } from "@/features/assignments/assignment-code-panel";
 import { assignmentWindow } from "@/features/assignments/submission-window";
 import type { AssignmentDetails, AssignmentSubmission } from "@/types/api";
 
 export function AssignmentPracticePanel({ details }: { details: AssignmentDetails }) {
   const item = details.assignment;
   const client = useQueryClient();
+  const token = useAuthStore((state) => state.accessToken);
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [busyId, setBusyId] = useState<number | null>(null);
   const history = useQuery({
     queryKey: queryKeys.assignments.submissions(item.id),
     queryFn: () => api.get<AssignmentSubmission[]>("/me/submissions", { assignment_id: item.id }),
   });
+  const refreshSubmissions = useCallback((type: string) => {
+    if (!type.startsWith("submission.")) return;
+    void client.invalidateQueries({ queryKey: queryKeys.assignments.submissions(item.id) });
+    void client.invalidateQueries({ queryKey: ["submission"] });
+  }, [client, item.id]);
+  useWebSocket(token, { onMessage: refreshSubmissions });
   const window = assignmentWindow(item);
   async function submit(questionId: number) {
     setBusyId(questionId);
@@ -41,7 +51,8 @@ export function AssignmentPracticePanel({ details }: { details: AssignmentDetail
         {question.type === "mcq" ? <>
           <div className="space-y-2">{question.options.map((option) => <label key={option.id} className="flex cursor-pointer items-start gap-2 rounded-lg border p-3 text-sm hover:bg-muted/50"><input type="radio" name={`assignment-${question.question_id}`} checked={answers[question.question_id] === option.id} disabled={locked || busyId === question.question_id} onChange={() => setAnswers((current) => ({ ...current, [question.question_id]: option.id }))} /><span>{option.content}</span></label>)}</div>
           <Button size="sm" disabled={history.isPending || locked || window === "closed" || busyId === question.question_id} onClick={() => submit(question.question_id)}>{busyId === question.question_id ? "Đang nộp…" : locked ? "Đã hết lượt nộp" : "Nộp câu này"}</Button>
-        </> : <div className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">Câu lập trình đã lưu trong bài; chạy thử và chấm tự động sẽ khả dụng khi worker sandbox được triển khai.</div>}
+        </> : <AssignmentCodePanel assignment={item} question={question} attempts={attempts}
+          locked={locked || history.isPending || history.isError} window={window} />}
         {attempts.length ? <p className="text-xs text-muted-foreground">Lịch sử: {attempts.map((row) => `lượt ${row.attempt_no}: ${submissionResult(row)}`).join(" · ")}</p> : null}
       </fieldset>;
     })}

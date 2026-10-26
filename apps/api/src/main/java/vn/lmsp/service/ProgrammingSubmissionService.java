@@ -29,7 +29,7 @@ public class ProgrammingSubmissionService {
     private final UserRepository users;
     private final QuestionVersionService snapshots;
     private final SubmissionPolicy policy;
-    private final GradingScoreService scores;
+    private final ProgrammingProblemValidator problems;
     private final GradingMapper mapper;
     private final AuditService audit;
 
@@ -52,7 +52,7 @@ public class ProgrammingSubmissionService {
         if (link.getQuestionVersion() == null || link.getQuestion().getType() != QuestionType.programming)
             throw invalid("Câu hỏi không phải đề lập trình đã xuất bản");
         var snapshot = snapshots.read(link.getQuestionVersion());
-        try { scores.validateProblem(snapshot); } catch (IllegalArgumentException error) { throw invalid(error.getMessage()); }
+        try { problems.validateProblem(snapshot); } catch (IllegalArgumentException error) { throw invalid(error.getMessage()); }
         if (snapshot.programming().allowed_languages() == null || !snapshot.programming().allowed_languages().contains(body.language()))
             throw invalid("Ngôn ngữ không được phép trong phiên bản đề này");
         var now = UtcTime.now();

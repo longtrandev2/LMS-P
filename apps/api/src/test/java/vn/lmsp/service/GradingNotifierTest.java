@@ -22,7 +22,8 @@ class GradingNotifierTest {
         submission.startGrading();
         var sockets = mock(GradingWebSocketHandler.class);
         var notifier = new GradingNotifier(sockets, new ObjectMapper());
-        var payload = new WorkerPayload("job", 90L, SubmissionStatus.grading, false, null, null, null, null);
+        var payload = new WorkerPayload("12345678-1234-1234-1234-123456789abc", 90L,
+                SubmissionStatus.grading, null, false, null, null, null);
         TransactionSynchronizationManager.initSynchronization();
         try {
             notifier.afterCommit(submission, payload);

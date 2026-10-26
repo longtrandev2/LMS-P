@@ -32,7 +32,7 @@ class ProgrammingSubmissionServiceTest {
         link.pin(version(link.getQuestion(), 1, programmingSnapshot()));
         var snapshots = new QuestionVersionService(mock(QuestionVersionRepository.class), mock(QuestionReadService.class), new ObjectMapper());
         service = new ProgrammingSubmissionService(access, links, submissions, jobs, users, snapshots,
-                new SubmissionPolicy(), new GradingScoreService(), new GradingMapper(), mock(AuditService.class));
+                new SubmissionPolicy(), new ProgrammingProblemValidator(), new GradingMapper(), mock(AuditService.class));
         when(access.studentAssignment(50L, 42L, true)).thenReturn(assignment);
         when(links.findByAssignment_IdAndQuestion_Id(50L, 100L)).thenReturn(Optional.of(link));
         when(users.findById(42L)).thenReturn(Optional.of(user(42, "student")));
