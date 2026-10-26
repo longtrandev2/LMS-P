@@ -19,8 +19,9 @@ public class MaterialController {
     public MaterialController(MaterialService service) { this.service=service; }
     @GetMapping("/classes/{classId}/materials")
     public Page list(@PathVariable Long classId, @AuthenticationPrincipal String actor, Authentication auth,
+                     @RequestParam(required=false) String q, @RequestParam(required=false) String sort,
                      @RequestParam(defaultValue="1") int page, @RequestParam(defaultValue="20") int limit) {
-        return service.list(classId,Long.valueOf(actor),privileged(auth),page,checkedLimit(limit));
+        return service.list(classId,Long.valueOf(actor),privileged(auth),q,sort,page,checkedLimit(limit));
     }
     @PostMapping(value="/classes/{classId}/materials",consumes=MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.CREATED)

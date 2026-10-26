@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import vn.lmsp.common.LmsException;
+import vn.lmsp.common.SortParam;
 import vn.lmsp.dto.MaterialDtos.*;
 import vn.lmsp.enums.EnrollmentStatus;
 import vn.lmsp.model.*;
@@ -19,6 +20,7 @@ import java.util.*;
 @Service
 public class MaterialService {
     private static final Map<String,String> TYPES=Map.of(".pdf","pdf",".doc","doc",".docx","doc",".ppt","slide",".pptx","slide",".zip","archive");
+    private static final Map<String,String> SORT_FIELDS=Map.of("title","title","created_at","createdAt","size_bytes","sizeBytes");
     private final MaterialRepository materials; private final ClassRepository classes; private final EnrollmentRepository enrollments;
     private final UserRepository users; private final NotificationService notifications; private final Path root; private final long maxBytes;
     private final AuditService audit;
@@ -28,9 +30,10 @@ public class MaterialService {
         this.materials=materials; this.classes=classes; this.enrollments=enrollments; this.users=users;
         this.notifications=notifications; this.audit=audit; this.root=Path.of(root).toAbsolutePath().normalize(); this.maxBytes=maxMb*1024L*1024L;
     }
-    @Transactional(readOnly=true) public Page list(Long classId, Long userId, boolean privileged, int page, int limit) {
+    @Transactional(readOnly=true) public Page list(Long classId, Long userId, boolean privileged, String q, String sort, int page, int limit) {
         LmsClass clazz=clazz(classId); checkAccess(clazz, userId, privileged);
-        var result=materials.findByLmsClass_IdOrderByCreatedAtDescIdDesc(classId, PageRequest.of(page-1,limit));
+        var order=SortParam.parse(sort, SORT_FIELDS, SortParam.desc("createdAt","id"));
+        var result=materials.search(classId, q==null || q.isBlank() ? null : q, PageRequest.of(page-1,limit,order));
         return new Page(result.getContent().stream().map(MaterialService::view).toList(), result.getTotalElements(), page, limit);
     }
     @Transactional public Item createLink(Long classId, Long actorId, String title, String description, String url) {
