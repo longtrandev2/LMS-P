@@ -1,11 +1,11 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState, ErrorState } from "@/components/state-blocks";
 import { AssignmentFormDialog } from "@/features/assignments/assignment-form-dialog";
-import { AssignmentStudentDialog } from "@/features/assignments/assignment-student-dialog";
 import { AssignmentSubmissionsDialog } from "@/features/assignments/assignment-submissions-dialog";
 import { assignmentWindow } from "@/features/assignments/submission-window";
 import { api } from "@/lib/api";
@@ -22,7 +22,6 @@ export function AssignmentsSection({ classId, canManage, canTake = false }: {
   const client = useQueryClient();
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<AssignmentDetails | null>(null);
-  const [studentItem, setStudentItem] = useState<AssignmentSummary | null>(null);
   const [submissionItem, setSubmissionItem] = useState<AssignmentSummary | null>(null);
   const [loadingId, setLoadingId] = useState<number | null>(null);
   const list = useQuery({
@@ -65,7 +64,7 @@ export function AssignmentsSection({ classId, canManage, canTake = false }: {
           <p className="mt-2 text-xs text-muted-foreground">{item.question_count} câu · {item.total_points} điểm{item.available_from ? ` · Mở ${formatUtcDateTime(item.available_from)}` : ""} · Hạn {formatUtcDateTime(item.due_at)}</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          {canTake ? <Button size="sm" disabled={assignmentWindow(item) === "upcoming"} onClick={() => setStudentItem(item)}>{assignmentWindow(item) === "upcoming" ? "Chưa mở" : "Mở bài"}</Button> : item.is_published ? <>
+          {canTake ? assignmentWindow(item) === "upcoming" ? <Button size="sm" disabled>Chưa mở</Button> : <Button size="sm" asChild><Link to={`/assignments/${item.id}/take`}>Mở bài</Link></Button> : item.is_published ? <>
             {canManage ? <Button size="sm" variant="outline" disabled={loadingId === item.id} onClick={() => edit(item)}>Điều chỉnh</Button> : null}
             <Button size="sm" variant="outline" onClick={() => setSubmissionItem(item)}>Bài nộp</Button>
           </> : canManage ? <>
@@ -77,7 +76,6 @@ export function AssignmentsSection({ classId, canManage, canTake = false }: {
       </CardContent></Card>)}
     </div>
     {formOpen ? <AssignmentFormDialog classId={classId} details={editing} onOpenChange={setFormOpen} onSaved={invalidate} /> : null}
-    {studentItem ? <AssignmentStudentDialog assignment={studentItem} onOpenChange={(open) => !open && setStudentItem(null)} /> : null}
     {submissionItem ? <AssignmentSubmissionsDialog assignment={submissionItem} onOpenChange={(open) => !open && setSubmissionItem(null)} /> : null}
   </section>;
 }

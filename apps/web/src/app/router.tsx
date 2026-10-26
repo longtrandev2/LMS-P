@@ -11,6 +11,7 @@ import { MyClassMaterialsPage } from "@/features/me/my-class-materials-page";
 import { AuditLogsPage } from "@/features/audit/audit-logs-page";
 import { ProfilePage } from "@/features/users/profile-page";
 import { QuestionsPage } from "@/features/questions/questions-page";
+import { AssignmentAttemptRoute } from "@/features/assignments/assignment-attempt-page";
 import { AppShell } from "@/components/app-shell";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
 
@@ -28,6 +29,7 @@ export function AppRouter() {
   return <Routes>
     <Route path="/" element={<RootPage />} />
     <Route path="/login" element={<LoginPage />} />
+    <Route path="/assignments/:id/take" element={<AssignmentAttemptRoute />} />
     <Route element={<ProtectedLayout />}>
       <Route path="/admin/users" element={<UsersPage />} />
       <Route path="/admin/academics" element={<AdminAcademicsPage />} />

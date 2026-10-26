@@ -1,4 +1,3 @@
-import { submissionResult } from "./submission-result";
 import { useCallback, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -9,10 +8,14 @@ import { queryKeys } from "@/lib/query-keys";
 import { useWebSocket } from "@/lib/ws";
 import { useAuthStore } from "@/stores/auth";
 import { AssignmentCodePanel } from "@/features/assignments/assignment-code-panel";
+import { AssignmentQuestionClassification } from "@/features/assignments/assignment-question-classification";
+import { AssignmentSubmissionHistory } from "@/features/assignments/assignment-submission-history";
 import { assignmentWindow } from "@/features/assignments/submission-window";
 import type { AssignmentDetails, AssignmentSubmission } from "@/types/api";
 
-export function AssignmentPracticePanel({ details }: { details: AssignmentDetails }) {
+export function AssignmentPracticePanel({ details, windowStatus }: {
+  details: AssignmentDetails; windowStatus?: ReturnType<typeof assignmentWindow>;
+}) {
   const item = details.assignment;
   const client = useQueryClient();
   const token = useAuthStore((state) => state.accessToken);
@@ -28,7 +31,7 @@ export function AssignmentPracticePanel({ details }: { details: AssignmentDetail
     void client.invalidateQueries({ queryKey: ["submission"] });
   }, [client, item.id]);
   useWebSocket(token, { onMessage: refreshSubmissions });
-  const window = assignmentWindow(item);
+  const window = windowStatus ?? assignmentWindow(item);
   async function submit(questionId: number) {
     setBusyId(questionId);
     try {
@@ -45,15 +48,16 @@ export function AssignmentPracticePanel({ details }: { details: AssignmentDetail
     {details.questions.map((question, index) => {
       const attempts = history.data?.filter((row) => row.question_id === question.question_id) ?? [];
       const locked = item.max_attempts != null && attempts.length >= item.max_attempts;
-      return <fieldset key={question.question_id} className="space-y-3 rounded-xl border p-4">
+      return <fieldset id={`question-${question.question_id}`} data-question-id={question.question_id} key={question.question_id} className="scroll-mt-24 space-y-3 rounded-xl border bg-card p-5 shadow-sm sm:p-6">
         <legend className="px-1 text-sm font-semibold">Câu {index + 1} · {question.points} điểm</legend>
+        <AssignmentQuestionClassification question={question} />
         <p className="whitespace-pre-wrap text-sm">{question.content}</p>
         {question.type === "mcq" ? <>
           <div className="space-y-2">{question.options.map((option) => <label key={option.id} className="flex cursor-pointer items-start gap-2 rounded-lg border p-3 text-sm hover:bg-muted/50"><input type="radio" name={`assignment-${question.question_id}`} checked={answers[question.question_id] === option.id} disabled={locked || busyId === question.question_id} onChange={() => setAnswers((current) => ({ ...current, [question.question_id]: option.id }))} /><span>{option.content}</span></label>)}</div>
           <Button size="sm" disabled={history.isPending || locked || window === "closed" || busyId === question.question_id} onClick={() => submit(question.question_id)}>{busyId === question.question_id ? "Đang nộp…" : locked ? "Đã hết lượt nộp" : "Nộp câu này"}</Button>
         </> : <AssignmentCodePanel assignment={item} question={question} attempts={attempts}
           locked={locked || history.isPending || history.isError} window={window} />}
-        {attempts.length ? <p className="text-xs text-muted-foreground">Lịch sử: {attempts.map((row) => `lượt ${row.attempt_no}: ${submissionResult(row)}`).join(" · ")}</p> : null}
+        <AssignmentSubmissionHistory attempts={attempts} />
       </fieldset>;
     })}
     {history.isError ? <p className="text-sm text-destructive">Không tải được lịch sử nộp bài.</p> : null}

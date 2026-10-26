@@ -2,7 +2,7 @@
 
 | Thuộc tính | Giá trị |
 |---|---|
-| Phiên bản | 1.7 — 2026-10-25 |
+| Phiên bản | 1.8 — 2026-10-26 |
 | Trạng thái | Baseline (spec-first, chuẩn đối chiếu cho DB/API/kiến trúc/plan) |
 | Nguồn требования | Subject gốc của giảng viên (English, bản gốc trong repo docs) |
 | Tham khảo mở rộng | `LMS – Phân tích nghiệp vụ và kiến trúc công nghệ.md` — CHỈ tham khảo, phạm vi lấy theo Subject + tài liệu này |
@@ -124,7 +124,7 @@ Giao diện admin có khu quản lý học phần và khu quản lý lớp riên
 | FR-ASG-02 | M | Chính sách: available_from, due_at, max_attempts (NULL = không giới hạn), nộp muộn (late_due_at + phạt %), score_policy (best/last), hạng mục điểm (quiz/assignment/midterm/final). Các mốc thời gian được chuẩn hóa và kiểm tra theo UTC; giao diện nhận/hiển thị giờ địa phương. Với quiz, lượt và best/last áp dụng cho **toàn bài**; với bài khác, áp dụng cho **từng câu** |
 | FR-ASG-03 | M | Làm quiz: nộp đáp án của cả bài trong một request có Idempotency-Key; câu bỏ trống được 0 điểm; server lưu một lượt quiz cùng các đáp án trong một transaction, chấm MCQ đồng bộ và trả điểm của lượt ngay |
 | FR-ASG-04 | M | Server kiểm tra hạn nộp + lượt nộp theo BR3; quá hạn từ chối hoặc đánh dấu muộn trừ %. Chỉ nộp chính thức mới tính lượt; mở đề và Run thử test công khai không tính lượt |
-| FR-ASG-05 | M | Student xem lịch sử lượt quiz hoặc lần nộp từng câu, kết quả từng test công khai, điểm |
+| FR-ASG-05 | M | Student xem lịch sử lượt quiz hoặc lần nộp từng câu, kết quả từng test công khai, điểm. Mở bài trên màn hình làm bài riêng; đồng hồ đếm ngược tới hạn đang áp dụng (`due_at` hoặc `late_due_at`), danh sách câu bên cạnh phải nhóm theo loại trắc nghiệm/lập trình, hiển thị chủ đề và độ khó. Quiz vẫn nộp cả bài một lần; bài khác nộp từng câu |
 | FR-ASG-06 | S | Lecturer xem danh sách bài nộp theo bài/lớp |
 | FR-ASG-07 | M | Sau khi xuất bản, giảng viên phụ trách vẫn có thể sửa tiêu đề, mô tả, thời điểm mở, hạn nộp và chính sách nộp muộn; nhập lý do và ghi audit before/after. Không được thay hạng mục, câu hỏi, phiên bản câu hỏi, điểm, thứ tự, số lượt hoặc cách tính điểm. Thay đổi chỉ ảnh hưởng các lượt nộp tiếp theo; các bài đã nộp giữ nguyên dữ liệu và điểm đã ghim |
 

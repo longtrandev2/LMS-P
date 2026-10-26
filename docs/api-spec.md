@@ -9,7 +9,7 @@
 ## 1. Quy ước chung
 
 - **Auth:** header `Authorization: Bearer <access_token>` (trừ login/refresh). WS: `GET /ws?token=...`.
-- **Format:** JSON, UTF-8. Datetime ISO 8601 UTC. Assignment schedule fields (`available_from`, `due_at`, `late_due_at`) are UTC instants; because their Java DTO type is `LocalDateTime`, the API serializes them without a zone suffix and clients must interpret them as UTC. Convert browser-local `datetime-local` values to UTC before sending, and convert UTC values back to local time for display/editing.
+- **Format:** JSON, UTF-8. Datetime ISO 8601 UTC. Assignment schedule fields (`available_from`, `due_at`, `late_due_at`) and notification `created_at` are UTC instants; because their Java DTO type is `LocalDateTime`, the API serializes them without a zone suffix and clients must interpret them as UTC. Convert browser-local `datetime-local` values to UTC before sending, and convert UTC values back to local time for display/editing.
 - **Phân trang:** `?page=1&limit=20` → response `{items, total, page, limit}`. Limit max 100.
 - **Search/sort (mọi route list):** `?q=` (search theo trường nghiệp vụ của từng resource — ghi rõ ở route), `?sort=field` / `?sort=-field` (tiền tố `-` = giảm dần; chỉ các trường cho phép của từng resource). Server whitelist trường sort, sai tên → 400 `VALIDATION_ERROR`.
 - **Envelope lỗi thống nhất:**
