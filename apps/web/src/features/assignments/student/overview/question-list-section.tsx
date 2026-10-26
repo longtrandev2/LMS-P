@@ -1,0 +1,31 @@
+import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState, ErrorState } from "@/components/state-blocks";
+import { useAuthStore } from "@/stores/auth";
+import type { AssignmentDetails } from "@/types/api";
+import { useMySubmissions } from "../use-student-data";
+import { ObjectiveQuestionCard } from "./objective-question-card";
+import { ProgrammingQuestionCard } from "./programming-question-card";
+
+/** Bài thường (không phải quiz): danh sách câu, nộp từng câu. */
+export function QuestionListSection({ details }: { details: AssignmentDetails }) {
+  const item = details.assignment;
+  const userId = useAuthStore((state) => state.user?.id ?? null);
+  const history = useMySubmissions(item.id);
+
+  if (details.questions.length === 0) return <EmptyState title="Bài chưa có câu hỏi" description="Giảng viên chưa thêm câu hỏi cho bài này." />;
+  if (history.isPending) return <div className="space-y-3"><Skeleton className="h-40 rounded-xl" /><Skeleton className="h-40 rounded-xl" /></div>;
+  if (history.isError) return <ErrorState error={history.error} onRetry={() => void history.refetch()} />;
+
+  return <section aria-labelledby="question-list-title" className="space-y-3">
+    <div className="flex flex-wrap items-baseline justify-between gap-2">
+      <h2 id="question-list-title" className="text-base font-semibold">Câu hỏi</h2>
+      <p className="text-xs text-muted-foreground">Nộp từng câu; câu chưa nộp tính 0 điểm.</p>
+    </div>
+    {details.questions.map((question, index) => {
+      const submissions = history.data.filter((row) => row.question_id === question.question_id);
+      return question.type === "programming"
+        ? <ProgrammingQuestionCard key={question.question_id} item={item} question={question} index={index} submissions={submissions} />
+        : <ObjectiveQuestionCard key={question.question_id} item={item} question={question} index={index} submissions={submissions} userId={userId} />;
+    })}
+  </section>;
+}
