@@ -61,7 +61,7 @@ export function HeroSection({ ctaHref, ctaLabel }: HeroSectionProps) {
             <Button
               asChild
               size="lg"
-              className="bg-(--gold) text-white hover:bg-(--gold)/90"
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
               <Link to={ctaHref}>
                 {ctaLabel}
