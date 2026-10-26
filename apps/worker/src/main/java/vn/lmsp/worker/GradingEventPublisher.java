@@ -1,59 +1,44 @@
 package vn.lmsp.worker;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.concurrent.TimeUnit;
-import org.springframework.amqp.core.MessageBuilder;
-import org.springframework.amqp.core.MessageDeliveryMode;
-import org.springframework.amqp.core.MessageProperties;
-import org.springframework.amqp.rabbit.connection.CorrelationData;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import java.util.List;
 import org.springframework.stereotype.Component;
 
+/** Event `submission.status` / `submission.graded` — docs/message-contracts.md §3. */
 @Component
 public class GradingEventPublisher {
-    private final RabbitTemplate rabbit;
-    private final ObjectMapper json;
+    private static final String ROUTING_KEY = "grading.events";
+    private final ConfirmedPublisher publisher;
 
-    public GradingEventPublisher(RabbitTemplate rabbit, ObjectMapper json) {
-        this.rabbit = rabbit;
-        this.json = json;
-    }
+    public GradingEventPublisher(ConfirmedPublisher publisher) { this.publisher = publisher; }
 
     public void progress(JobMessage job) {
-        publish("status-" + job.job_id(), new Event("submission.status",
-                new Payload(job.job_id(), job.submission_id(), "grading", null, false, null, null, null)));
+        publisher.publish(ROUTING_KEY, "status-" + job.job_id(), new Event("submission.status",
+                new StatusPayload(job.job_id(), job.submission_id(), "grading")));
     }
 
-    public void completed(JobMessage job, GradeOutcome outcome) {
-        publish("graded-" + job.job_id(), new Event("submission.graded",
-                new Payload(job.job_id(), job.submission_id(), "completed", outcome.verdict().name(),
-                        outcome.compileError(), outcome.compileOutput(), outcome.errorMessage(), outcome.durationMs())));
+    public void completed(JobMessage job, ExecutionResult result) {
+        publisher.publish(ROUTING_KEY, "graded-" + job.job_id(), new Event("submission.graded", payload(job, result)));
     }
 
-    public void failed(JobMessage job, String error) {
-        publish("failed-" + job.job_id(), new Event("submission.graded",
-                new Payload(job.job_id(), job.submission_id(), "failed", "SYSTEM_ERROR", false,
-                        null, error, 0)));
+    public void failed(JobMessage job, String error, int durationMs) {
+        publisher.publish(ROUTING_KEY, "failed-" + job.job_id(), new Event("submission.graded",
+                payload(job, ExecutionResult.failure(error, durationMs))));
     }
 
-    private void publish(String correlationId, Event event) {
-        try {
-            var message = MessageBuilder.withBody(json.writeValueAsBytes(event))
-                    .setContentType(MessageProperties.CONTENT_TYPE_JSON)
-                    .setDeliveryMode(MessageDeliveryMode.PERSISTENT)
-                    .setMessageId(correlationId).build();
-            var correlation = new CorrelationData(correlationId);
-            rabbit.send("lms", "grading.events", message, correlation);
-            var confirm = correlation.getFuture().get(5, TimeUnit.SECONDS);
-            if (!confirm.isAck() || correlation.getReturned() != null)
-                throw new IllegalStateException("Grading event was not routed and confirmed");
-        } catch (Exception error) {
-            if (error instanceof InterruptedException) Thread.currentThread().interrupt();
-            throw new IllegalStateException("Could not publish grading event", error);
-        }
+    static GradedPayload payload(JobMessage job, ExecutionResult result) {
+        var tests = result.tests().stream()
+                .map(test -> new TestPayload(test.position(), test.verdict().name(), test.timeMs(), test.memoryKb(),
+                        OutputText.truncate(test.output(), OutputText.EVENT_OUTPUT_BYTES)))
+                .toList();
+        return new GradedPayload(job.job_id(), job.submission_id(), result.failed() ? "failed" : "completed",
+                result.verdict().name(), result.compileError(), result.compileOutput(), result.errorMessage(),
+                result.durationMs(), result.testsTotal(), result.testsPassed(), result.failedTest(), tests);
     }
 
-    private record Event(String event, Payload payload) { }
-    private record Payload(String job_id, Long submission_id, String status, String verdict,
-            boolean compile_error, String compile_output, String error_message, Integer duration_ms) { }
+    record Event(String event, Object payload) { }
+    record StatusPayload(String job_id, Long submission_id, String status) { }
+    record GradedPayload(String job_id, Long submission_id, String status, String verdict, boolean compile_error,
+            String compile_output, String error_message, Integer duration_ms, Integer tests_total,
+            Integer tests_passed, Integer failed_test, List<TestPayload> tests) { }
+    record TestPayload(int position, String verdict, int time_ms, Integer memory_kb, String output) { }
 }

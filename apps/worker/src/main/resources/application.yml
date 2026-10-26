@@ -32,4 +32,4 @@ spring:
 lms:
   grading:
     runner-image: ${GRADER_IMAGE:lmsp-grader:local}
-    job-timeout-seconds: ${GRADING_JOB_TIMEOUT_SECONDS:120}
+    # Thời gian job tổng tính theo bộ test: max(60 s, Σ giới hạn test thực × 1,5 + 30 s).
