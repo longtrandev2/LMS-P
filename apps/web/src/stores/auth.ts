@@ -40,6 +40,6 @@ export function hasRole(
 export function homePathFor(user: CurrentUser | null): string {
   if (hasRole(user, "admin")) return "/admin/users";
   if (hasRole(user, "lecturer")) return "/courses";
-  if (hasRole(user, "student")) return "/me/classes";
+  if (hasRole(user, "student")) return "/me";
   return "/login";
 }
