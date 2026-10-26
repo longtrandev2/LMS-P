@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.lmsp.common.LmsException;
+import vn.lmsp.common.SortParam;
 import vn.lmsp.dto.NotificationDtos.*;
 import vn.lmsp.model.Notification;
 import vn.lmsp.model.User;
@@ -15,14 +16,16 @@ import java.util.Map;
 
 @Service
 public class NotificationService {
+    private static final Map<String,String> SORT_FIELDS=Map.of("created_at","createdAt");
     private final NotificationRepository notifications;
     private final UserRepository users;
     private final ObjectMapper json;
     public NotificationService(NotificationRepository notifications, UserRepository users, ObjectMapper json) {
         this.notifications=notifications; this.users=users; this.json=json;
     }
-    @Transactional(readOnly=true) public Page list(Long userId, Boolean read, int page, int limit) {
-        var request=PageRequest.of(page-1, limit);
+    @Transactional(readOnly=true) public Page list(Long userId, Boolean read, String sort, int page, int limit) {
+        var order=SortParam.parse(sort, SORT_FIELDS, SortParam.desc("createdAt","id"));
+        var request=PageRequest.of(page-1, limit, order);
         var result=read == null ? notifications.findByUser_Id(userId, request) : notifications.findByUser_IdAndRead(userId, read, request);
         return new Page(result.getContent().stream().map(this::view).toList(), result.getTotalElements(), page, limit);
     }

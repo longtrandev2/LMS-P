@@ -5,24 +5,29 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import vn.lmsp.common.LmsException;
+import vn.lmsp.common.SortParam;
 import vn.lmsp.dto.UserManagementDtos.*;
 import vn.lmsp.enums.UserStatus;
 import vn.lmsp.model.*;
 import vn.lmsp.repository.*;
+import java.nio.file.Path;
 import java.security.SecureRandom;
 import java.util.*;
 
 @Service
 public class UserManagementService {
-    private final UserRepository users; private final RoleRepository roles; private final RefreshTokenRepository tokens; private final PasswordEncoder passwords; private final AuditService audit;
+    private static final Map<String,String> USER_SORT = Map.of("full_name","fullName","created_at","createdAt","last_login_at","lastLoginAt");
+    private final UserRepository users; private final RoleRepository roles; private final RefreshTokenRepository tokens; private final PasswordEncoder passwords; private final AuditService audit; private final AvatarStorage avatars;
     private final SecureRandom random=new SecureRandom(); private static final String ALPHABET="abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-    public UserManagementService(UserRepository users,RoleRepository roles,RefreshTokenRepository tokens,PasswordEncoder passwords,AuditService audit) {
-        this.users=users; this.roles=roles; this.tokens=tokens; this.passwords=passwords; this.audit=audit;
+    public UserManagementService(UserRepository users,RoleRepository roles,RefreshTokenRepository tokens,PasswordEncoder passwords,AuditService audit,AvatarStorage avatars) {
+        this.users=users; this.roles=roles; this.tokens=tokens; this.passwords=passwords; this.audit=audit; this.avatars=avatars;
     }
-    @Transactional(readOnly=true) public Page<UserView> list(String role,String status,String q,int page,int limit) {
+    @Transactional(readOnly=true) public Page<UserView> list(String role,String status,String q,String sort,int page,int limit) {
         UserStatus value=status==null ? null : parseStatus(status);
-        var result=users.search(blankNull(role),value,blankNull(q),PageRequest.of(page-1,limit));
+        var order=SortParam.parse(sort,USER_SORT,SortParam.asc("id"));
+        var result=users.search(blankNull(role),value,blankNull(q),PageRequest.of(page-1,limit,order));
         return new Page<>(result.getContent().stream().map(UserManagementService::view).toList(),result.getTotalElements(),page,limit);
     }
     @Transactional public UserWithTempPassword create(CreateUser input,Long actorId) {
@@ -50,12 +55,33 @@ public class UserManagementService {
     }
     @Transactional public UserView updateMe(Long id,UpdateMe input) {
         User user=user(id); Map<String,Object> old=snapshot(user); user.updateProfile(input.full_name(),null);
+        if(input.phone()!=null) user.updatePhone(input.phone());
         if(input.new_password()!=null) {
             if(input.current_password()==null || !passwords.matches(input.current_password(),user.getPasswordHash())) throw invalid("Mật khẩu hiện tại không đúng");
             user.setPasswordHash(passwords.encode(input.new_password())); revoke(user);
         }
         audit.record(id,"user.update","user",id,old,snapshot(user));
         return view(user);
+    }
+    /** Upload ảnh đại diện (FR-AUTH-03): thay file cũ, cập nhật avatar_path. */
+    @Transactional public UserView uploadAvatar(Long id, MultipartFile file) {
+        User user=user(id); String oldPath=user.getAvatarPath();
+        String relative=avatars.store(id,file);
+        if(!relative.equals(oldPath)) avatars.delete(oldPath);
+        user.setAvatarPath(relative);
+        return view(user);
+    }
+    @Transactional public UserView deleteAvatar(Long id) {
+        User user=user(id); avatars.delete(user.getAvatarPath()); user.setAvatarPath(null);
+        return view(user);
+    }
+    /** Đường dẫn file avatar để stream; 404 nếu chưa có hoặc file bị mất. */
+    @Transactional(readOnly=true) public Path avatarFile(Long id) {
+        User user=user(id);
+        if(user.getAvatarPath()==null) throw notFound("Người dùng chưa có ảnh đại diện");
+        Path path=avatars.resolve(user.getAvatarPath());
+        if(!java.nio.file.Files.isRegularFile(path)) throw notFound("Không tìm thấy ảnh đại diện");
+        return path;
     }
     @Transactional public int revokeSessions(Long id,Long actorId) {
         user(id); var active=tokens.findAllByUser_IdAndRevokedAtIsNull(id); active.forEach(RefreshToken::revoke);
@@ -86,7 +112,7 @@ public class UserManagementService {
         return new ImportResult(created,skipped,errors,tempPasswords);
     }
     private static String value(List<String> row,int index) { return index>=row.size()?"":row.get(index).trim(); }
-    private static Map<String,Object> snapshot(User u) { Map<String,Object> value=new LinkedHashMap<>(); value.put("full_name",u.getFullName()); value.put("student_code",u.getStudentCode()); value.put("status",u.getStatus().name()); value.put("roles",u.getRoles().stream().map(Role::getName).sorted().toList()); return value; }
+    private static Map<String,Object> snapshot(User u) { Map<String,Object> value=new LinkedHashMap<>(); value.put("full_name",u.getFullName()); value.put("phone",u.getPhone()); value.put("student_code",u.getStudentCode()); value.put("status",u.getStatus().name()); value.put("roles",u.getRoles().stream().map(Role::getName).sorted().toList()); return value; }
     private static List<String> parseCsvLine(String line) {
         List<String> cells=new ArrayList<>(); StringBuilder cell=new StringBuilder(); boolean quoted=false;
         for(int i=0;i<line.length();i++) { char c=line.charAt(i);
@@ -107,9 +133,10 @@ public class UserManagementService {
         Set<Role> resolved=new HashSet<>(); for(String name:distinct) resolved.add(role(name)); return resolved;
     }
     private String generatePassword() { StringBuilder value=new StringBuilder(); for(int i=0;i<12;i++) value.append(ALPHABET.charAt(random.nextInt(ALPHABET.length()))); return value.toString(); }
-    private static UserView view(User u) { return new UserView(u.getId(),u.getEmail(),u.getFullName(),u.getStudentCode(),u.getStatus().name(),u.getLastLoginAt(),u.getCreatedAt(),u.getRoles().stream().map(Role::getName).sorted().toList()); }
+    private static UserView view(User u) { return new UserView(u.getId(),u.getEmail(),u.getFullName(),u.getStudentCode(),u.getPhone(),u.getStatus().name(),u.getLastLoginAt(),u.getCreatedAt(),u.getRoles().stream().map(Role::getName).sorted().toList(),u.getAvatarPath()==null ? null : "/api/v1/users/"+u.getId()+"/avatar"); }
     private static UserStatus parseStatus(String status) { try { return UserStatus.valueOf(status); } catch(Exception e) { throw invalid("Trạng thái không hợp lệ"); } }
     private static String blankNull(String value) { return value==null || value.isBlank() ? null : value; }
     private static LmsException invalid(String text) { return new LmsException("VALIDATION_ERROR",text,HttpStatus.BAD_REQUEST,null); }
     private static LmsException conflict(String text) { return new LmsException("CONFLICT",text,HttpStatus.CONFLICT,null); }
+    private static LmsException notFound(String text) { return new LmsException("NOT_FOUND",text,HttpStatus.NOT_FOUND,null); }
 }

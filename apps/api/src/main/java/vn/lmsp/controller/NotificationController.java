@@ -12,8 +12,9 @@ public class NotificationController {
     private final NotificationService service;
     public NotificationController(NotificationService service) { this.service=service; }
     @GetMapping public Page list(@AuthenticationPrincipal String actor, @RequestParam(required=false) Boolean is_read,
+                                @RequestParam(required=false) String sort,
                                 @RequestParam(defaultValue="1") int page, @RequestParam(defaultValue="20") int limit) {
-        return service.list(Long.valueOf(actor), is_read, page, checkedLimit(limit));
+        return service.list(Long.valueOf(actor), is_read, sort, page, checkedLimit(limit));
     }
     @PatchMapping("/{id}/read") public Item read(@AuthenticationPrincipal String actor, @PathVariable Long id) {
         return service.markRead(Long.valueOf(actor), id);
