@@ -7,9 +7,14 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import vn.lmsp.dto.QuestionDrawDtos.*;
 import vn.lmsp.dto.QuestionDtos.*;
+import vn.lmsp.dto.RunDtos.DraftCheckInput;
+import vn.lmsp.dto.RunDtos.RunAccepted;
 import vn.lmsp.enums.QuestionDifficulty;
 import vn.lmsp.enums.QuestionType;
+import vn.lmsp.service.QuestionCheckService;
+import vn.lmsp.service.QuestionDrawService;
 import vn.lmsp.service.QuestionService;
 import java.util.List;
 
@@ -19,6 +24,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class QuestionController {
     private final QuestionService service;
+    private final QuestionDrawService draws;
+    private final QuestionCheckService checks;
 
     @GetMapping
     public QuestionPage list(@AuthenticationPrincipal String actor, Authentication auth,
@@ -52,9 +59,17 @@ public class QuestionController {
             @AuthenticationPrincipal String actor, Authentication auth) {
         return service.replaceCases(id, body, Long.valueOf(actor), isAdmin(auth));
     }
-    @PostMapping("/{id}/verify") @PreAuthorize("hasRole('LECTURER')")
-    public void verify(@PathVariable Long id, @AuthenticationPrincipal String actor, Authentication auth) {
-        service.requireVerifyOwner(id, Long.valueOf(actor), isAdmin(auth));
+    @PostMapping("/draw") @PreAuthorize("hasRole('LECTURER')")
+    public DrawResult draw(@Valid @RequestBody DrawRequest body, @AuthenticationPrincipal String actor, Authentication auth) {
+        return draws.draw(body, Long.valueOf(actor), isAdmin(auth));
+    }
+    @PostMapping("/{id}/verify") @ResponseStatus(HttpStatus.ACCEPTED) @PreAuthorize("hasRole('LECTURER')")
+    public RunAccepted verify(@PathVariable Long id, @AuthenticationPrincipal String actor, Authentication auth) {
+        return checks.verify(id, Long.valueOf(actor), isAdmin(auth));
+    }
+    @PostMapping("/draft-check") @ResponseStatus(HttpStatus.ACCEPTED) @PreAuthorize("hasRole('LECTURER')")
+    public RunAccepted draftCheck(@Valid @RequestBody DraftCheckInput body, @AuthenticationPrincipal String actor, Authentication auth) {
+        return checks.draftCheck(body, Long.valueOf(actor), isAdmin(auth));
     }
     private boolean isAdmin(Authentication auth) {
         return auth.getAuthorities().stream().anyMatch(item -> item.getAuthority().equals("ROLE_ADMIN"));

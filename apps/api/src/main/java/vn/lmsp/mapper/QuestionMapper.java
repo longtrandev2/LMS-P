@@ -23,14 +23,17 @@ public class QuestionMapper {
         return new QuestionView(question.getId(), question.getOwnerId(), question.getBankId(), question.getCourseId(),
                 question.getCategoryId(), question.getBankName(), question.getCategoryName(), question.getType(),
                 question.getContent(), question.getTopic(), question.getDifficulty(), version,
+                snapshot.explanation(), snapshot.scoring_mode(), snapshot.answer_spec(),
                 snapshot.options(), snapshot.programming(), snapshot.test_cases(),
                 question.getCreatedAt(), question.getUpdatedAt());
     }
 
+    /** Snapshot đầy đủ để hiển thị và chấm — assessment-spec.md §2. */
     public QuestionSnapshot toSnapshot(Question question, List<QuestionOption> options,
             QuestionProgramming programming, List<TestCase> testCases) {
         return new QuestionSnapshot(question.getType(), question.getContent(), question.getTopic(),
-                question.getDifficulty(), null, null, options.stream().map(this::toOptionView).toList(), null,
+                question.getDifficulty(), question.getExplanation(), question.getScoringMode(),
+                options.stream().map(this::toOptionView).toList(), question.getAnswerSpec(),
                 toProgrammingView(programming), testCases.stream().map(this::toTestCaseView).toList());
     }
 
@@ -48,10 +51,14 @@ public class QuestionMapper {
         return new OptionView(option.getId(), option.getContent(), option.isCorrect(), option.getPosition());
     }
 
+    /** `starter_code` (cột cũ) và `starter_codes` (cột mới) trả nguyên trạng; client ưu tiên `starter_codes`. */
     private ProgrammingView toProgrammingView(QuestionProgramming programming) {
-        return programming == null ? null : new ProgrammingView(programming.getStarterCode(), null,
-                programming.getSolutionCode(), null, programming.getAllowedLanguages(),
-                programming.getTimeLimitMs(), programming.getMemoryLimitMb(), null, null);
+        if (programming == null) return null;
+        var starters = programming.getStarterCodes();
+        return new ProgrammingView(programming.getStarterCode(), starters == null || starters.isEmpty() ? null : starters,
+                programming.getSolutionCode(), programming.getSolutionLanguage(), programming.getAllowedLanguages(),
+                programming.getTimeLimitMs(), programming.getMemoryLimitMb(),
+                programming.getCheckerMode() == null ? "token" : programming.getCheckerMode(), programming.getCheckerEpsilon());
     }
 
     private TestCaseView toTestCaseView(TestCase testCase) {
