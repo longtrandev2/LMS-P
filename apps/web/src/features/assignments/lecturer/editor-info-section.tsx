@@ -2,7 +2,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MarkdownView } from "@/components/markdown-view";
-import { RadioCards } from "./controls";
+import { RadioCards } from "./option-cards";
 import { EditorSection, Field, fieldAria } from "./editor-layout";
 import { CATEGORY_OPTIONS } from "./labels";
 import type { EditorForm, FieldErrors } from "./editor-model";
@@ -33,7 +33,7 @@ export function EditorInfoSection({ form, patch, errors, published }: {
             placeholder="Yêu cầu, tài liệu được dùng, cách nộp…" onChange={(event) => patch({ description: event.target.value })} />
         </TabsContent>
         <TabsContent value="preview" className="mt-2">
-          <div className="min-h-32 rounded-lg border bg-muted/30 p-4">
+          <div className="min-h-32 rounded-md border px-3 py-2">
             {form.description.trim() ? <MarkdownView source={form.description} />
               : <p className="text-sm text-muted-foreground">Chưa có mô tả.</p>}
           </div>
@@ -41,7 +41,7 @@ export function EditorInfoSection({ form, patch, errors, published }: {
       </Tabs>
     </div>
     <div className="space-y-2">
-      <p id="assignment-category-label" className="text-sm font-medium">Hạng mục</p>
+      <p className="text-sm font-medium">Hạng mục</p>
       <RadioCards label="Hạng mục" value={form.category} onChange={(category) => patch({ category })}
         options={options} columns={4} disabled={published} />
       {published ? <p className="text-xs text-muted-foreground">Hạng mục đã khóa sau khi xuất bản.</p> : null}

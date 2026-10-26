@@ -24,7 +24,7 @@ export function QuestionPreviewDialog({ questionId, onOpenChange }: { questionId
   return <Dialog open={questionId != null} onOpenChange={onOpenChange}>
     <DialogContent className="max-h-[88dvh] overflow-y-auto sm:max-w-2xl">
       <DialogHeader>
-        <DialogTitle className="font-heading">Xem trước câu hỏi</DialogTitle>
+        <DialogTitle>Xem trước câu hỏi</DialogTitle>
         <DialogDescription>
           {q ? `${questionTypeLabel(q.type)} · ${DIFFICULTY_LABEL[q.difficulty]} · ${q.bank_name} / ${q.category_name} · phiên bản ${q.version_no}` : "Đang tải nội dung câu hỏi."}
         </DialogDescription>
@@ -35,7 +35,7 @@ export function QuestionPreviewDialog({ questionId, onOpenChange }: { questionId
         <div className="rounded-lg border p-4"><MarkdownView source={q.content} /></div>
         <QuestionAnswerPreview question={q} />
         {PARTIAL_SCORING_TYPES.includes(q.type) && q.scoring_mode ? <p className="text-xs text-muted-foreground">Cách chấm: {SCORING_MODE_LABEL[q.scoring_mode]}</p> : null}
-        {q.explanation ? <div className="space-y-1.5"><p className="text-xs font-medium text-muted-foreground">Giải thích</p><div className="rounded-lg bg-muted/40 p-3"><MarkdownView source={q.explanation} /></div></div> : null}
+        {q.explanation ? <div className="space-y-1.5"><p className="text-xs font-medium text-muted-foreground">Giải thích</p><div className="rounded-lg border p-3"><MarkdownView source={q.explanation} /></div></div> : null}
         <div className="flex justify-end">
           <Button variant="outline" size="sm" asChild>
             <Link to={`/questions/${q.id}/edit`} target="_blank" rel="noreferrer"><ExternalLink aria-hidden />Mở trang sửa câu</Link>

@@ -1,8 +1,9 @@
 import { ArrowDown, ArrowUp, Pencil, Trash2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { SegmentedToggle } from "../../ui/choice-controls";
 import { byteSize, formatBytes } from "../limits";
 
 export interface TestRow { key: string; input: string; expected_output: string; is_public: boolean }
@@ -25,7 +26,7 @@ export function TestCaseTable({ tests, errors, readOnly, onToggle, onEdit, onMov
 }) {
   return <div className="overflow-hidden rounded-lg border">
     <Table>
-      <TableHeader className="bg-muted/40">
+      <TableHeader>
         <TableRow>
           <TableHead className="w-10">#</TableHead>
           <TableHead className="w-32">Loại</TableHead>
@@ -38,13 +39,14 @@ export function TestCaseTable({ tests, errors, readOnly, onToggle, onEdit, onMov
         {tests.map((test, index) => {
           const error = errors?.[`tests.${index}`];
           return <TableRow key={test.key} data-field={`tests.${index}`} className={cn("align-top", error && "bg-destructive/5")}>
-            <TableCell className="font-mono text-xs text-muted-foreground">{index + 1}</TableCell>
+            <TableCell className="font-mono text-xs text-muted-foreground tabular-nums">{index + 1}</TableCell>
             <TableCell>
-              {readOnly ? <span className={cn("rounded-md px-2 py-0.5 text-xs font-medium", test.is_public ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground")}>
-                {test.is_public ? "Mẫu" : "Ẩn"}</span>
-                : <SegmentedToggle size="sm" label={`Loại test ${index + 1}`} value={test.is_public ? "public" : "hidden"}
-                  onChange={(next) => onToggle?.(index, next === "public")}
-                  options={[{ value: "hidden", label: "Ẩn" }, { value: "public", label: "Mẫu" }]} />}
+              {readOnly ? <Badge variant={test.is_public ? "outline" : "secondary"}>{test.is_public ? "Mẫu" : "Ẩn"}</Badge>
+                : <ToggleGroup type="single" size="sm" aria-label={`Loại test ${index + 1}`} value={test.is_public ? "public" : "hidden"}
+                  onValueChange={(next) => next && onToggle?.(index, next === "public")}>
+                  <ToggleGroupItem value="hidden" className="px-2.5 text-xs">Ẩn</ToggleGroupItem>
+                  <ToggleGroupItem value="public" className="px-2.5 text-xs">Mẫu</ToggleGroupItem>
+                </ToggleGroup>}
             </TableCell>
             <TableCell><Excerpt text={test.input} empty="(trống)" /></TableCell>
             <TableCell className="whitespace-normal">

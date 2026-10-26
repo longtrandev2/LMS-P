@@ -38,7 +38,7 @@ export function SelectedQuestionRow({ index, count, question, error, invalidType
       {locked ? null : <>
         <Button type="button" variant="ghost" size="icon-sm" aria-label={`Đưa câu ${index + 1} lên`} disabled={index === 0} onClick={() => onMove(-1)}><ArrowUp aria-hidden /></Button>
         <Button type="button" variant="ghost" size="icon-sm" aria-label={`Đưa câu ${index + 1} xuống`} disabled={index === count - 1} onClick={() => onMove(1)}><ArrowDown aria-hidden /></Button>
-        <Button type="button" variant="ghost" size="icon-sm" aria-label={`Bỏ câu ${index + 1} khỏi đề`} className="hover:bg-destructive/10 hover:text-destructive" onClick={onRemove}><X aria-hidden /></Button>
+        <Button type="button" variant="ghost" size="icon-sm" aria-label={`Bỏ câu ${index + 1} khỏi đề`} className="text-muted-foreground hover:text-destructive" onClick={onRemove}><X aria-hidden /></Button>
       </>}
     </div>
   </li>;

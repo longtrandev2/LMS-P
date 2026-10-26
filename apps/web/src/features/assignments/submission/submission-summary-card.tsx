@@ -17,7 +17,7 @@ export function SubmissionSummaryCard({ submission, result, question, position, 
   const code = submission.type === "code";
   const failedAt = result?.failed_test;
   return <section aria-label="Tóm tắt bài nộp" className="rounded-xl border bg-card">
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b px-5 py-4">
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b px-4 py-4 sm:px-5">
       <SubmissionStatusBadge status={submission.status} verdict={submission.verdict} className="text-sm" />
       {code && result?.tests_total ? <span className="text-sm">
         Đạt <span className="font-semibold tabular-nums">{result.tests_passed ?? 0}/{result.tests_total}</span> test
@@ -25,21 +25,21 @@ export function SubmissionSummaryCard({ submission, result, question, position, 
       {code && failedAt ? <span className="text-sm text-destructive">Sai ở test #{failedAt}</span> : null}
       {result?.compile_error ? <span className="text-sm text-destructive">Biên dịch không thành công</span> : null}
       <span className="ml-auto text-sm">
-        {showScore ? <>Điểm <span className="font-heading text-xl font-semibold tabular-nums">{formatPoints(submission.score)}</span>
+        {showScore ? <>Điểm <span className="text-xl font-semibold tabular-nums">{formatPoints(submission.score)}</span>
           {submission.max_score != null ? <span className="text-muted-foreground"> / {formatPoints(submission.max_score)}</span> : null}</>
           : <span className="text-muted-foreground">Điểm hiện khi được xem lại</span>}
       </span>
     </div>
-    <dl className="grid grid-cols-2 gap-4 px-5 py-4 sm:grid-cols-3 lg:grid-cols-6">
+    <dl className="grid grid-cols-2 gap-4 px-4 py-4 sm:grid-cols-3 sm:px-5 lg:grid-cols-6">
       <Item label="Sinh viên">
         <span className="block truncate">{submission.student_full_name ?? `#${submission.student_id}`}</span>
         {submission.student_code ? <span className="block font-mono text-xs font-normal text-muted-foreground">{submission.student_code}</span> : null}
       </Item>
       <Item label="Câu">{position ? `Câu ${position}` : `#${submission.question_id}`}{question ? <span className="block text-xs font-normal text-muted-foreground">{questionTypeLabel(question.type)}</span> : null}</Item>
-      <Item label="Lượt">{submission.attempt_no}</Item>
+      <Item label="Lượt"><span className="tabular-nums">{submission.attempt_no}</span></Item>
       <Item label="Ngôn ngữ">{code ? languageLabel(submission.language) || "—" : "—"}</Item>
       <Item label="Nộp lúc"><span className="tabular-nums">{formatUtcDateTime(submission.submitted_at)}</span></Item>
-      <Item label="Nộp muộn">{submission.is_late ? <span className="text-gold">Có</span> : "Không"}</Item>
+      <Item label="Nộp muộn">{submission.is_late ? <span className="text-warning">Có</span> : "Không"}</Item>
     </dl>
   </section>;
 }

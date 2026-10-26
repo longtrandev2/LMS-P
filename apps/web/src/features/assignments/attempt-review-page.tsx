@@ -1,5 +1,6 @@
 import { useParams } from "react-router-dom";
 import { EyeOff } from "lucide-react";
+import { PageHeader } from "@/components/page-header";
 import { cn } from "@/lib/utils";
 import { hasRole, useAuthStore } from "@/stores/auth";
 import { BackLink, PageError, PageNotice, PageSkeleton } from "@/features/assignments/student/page-states";
@@ -36,16 +37,13 @@ export function AttemptReviewPage() {
 
   return <div className="space-y-6">
     {back}
-    <header className="space-y-1">
-      <h1 className="font-heading text-2xl font-semibold tracking-tight">Kết quả lượt {attempt.attempt_no}</h1>
-      {details.data ? <p className="text-sm text-muted-foreground">{details.data.assignment.title}</p> : null}
-    </header>
+    <PageHeader title={`Kết quả lượt ${attempt.attempt_no}`} description={details.data?.assignment.title} />
     <AttemptScoreCard attempt={attempt} fallbackMax={details.data?.assignment.total_points} reviewAvailable={review.data.review_available} summary={summary} />
     {available ? <>
       <nav aria-label="Đi tới câu" className="flex flex-wrap gap-1.5">
         {states.map((state, index) => <a key={questions[index].question.question_id} href={`#cau-${index + 1}`}
           title={REVIEW_STATE_LABEL[state]} aria-label={`Câu ${index + 1}: ${REVIEW_STATE_LABEL[state]}`}
-          className={cn("flex size-8 items-center justify-center rounded-md border text-xs font-medium tabular-nums", REVIEW_STATE_TONE[state])}>
+          className={cn("flex size-8 items-center justify-center rounded-md border text-xs font-medium tabular-nums outline-none transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background", REVIEW_STATE_TONE[state])}>
           {index + 1}
         </a>)}
       </nav>

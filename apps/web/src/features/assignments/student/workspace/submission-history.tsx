@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { Send } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { EmptyState } from "@/components/state-blocks";
 import { VerdictBadge } from "@/components/verdict-badge";
@@ -16,7 +17,7 @@ function statusCell(row: AssignmentSubmission) {
 
 /** Tab "Bài nộp": các lượt của câu này, mới nhất trước. */
 export function SubmissionHistory({ rows, maxScore }: { rows: AssignmentSubmission[]; maxScore: number }) {
-  if (rows.length === 0) return <EmptyState compact title="Chưa có bài nộp" description="Các lượt nộp của bạn cho câu này sẽ hiện ở đây." />;
+  if (rows.length === 0) return <EmptyState compact icon={Send} title="Chưa có bài nộp" description="Các lượt nộp của bạn cho câu này sẽ hiện ở đây." />;
   return <div className="overflow-x-auto rounded-lg border">
     <Table>
       <TableHeader>
@@ -31,11 +32,11 @@ export function SubmissionHistory({ rows, maxScore }: { rows: AssignmentSubmissi
       <TableBody>
         {rows.map((row) => <TableRow key={row.id}>
           <TableCell className="font-mono text-xs">
-            <Link to={studentPaths.submission(row.id)} className="underline-offset-4 hover:underline" aria-label={`Xem chi tiết lượt ${row.attempt_no}`}>{row.attempt_no}</Link>
+            <Link to={studentPaths.submission(row.id)} className="rounded-sm underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring" aria-label={`Xem chi tiết lượt ${row.attempt_no}`}>{row.attempt_no}</Link>
           </TableCell>
-          <TableCell className="text-xs whitespace-nowrap">
-            <Link to={studentPaths.submission(row.id)} className="hover:underline">{formatUtcDateTime(row.submitted_at)}</Link>
-            {row.is_late ? <span className="ml-1.5 text-gold">· muộn</span> : null}
+          <TableCell className="text-xs whitespace-nowrap tabular-nums">
+            <Link to={studentPaths.submission(row.id)} className="rounded-sm outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring">{formatUtcDateTime(row.submitted_at)}</Link>
+            {row.is_late ? <span className="ml-1.5 text-warning">· muộn</span> : null}
           </TableCell>
           <TableCell className="text-xs">{LANGUAGES.find((item) => item.id === row.language)?.short ?? row.language ?? "—"}</TableCell>
           <TableCell>{statusCell(row)}</TableCell>

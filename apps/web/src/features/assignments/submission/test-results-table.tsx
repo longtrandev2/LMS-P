@@ -1,5 +1,6 @@
 import { Fragment, useState } from "react";
 import { ChevronRight } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { VerdictBadge } from "@/components/verdict-badge";
@@ -43,7 +44,7 @@ export function TestResultsTable({ result }: { result: GradingResultView }) {
           return <Fragment key={test.position}>
             <TableRow className={cn(expandable && "cursor-pointer")} onClick={expandable ? () => toggle(test.position) : undefined}>
               <TableCell className="font-mono text-xs tabular-nums">{test.position}</TableCell>
-              <TableCell className="text-sm">{test.is_public ? "Mẫu" : <span className="text-muted-foreground">Ẩn</span>}</TableCell>
+              <TableCell>{test.is_public ? <Badge variant="outline">Mẫu</Badge> : <Badge variant="secondary">Ẩn</Badge>}</TableCell>
               <TableCell><VerdictBadge verdict={test.verdict} /></TableCell>
               <TableCell className="text-right font-mono text-xs tabular-nums">{test.time_ms != null ? `${test.time_ms} ms` : "—"}</TableCell>
               <TableCell className="text-right font-mono text-xs tabular-nums">{test.memory_kb != null ? `${Math.round(test.memory_kb / 1024 * 10) / 10} MB` : "—"}</TableCell>
@@ -51,12 +52,12 @@ export function TestResultsTable({ result }: { result: GradingResultView }) {
                 {expandable ? <Button type="button" variant="ghost" size="icon-xs" aria-expanded={expanded} aria-controls={panelId}
                   aria-label={expanded ? `Ẩn chi tiết test ${test.position}` : `Xem chi tiết test ${test.position}`}
                   onClick={(event) => { event.stopPropagation(); toggle(test.position); }}>
-                  <ChevronRight className={cn("transition-transform", expanded && "rotate-90")} aria-hidden />
+                  <ChevronRight className={cn("transition-transform duration-150 motion-reduce:transition-none", expanded && "rotate-90")} aria-hidden />
                 </Button> : null}
               </TableCell>
             </TableRow>
             {expanded ? <TableRow id={panelId} className="hover:bg-transparent">
-              <TableCell colSpan={6} className="bg-muted/20 p-3 whitespace-normal">
+              <TableCell colSpan={6} className="bg-muted/40 p-3 whitespace-normal">
                 <div className="grid gap-3 lg:grid-cols-3">
                   <MonoBlock title="Input" value={test.input} />
                   <MonoBlock title="Output mong đợi" value={test.expected_output} />

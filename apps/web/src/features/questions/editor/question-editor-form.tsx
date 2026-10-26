@@ -79,7 +79,7 @@ export function QuestionEditorForm({ question, bank, categories, categoriesLoadi
           </EditorSection>
           <TypeAnswerEditor suggestVerify={justSaved} />
         </form>
-        <aside className="min-w-0 xl:sticky xl:top-44 xl:max-h-[calc(100dvh-12rem)] xl:overflow-y-auto">
+        <aside className="min-w-0 xl:sticky xl:top-36 xl:max-h-[calc(100dvh-10rem)] xl:overflow-y-auto">
           <QuestionPreview draft={form.draft} />
         </aside>
       </div>
@@ -87,7 +87,7 @@ export function QuestionEditorForm({ question, bank, categories, categoriesLoadi
     <AlertDialog open={leave.pendingHref != null} onOpenChange={(open) => !open && leave.cancel()}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle className="font-heading">Rời trang khi chưa lưu?</AlertDialogTitle>
+          <AlertDialogTitle>Rời trang khi chưa lưu?</AlertDialogTitle>
           <AlertDialogDescription>Các thay đổi chưa lưu sẽ bị mất.</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

@@ -1,21 +1,16 @@
 import type { ReactNode } from "react";
 import { formatUtcDateTime } from "@/lib/date-time";
-import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 import type { AssignmentSummary } from "@/types/api";
 import { assignmentWindow, WINDOW_LABEL, type AssignmentWindow } from "../../submission-window";
 import { reviewPolicyText } from "../labels";
 
-const windowTone: Record<AssignmentWindow, string> = {
-  upcoming: "border-border bg-muted text-muted-foreground",
-  open: "border-success/30 bg-success/10 text-success",
-  late: "border-gold/30 bg-gold/10 text-gold",
-  closed: "border-border bg-muted text-muted-foreground",
-};
+const windowVariant = { upcoming: "secondary", open: "success", late: "warning", closed: "secondary" } as const satisfies Record<AssignmentWindow, string>;
 
 export function WindowBadge({ window }: { window: AssignmentWindow }) {
-  return <span className={cn("inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-xs font-medium", windowTone[window])}>
+  return <Badge variant={windowVariant[window]}>
     <span className="size-1.5 rounded-full bg-current" aria-hidden />{WINDOW_LABEL[window]}
-  </span>;
+  </Badge>;
 }
 
 function Row({ label, children }: { label: string; children: ReactNode }) {
@@ -34,10 +29,10 @@ export function AssignmentInfo({ item, attempts }: { item: AssignmentSummary; at
       <WindowBadge window={window} />
     </div>
     <dl className="divide-y">
-      <Row label="Mở lúc">{item.available_from ? formatUtcDateTime(item.available_from) : "Ngay khi xuất bản"}</Row>
-      <Row label="Hạn nộp"><span className="font-medium">{formatUtcDateTime(item.due_at)}</span></Row>
+      <Row label="Mở lúc"><span className="tabular-nums">{item.available_from ? formatUtcDateTime(item.available_from) : "Ngay khi xuất bản"}</span></Row>
+      <Row label="Hạn nộp"><span className="font-medium tabular-nums">{formatUtcDateTime(item.due_at)}</span></Row>
       {item.allow_late && item.late_due_at ? <Row label="Hạn nộp muộn">
-        {formatUtcDateTime(item.late_due_at)} · <span className="text-gold">trừ {item.late_penalty_percent}% điểm</span>
+        <span className="tabular-nums">{formatUtcDateTime(item.late_due_at)}</span> · <span className="text-warning">trừ {item.late_penalty_percent}% điểm</span>
       </Row> : <Row label="Nộp muộn">Không nhận</Row>}
       <Row label="Lượt làm">{attempts}</Row>
       <Row label="Tính điểm">{item.question_count} câu · {item.total_points} điểm · {item.score_policy === "best" ? "lấy lượt cao nhất" : "lấy lượt cuối"}</Row>

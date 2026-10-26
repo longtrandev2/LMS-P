@@ -5,7 +5,7 @@ import { EditorSection, FieldMessage, useEditor } from "../editor-context";
 import { emptyItem, emptyPair, type ItemDraft, type PairDraft } from "../question-draft";
 import { LIMITS } from "../limits";
 
-const cellClass = "min-h-10 bg-background";
+const cellClass = "min-h-10";
 
 function CellError({ text }: { text?: string }) {
   return text ? <p className="mt-1 text-xs text-destructive">{text}</p> : null;
@@ -45,7 +45,7 @@ export function MatchingEditor() {
     <div className="flex items-center justify-between gap-2">
       <Button type="button" variant="outline" size="sm" disabled={draft.pairs.length >= LIMITS.pairs.max}
         onClick={() => setPairs((rows) => [...rows, emptyPair()])}><Plus aria-hidden /> Thêm cặp</Button>
-      <span className="text-xs text-muted-foreground">{draft.pairs.length}/{LIMITS.pairs.max} cặp</span>
+      <span className="text-xs text-muted-foreground tabular-nums">{draft.pairs.length}/{LIMITS.pairs.max} cặp</span>
     </div>
     <FieldMessage id="pairs-message" error={errors.pairs} />
 

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Divide, Library, Shuffle } from "lucide-react";
+import { Divide, ListPlus, Library, Shuffle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/state-blocks";
@@ -54,20 +54,20 @@ export function EditorQuestionsSection({ classId, form, patch, errors, locked }:
       </div>
       <div className="flex items-end gap-2">
         <div className="space-y-1.5">
-          <label htmlFor="target-total" className="text-xs font-medium text-muted-foreground">Tổng điểm mong muốn</label>
+          <label htmlFor="target-total" className="block text-xs font-medium text-muted-foreground">Tổng điểm mong muốn</label>
           <Input id="target-total" type="number" inputMode="decimal" min={0.01} step={0.5} className="h-9 w-28 tabular-nums"
             value={target} onChange={(event) => setTarget(event.target.value)} />
         </div>
-        <Button type="button" variant="secondary" size="sm" disabled={questions.length === 0} onClick={distribute}><Divide aria-hidden />Chia đều</Button>
+        <Button type="button" variant="outline" disabled={questions.length === 0} onClick={distribute}><Divide aria-hidden />Chia đều</Button>
       </div>
     </div>}
 
     {questions.length === 0 ? <div className="rounded-lg border border-dashed">
-      <EmptyState compact title="Đề chưa có câu nào" description={quiz ? "Quiz nhận mọi loại câu trừ lập trình." : "Bài tập nhận mọi loại câu, kể cả lập trình."} />
+      <EmptyState compact icon={ListPlus} title="Đề chưa có câu nào" description={quiz ? "Quiz nhận mọi loại câu trừ lập trình." : "Bài tập nhận mọi loại câu, kể cả lập trình."} />
     </div> : <div className="rounded-lg border">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b bg-muted/30 px-4 py-2.5 text-sm" aria-live="polite">
-        <span><span className="font-medium">{questions.length}</span> câu</span>
-        <span>Tổng hiện tại: <span className="font-semibold tabular-nums">{formatPoints(total)}</span> điểm</span>
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-2.5 text-sm text-muted-foreground" aria-live="polite">
+        <span><span className="font-medium text-foreground tabular-nums">{questions.length}</span> câu</span>
+        <span>Tổng hiện tại: <span className="font-semibold text-foreground tabular-nums">{formatPoints(total)}</span> điểm</span>
       </div>
       <ol className="divide-y">
         {questions.map((question, index) => <SelectedQuestionRow key={question.question_id} index={index} count={questions.length}

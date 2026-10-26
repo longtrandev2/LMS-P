@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { Info } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { AssignmentEditorHeader } from "./assignment-editor-header";
 import { EditorClassesSection } from "./editor-classes-section";
 import { EditorInfoSection } from "./editor-info-section";
 import { EditorQuestionsSection } from "./editor-questions-section";
@@ -24,7 +27,9 @@ function focusFirstError() {
 }
 
 /** Form soạn đề (trang riêng) — docs/assessment-spec.md §6, §8. */
-export function AssignmentEditorForm({ classId, details }: { classId: number; details: AssignmentDetails | null }) {
+export function AssignmentEditorForm({ classId, details, title, classLabel, badges }: {
+  classId: number; details: AssignmentDetails | null; title: string; classLabel: string; badges?: React.ReactNode;
+}) {
   const navigate = useNavigate();
   const mode: EditorMode = !details ? "create" : details.assignment.is_published ? "published" : "draft";
   const published = mode === "published";
@@ -33,7 +38,7 @@ export function AssignmentEditorForm({ classId, details }: { classId: number; de
   const [attempt, setAttempt] = useState<SaveAction | null>(null);
   const dirty = JSON.stringify(form) !== baseline;
   const guard = useUnsavedGuard(dirty);
-  const classPath = `/classes/${classId}`;
+  const classPath = `/classes/${classId}?tab=assignments`;
   const errors = attempt ? validate(form, mode, attempt === "publish") : {};
   const patch = (next: Partial<EditorForm>) => setForm((current) => ({ ...current, ...next }));
 
@@ -69,10 +74,22 @@ export function AssignmentEditorForm({ classId, details }: { classId: number; de
     return question ? `Câu ${form.questions.indexOf(question) + 1}: ${plainExcerpt(question.content, 80)}` : `Câu hỏi #${id}`;
   };
 
-  return <form className="space-y-5 pb-4" noValidate onSubmit={(event) => event.preventDefault()}>
-    {published ? <div className="rounded-lg border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
-      Bài đã xuất bản: chỉ sửa được thông tin, lịch, nộp muộn và chính sách xem lại. Câu hỏi, điểm, số lượt và trộn đề đã khóa.
-    </div> : null}
+  return <form className="space-y-8 pb-8" noValidate onSubmit={(event) => event.preventDefault()}>
+    <AssignmentEditorHeader backHref={classPath} backLabel={classLabel} title={title} badges={badges} dirty={dirty} isNew={mode === "create"}>
+      <Button type="button" variant="ghost" onClick={() => guard.requestLeave(classPath)}>Hủy</Button>
+      {published ? <Button type="button" variant="cta" disabled={saver.saving != null} onClick={() => submit("draft")}>{saver.saving ? "Đang lưu…" : "Lưu điều chỉnh"}</Button> : <>
+        <Button type="button" variant="outline" disabled={saver.saving != null} onClick={() => submit("draft")}>
+          {saver.saving === "draft" ? "Đang lưu…" : "Lưu nháp"}
+        </Button>
+        <Button type="button" variant="cta" disabled={saver.saving != null} onClick={() => submit("publish")}>
+          {saver.saving === "publish" ? "Đang xuất bản…" : "Lưu & xuất bản"}
+        </Button>
+      </>}
+    </AssignmentEditorHeader>
+    {published ? <Alert>
+      <Info aria-hidden />
+      <AlertDescription>Bài đã xuất bản: chỉ sửa được thông tin, lịch, nộp muộn và chính sách xem lại. Câu hỏi, điểm, số lượt và trộn đề đã khóa.</AlertDescription>
+    </Alert> : null}
     <EditorInfoSection form={form} patch={patch} errors={errors} published={published} />
     <EditorScheduleSection form={form} patch={patch} errors={errors} published={published} />
     <EditorReviewSection form={form} patch={patch} published={published} />
@@ -82,21 +99,6 @@ export function AssignmentEditorForm({ classId, details }: { classId: number; de
       <EditorQuestionsSection classId={classId} form={form} patch={patch} errors={errors} locked={published} />
     </div>
     {published ? <PublishedReasonSection form={form} patch={patch} errors={errors} /> : null}
-
-    <div className="sticky bottom-3 z-10 flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-card/95 px-4 py-3 shadow-sm backdrop-blur">
-      <p className="text-sm text-muted-foreground" aria-live="polite">{dirty ? "Có thay đổi chưa lưu" : "Không có thay đổi chưa lưu"}</p>
-      <div className="flex flex-wrap gap-2">
-        <Button type="button" variant="ghost" onClick={() => guard.requestLeave(classPath)}>Hủy</Button>
-        {published ? <Button type="button" variant="cta" disabled={saver.saving != null} onClick={() => submit("draft")}>{saver.saving ? "Đang lưu…" : "Lưu điều chỉnh"}</Button> : <>
-          <Button type="button" variant="outline" disabled={saver.saving != null} onClick={() => submit("draft")}>
-            {saver.saving === "draft" ? "Đang lưu…" : "Lưu nháp"}
-          </Button>
-          <Button type="button" variant="cta" disabled={saver.saving != null} onClick={() => submit("publish")}>
-            {saver.saving === "publish" ? "Đang xuất bản…" : "Lưu & xuất bản"}
-          </Button>
-        </>}
-      </div>
-    </div>
 
     <PublishConflictDialog conflict={saver.conflict} busy={saver.saving != null} questionLabel={contentOf}
       onCancel={saver.dismissConflict} onConfirm={saver.confirmUnverified} />

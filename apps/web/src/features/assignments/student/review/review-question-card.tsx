@@ -20,7 +20,7 @@ export const REVIEW_STATE_LABEL: Record<ReviewState, string> = {
 
 export const REVIEW_STATE_TONE: Record<ReviewState, string> = {
   correct: "border-success/30 bg-success/10 text-success",
-  partial: "border-gold/30 bg-gold/10 text-gold",
+  partial: "border-warning/30 bg-warning/10 text-warning",
   wrong: "border-destructive/30 bg-destructive/10 text-destructive",
   blank: "border-border bg-muted text-muted-foreground",
 };
@@ -33,7 +33,7 @@ export function ReviewQuestionCard({ row, index, showsAnswers }: { row: ReviewQu
   const question = row.question;
   const titleId = `review-q-${question.question_id}`;
   return <article id={`cau-${index + 1}`} aria-labelledby={titleId} className="scroll-mt-28 rounded-xl border bg-card">
-    <header className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b px-5 py-3">
+    <header className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b px-4 py-3 sm:px-5">
       <h2 id={titleId} className="text-sm font-semibold">Câu {index + 1}</h2>
       <span className="text-xs text-muted-foreground">{questionTypeLabel(question.type)}</span>
       <span className="ml-auto flex items-center gap-2">
@@ -41,13 +41,13 @@ export function ReviewQuestionCard({ row, index, showsAnswers }: { row: ReviewQu
         <span className="font-mono text-sm font-semibold tabular-nums">{formatScore(row.score)}<span className="text-muted-foreground">/{formatScore(row.max_score)}</span></span>
       </span>
     </header>
-    <div className="space-y-5 px-5 py-5">
+    <div className="space-y-5 p-4 sm:p-5">
       <QuestionPrompt question={question} />
       {state === "blank" ? <p className="text-xs font-medium text-muted-foreground">Bạn đã bỏ trống câu này.</p> : null}
       <AnswerInput question={question} value={fromResponse(row.response)} onChange={noop} readOnly
         correct={showsAnswers ? row.correct_answer : null} idPrefix={`review-${question.question_id}`} />
-      {showsAnswers && row.explanation?.trim() ? <div className="rounded-lg border-l-2 border-primary bg-muted/40 px-4 py-3">
-        <p className="mb-1 text-xs font-semibold">Giải thích</p>
+      {showsAnswers && row.explanation?.trim() ? <div className="border-t pt-4">
+        <p className="mb-1 text-xs font-semibold text-muted-foreground">Giải thích</p>
         <MarkdownView source={row.explanation} />
       </div> : null}
     </div>

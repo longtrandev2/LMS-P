@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { Badge } from "@/components/ui/badge";
 import { CodeEditor } from "@/components/code-editor";
 import { languageLabel, LANGUAGES } from "@/lib/languages";
 import { SCORING_MODE_LABEL, PARTIAL_SCORING_TYPES } from "@/lib/question-types";
@@ -22,18 +23,18 @@ export function QuestionViewer({ question, bank }: { question: Question; bank: Q
   return <div className="space-y-6">
     <EditorHeader backHref={bankHref(question.bank_id, question.category_id)} bankName={bank?.name ?? question.bank_name}
       title={`Câu hỏi #${question.id}`} version={question.version_no} dirty={false}>
-      <span className="rounded-md border px-2 py-1 text-xs text-muted-foreground">Chỉ xem</span>
+      <Badge variant="secondary">Chỉ xem</Badge>
     </EditorHeader>
     <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(300px,380px)]">
       <QuestionPreview draft={draft} showAnswers title="Câu hỏi và đáp án" />
       <EditorSection title="Thông tin">
         <dl className="grid grid-cols-2 gap-4">
           <Fact label="Danh mục">{question.category_name}</Fact>
-          <Fact label="Phiên bản">{question.version_no}</Fact>
+          <Fact label="Phiên bản"><span className="tabular-nums">{question.version_no}</span></Fact>
           {PARTIAL_SCORING_TYPES.includes(question.type) ? <Fact label="Cách chấm">{SCORING_MODE_LABEL[draft.scoring_mode]}</Fact> : null}
           {question.type === "programming" ? <>
-            <Fact label="Thời gian">{p.time_limit_ms} ms</Fact>
-            <Fact label="Bộ nhớ">{p.memory_limit_mb} MB</Fact>
+            <Fact label="Thời gian"><span className="tabular-nums">{p.time_limit_ms} ms</span></Fact>
+            <Fact label="Bộ nhớ"><span className="tabular-nums">{p.memory_limit_mb} MB</span></Fact>
             <Fact label="Cách so output">{CHECKERS.find((c) => c.id === p.checker_mode)?.label}{p.checker_mode === "float" ? ` (ε = ${p.checker_epsilon})` : ""}</Fact>
             <div className="col-span-2"><Fact label="Ngôn ngữ">{LANGUAGES.filter((l) => p.allowed_languages.includes(l.id)).map((l) => l.label).join(", ")}</Fact></div>
           </> : null}

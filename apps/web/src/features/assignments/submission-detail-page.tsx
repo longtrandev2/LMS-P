@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { useParams } from "react-router-dom";
+import { Loader2 } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CodeEditor } from "@/components/code-editor";
 import { PageHeader } from "@/components/page-header";
@@ -14,13 +15,14 @@ import { RegradeButton } from "@/features/assignments/submission/regrade-dialog"
 import { SubmissionSummaryCard } from "@/features/assignments/submission/submission-summary-card";
 import { TestResultsTable } from "@/features/assignments/submission/test-results-table";
 import { useSubmissionLive } from "@/features/assignments/submission/use-submission-live";
+import { BackLink } from "@/features/assignments/student/page-states";
 
 const EDITOR_LANGUAGES = ["python", "c", "cpp", "java"] as const;
 
 function Panel({ title, aside, children }: { title: string; aside?: React.ReactNode; children: React.ReactNode }) {
   return <section aria-label={title} className="overflow-hidden rounded-xl border bg-card">
-    <header className="flex flex-wrap items-center justify-between gap-2 border-b px-5 py-3">
-      <h2 className="font-heading text-sm font-semibold">{title}</h2>{aside}
+    <header className="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-3 sm:px-5">
+      <h2 className="text-sm font-semibold">{title}</h2>{aside}
     </header>
     {children}
   </section>;
@@ -54,18 +56,16 @@ export function SubmissionDetailPage() {
   const canRegrade = staff && code && (data?.status === "completed" || data?.status === "failed");
 
   return <div className="space-y-6">
-    {back ? <Link to={back.to} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground">
-      <ArrowLeft className="size-4" aria-hidden />{back.label}{details ? ` · ${details.assignment.title}` : ""}
-    </Link> : <span className="block h-5" />}
+    {back ? <BackLink to={back.to}>{back.label}{details ? ` · ${details.assignment.title}` : ""}</BackLink> : <span className="block h-5" />}
     {submission.isError ? <ErrorState error={submission.error} onRetry={() => submission.refetch()} /> : null}
-    {submission.isPending ? <div className="space-y-4"><Skeleton className="h-10 w-1/3" /><Skeleton className="h-36 rounded-xl" /><Skeleton className="h-72 rounded-xl" /></div> : null}
+    {submission.isPending ? <div aria-busy="true" aria-label="Đang tải" className="space-y-4"><Skeleton className="h-10 w-1/3" /><Skeleton className="h-36 rounded-xl" /><Skeleton className="h-72 rounded-xl" /></div> : null}
     {data ? <>
       <PageHeader title={`Bài nộp #${data.id}`} description={details ? `${details.assignment.title}${position ? ` · Câu ${position}` : ""} · Lượt ${data.attempt_no}` : undefined}
         actions={staff && code ? <RegradeButton submissionId={data.id} assignmentId={data.assignment_id} disabled={!canRegrade} /> : undefined} />
-      {grading ? <div role="status" className="flex items-center gap-2 rounded-lg border bg-muted/40 px-4 py-3 text-sm">
-        <Loader2 className="size-4 animate-spin motion-reduce:animate-none" aria-hidden />
-        {data.status === "pending" ? "Bài đang chờ chấm." : "Đang chấm bài."} Trang tự cập nhật khi có kết quả.
-      </div> : null}
+      {grading ? <Alert role="status">
+        <Loader2 className="animate-spin motion-reduce:animate-none" aria-hidden />
+        <AlertDescription className="text-foreground">{data.status === "pending" ? "Bài đang chờ chấm." : "Đang chấm bài."} Trang tự cập nhật khi có kết quả.</AlertDescription>
+      </Alert> : null}
       <SubmissionSummaryCard submission={data} result={shown} question={question} position={position}
         showScore={staff || code || data.review_available === true} />
 
@@ -86,7 +86,7 @@ export function SubmissionDetailPage() {
       </Panel> : null}
 
       {!code && data.response && (staff || data.review_available) ? <Panel title="Câu trả lời"><ObjectiveResponse question={question} response={data.response} /></Panel> : null}
-      {!code && !staff && !data.review_available ? <p className="rounded-lg border px-4 py-3 text-sm text-muted-foreground">
+      {!code && !staff && !data.review_available ? <p className="rounded-xl border bg-card px-4 py-3 text-sm text-muted-foreground">
         Đã nộp. Điểm và câu trả lời hiện khi bài cho phép xem lại.
       </p> : null}
     </> : null}

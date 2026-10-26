@@ -58,7 +58,7 @@ export function QuestionCsvImportDialog({ bankId, categories, defaultCategoryId,
   return <Dialog open onOpenChange={onOpenChange}>
     <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-3xl">
       <DialogHeader>
-        <DialogTitle className="font-heading">Nhập câu hỏi từ CSV</DialogTitle>
+        <DialogTitle>Nhập câu hỏi từ CSV</DialogTitle>
         <DialogDescription>Hỗ trợ Một đáp án, Nhiều đáp án, Đúng/Sai và Trả lời ngắn. Bản xem trước kiểm tra lỗi và câu trùng trước khi lưu.</DialogDescription>
       </DialogHeader>
       <div className="grid gap-4 sm:grid-cols-2">

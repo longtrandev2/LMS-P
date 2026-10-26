@@ -21,7 +21,7 @@ export function runErrorText(error: unknown): string {
 function TestRow({ test, index, custom }: { test: RunTestResult; index: number; custom: boolean }) {
   const passed = test.verdict === "AC" || test.verdict === "OK";
   return <details open={!passed} className="group rounded-lg border">
-    <summary className="flex cursor-pointer list-none items-center gap-3 px-3 py-2 text-sm [&::-webkit-details-marker]:hidden">
+    <summary className="flex cursor-pointer list-none items-center gap-3 rounded-lg px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
       <span className="font-medium">{custom ? "Input tự nhập" : `Ví dụ ${index + 1}`}</span>
       <VerdictBadge verdict={test.verdict} />
       <span className="ml-auto text-xs text-muted-foreground tabular-nums">{test.time_ms != null ? `${test.time_ms} ms` : ""}</span>
@@ -38,7 +38,7 @@ function TestRow({ test, index, custom }: { test: RunTestResult; index: number; 
 
 /** Kết quả chạy thử (practice_run): verdict, log biên dịch, từng test. */
 export function RunResult({ job, running, error, custom }: { job: RunJob | null; running: boolean; error: unknown; custom: boolean }) {
-  if (error && !running) return <p role="alert" className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">{runErrorText(error)}</p>;
+  if (error && !running) return <p role="alert" className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">{runErrorText(error)}</p>;
   if (!job) return running ? <Pending text="Đang gửi code…" />
     : <p className="py-6 text-sm text-muted-foreground">Bấm <strong className="text-foreground">Chạy thử</strong> để chạy code với ví dụ mẫu hoặc input tự nhập.</p>;
   if (job.status === "pending") return <Pending text="Đang chờ máy chấm…" />;
@@ -48,7 +48,7 @@ export function RunResult({ job, running, error, custom }: { job: RunJob | null;
   return <div className="space-y-3">
     <div className="flex flex-wrap items-center gap-3">
       <VerdictBadge verdict={job.status === "failed" ? "SYSTEM_ERROR" : job.verdict} />
-      {job.tests.length && !custom ? <span className="text-sm">Đạt {passed}/{job.tests.length} ví dụ</span> : null}
+      {job.tests.length && !custom ? <span className="text-sm tabular-nums">Đạt {passed}/{job.tests.length} ví dụ</span> : null}
       {job.duration_ms != null ? <span className="ml-auto text-xs text-muted-foreground tabular-nums">{job.duration_ms} ms</span> : null}
     </div>
     {job.compile_output ? <IoBlock label={job.verdict === "CE" ? "Lỗi biên dịch" : "Log biên dịch"} value={job.compile_output} tone={job.verdict === "CE" ? "danger" : undefined} /> : null}

@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
 import { errorText } from "@/lib/error-messages";
 import { queryKeys } from "@/lib/query-keys";
-import { Checkbox } from "./controls";
+import { Checkbox } from "@/components/ui/checkbox";
 import { EditorSection } from "./editor-layout";
 import type { ClassSummary, Paginated } from "@/types/api";
 
@@ -36,7 +36,7 @@ export function EditorClassesSection({ classId, value, onChange, error }: {
       <legend className="sr-only">Lớp nhận bài</legend>
       {items.map((item) => {
         const id = `target-class-${item.id}`;
-        return <label key={item.id} htmlFor={id} className="flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-muted/50 has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-primary/5">
+        return <label key={item.id} htmlFor={id} className="flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-colors duration-150 hover:bg-muted/40 has-[[data-state=checked]]:border-foreground/40 has-[[data-state=checked]]:bg-accent">
           <Checkbox id={id} checked={value.includes(item.id)} onCheckedChange={(checked) => toggle(item.id, checked === true)} />
           <span className="min-w-0">
             <span className="block truncate text-sm font-medium">{item.name}</span>
@@ -46,6 +46,6 @@ export function EditorClassesSection({ classId, value, onChange, error }: {
       })}
     </fieldset> : null}
     {error ? <p role="alert" className="text-xs text-destructive">{error}</p>
-      : <p className="text-xs text-muted-foreground">Đã chọn {value.length} lớp.</p>}
+      : <p className="text-xs text-muted-foreground tabular-nums">Đã chọn {value.length} lớp.</p>}
   </EditorSection>;
 }

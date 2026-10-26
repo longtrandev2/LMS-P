@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
-import { Search } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { SearchX, Users } from "lucide-react";
+import { ListToolbar, SearchField } from "@/components/list-toolbar";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { SortSelect } from "@/components/sort-select";
 import { EmptyState, ErrorState, TableSkeleton } from "@/components/state-blocks";
@@ -49,18 +49,14 @@ export function ResultsStudentsTab({ query, questions, quiz, attemptHref }: {
     return next;
   });
 
-  return <div className="space-y-3">
-    <div className="flex flex-wrap items-center justify-between gap-2">
-      <div className="relative w-full sm:w-72">
-        <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
-        <Input type="search" aria-label="Tìm sinh viên" placeholder="Tìm tên hoặc mã sinh viên" className="pl-9" value={search} onChange={(event) => setSearch(event.target.value)} />
-      </div>
+  return <section className="overflow-hidden rounded-xl border bg-card" aria-label="Kết quả theo sinh viên">
+    <ListToolbar search={<SearchField value={search} onChange={setSearch} placeholder="Tìm tên hoặc mã sinh viên" label="Tìm sinh viên" />}>
       <SortSelect value={sort} onChange={setSort} options={SORTS} />
-    </div>
-    <div className="overflow-hidden rounded-xl border bg-card">
+    </ListToolbar>
+    <div>
       {query.isPending ? <TableSkeleton rows={5} cols={4} /> : null}
       {query.isError ? <ErrorState error={query.error} onRetry={() => void query.refetch()} /> : null}
-      {query.data && rows.length === 0 ? <EmptyState compact title={search ? "Không tìm thấy sinh viên" : "Lớp chưa có sinh viên"} /> : null}
+      {query.data && rows.length === 0 ? <EmptyState compact icon={search ? SearchX : Users} title={search ? "Không tìm thấy sinh viên" : "Lớp chưa có sinh viên"} /> : null}
       {rows.length ? <Table>
         <TableHeader>
           <TableRow>
@@ -69,7 +65,7 @@ export function ResultsStudentsTab({ query, questions, quiz, attemptHref }: {
             <TableHead className="text-right">Lượt</TableHead>
             {questions.map((question, index) => <TableHead key={question.question_id} className="min-w-20 text-center"
               title={`${questionTypeLabel(question.type)} · ${formatPoints(question.points)} điểm`}>
-              C{index + 1}<span className="block text-[11px] font-normal text-muted-foreground">{formatPoints(question.points)}đ</span>
+              C{index + 1}<span className="block text-[11px] font-normal text-muted-foreground tabular-nums">{formatPoints(question.points)}đ</span>
             </TableHead>)}
           </TableRow>
         </TableHeader>
@@ -79,5 +75,5 @@ export function ResultsStudentsTab({ query, questions, quiz, attemptHref }: {
         </TableBody>
       </Table> : null}
     </div>
-  </div>;
+  </section>;
 }

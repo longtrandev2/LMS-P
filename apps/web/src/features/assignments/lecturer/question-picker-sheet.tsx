@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { Search } from "lucide-react";
+import { FileQuestion, LibraryBig } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { DataTablePagination } from "@/components/data-table-pagination";
-import { EmptyState, ErrorState, TableSkeleton } from "@/components/state-blocks";
+import { SearchField } from "@/components/list-toolbar";
+import { EmptyState, ErrorState, ListSkeleton } from "@/components/state-blocks";
 import { api } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
 import { BankSelect, CategorySelect, DifficultySelect, TypeSelect, useClassBanks } from "./question-filter-selects";
@@ -58,11 +58,11 @@ export function QuestionPickerSheet({ open, onOpenChange, classId, quiz, existin
 
   return <Sheet open={open} onOpenChange={onOpenChange}>
     <SheetContent side="right" className="w-full! gap-0 sm:max-w-2xl!">
-      <SheetHeader className="border-b p-5 pr-14">
-        <SheetTitle className="font-heading">Chọn câu từ ngân hàng</SheetTitle>
+      <SheetHeader className="border-b p-4 pr-14 sm:p-5">
+        <SheetTitle>Chọn câu từ ngân hàng</SheetTitle>
         <SheetDescription>Đánh dấu các câu cần thêm. Câu đã có trong đề được bỏ qua.</SheetDescription>
       </SheetHeader>
-      <div className="grid gap-3 border-b p-5 sm:grid-cols-2">
+      <div className="grid gap-3 border-b p-4 sm:grid-cols-2 sm:p-5">
         <div className="space-y-1.5"><Label htmlFor="picker-bank">Ngân hàng</Label>
           <BankSelect id="picker-bank" banks={banks} value={activeBank} onChange={(id) => { setBankId(id); setCategoryId(null); }} /></div>
         <div className="space-y-1.5"><Label htmlFor="picker-category">Danh mục</Label>
@@ -71,19 +71,15 @@ export function QuestionPickerSheet({ open, onOpenChange, classId, quiz, existin
           <DifficultySelect id="picker-difficulty" value={difficulty} onChange={setDifficulty} /></div>
         <div className="space-y-1.5"><Label htmlFor="picker-type">Loại câu</Label>
           <TypeSelect id="picker-type" value={type} onChange={setType} excludeProgramming={quiz} /></div>
-        <div className="relative sm:col-span-2">
-          <Label htmlFor="picker-search" className="sr-only">Tìm câu hỏi</Label>
-          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
-          <Input id="picker-search" type="search" className="pl-9" value={search} placeholder="Tìm theo nội dung câu hỏi" onChange={(event) => setSearch(event.target.value)} />
-        </div>
+        <SearchField className="sm:col-span-2" value={search} onChange={setSearch} placeholder="Tìm theo nội dung câu hỏi" label="Tìm câu hỏi" />
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto" aria-busy={list.isFetching}>
         {banksError ? <ErrorState error={banksError} onRetry={retry} /> : null}
-        {banksPending && !banksError ? <TableSkeleton rows={6} cols={2} /> : null}
-        {!banksError && !banksPending && banks.length === 0 ? <EmptyState compact title="Chưa có ngân hàng câu hỏi" description="Tạo ngân hàng và câu hỏi ở trang Ngân hàng câu hỏi." /> : null}
-        {list.isPending && activeBank != null ? <TableSkeleton rows={6} cols={2} /> : null}
+        {banksPending && !banksError ? <ListSkeleton rows={6} /> : null}
+        {!banksError && !banksPending && banks.length === 0 ? <EmptyState compact icon={LibraryBig} title="Chưa có ngân hàng câu hỏi" description="Tạo ngân hàng và câu hỏi ở trang Ngân hàng câu hỏi." /> : null}
+        {list.isPending && activeBank != null ? <ListSkeleton rows={6} /> : null}
         {list.isError ? <ErrorState error={list.error} onRetry={() => list.refetch()} /> : null}
-        {list.data?.items.length === 0 ? <EmptyState compact title="Không có câu phù hợp" description="Thử bỏ bớt bộ lọc hoặc đổi ngân hàng." /> : null}
+        {list.data?.items.length === 0 ? <EmptyState compact icon={FileQuestion} title="Không có câu phù hợp" description="Thử bỏ bớt bộ lọc hoặc đổi ngân hàng." /> : null}
         {list.data?.items.length ? <ul className="divide-y">{list.data.items.map((item) => {
           const disabledReason = reason(item);
           return <QuestionPickRow key={item.id} item={item} checked={existing.has(item.id) || picked.has(item.id)}
@@ -92,7 +88,7 @@ export function QuestionPickerSheet({ open, onOpenChange, classId, quiz, existin
       </div>
       {list.data && list.data.total > LIMIT ? <DataTablePagination page={page} limit={LIMIT} total={list.data.total} onPageChange={setPage} /> : null}
       <div className="flex items-center justify-between gap-3 border-t p-4">
-        <p className="text-sm text-muted-foreground" aria-live="polite">Đã đánh dấu <span className="font-medium text-foreground">{picked.size}</span> câu</p>
+        <p className="text-sm text-muted-foreground" aria-live="polite">Đã đánh dấu <span className="font-medium text-foreground tabular-nums">{picked.size}</span> câu</p>
         <div className="flex gap-2">
           <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Hủy</Button>
           <Button type="button" disabled={picked.size === 0} onClick={add}>Thêm {picked.size || ""} câu vào đề</Button>

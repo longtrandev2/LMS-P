@@ -19,7 +19,7 @@ export function OrderingEditor() {
           <span className="grid h-10 w-7 shrink-0 place-items-center font-mono text-sm font-semibold text-muted-foreground" aria-hidden>{index + 1}</span>
           <div className="min-w-0 flex-1">
             <label htmlFor={`order-item-${item.key}`} className="sr-only">Mục thứ {index + 1}</label>
-            <Textarea id={`order-item-${item.key}`} rows={1} value={item.text} aria-invalid={!!error} className="min-h-10 bg-background"
+            <Textarea id={`order-item-${item.key}`} rows={1} value={item.text} aria-invalid={!!error} className="min-h-10"
               onChange={(event) => setItems((rows) => rows.map((row) => row.key === item.key ? { ...row, text: event.target.value } : row))} />
             {error ? <p className="mt-1 text-xs text-destructive">{error}</p> : null}
           </div>
@@ -37,7 +37,7 @@ export function OrderingEditor() {
     <div className="flex items-center justify-between gap-2">
       <Button type="button" variant="outline" size="sm" disabled={count >= LIMITS.items.max}
         onClick={() => setItems((rows) => [...rows, emptyItem()])}><Plus aria-hidden /> Thêm mục</Button>
-      <span className="text-xs text-muted-foreground">{count}/{LIMITS.items.max}</span>
+      <span className="text-xs text-muted-foreground tabular-nums">{count}/{LIMITS.items.max}</span>
     </div>
     <FieldMessage id="items-message" error={errors.items} />
   </EditorSection>;

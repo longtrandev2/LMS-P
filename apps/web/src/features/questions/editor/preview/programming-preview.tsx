@@ -16,8 +16,8 @@ export function ProgrammingPreview({ draft }: { draft: QuestionDraft }) {
   const languages = LANGUAGES.filter((lang) => p.allowed_languages.includes(lang.id));
   return <div className="space-y-4">
     <dl className="flex flex-wrap gap-x-5 gap-y-1.5 text-xs text-muted-foreground">
-      <div className="flex items-center gap-1.5"><Clock className="size-3.5" aria-hidden /><dt className="sr-only">Thời gian</dt><dd>{p.time_limit_ms || "—"} ms</dd></div>
-      <div className="flex items-center gap-1.5"><Cpu className="size-3.5" aria-hidden /><dt className="sr-only">Bộ nhớ</dt><dd>{p.memory_limit_mb} MB</dd></div>
+      <div className="flex items-center gap-1.5"><Clock className="size-3.5" aria-hidden /><dt className="sr-only">Thời gian</dt><dd className="tabular-nums">{p.time_limit_ms || "—"} ms</dd></div>
+      <div className="flex items-center gap-1.5"><Cpu className="size-3.5" aria-hidden /><dt className="sr-only">Bộ nhớ</dt><dd className="tabular-nums">{p.memory_limit_mb} MB</dd></div>
       <div className="flex items-center gap-1.5"><dt>Ngôn ngữ:</dt><dd>{languages.map((lang) => lang.short).join(", ") || "—"}</dd></div>
     </dl>
     <div className="space-y-3">

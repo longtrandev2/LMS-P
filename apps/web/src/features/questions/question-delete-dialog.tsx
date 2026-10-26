@@ -22,7 +22,7 @@ export function QuestionDeleteDialog({ question, onClose, onDeleted }: { questio
   return <AlertDialog open onOpenChange={(open) => !open && onClose()}>
     <AlertDialogContent>
       <AlertDialogHeader>
-        <AlertDialogTitle className="font-heading">Xóa câu hỏi #{question.id} khỏi ngân hàng?</AlertDialogTitle>
+        <AlertDialogTitle>Xóa câu hỏi #{question.id} khỏi ngân hàng?</AlertDialogTitle>
         <AlertDialogDescription>Câu hỏi bị ẩn khỏi danh sách và không thể thêm vào bài mới. Bài đã xuất bản vẫn giữ nguyên phiên bản đã ghim.</AlertDialogDescription>
       </AlertDialogHeader>
       <AlertDialogFooter>

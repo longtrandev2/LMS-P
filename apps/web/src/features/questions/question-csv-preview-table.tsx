@@ -1,8 +1,8 @@
 import { useState } from "react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { questionTypeLabel } from "@/lib/question-types";
 import type { QuestionCsvPreview, QuestionCsvRow } from "@/types/api";
-import { CheckBox } from "./ui/choice-controls";
 
 /** Bảng xem trước CSV: loại, nội dung, đáp án, trạng thái; lọc “chỉ dòng lỗi”. */
 export function QuestionCsvPreviewTable({ preview, rows, importErrors }: {
@@ -14,10 +14,10 @@ export function QuestionCsvPreviewTable({ preview, rows, importErrors }: {
   const errorCount = preview.rows.length - preview.valid_rows;
   return <div className="space-y-2">
     <div className="flex flex-wrap items-center justify-between gap-2">
-      <p className="text-sm"><span className="font-semibold">{preview.valid_rows}</span> / {preview.rows.length} dòng hợp lệ
+      <p className="text-sm tabular-nums"><span className="font-semibold">{preview.valid_rows}</span> / {preview.rows.length} dòng hợp lệ
         {errorCount ? <span className="text-destructive"> · {errorCount} dòng lỗi</span> : null}</p>
-      <label className="flex items-center gap-2 text-xs text-muted-foreground">
-        <CheckBox checked={onlyErrors} onCheckedChange={(checked) => setOnlyErrors(checked === true)} /> Chỉ dòng lỗi
+      <label htmlFor="csv-only-errors" className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground">
+        <Checkbox id="csv-only-errors" checked={onlyErrors} onCheckedChange={(checked) => setOnlyErrors(checked === true)} /> Chỉ dòng lỗi
       </label>
     </div>
     <div className="max-h-72 overflow-y-auto rounded-lg border">
@@ -32,7 +32,7 @@ export function QuestionCsvPreviewTable({ preview, rows, importErrors }: {
             const saveError = importErrors.get(row.row);
             const ok = row.valid && !saveError;
             return <TableRow key={row.row} className="align-top">
-              <TableCell className="font-mono text-xs text-muted-foreground">{row.row}</TableCell>
+              <TableCell className="font-mono text-xs text-muted-foreground tabular-nums">{row.row}</TableCell>
               <TableCell className="text-xs">{original?.type ? questionTypeLabel(original.type) : "—"}</TableCell>
               <TableCell className="max-w-72 whitespace-normal"><span className="line-clamp-2 text-xs">{row.content || "Thiếu nội dung"}</span></TableCell>
               <TableCell className="max-w-32 truncate font-mono text-xs">{original?.correct_option || "—"}</TableCell>

@@ -1,5 +1,6 @@
 import { Loader2 } from "lucide-react";
 import { VerdictBadge } from "@/components/verdict-badge";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { STATUS_LABEL } from "@/features/assignments/lecturer/labels";
 import type { GradingVerdict, SubmissionStatus } from "@/types/api";
@@ -11,16 +12,16 @@ export function SubmissionStatusBadge({ status, verdict, compact = false, classN
   status: SubmissionStatus | null | undefined; verdict?: GradingVerdict | null; compact?: boolean; className?: string;
 }) {
   if (isGrading(status)) {
-    return <span className={cn("inline-flex items-center gap-1.5 rounded-md border bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground", className)}>
-      <Loader2 className="size-3 animate-spin motion-reduce:animate-none" aria-hidden />{STATUS_LABEL[status as SubmissionStatus]}
-    </span>;
+    return <Badge variant="secondary" className={cn("border-border", className)}>
+      <Loader2 className="animate-spin motion-reduce:animate-none" aria-hidden />{STATUS_LABEL[status as SubmissionStatus]}
+    </Badge>;
   }
   if (verdict) return <VerdictBadge verdict={verdict} compact={compact} className={className} />;
   if (status === "failed") {
-    return <span className={cn("inline-flex items-center rounded-md border border-destructive/30 bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive", className)}>{STATUS_LABEL.failed}</span>;
+    return <Badge variant="destructive" className={className}>{STATUS_LABEL.failed}</Badge>;
   }
   if (status === "completed") {
-    return <span className={cn("inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium text-muted-foreground", className)}>{STATUS_LABEL.completed}</span>;
+    return <Badge variant="outline" className={cn("text-muted-foreground", className)}>{STATUS_LABEL.completed}</Badge>;
   }
   return null;
 }

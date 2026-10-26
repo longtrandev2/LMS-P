@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, History } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState, ErrorState } from "@/components/state-blocks";
@@ -22,8 +23,8 @@ function AttemptRow({ attempt, item }: { attempt: QuizAttempt; item: AssignmentS
     <span className="w-16 text-sm font-medium">Lượt {attempt.attempt_no}</span>
     <span className="font-mono text-sm font-semibold tabular-nums">{formatScore(attempt.score)}<span className="text-muted-foreground">/{formatScore(max)}</span></span>
     <span className="text-xs text-muted-foreground tabular-nums">{percent(attempt.score, max)}</span>
-    <span className="text-xs text-muted-foreground">{formatUtcDateTime(attempt.submitted_at)}</span>
-    {attempt.is_late ? <span className="rounded-md border border-gold/30 bg-gold/10 px-1.5 py-0.5 text-xs text-gold">Muộn · trừ {attempt.late_penalty_percent}%</span> : null}
+    <span className="text-xs text-muted-foreground tabular-nums">{formatUtcDateTime(attempt.submitted_at)}</span>
+    {attempt.is_late ? <Badge variant="warning">Muộn · trừ {attempt.late_penalty_percent}%</Badge> : null}
     <span className="ml-auto">
       {attempt.review_available ? <Button asChild size="xs" variant="outline">
         <Link to={studentPaths.review(item.class_id, item.id, attempt.attempt_id)}>Xem lại</Link>
@@ -49,7 +50,7 @@ export function QuizAttemptsSection({ item, attempts, isPending, error, onRetry 
   return <section aria-labelledby="quiz-attempts-title" className="space-y-4">
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-card p-4">
       <div className="space-y-0.5">
-        <p className="text-sm font-semibold">{item.question_count} câu · {item.total_points} điểm</p>
+        <p className="text-sm font-semibold tabular-nums">{item.question_count} câu · {item.total_points} điểm</p>
         <p className="text-xs text-muted-foreground">
           {blocked ?? (window === "late" ? `Đang trong hạn nộp muộn — điểm lượt mới bị trừ ${item.late_penalty_percent}%.` : "Nháp được lưu tự động trên trình duyệt này.")}
         </p>
@@ -59,9 +60,9 @@ export function QuizAttemptsSection({ item, attempts, isPending, error, onRetry 
     </div>
     <div className="rounded-xl border bg-card">
       <h2 id="quiz-attempts-title" className="border-b px-4 py-3 text-sm font-semibold">Lịch sử lượt làm</h2>
-      {isPending ? <div className="space-y-2 p-4"><Skeleton className="h-8" /><Skeleton className="h-8" /></div>
+      {isPending ? <div aria-busy="true" aria-label="Đang tải" className="space-y-2 p-4"><Skeleton className="h-8" /><Skeleton className="h-8" /></div>
         : error ? <ErrorState error={error} onRetry={onRetry} />
-        : attempts.length === 0 ? <EmptyState compact title="Chưa có lượt nào" description="Kết quả từng lượt sẽ hiện ở đây sau khi bạn nộp." />
+        : attempts.length === 0 ? <EmptyState compact icon={History} title="Chưa có lượt nào" description="Kết quả từng lượt sẽ hiện ở đây sau khi bạn nộp." />
         : <ul className="divide-y">{attempts.map((attempt) => <AttemptRow key={attempt.attempt_id} attempt={attempt} item={item} />)}</ul>}
     </div>
   </section>;

@@ -1,8 +1,8 @@
 import { Label } from "@/components/ui/label";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PARTIAL_SCORING_TYPES, SCORING_MODE_LABEL } from "@/lib/question-types";
 import type { QuestionCategory, QuestionDifficulty, ScoringMode } from "@/types/api";
-import { SegmentedToggle } from "../ui/choice-controls";
 import { useEditor } from "./editor-context";
 
 const DEFAULT_CATEGORY = "__default";
@@ -25,7 +25,7 @@ export function MetaFields({ categories, categoriesLoading }: { categories: Ques
       <Label htmlFor="question-category">Danh mục</Label>
       <Select value={categoryValue} disabled={categoriesLoading}
         onValueChange={(value) => patch({ category_id: value === DEFAULT_CATEGORY ? null : Number(value) })}>
-        <SelectTrigger id="question-category" className="w-full bg-background">
+        <SelectTrigger id="question-category" className="w-full">
           <SelectValue placeholder={categoriesLoading ? "Đang tải danh mục…" : "Chọn danh mục"} />
         </SelectTrigger>
         <SelectContent position="popper">
@@ -36,13 +36,18 @@ export function MetaFields({ categories, categoriesLoading }: { categories: Ques
     </div>
     <div className="space-y-2">
       <span id="question-difficulty-label" className="block text-sm font-medium leading-none">Độ khó</span>
-      <div className="pt-0.5"><SegmentedToggle label="Độ khó" value={draft.difficulty} options={DIFFICULTIES} onChange={(difficulty) => patch({ difficulty })} /></div>
+      <ToggleGroup type="single" aria-labelledby="question-difficulty-label" value={draft.difficulty}
+        onValueChange={(value) => value && patch({ difficulty: value as QuestionDifficulty })}>
+        {DIFFICULTIES.map((item) => <ToggleGroupItem key={item.value} value={item.value}>{item.label}</ToggleGroupItem>)}
+      </ToggleGroup>
     </div>
     {partial ? <div className="space-y-2 sm:col-span-2">
-      <span className="block text-sm font-medium leading-none">Cách chấm</span>
-      <div className="flex flex-wrap items-center gap-3 pt-0.5">
-        <SegmentedToggle label="Cách chấm" value={draft.scoring_mode} onChange={(scoring_mode) => patch({ scoring_mode })}
-          options={(["all_or_nothing", "partial"] as ScoringMode[]).map((value) => ({ value, label: SCORING_MODE_LABEL[value] }))} />
+      <span id="question-scoring-label" className="block text-sm font-medium leading-none">Cách chấm</span>
+      <div className="flex flex-wrap items-center gap-3">
+        <ToggleGroup type="single" aria-labelledby="question-scoring-label" value={draft.scoring_mode}
+          onValueChange={(value) => value && patch({ scoring_mode: value as ScoringMode })}>
+          {(["all_or_nothing", "partial"] as ScoringMode[]).map((value) => <ToggleGroupItem key={value} value={value}>{SCORING_MODE_LABEL[value]}</ToggleGroupItem>)}
+        </ToggleGroup>
         <p className="text-xs text-muted-foreground">{SCORING_HINT[draft.scoring_mode]}</p>
       </div>
     </div> : null}

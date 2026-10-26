@@ -18,13 +18,13 @@ export function MonoBlock({ title, value, tone = "default", maxHeight = "max-h-6
   }
   return <figure className={cn("min-w-0 overflow-hidden rounded-lg border", tone === "danger" ? "border-destructive/30" : "", className)}>
     <figcaption className={cn("flex items-center justify-between gap-2 border-b px-3 py-1.5 text-xs font-medium",
-      tone === "danger" ? "border-destructive/30 bg-destructive/5 text-destructive" : "bg-muted/50 text-muted-foreground")}>
+      tone === "danger" ? "border-destructive/30 bg-destructive/5 text-destructive" : "bg-muted/40 text-muted-foreground")}>
       <span>{title}</span>
       <Button type="button" variant="ghost" size="icon-xs" aria-label={copied ? `Đã sao chép ${title}` : `Sao chép ${title}`} disabled={!text} onClick={copy}>
         {copied ? <Check aria-hidden /> : <Copy aria-hidden />}
       </Button>
     </figcaption>
-    <pre tabIndex={0} aria-label={title} className={cn("overflow-auto p-3 font-mono text-xs leading-5 whitespace-pre outline-none focus-visible:ring-2 focus-visible:ring-ring/40", maxHeight)}>
+    <pre tabIndex={0} aria-label={title} className={cn("overflow-auto p-3 font-mono text-xs leading-5 whitespace-pre outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset", maxHeight)}>
       {text || <span className="text-muted-foreground italic">(trống)</span>}
     </pre>
   </figure>;

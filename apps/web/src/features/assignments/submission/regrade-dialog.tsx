@@ -41,7 +41,7 @@ export function RegradeButton({ submissionId, assignmentId, disabled }: { submis
       <DialogContent className="sm:max-w-md">
         <form onSubmit={submit} noValidate className="space-y-4">
           <DialogHeader>
-            <DialogTitle className="font-heading">Chấm lại bài nộp</DialogTitle>
+            <DialogTitle>Chấm lại bài nộp</DialogTitle>
             <DialogDescription>Bài sẽ về trạng thái chờ chấm; điểm lấy theo lần chấm mới nhất. Kết quả cũ vẫn được giữ trong lịch sử.</DialogDescription>
           </DialogHeader>
           <div className="space-y-1.5">
@@ -53,7 +53,7 @@ export function RegradeButton({ submissionId, assignmentId, disabled }: { submis
           </div>
           <DialogFooter>
             <Button type="button" variant="ghost" disabled={regrade.isPending} onClick={() => setOpen(false)}>Hủy</Button>
-            <Button type="submit" variant="cta" disabled={regrade.isPending}>{regrade.isPending ? "Đang gửi…" : "Chấm lại"}</Button>
+            <Button type="submit" disabled={regrade.isPending}>{regrade.isPending ? "Đang gửi…" : "Chấm lại"}</Button>
           </DialogFooter>
         </form>
       </DialogContent>

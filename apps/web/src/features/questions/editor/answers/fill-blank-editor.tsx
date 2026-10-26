@@ -41,7 +41,7 @@ export function FillBlankEditor() {
       Nội dung chưa có ô nào. Đặt con trỏ vào chỗ cần điền rồi bấm “Chèn ô”.</p> : <ol className="space-y-4">
       {Array.from({ length: count }, (_, index) => {
         const blank = draft.blanks[index];
-        return <li key={index} data-field={`blanks.${index}`} className="rounded-lg border bg-background p-3">
+        return <li key={index} data-field={`blanks.${index}`} className="rounded-lg border p-3">
           <AcceptedAnswersInput id={`blank-${index + 1}`} label={`Ô [[${index + 1}]]`} values={blank?.accepted ?? []}
             caseSensitive={blank?.case_sensitive ?? false} error={errors[`blanks.${index}`]}
             onChange={(accepted) => setBlank(index, { accepted })}

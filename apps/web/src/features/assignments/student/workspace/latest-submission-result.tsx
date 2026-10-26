@@ -27,10 +27,10 @@ export function LatestSubmissionResult({ submission, loading, error, onRetry }: 
   return <div className="space-y-3">
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
       <span className="font-medium text-foreground">Lượt {submission.attempt_no}</span>
-      <span>{formatUtcDateTime(submission.submitted_at)}</span>
+      <span className="tabular-nums">{formatUtcDateTime(submission.submitted_at)}</span>
       <span>{languageLabel(submission.language)}</span>
-      {submission.is_late ? <span className="text-gold">Nộp muộn</span> : null}
-      <Link to={studentPaths.submission(submission.id)} className="ml-auto inline-flex items-center gap-1 font-medium text-foreground underline-offset-4 hover:underline">
+      {submission.is_late ? <span className="text-warning">Nộp muộn</span> : null}
+      <Link to={studentPaths.submission(submission.id)} className="ml-auto inline-flex items-center gap-1 rounded-sm font-medium text-foreground underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring">
         Xem chi tiết<ArrowRight className="size-3.5" aria-hidden />
       </Link>
     </div>

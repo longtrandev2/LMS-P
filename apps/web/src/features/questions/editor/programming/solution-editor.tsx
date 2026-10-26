@@ -42,13 +42,13 @@ export function SolutionEditor() {
       <div className="w-full space-y-2 sm:w-64">
         <Label htmlFor="solution-language">Ngôn ngữ lời giải</Label>
         <Select value={p.solution_language ?? (p.solution_code.trim() ? "" : language)} onValueChange={(value) => set({ solution_language: value as ProgrammingLanguage })}>
-          <SelectTrigger id="solution-language" className="w-full bg-background" aria-invalid={!!errors.solution_language}><SelectValue placeholder="Chọn ngôn ngữ" /></SelectTrigger>
+          <SelectTrigger id="solution-language" className="w-full" aria-invalid={!!errors.solution_language}><SelectValue placeholder="Chọn ngôn ngữ" /></SelectTrigger>
           <SelectContent position="popper">
             {LANGUAGES.map((lang) => <SelectItem key={lang.id} value={lang.id} disabled={!p.allowed_languages.includes(lang.id)}>{lang.label}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>
-      <span className="pb-2.5 text-xs text-muted-foreground">{formatBytes(byteSize(p.solution_code))} / {formatBytes(LIMITS.solutionBytes)}</span>
+      <span className="pb-2.5 text-xs text-muted-foreground tabular-nums">{formatBytes(byteSize(p.solution_code))} / {formatBytes(LIMITS.solutionBytes)}</span>
     </div>
     <FieldMessage id="solution-language-message" error={errors.solution_language} />
     <CodeEditor language={language} value={p.solution_code} minHeight="14rem" maxHeight="36rem" ariaLabel="Lời giải mẫu"

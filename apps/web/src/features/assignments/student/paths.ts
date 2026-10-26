@@ -2,7 +2,7 @@
 type Id = number | string;
 
 export const studentPaths = {
-  classPage: (classId: Id) => `/me/classes/${classId}`,
+  classPage: (classId: Id) => `/me/classes/${classId}?tab=assignments`,
   overview: (classId: Id, assignmentId: Id) => `/me/classes/${classId}/assignments/${assignmentId}`,
   attempt: (classId: Id, assignmentId: Id) => `/me/classes/${classId}/assignments/${assignmentId}/attempt`,
   review: (classId: Id, assignmentId: Id, attemptId: Id) => `/me/classes/${classId}/assignments/${assignmentId}/attempts/${attemptId}`,

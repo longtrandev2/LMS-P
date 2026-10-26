@@ -22,7 +22,7 @@ export function StarterCodesEditor() {
       <RotateCcw aria-hidden /> Dùng mẫu mặc định</Button>}>
     <Tabs value={active} onValueChange={(value) => setSelected(value as ProgrammingLanguage)} className="gap-3">
       <TabsList variant="line" className="h-9 max-w-full justify-start overflow-x-auto">
-        {allowed.map((lang) => <TabsTrigger key={lang.id} value={lang.id} className="flex-none px-3 normal-case tracking-normal">
+        {allowed.map((lang) => <TabsTrigger key={lang.id} value={lang.id} className="flex-none px-3">
           {lang.short}{draft.programming.starter_codes[lang.id]?.trim() ? null : <span className="ml-1 font-normal text-muted-foreground">(trống)</span>}
         </TabsTrigger>)}
       </TabsList>

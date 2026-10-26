@@ -1,7 +1,8 @@
 import { useRef, useState } from "react";
-import { FileArchive, FileUp, Plus } from "lucide-react";
+import { FileArchive, FileUp, FlaskConical, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/state-blocks";
 import { cn } from "@/lib/utils";
 import { EditorSection, FieldMessage, useEditor } from "../editor-context";
 import { emptyTest, type TestDraft } from "../question-draft";
@@ -41,18 +42,16 @@ export function TestsSection({ toolbar }: { toolbar?: React.ReactNode }) {
         onChange={(event) => { const file = event.currentTarget.files?.[0]; event.currentTarget.value = ""; if (file) void read(() => importFromZip(file)); }} />
       <Button type="button" size="sm" variant="outline" disabled={reading} onClick={() => filesRef.current?.click()}><FileUp aria-hidden /> Tải file</Button>
       <Button type="button" size="sm" variant="outline" disabled={reading} onClick={() => zipRef.current?.click()}><FileArchive aria-hidden /> {reading ? "Đang đọc…" : "Tải zip"}</Button>
-      <Button type="button" size="sm" disabled={full} onClick={() => setEditing({ index: null, test: emptyTest() })}><Plus aria-hidden /> Thêm test</Button>
+      <Button type="button" size="sm" variant="outline" disabled={full} onClick={() => setEditing({ index: null, test: emptyTest() })}><Plus aria-hidden /> Thêm test</Button>
     </>}>
     {tests.length ? <TestCaseTable tests={tests} errors={errors}
       onToggle={(index, is_public) => setTests((rows) => rows.map((row, i) => i === index ? { ...row, is_public } : row))}
       onEdit={(index) => setEditing({ index, test: tests[index] })}
       onMove={(index, delta) => setTests((rows) => moveItem(rows, index, delta))}
       onDelete={(index) => setTests((rows) => rows.filter((_, i) => i !== index))} />
-      : <div className="rounded-lg border border-dashed px-4 py-8 text-center">
-        <p className="text-sm font-medium">Chưa có test</p>
-        <p className="mt-1 text-xs text-muted-foreground">Thêm từng test, hoặc tải file .in/.out (hay một file zip) để nhập hàng loạt.</p>
-      </div>}
-    <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+      : <EmptyState compact icon={FlaskConical} title="Chưa có test" className="rounded-lg border border-dashed"
+        description="Thêm từng test, hoặc tải file .in/.out (hay một file zip) để nhập hàng loạt." />}
+    <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground tabular-nums">
       <span>{tests.length}/{LIMITS.tests.max} test · {tests.filter((t) => t.is_public).length} mẫu</span>
       <span className={cn(total > LIMITS.totalTestBytes && "font-medium text-destructive")}>{formatBytes(total)} / {formatBytes(LIMITS.totalTestBytes)}</span>
     </div>

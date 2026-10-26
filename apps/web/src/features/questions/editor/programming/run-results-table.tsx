@@ -20,7 +20,7 @@ function Block({ label, text }: { label: string; text?: string | null }) {
 export function RunResultsTable({ rows }: { rows: RunRow[] }) {
   return <div className="overflow-hidden rounded-lg border">
     <Table>
-      <TableHeader className="bg-muted/40"><TableRow>
+      <TableHeader><TableRow>
         <TableHead className="w-12">Test</TableHead><TableHead className="w-44">Kết quả</TableHead>
         <TableHead className="w-24 text-right">Thời gian</TableHead><TableHead>Chi tiết</TableHead>
       </TableRow></TableHeader>
@@ -28,12 +28,12 @@ export function RunResultsTable({ rows }: { rows: RunRow[] }) {
         {rows.map((row) => {
           const ok = row.verdict === "AC" || row.verdict === "OK";
           return <TableRow key={row.position} className="align-top">
-            <TableCell className="font-mono text-xs">#{row.position}</TableCell>
+            <TableCell className="font-mono text-xs tabular-nums">#{row.position}</TableCell>
             <TableCell><VerdictBadge verdict={row.verdict} /></TableCell>
-            <TableCell className="text-right font-mono text-xs">{row.time_ms != null ? `${row.time_ms} ms` : "—"}</TableCell>
+            <TableCell className="text-right font-mono text-xs tabular-nums">{row.time_ms != null ? `${row.time_ms} ms` : "—"}</TableCell>
             <TableCell className="whitespace-normal">
               {ok ? <span className="text-xs text-muted-foreground">—</span> : <details className="group">
-                <summary className="cursor-pointer rounded text-xs font-medium outline-none select-none focus-visible:ring-2 focus-visible:ring-ring/40">So sánh output</summary>
+                <summary className="cursor-pointer rounded text-xs font-medium outline-none select-none focus-visible:ring-2 focus-visible:ring-ring">So sánh output</summary>
                 <div className="mt-2 grid gap-2 md:grid-cols-2">
                   {row.input != null ? <div className="md:col-span-2"><Block label="Input" text={row.input} /></div> : null}
                   <Block label="Output mong đợi" text={row.expected} />

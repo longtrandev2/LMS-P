@@ -1,5 +1,5 @@
 import { Input } from "@/components/ui/input";
-import { RadioCards, SwitchRow } from "./controls";
+import { RadioCards, SwitchRow } from "./option-cards";
 import { EditorSection, Field, fieldAria } from "./editor-layout";
 import { SCORE_POLICY_OPTIONS } from "./labels";
 import type { EditorForm, FieldErrors } from "./editor-model";
@@ -26,7 +26,7 @@ export function EditorScheduleSection({ form, patch, errors, published }: {
       </Field>
     </div>
 
-    <div className="space-y-4 rounded-lg border p-4">
+    <div className="space-y-4 border-t pt-5">
       <SwitchRow id="allow-late" label="Cho phép nộp muộn" description="Bài nộp sau hạn bị trừ điểm theo phần trăm."
         checked={form.allowLate} onChange={(allowLate) => patch({ allowLate })} />
       {form.allowLate ? <div className="grid gap-4 sm:grid-cols-[1fr_10rem]">
@@ -44,11 +44,11 @@ export function EditorScheduleSection({ form, patch, errors, published }: {
       </div> : null}
     </div>
 
-    {published ? <p className="text-sm text-muted-foreground">
+    {published ? <p className="border-t pt-5 text-sm text-muted-foreground">
       Số lượt: <span className="font-medium text-foreground">{form.attemptsLimited ? form.maxAttempts : "không giới hạn"}</span>
       {" · "}Cách tính điểm: <span className="font-medium text-foreground">{SCORE_POLICY_OPTIONS.find((o) => o.id === form.scorePolicy)?.label}</span>
       {" "}(đã khóa sau khi xuất bản)
-    </p> : <div className="grid gap-4 sm:grid-cols-2">
+    </p> : <div className="grid gap-4 border-t pt-5 sm:grid-cols-2">
       <div className="space-y-2">
         <p className="text-sm font-medium">Số lượt nộp</p>
         <RadioCards label="Số lượt nộp" value={form.attemptsLimited ? "limited" : "unlimited"}

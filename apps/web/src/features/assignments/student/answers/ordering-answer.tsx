@@ -48,7 +48,7 @@ export function OrderingAnswer({ question, value, onChange, readOnly, correct, i
         return <li key={id} ref={(node) => { if (node) refs.current.set(id, node); else refs.current.delete(id); }}
           tabIndex={readOnly ? undefined : 0} onKeyDown={(event) => onKeyDown(event, index)}
           aria-label={`Vị trí ${index + 1}: ${textOf(id)}`}
-          className={cn("flex items-center gap-3 rounded-lg border bg-card px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/40", markTone(state))}>
+          className={cn("flex items-center gap-3 rounded-lg border bg-card px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring", markTone(state))}>
           <span className="w-5 font-mono text-xs text-muted-foreground" aria-hidden>{index + 1}</span>
           <span className="min-w-0 flex-1 break-words">{textOf(id)}</span>
           {state ? <CorrectnessMark ok={state === "correct"} /> : null}

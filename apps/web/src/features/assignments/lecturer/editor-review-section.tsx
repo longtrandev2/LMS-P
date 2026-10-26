@@ -1,5 +1,5 @@
 import { Textarea } from "@/components/ui/textarea";
-import { RadioCards, SwitchRow } from "./controls";
+import { RadioCards, SwitchRow } from "./option-cards";
 import { EditorSection, Field, fieldAria } from "./editor-layout";
 import { REVIEW_MODE_OPTIONS } from "./labels";
 import type { EditorForm, FieldErrors } from "./editor-model";

@@ -18,7 +18,7 @@ export function PublishConflictDialog({ conflict, busy, questionLabel, onCancel,
   return <AlertDialog open={conflict != null} onOpenChange={(open) => !open && onCancel()}>
     <AlertDialogContent className="sm:max-w-lg!">
       <AlertDialogHeader>
-        <AlertDialogTitle className="normal-case tracking-normal">
+        <AlertDialogTitle>
           {unverified ? "Có câu lập trình chưa kiểm tra đề" : "Lời giải mẫu chưa đạt bộ test"}
         </AlertDialogTitle>
         <AlertDialogDescription>
@@ -30,7 +30,7 @@ export function PublishConflictDialog({ conflict, busy, questionLabel, onCancel,
       {conflict?.questionIds.length ? <ul className="space-y-1.5">
         {conflict.questionIds.map((id) => <li key={id}>
           <Link to={`/questions/${id}/edit`} target="_blank" rel="noreferrer"
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-primary underline-offset-4 hover:underline">
+            className="inline-flex items-center gap-1.5 rounded-sm text-sm font-medium text-foreground underline decoration-border underline-offset-4 outline-none hover:decoration-foreground focus-visible:ring-2 focus-visible:ring-ring">
             <ExternalLink className="size-3.5" aria-hidden />{questionLabel?.(id) ?? `Câu hỏi #${id}`}
           </Link>
         </li>)}

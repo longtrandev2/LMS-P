@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { AlertTriangle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { SegmentedToggle } from "../../ui/choice-controls";
 import { byteSize, formatBytes, LIMITS, testsTotalBytes } from "../limits";
 import type { TestDraft } from "../question-draft";
 import type { ImportedPair, ImportResult } from "./test-import";
@@ -27,32 +28,34 @@ export function TestImportDialog({ result, existing, onApply, onClose }: {
   return <Dialog open onOpenChange={(open) => !open && onClose()}>
     <DialogContent className="max-h-[88dvh] grid-rows-[auto_minmax(0,1fr)_auto] sm:max-w-2xl">
       <DialogHeader>
-        <DialogTitle className="font-heading">Nhập bộ test</DialogTitle>
+        <DialogTitle>Nhập bộ test</DialogTitle>
         <DialogDescription>Đã ghép {result.pairs.length} cặp, {valid.length} cặp hợp lệ. Test nhập vào mặc định là <strong>Ẩn</strong>.</DialogDescription>
       </DialogHeader>
       <div className="min-h-0 space-y-3 overflow-y-auto">
-        {result.problems.length ? <ul className="space-y-1 rounded-lg border border-gold/30 bg-gold/5 px-3 py-2 text-xs text-gold">
-          {result.problems.map((problem) => <li key={problem} className="flex gap-2"><AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden />{problem}</li>)}
-        </ul> : null}
+        {result.problems.length ? <Alert variant="warning">
+          <AlertTriangle aria-hidden />
+          <AlertDescription><ul className="space-y-1 text-xs">{result.problems.map((problem) => <li key={problem}>{problem}</li>)}</ul></AlertDescription>
+        </Alert> : null}
         {result.pairs.length ? <div className="overflow-hidden rounded-lg border">
           <Table>
             <TableHeader><TableRow><TableHead className="w-10">#</TableHead><TableHead>Tên</TableHead><TableHead className="text-right">Input</TableHead><TableHead className="text-right">Output</TableHead><TableHead>Trạng thái</TableHead></TableRow></TableHeader>
             <TableBody>
               {result.pairs.map((pair, index) => <TableRow key={pair.name}>
-                <TableCell className="font-mono text-xs text-muted-foreground">{index + 1}</TableCell>
+                <TableCell className="font-mono text-xs text-muted-foreground tabular-nums">{index + 1}</TableCell>
                 <TableCell className="max-w-48 truncate font-mono text-xs">{pair.name}</TableCell>
-                <TableCell className="text-right font-mono text-xs">{formatBytes(byteSize(pair.input))}</TableCell>
-                <TableCell className="text-right font-mono text-xs">{formatBytes(byteSize(pair.expected_output))}</TableCell>
+                <TableCell className="text-right font-mono text-xs tabular-nums">{formatBytes(byteSize(pair.input))}</TableCell>
+                <TableCell className="text-right font-mono text-xs tabular-nums">{formatBytes(byteSize(pair.expected_output))}</TableCell>
                 <TableCell className={pair.error ? "text-xs text-destructive" : "text-xs text-success"}>{pair.error ?? "Hợp lệ"}</TableCell>
               </TableRow>)}
             </TableBody>
           </Table>
         </div> : null}
         <div className="flex flex-wrap items-center gap-3">
-          <SegmentedToggle label="Cách nhập" value={mode} onChange={setMode} options={[
-            { value: "replace", label: "Thay toàn bộ" }, { value: "append", label: "Thêm vào cuối" },
-          ]} />
-          <span className="text-xs text-muted-foreground">Sau khi nhập: {count} test · {formatBytes(total)}</span>
+          <ToggleGroup type="single" aria-label="Cách nhập" value={mode} onValueChange={(next) => next && setMode(next as ImportMode)}>
+            <ToggleGroupItem value="replace">Thay toàn bộ</ToggleGroupItem>
+            <ToggleGroupItem value="append">Thêm vào cuối</ToggleGroupItem>
+          </ToggleGroup>
+          <span className="text-xs text-muted-foreground tabular-nums">Sau khi nhập: {count} test · {formatBytes(total)}</span>
         </div>
         {blockers.map((text) => <p key={text} role="alert" className="text-xs text-destructive">{text}</p>)}
       </div>

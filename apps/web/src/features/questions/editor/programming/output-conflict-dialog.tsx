@@ -10,7 +10,7 @@ export function OutputConflictDialog({ conflicts, onOverwrite, onKeep }: {
   return <AlertDialog open onOpenChange={(open) => !open && onKeep()}>
     <AlertDialogContent className="max-h-[88dvh] overflow-y-auto sm:max-w-2xl">
       <AlertDialogHeader>
-        <AlertDialogTitle className="font-heading">{conflicts.length} test có output khác lời giải</AlertDialogTitle>
+        <AlertDialogTitle>{conflicts.length} test có output khác lời giải</AlertDialogTitle>
         <AlertDialogDescription>Các test dưới đây đã có output mong đợi nhưng lời giải in ra kết quả khác. Ghi đè bằng output của lời giải?</AlertDialogDescription>
       </AlertDialogHeader>
       <ul className="space-y-3">

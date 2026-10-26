@@ -1,16 +1,20 @@
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
-/** Một mục của trang soạn đề: tiêu đề + mô tả bên trái (desktop), nội dung bên phải. */
+/**
+ * Một mục của trang soạn đề (DESIGN.md §5 "Trang soạn"): tiêu đề + mô tả bên trái trên desktop (1/3),
+ * panel nội dung bên phải (2/3); xếp dọc trên màn hẹp.
+ */
 export function EditorSection({ id, title, description, children, className }: {
   id: string; title: string; description?: string; children: React.ReactNode; className?: string;
 }) {
-  return <section id={id} aria-labelledby={`${id}-title`} className={cn("rounded-xl border bg-card", className)}>
-    <header className="border-b px-5 py-4">
-      <h2 id={`${id}-title`} className="font-heading text-base font-semibold">{title}</h2>
-      {description ? <p className="mt-0.5 text-sm text-muted-foreground">{description}</p> : null}
+  return <section id={id} aria-labelledby={`${id}-title`}
+    className={cn("grid scroll-mt-32 gap-x-8 gap-y-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]", className)}>
+    <header className="space-y-1 lg:pt-1">
+      <h2 id={`${id}-title`} className="text-base font-semibold tracking-tight">{title}</h2>
+      {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
     </header>
-    <div className="space-y-5 p-5">{children}</div>
+    <div className="min-w-0 space-y-5 rounded-xl border bg-card p-4 sm:p-5">{children}</div>
   </section>;
 }
 

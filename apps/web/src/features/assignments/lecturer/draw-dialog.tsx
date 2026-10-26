@@ -70,7 +70,7 @@ export function DrawDialog({ open, onOpenChange, classId, quiz, existing, onAdd 
   return <Dialog open={open} onOpenChange={close}>
     <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-4xl">
       <DialogHeader>
-        <DialogTitle className="font-heading">Bốc câu ngẫu nhiên</DialogTitle>
+        <DialogTitle>Bốc câu ngẫu nhiên</DialogTitle>
         <DialogDescription>
           {result ? "Xem kết quả, bỏ chọn câu không muốn dùng rồi thêm vào đề. Đề vẫn chung cho cả lớp."
             : "Mỗi quy tắc bốc một số câu không lặp từ ngân hàng. Câu đã có trong đề được loại trừ."}

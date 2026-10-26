@@ -54,13 +54,13 @@ export function QuizRunner({ details, attemptNo, draftKey, remainingAfter }: {
       subtitle={`Lượt ${attemptNo} · Nháp tự lưu trên trình duyệt này${late ? ` · Nộp muộn trừ ${item.late_penalty_percent}%` : ""}`}
       answered={draft.answeredCount} total={questions.length} onSubmit={openSubmit} submitting={submit.isPending} />
     <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_16rem]">
-      <div className="order-2 mx-auto w-full max-w-3xl lg:order-1">
+      <div className="order-2 mx-auto w-full max-w-[720px] lg:order-1">
         <QuizQuestionView question={question} index={index} total={questions.length}
           value={draft.answers[question.question_id] ?? {}} onChange={(value) => draft.setAnswer(question.question_id, value)}
           flagged={draft.flagged.includes(question.question_id)} onToggleFlag={() => draft.toggleFlag(question.question_id)}
           onPrev={() => goTo(index - 1)} onNext={() => goTo(index + 1)} onSubmit={openSubmit} />
       </div>
-      <aside className="order-1 lg:sticky lg:top-44 lg:order-2">
+      <aside className="order-1 lg:sticky lg:top-36 lg:order-2">
         <QuizNavigator questions={questions} answers={draft.answers} flagged={draft.flagged} current={index} onSelect={goTo} />
       </aside>
     </div>

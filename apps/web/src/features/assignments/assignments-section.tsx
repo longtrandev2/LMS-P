@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
+import { ClipboardList, Plus } from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { EmptyState, ErrorState, TableSkeleton } from "@/components/state-blocks";
+import { EmptyState, ErrorState, ListSkeleton } from "@/components/state-blocks";
 import { api, ApiError } from "@/lib/api";
 import { errorText } from "@/lib/error-messages";
 import { queryKeys } from "@/lib/query-keys";
@@ -58,9 +58,9 @@ export function AssignmentsSection({ classId, canManage, canTake = false }: {
       <Button variant="cta" asChild><Link to={`/classes/${classId}/assignments/new`}><Plus aria-hidden />Tạo bài tập / quiz</Link></Button>
     </div> : null}
     <div className="overflow-hidden rounded-xl border bg-card">
-      {list.isPending ? <TableSkeleton rows={3} cols={3} /> : null}
+      {list.isPending ? <ListSkeleton rows={3} /> : null}
       {list.isError ? <ErrorState error={list.error} onRetry={() => list.refetch()} /> : null}
-      {list.data && items.length === 0 ? <EmptyState title="Chưa có bài tập hoặc quiz"
+      {list.data && items.length === 0 ? <EmptyState icon={ClipboardList} title="Chưa có bài tập hoặc quiz"
         description={canManage ? "Tạo bản nháp, chọn câu hỏi rồi xuất bản để sinh viên làm." : "Giảng viên chưa đăng bài nào cho lớp."} /> : null}
       {items.length ? <div className="divide-y">{items.map((item) => <AssignmentListItem key={item.id} item={item} classId={classId}
         canManage={canManage} canTake={canTake} busy={busyId === item.id}
@@ -70,7 +70,7 @@ export function AssignmentsSection({ classId, canManage, canTake = false }: {
     <AlertDialog open={deleting != null} onOpenChange={(open) => !open && setDeleting(null)}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle className="normal-case tracking-normal">Xóa bản nháp?</AlertDialogTitle>
+          <AlertDialogTitle>Xóa bản nháp?</AlertDialogTitle>
           <AlertDialogDescription>“{deleting?.title}” sẽ bị xóa vĩnh viễn. Câu hỏi trong ngân hàng không bị ảnh hưởng.</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

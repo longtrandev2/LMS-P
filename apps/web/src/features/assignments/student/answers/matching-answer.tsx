@@ -1,4 +1,5 @@
 import { AlertTriangle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { CorrectnessMark, markTone, type AnswerFieldProps } from "./correctness-mark";
@@ -24,9 +25,10 @@ export function MatchingAnswer({ question, value, onChange, readOnly, correct, i
 
   return <fieldset className="space-y-3">
     <legend className="mb-1 text-xs font-medium text-muted-foreground">Ghép mỗi mục bên trái với một mục bên phải</legend>
-    {hasDuplicate && !readOnly ? <p role="status" className="flex items-center gap-2 rounded-md border border-gold/40 bg-gold/10 px-3 py-2 text-xs text-gold">
-      <AlertTriangle className="size-4 shrink-0" aria-hidden /> Có mục bên phải đang được chọn nhiều lần — mỗi mục chỉ đúng với một dòng.
-    </p> : null}
+    {hasDuplicate && !readOnly ? <Alert variant="warning" role="status">
+      <AlertTriangle aria-hidden />
+      <AlertDescription className="text-xs">Có mục bên phải đang được chọn nhiều lần — mỗi mục chỉ đúng với một dòng.</AlertDescription>
+    </Alert> : null}
     <ul className="space-y-2">
       {lefts.map((left, index) => {
         const id = `${idPrefix}-match-${left.id}`;
@@ -53,7 +55,7 @@ export function MatchingAnswer({ question, value, onChange, readOnly, correct, i
                 </SelectItem>)}
               </SelectContent>
             </Select>}
-            {duplicate && !readOnly ? <p className="text-xs text-gold">Mục này cũng được chọn ở dòng khác.</p> : null}
+            {duplicate && !readOnly ? <p className="text-xs text-warning">Mục này cũng được chọn ở dòng khác.</p> : null}
             {state === "wrong" && expected ? <p className="text-xs text-muted-foreground">
               Đúng: <span className="font-medium text-foreground">{rightText(expected) ?? expected}</span>
             </p> : null}

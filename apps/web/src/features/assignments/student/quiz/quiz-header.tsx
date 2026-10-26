@@ -8,7 +8,7 @@ function Progress({ answered, total, className }: { answered: number; total: num
     <p className="text-xs font-medium tabular-nums">Đã làm {answered}/{total}</p>
     <div role="progressbar" aria-label="Tiến độ làm bài" aria-valuemin={0} aria-valuemax={total} aria-valuenow={answered}
       className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-      <div className="h-full rounded-full bg-primary transition-[width] duration-200" style={{ width: `${percent}%` }} />
+      <div className="h-full rounded-full bg-foreground transition-[width] duration-200 motion-reduce:transition-none" style={{ width: `${percent}%` }} />
     </div>
   </div>;
 }
@@ -17,7 +17,7 @@ function Progress({ answered, total, className }: { answered: number; total: num
 export function QuizHeader({ title, subtitle, backTo, answered, total, onSubmit, submitting }: {
   title: string; subtitle: string; backTo: string; answered: number; total: number; onSubmit: () => void; submitting: boolean;
 }) {
-  return <div className="sticky top-20 z-10 -mx-4 -mt-7 border-b bg-background/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:-mt-9 sm:px-6 xl:-mx-10 xl:px-10">
+  return <div className="sticky top-14 z-20 -mx-4 -mt-6 border-b bg-background/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:-mt-8 sm:px-6">
     <div className="flex items-center gap-3">
       <Button asChild variant="ghost" size="icon-sm">
         <Link to={backTo} aria-label="Về trang bài (nháp vẫn được lưu)"><ArrowLeft aria-hidden /></Link>

@@ -1,5 +1,7 @@
 import { useParams } from "react-router-dom";
 import { MarkdownView } from "@/components/markdown-view";
+import { PageHeader } from "@/components/page-header";
+import { Badge } from "@/components/ui/badge";
 import { AssignmentInfo } from "@/features/assignments/student/overview/assignment-info";
 import { QuestionListSection } from "@/features/assignments/student/overview/question-list-section";
 import { QuizAttemptsSection } from "@/features/assignments/student/overview/quiz-attempts-section";
@@ -29,13 +31,13 @@ export function StudentAssignmentPage() {
 
   return <div className="space-y-6">
     {back}
-    <header className="space-y-2">
-      <p className="text-xs font-medium text-muted-foreground">{CATEGORY_LABEL[item.category]}</p>
-      <h1 className="font-heading text-2xl font-semibold tracking-tight sm:text-[28px]">{item.title}</h1>
-    </header>
+    <PageHeader title={item.title} meta={<>
+      <Badge variant="outline">{CATEGORY_LABEL[item.category]}</Badge>
+      <span className="tabular-nums">{item.question_count} câu · {item.total_points} điểm</span>
+    </>} />
     <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
       <div className="order-2 min-w-0 space-y-6 lg:order-1">
-        {item.description?.trim() ? <section aria-label="Mô tả" className="rounded-xl border bg-card p-5">
+        {item.description?.trim() ? <section aria-label="Mô tả" className="rounded-xl border bg-card p-4 sm:p-5">
           <MarkdownView source={item.description} />
         </section> : null}
         {isQuiz
@@ -43,7 +45,7 @@ export function StudentAssignmentPage() {
               error={attempts.error} onRetry={() => void attempts.refetch()} />
           : <QuestionListSection details={details.data} />}
       </div>
-      <aside className="order-1 lg:sticky lg:top-28 lg:order-2">
+      <aside className="order-1 lg:sticky lg:top-20 lg:order-2">
         <AssignmentInfo item={item} attempts={attemptsInfo} />
       </aside>
     </div>

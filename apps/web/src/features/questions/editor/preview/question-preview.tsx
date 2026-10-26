@@ -14,8 +14,8 @@ const withBlankChips = (content: string) => content.replace(/\[\[(\d{1,2})\]\]/g
 export function QuestionPreview({ draft, showAnswers = false, title = "Xem trước" }: { draft: QuestionDraft; showAnswers?: boolean; title?: string }) {
   const content = draft.type === "fill_blank" ? withBlankChips(draft.content) : draft.content;
   return <section aria-label={title} className="overflow-hidden rounded-xl border bg-card">
-    <header className="flex items-center justify-between gap-2 border-b bg-muted/30 px-4 py-2.5">
-      <span className="inline-flex items-center gap-1.5 text-xs font-semibold"><Eye className="size-3.5" aria-hidden />{title}</span>
+    <header className="flex items-center justify-between gap-2 border-b px-4 py-2.5">
+      <span className="inline-flex items-center gap-1.5 text-sm font-semibold"><Eye className="size-4 text-muted-foreground" aria-hidden />{title}</span>
       <span className="text-xs text-muted-foreground">{questionTypeLabel(draft.type)} · {DIFFICULTY[draft.difficulty]}</span>
     </header>
     <div className="space-y-5 p-4 sm:p-5">

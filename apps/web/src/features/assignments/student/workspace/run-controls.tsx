@@ -1,5 +1,6 @@
 import { Loader2, Play, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -8,17 +9,17 @@ export function RunControls({ useCustom, onUseCustomChange, customInput, onCusto
   useCustom: boolean; onUseCustomChange: (value: boolean) => void; customInput: string; onCustomInputChange: (value: string) => void;
   onRun: () => void; running: boolean; hasSamples: boolean; canRun: boolean; onSubmit: () => void; submitting: boolean; canSubmit: boolean; note: string;
 }) {
-  return <div className="space-y-2 rounded-lg border bg-card p-3">
+  return <div className="space-y-2 rounded-xl border bg-card p-3">
     <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
       <Button type="button" variant="outline" size="sm" onClick={onRun} disabled={!canRun || running}>
         {running ? <Loader2 className="animate-spin motion-reduce:animate-none" aria-hidden /> : <Play aria-hidden />}
         {running ? "Đang chạy…" : "Chạy thử"}
       </Button>
-      <label className="flex cursor-pointer items-center gap-2 text-xs font-medium select-none">
-        <input type="checkbox" className="size-4 accent-[var(--primary)]" checked={useCustom} onChange={(event) => onUseCustomChange(event.target.checked)} />
+      <label htmlFor="workspace-use-custom" className="flex cursor-pointer items-center gap-2 text-xs font-medium select-none">
+        <Checkbox id="workspace-use-custom" checked={useCustom} onCheckedChange={(checked) => onUseCustomChange(checked === true)} />
         Input tự nhập
       </label>
-      <span className="ml-auto text-xs text-muted-foreground">{note}</span>
+      <span className="ml-auto text-xs text-muted-foreground tabular-nums">{note}</span>
       <Button type="button" variant="cta" size="sm" onClick={onSubmit} disabled={!canSubmit || submitting}>
         {submitting ? <Loader2 className="animate-spin motion-reduce:animate-none" aria-hidden /> : <Send aria-hidden />}
         {submitting ? "Đang nộp…" : "Nộp bài"}

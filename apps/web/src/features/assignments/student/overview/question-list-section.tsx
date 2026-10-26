@@ -1,3 +1,4 @@
+import { FileQuestion } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState, ErrorState } from "@/components/state-blocks";
 import { useAuthStore } from "@/stores/auth";
@@ -12,9 +13,9 @@ export function QuestionListSection({ details }: { details: AssignmentDetails })
   const userId = useAuthStore((state) => state.user?.id ?? null);
   const history = useMySubmissions(item.id);
 
-  if (details.questions.length === 0) return <EmptyState title="Bài chưa có câu hỏi" description="Giảng viên chưa thêm câu hỏi cho bài này." />;
-  if (history.isPending) return <div className="space-y-3"><Skeleton className="h-40 rounded-xl" /><Skeleton className="h-40 rounded-xl" /></div>;
-  if (history.isError) return <ErrorState error={history.error} onRetry={() => void history.refetch()} />;
+  if (details.questions.length === 0) return <EmptyState icon={FileQuestion} className="rounded-xl border bg-card" title="Bài chưa có câu hỏi" description="Giảng viên chưa thêm câu hỏi cho bài này." />;
+  if (history.isPending) return <div aria-busy="true" aria-label="Đang tải" className="space-y-3"><Skeleton className="h-40 rounded-xl" /><Skeleton className="h-40 rounded-xl" /></div>;
+  if (history.isError) return <ErrorState className="rounded-xl border bg-card" error={history.error} onRetry={() => void history.refetch()} />;
 
   return <section aria-labelledby="question-list-title" className="space-y-3">
     <div className="flex flex-wrap items-baseline justify-between gap-2">

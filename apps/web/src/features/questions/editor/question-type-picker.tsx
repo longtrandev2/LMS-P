@@ -13,7 +13,7 @@ export function QuestionTypePicker({ value, locked, onChange }: { value: Questio
   if (locked) {
     const Icon = TYPE_ICON[value];
     return <div className="flex items-center gap-3 rounded-xl border bg-card px-4 py-3">
-      <span className="grid size-9 place-items-center rounded-lg bg-muted text-foreground"><Icon className="size-4" aria-hidden /></span>
+      <Icon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
       <div className="min-w-0">
         <p className="text-sm font-semibold">{questionTypeLabel(value)}</p>
         <p className="text-xs text-muted-foreground">Loại câu không đổi được sau khi tạo.</p>
@@ -27,10 +27,10 @@ export function QuestionTypePicker({ value, locked, onChange }: { value: Questio
         const Icon = TYPE_ICON[item.id];
         const active = item.id === value;
         return <button key={item.id} type="button" aria-pressed={active} onClick={() => onChange(item.id)}
-          className={cn("group flex min-w-0 items-start gap-2.5 rounded-lg border bg-card p-3 text-left transition-colors outline-none",
-            "focus-visible:ring-2 focus-visible:ring-ring/40",
-            active ? "border-primary ring-1 ring-primary" : "hover:border-foreground/25 hover:bg-muted/40")}>
-          <Icon className={cn("mt-0.5 size-4 shrink-0", active ? "text-primary" : "text-muted-foreground group-hover:text-foreground")} aria-hidden />
+          className={cn("group flex min-w-0 items-start gap-2.5 rounded-lg border bg-card p-3 text-left transition-colors duration-150 outline-none",
+            "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+            active ? "border-foreground ring-1 ring-foreground" : "hover:border-foreground/25 hover:bg-muted/40")}>
+          <Icon className={cn("mt-0.5 size-4 shrink-0", active ? "text-foreground" : "text-muted-foreground group-hover:text-foreground")} aria-hidden />
           <span className="min-w-0">
             <span className="block text-sm font-medium leading-5">{item.label}</span>
             <span className="mt-0.5 hidden text-xs leading-4 text-muted-foreground sm:block">{item.description}</span>

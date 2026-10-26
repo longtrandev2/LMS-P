@@ -16,14 +16,14 @@ export function ProblemStatement({ question }: { question: AssignmentQuestion })
   const programming = question.programming;
   const samples = programming?.samples ?? [];
   return <div className="space-y-6">
-    {programming ? <dl className="grid grid-cols-2 gap-x-4 gap-y-3 rounded-lg border bg-muted/30 p-3 sm:grid-cols-4">
+    {programming ? <dl className="grid grid-cols-2 gap-x-4 gap-y-3 border-b pb-4 sm:grid-cols-4">
       <Fact label="Thời gian" value={`${programming.time_limit_ms} ms`} />
       <Fact label="Bộ nhớ" value={`${programming.memory_limit_mb} MB`} />
       <Fact label="Điểm" value={formatScore(question.points)} />
       <Fact label="So kết quả" value={programming.checker_mode === "float" ? "Số thực" : programming.checker_mode === "line" ? "Theo dòng" : "Theo từ"} />
     </dl> : null}
     <MarkdownView source={question.content} className="text-[15px]" />
-    <div className="space-y-1 rounded-lg border-l-2 border-primary bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+    <div className="space-y-1 rounded-lg border px-3 py-2 text-xs text-muted-foreground">
       <p>Đọc dữ liệu từ <strong className="text-foreground">stdin</strong>, ghi kết quả ra <strong className="text-foreground">stdout</strong>. Java: đặt tên lớp là <code className="rounded bg-muted px-1 font-mono">Main</code>.</p>
       {programming ? <p>Cách so: {CHECKER_LABEL[programming.checker_mode]}. Java và Python được gấp đôi giới hạn thời gian.</p> : null}
     </div>

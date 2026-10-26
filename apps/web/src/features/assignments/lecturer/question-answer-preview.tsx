@@ -50,9 +50,9 @@ export function QuestionAnswerPreview({ question }: { question: Question }) {
       const publicTests = question.test_cases.filter((t) => t.is_public);
       return <Block title="Thông số chấm">
         <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-4">
-          <div><dt className="text-xs text-muted-foreground">Thời gian</dt><dd className="font-mono">{p?.time_limit_ms ?? "—"} ms</dd></div>
-          <div><dt className="text-xs text-muted-foreground">Bộ nhớ</dt><dd className="font-mono">{p?.memory_limit_mb ?? "—"} MB</dd></div>
-          <div><dt className="text-xs text-muted-foreground">Test</dt><dd>{question.test_cases.length} ({publicTests.length} mẫu)</dd></div>
+          <div><dt className="text-xs text-muted-foreground">Thời gian</dt><dd className="font-mono tabular-nums">{p?.time_limit_ms ?? "—"} ms</dd></div>
+          <div><dt className="text-xs text-muted-foreground">Bộ nhớ</dt><dd className="font-mono tabular-nums">{p?.memory_limit_mb ?? "—"} MB</dd></div>
+          <div><dt className="text-xs text-muted-foreground">Test</dt><dd className="tabular-nums">{question.test_cases.length} ({publicTests.length} mẫu)</dd></div>
           <div><dt className="text-xs text-muted-foreground">Checker</dt><dd>{CHECKER_LABEL[p?.checker_mode ?? "token"]}</dd></div>
         </dl>
         <p className="text-xs text-muted-foreground">Ngôn ngữ: {(p?.allowed_languages ?? []).map(languageLabel).join(", ") || "—"}

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Shuffle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { EmptyState } from "@/components/state-blocks";
 import { QuestionPickRow } from "./question-pick-row";
@@ -23,7 +23,7 @@ export function DrawResultList({ result, rules, checked, onCheckedChange }: {
     onCheckedChange(next);
   };
   return <div className="space-y-3">
-    {result.shortages.length || result.skipped ? <Alert>
+    {result.shortages.length || result.skipped ? <Alert variant="warning">
       <AlertTriangle aria-hidden />
       <AlertTitle>Không đủ câu theo yêu cầu</AlertTitle>
       <AlertDescription>
@@ -33,9 +33,9 @@ export function DrawResultList({ result, rules, checked, onCheckedChange }: {
         </ul>
       </AlertDescription>
     </Alert> : null}
-    {result.items.length === 0 ? <EmptyState compact title="Không bốc được câu nào" description="Nới lỏng quy tắc (bỏ danh mục, độ khó hoặc loại câu) rồi bốc lại." />
+    {result.items.length === 0 ? <EmptyState compact icon={Shuffle} title="Không bốc được câu nào" description="Nới lỏng quy tắc (bỏ danh mục, độ khó hoặc loại câu) rồi bốc lại." />
       : <div className="rounded-lg border">
-        <p className="border-b px-4 py-2 text-sm text-muted-foreground" aria-live="polite">
+        <p className="border-b px-4 py-2 text-sm text-muted-foreground tabular-nums" aria-live="polite">
           Bốc được {result.items.length} câu · chọn {checked.size}
         </p>
         <ul className="max-h-[45dvh] divide-y overflow-y-auto">

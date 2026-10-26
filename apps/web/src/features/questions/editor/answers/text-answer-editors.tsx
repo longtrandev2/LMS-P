@@ -27,14 +27,14 @@ export function NumericEditor() {
         <Label htmlFor="numeric-value">Đáp số</Label>
         <Input id="numeric-value" inputMode="decimal" autoComplete="off" value={draft.numeric.value} placeholder="Ví dụ: 3,14"
           aria-invalid={!!errors["numeric.value"]} aria-describedby="numeric-value-message"
-          onChange={(event) => set("value", event.target.value)} className="bg-background font-mono" />
+          onChange={(event) => set("value", event.target.value)} className="font-mono" />
         <FieldMessage id="numeric-value-message" error={errors["numeric.value"]} />
       </div>
       <div className="space-y-2" data-field="numeric.tolerance">
         <Label htmlFor="numeric-tolerance">Sai số cho phép</Label>
         <Input id="numeric-tolerance" inputMode="decimal" autoComplete="off" value={draft.numeric.tolerance} placeholder="0"
           aria-invalid={!!errors["numeric.tolerance"]} aria-describedby="numeric-tolerance-message"
-          onChange={(event) => set("tolerance", event.target.value)} className="bg-background font-mono" />
+          onChange={(event) => set("tolerance", event.target.value)} className="font-mono" />
         <FieldMessage id="numeric-tolerance-message" error={errors["numeric.tolerance"]} hint="0 nghĩa là phải khớp chính xác." />
       </div>
     </div>

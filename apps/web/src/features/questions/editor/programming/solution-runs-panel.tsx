@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Loader2, ShieldCheck, Wand2 } from "lucide-react";
 import { toast } from "sonner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { VerdictBadge } from "@/components/verdict-badge";
 import { cn } from "@/lib/utils";
@@ -34,7 +35,7 @@ export function SolutionRunsPanel({ suggestVerify }: { suggestVerify: boolean })
     : dirty ? "Có thay đổi chưa lưu — kiểm tra đề chạy trên phiên bản đã lưu." : !hasSolution ? "Cần có lời giải mẫu." : null;
   const verifyNow = () => { setDismissed(true); runs.verify(draft.tests); };
 
-  return <div className="space-y-3 rounded-lg border bg-muted/20 p-3">
+  return <div className="space-y-3 border-t pt-4">
     <div className="flex flex-wrap items-center gap-2">
       <Button type="button" size="sm" variant="outline" disabled={runs.running || !hasSolution} onClick={() => {
         const problem = runs.generate(); if (problem) toast.error(problem);
@@ -45,10 +46,13 @@ export function SolutionRunsPanel({ suggestVerify }: { suggestVerify: boolean })
         <Loader2 className="size-3.5 animate-spin" aria-hidden />{runs.mode === "verify" ? "Đang kiểm tra đề…" : "Đang chạy lời giải…"}</span>
         : <span className="text-xs text-muted-foreground">{verifyBlocker ?? "Xuất bản bài có câu lập trình cần kiểm tra đề đạt mọi test."}</span>}
     </div>
-    {suggestVerify && !dismissed && !verifyBlocker && !runs.summary && !runs.running ? <div role="status" className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-primary/30 bg-primary/5 px-3 py-2">
-      <p className="text-xs">Đã lưu phiên bản mới. Chạy kiểm tra đề để có thể xuất bản bài chứa câu này.</p>
-      <Button type="button" size="xs" onClick={verifyNow}>Kiểm tra ngay</Button>
-    </div> : null}
+    {suggestVerify && !dismissed && !verifyBlocker && !runs.summary && !runs.running ? <Alert role="status">
+      <ShieldCheck aria-hidden />
+      <AlertDescription className="flex flex-wrap items-center justify-between gap-2 text-foreground">
+        <span>Đã lưu phiên bản mới. Chạy kiểm tra đề để có thể xuất bản bài chứa câu này.</span>
+        <Button type="button" size="xs" variant="outline" onClick={verifyNow}>Kiểm tra ngay</Button>
+      </AlertDescription>
+    </Alert> : null}
     {runs.summary ? <div className="space-y-3" aria-live="polite">
       <SummaryLine summary={runs.summary} />
       {runs.summary.rows.length && runs.summary.job.verdict !== "CE" ? <RunResultsTable rows={runs.summary.rows} /> : null}

@@ -64,9 +64,9 @@ export function ObjectiveQuestionCard({ item, question, index, submissions, user
     <div className="flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3">
       <p className="text-xs text-muted-foreground">
         {attemptsText(used, item.max_attempts)}
-        {latest ? <> · <Link className="underline underline-offset-4 hover:text-foreground" to={studentPaths.submission(latest.id)}>Chi tiết lượt gần nhất</Link></> : null}
+        {latest ? <> · <Link className="rounded-sm underline underline-offset-4 outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring" to={studentPaths.submission(latest.id)}>Chi tiết lượt gần nhất</Link></> : null}
       </p>
-      <Button size="sm" variant="cta" disabled={locked || !answer || submit.isPending} onClick={requestSubmit}>
+      <Button size="sm" disabled={locked || !answer || submit.isPending} onClick={requestSubmit}>
         {submit.isPending ? "Đang nộp…" : remaining === 0 ? "Hết lượt" : "Nộp câu này"}
       </Button>
     </div>

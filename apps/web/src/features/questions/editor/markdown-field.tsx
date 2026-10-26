@@ -21,18 +21,18 @@ export function MarkdownField({ id, label, value, onChange, error, hint, placeho
         <div className="flex flex-wrap items-center gap-2">
           {actions}
           <TabsList variant="line" className="h-8">
-            <TabsTrigger value="write" className="px-2.5 normal-case tracking-normal">Viết</TabsTrigger>
-            <TabsTrigger value="preview" className="px-2.5 normal-case tracking-normal">Xem trước</TabsTrigger>
+            <TabsTrigger value="write" className="px-2.5">Viết</TabsTrigger>
+            <TabsTrigger value="preview" className="px-2.5">Xem trước</TabsTrigger>
           </TabsList>
         </div>
       </div>
       <TabsContent value="write" className="mt-2" forceMount hidden={tab !== "write"}>
         <Textarea id={id} ref={textareaRef} value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder}
           aria-invalid={!!error} aria-describedby={error || hint ? messageId : undefined} maxLength={maxLength}
-          className={cn("max-h-[70vh] bg-background font-mono text-[13px] leading-6", minHeight)} spellCheck={false} />
+          className={cn("max-h-[70vh] font-mono text-[13px] leading-6", minHeight)} spellCheck={false} />
       </TabsContent>
       <TabsContent value="preview" className="mt-2">
-        <div className={cn("rounded-md border bg-background px-3 py-2", minHeight)}>
+        <div className={cn("rounded-md border px-3 py-2", minHeight)}>
           {value.trim() ? <MarkdownView source={value} /> : <p className="text-sm text-muted-foreground">Chưa có nội dung để xem trước.</p>}
         </div>
       </TabsContent>

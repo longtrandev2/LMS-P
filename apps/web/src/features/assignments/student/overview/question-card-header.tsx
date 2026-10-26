@@ -9,7 +9,7 @@ export function QuestionCardHeader({ index, question, status, titleId }: {
 }) {
   return <header className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b px-4 py-3">
     <h3 id={titleId} className="text-sm font-semibold">Câu {index + 1}</h3>
-    <span className="text-xs text-muted-foreground">{questionTypeLabel(question.type)} · {formatScore(question.points)} điểm</span>
+    <span className="text-xs text-muted-foreground tabular-nums">{questionTypeLabel(question.type)} · {formatScore(question.points)} điểm</span>
     {status ? <span className="ml-auto text-xs font-medium">{status}</span> : null}
   </header>;
 }

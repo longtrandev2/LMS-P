@@ -5,8 +5,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState, ErrorState } from "@/components/state-blocks";
 
 export function BackLink({ to, children }: { to: string; children: ReactNode }) {
-  return <Link to={to} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground">
-    <ArrowLeft className="size-4" aria-hidden />{children}
+  return <Link to={to} className="inline-flex max-w-full items-center gap-1.5 rounded-sm text-sm text-muted-foreground transition-colors duration-150 outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring">
+    <ArrowLeft className="size-4 shrink-0" aria-hidden /><span className="truncate">{children}</span>
   </Link>;
 }
 
