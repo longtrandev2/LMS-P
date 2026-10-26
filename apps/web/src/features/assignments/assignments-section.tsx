@@ -1,83 +1,88 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Plus } from "lucide-react";
 import { toast } from "sonner";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
+  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { EmptyState, ErrorState } from "@/components/state-blocks";
-import { AssignmentFormDialog } from "@/features/assignments/assignment-form-dialog";
-import { AssignmentStudentDialog } from "@/features/assignments/assignment-student-dialog";
-import { AssignmentSubmissionsDialog } from "@/features/assignments/assignment-submissions-dialog";
-import { assignmentWindow } from "@/features/assignments/submission-window";
-import { api } from "@/lib/api";
+import { EmptyState, ErrorState, TableSkeleton } from "@/components/state-blocks";
+import { api, ApiError } from "@/lib/api";
 import { errorText } from "@/lib/error-messages";
-import { formatUtcDateTime } from "@/lib/date-time";
 import { queryKeys } from "@/lib/query-keys";
-import type { AssignmentDetails, AssignmentSummary, Paginated } from "@/types/api";
+import { AssignmentListItem } from "@/features/assignments/lecturer/assignment-list-item";
+import { PublishConflictDialog } from "@/features/assignments/lecturer/publish-conflict-dialog";
+import { conflictQuestionIds, type PublishConflict } from "@/features/assignments/lecturer/use-save-assignment";
+import type { AssignmentSummary, Paginated } from "@/types/api";
 
-const categoryLabel = { quiz: "Quiz", assignment: "Bài tập", midterm: "Giữa kỳ", final: "Cuối kỳ" };
-
+/** Tab "Bài tập & Quiz" của lớp. Giảng viên: tạo/sửa/xuất bản/xóa nháp/kết quả; sinh viên (`canTake`): mở bài. */
 export function AssignmentsSection({ classId, canManage, canTake = false }: {
   classId: string; canManage: boolean; canTake?: boolean;
 }) {
   const client = useQueryClient();
-  const [formOpen, setFormOpen] = useState(false);
-  const [editing, setEditing] = useState<AssignmentDetails | null>(null);
-  const [studentItem, setStudentItem] = useState<AssignmentSummary | null>(null);
-  const [submissionItem, setSubmissionItem] = useState<AssignmentSummary | null>(null);
-  const [loadingId, setLoadingId] = useState<number | null>(null);
+  const [busyId, setBusyId] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState<AssignmentSummary | null>(null);
+  const [conflict, setConflict] = useState<(PublishConflict & { item: AssignmentSummary }) | null>(null);
   const list = useQuery({
     queryKey: queryKeys.assignments.class(classId),
-    queryFn: () => api.get<Paginated<AssignmentSummary>>(`/classes/${classId}/assignments`, { page: 1, limit: 100 }),
+    queryFn: ({ signal }) => api.get<Paginated<AssignmentSummary>>(`/classes/${classId}/assignments`, { page: 1, limit: 100 }, signal),
   });
-  const invalidate = () => client.invalidateQueries({ queryKey: queryKeys.assignments.class(classId) });
+  const invalidate = () => client.invalidateQueries({ queryKey: queryKeys.assignments.all });
 
-  async function edit(item: AssignmentSummary) {
-    setLoadingId(item.id);
+  async function publish(item: AssignmentSummary, confirmUnverified = false) {
+    setBusyId(item.id);
     try {
-      setEditing(await api.get<AssignmentDetails>(`/assignments/${item.id}`));
-      setFormOpen(true);
-    } catch (error) { toast.error(errorText(error)); }
-    finally { setLoadingId(null); }
-  }
-  async function publish(item: AssignmentSummary) {
-    setLoadingId(item.id);
-    try { await api.post(`/assignments/${item.id}/publish`); toast.success("Đã xuất bản bài."); invalidate(); }
-    catch (error) { toast.error(errorText(error)); }
-    finally { setLoadingId(null); }
+      await api.post(`/assignments/${item.id}/publish`, confirmUnverified ? { confirm_unverified: true } : {});
+      toast.success(`Đã xuất bản “${item.title}”.`);
+      setConflict(null);
+      void invalidate();
+    } catch (error) {
+      if (error instanceof ApiError && (error.code === "PROBLEM_UNVERIFIED" || error.code === "PROBLEM_CHECK_FAILED")) {
+        setConflict({ code: error.code, message: errorText(error), questionIds: conflictQuestionIds(error.details), item });
+      } else toast.error(errorText(error));
+    } finally { setBusyId(null); }
   }
   async function remove(item: AssignmentSummary) {
-    if (!window.confirm(`Xóa bản nháp “${item.title}”?`)) return;
-    setLoadingId(item.id);
-    try { await api.delete(`/assignments/${item.id}`); toast.success("Đã xóa bản nháp."); invalidate(); }
+    setBusyId(item.id);
+    try { await api.delete(`/assignments/${item.id}`); toast.success("Đã xóa bản nháp."); setDeleting(null); void invalidate(); }
     catch (error) { toast.error(errorText(error)); }
-    finally { setLoadingId(null); }
+    finally { setBusyId(null); }
   }
 
-  return <section className="space-y-4">
-    {canManage ? <div className="flex justify-end"><Button onClick={() => { setEditing(null); setFormOpen(true); }}>Tạo bài tập / quiz</Button></div> : null}
-    {list.isPending ? <Card><CardContent className="p-6 text-sm text-muted-foreground">Đang tải danh sách bài…</CardContent></Card> : null}
-    {list.isError ? <ErrorState error={list.error} onRetry={() => list.refetch()} /> : null}
-    {list.data?.items.length === 0 ? <EmptyState title="Chưa có bài tập hoặc quiz" description={canManage ? "Tạo bản nháp rồi xuất bản để sinh viên làm." : "Giảng viên chưa đăng bài nào cho lớp."} /> : null}
-    <div className="grid gap-3">
-      {list.data?.items.map((item) => <Card key={item.id}><CardContent className="flex flex-wrap items-center justify-between gap-4 p-4">
-        <div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><h3 className="font-semibold">{item.title}</h3><span className="rounded-full bg-muted px-2 py-0.5 text-xs">{categoryLabel[item.category]}</span><span className={`rounded-full px-2 py-0.5 text-xs ${item.is_published ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"}`}>{item.is_published ? "Đã xuất bản" : "Bản nháp"}</span></div>
-          {item.description ? <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{item.description}</p> : null}
-          <p className="mt-2 text-xs text-muted-foreground">{item.question_count} câu · {item.total_points} điểm{item.available_from ? ` · Mở ${formatUtcDateTime(item.available_from)}` : ""} · Hạn {formatUtcDateTime(item.due_at)}</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {canTake ? <Button size="sm" disabled={assignmentWindow(item) === "upcoming"} onClick={() => setStudentItem(item)}>{assignmentWindow(item) === "upcoming" ? "Chưa mở" : "Mở bài"}</Button> : item.is_published ? <>
-            {canManage ? <Button size="sm" variant="outline" disabled={loadingId === item.id} onClick={() => edit(item)}>Điều chỉnh</Button> : null}
-            <Button size="sm" variant="outline" onClick={() => setSubmissionItem(item)}>Bài nộp</Button>
-          </> : canManage ? <>
-            <Button size="sm" variant="outline" disabled={loadingId === item.id} onClick={() => edit(item)}>Sửa</Button>
-            <Button size="sm" disabled={loadingId === item.id || item.question_count === 0} onClick={() => publish(item)}>Xuất bản</Button>
-            <Button size="sm" variant="ghost" disabled={loadingId === item.id} onClick={() => remove(item)}>Xóa</Button>
-          </> : null}
-        </div>
-      </CardContent></Card>)}
+  const items = list.data?.items ?? [];
+  return <section className="space-y-4" aria-label="Bài tập và quiz">
+    {canManage ? <div className="flex flex-wrap items-center justify-between gap-3">
+      <p className="text-sm text-muted-foreground">Bản nháp chỉ giảng viên thấy. Xuất bản sẽ ghim phiên bản câu hỏi, điểm và thứ tự.</p>
+      <Button variant="cta" asChild><Link to={`/classes/${classId}/assignments/new`}><Plus aria-hidden />Tạo bài tập / quiz</Link></Button>
+    </div> : null}
+    <div className="overflow-hidden rounded-xl border bg-card">
+      {list.isPending ? <TableSkeleton rows={3} cols={3} /> : null}
+      {list.isError ? <ErrorState error={list.error} onRetry={() => list.refetch()} /> : null}
+      {list.data && items.length === 0 ? <EmptyState title="Chưa có bài tập hoặc quiz"
+        description={canManage ? "Tạo bản nháp, chọn câu hỏi rồi xuất bản để sinh viên làm." : "Giảng viên chưa đăng bài nào cho lớp."} /> : null}
+      {items.length ? <div className="divide-y">{items.map((item) => <AssignmentListItem key={item.id} item={item} classId={classId}
+        canManage={canManage} canTake={canTake} busy={busyId === item.id}
+        onPublish={() => void publish(item)} onDelete={() => setDeleting(item)} />)}</div> : null}
     </div>
-    {formOpen ? <AssignmentFormDialog classId={classId} details={editing} onOpenChange={setFormOpen} onSaved={invalidate} /> : null}
-    {studentItem ? <AssignmentStudentDialog assignment={studentItem} onOpenChange={(open) => !open && setStudentItem(null)} /> : null}
-    {submissionItem ? <AssignmentSubmissionsDialog assignment={submissionItem} onOpenChange={(open) => !open && setSubmissionItem(null)} /> : null}
+
+    <AlertDialog open={deleting != null} onOpenChange={(open) => !open && setDeleting(null)}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle className="normal-case tracking-normal">Xóa bản nháp?</AlertDialogTitle>
+          <AlertDialogDescription>“{deleting?.title}” sẽ bị xóa vĩnh viễn. Câu hỏi trong ngân hàng không bị ảnh hưởng.</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={busyId != null}>Hủy</AlertDialogCancel>
+          <AlertDialogAction variant="destructive" disabled={busyId != null}
+            onClick={(event) => { event.preventDefault(); if (deleting) void remove(deleting); }}>
+            {busyId != null ? "Đang xóa…" : "Xóa bản nháp"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    <PublishConflictDialog conflict={conflict} busy={busyId != null} onCancel={() => setConflict(null)}
+      onConfirm={() => { if (conflict) void publish(conflict.item, true); }} />
   </section>;
 }
