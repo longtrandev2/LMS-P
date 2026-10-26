@@ -1,8 +1,9 @@
 # LMS Web — React SPA + Vite
 FROM node:22-alpine AS builder
 WORKDIR /app
-COPY package.json ./
-RUN npm install --no-audit --no-fund
+COPY package.json package-lock.json ./
+# --foreground-scripts: chạy install-script tuần tự, tránh ETXTBSY khi esbuild spawn binary vừa ghi
+RUN npm ci --no-audit --no-fund --foreground-scripts
 COPY . .
 ARG VITE_API_URL=http://localhost:8000
 ARG VITE_WS_URL=ws://localhost:8000/ws
