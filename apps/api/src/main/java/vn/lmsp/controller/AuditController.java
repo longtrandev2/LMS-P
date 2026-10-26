@@ -1,5 +1,6 @@
 package vn.lmsp.controller;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import vn.lmsp.dto.AuditDtos.Page;
@@ -9,9 +10,9 @@ import java.time.LocalDateTime;
 @RestController
 @RequestMapping("/api/v1/admin/audit-logs")
 @PreAuthorize("hasRole('ADMIN')")
+@RequiredArgsConstructor
 public class AuditController {
     private final AuditService audit;
-    public AuditController(AuditService audit) { this.audit=audit; }
     @GetMapping public Page list(@RequestParam(required=false) Long actor_id,@RequestParam(required=false) String action,
                                  @RequestParam(required=false) String entity_type,@RequestParam(required=false) LocalDateTime from,
                                  @RequestParam(required=false) LocalDateTime to,@RequestParam(defaultValue="1") int page,

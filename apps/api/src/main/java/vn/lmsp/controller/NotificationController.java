@@ -1,5 +1,6 @@
 package vn.lmsp.controller;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -8,9 +9,9 @@ import vn.lmsp.service.NotificationService;
 
 @RestController
 @RequestMapping("/api/v1/notifications")
+@RequiredArgsConstructor
 public class NotificationController {
     private final NotificationService service;
-    public NotificationController(NotificationService service) { this.service=service; }
     @GetMapping public Page list(@AuthenticationPrincipal String actor, @RequestParam(required=false) Boolean is_read,
                                 @RequestParam(defaultValue="1") int page, @RequestParam(defaultValue="20") int limit) {
         return service.list(Long.valueOf(actor), is_read, page, checkedLimit(limit));

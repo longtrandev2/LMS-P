@@ -1,5 +1,6 @@
 package vn.lmsp.security;
 
+import lombok.RequiredArgsConstructor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
 import java.util.Map;
@@ -10,11 +11,10 @@ import org.springframework.web.socket.handler.ConcurrentWebSocketSessionDecorato
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 @Component
+@RequiredArgsConstructor
 public class GradingWebSocketHandler extends TextWebSocketHandler {
     private final ConcurrentHashMap<String, ConcurrentHashMap<String, WebSocketSession>> sessions = new ConcurrentHashMap<>();
     private final ObjectMapper json;
-
-    public GradingWebSocketHandler(ObjectMapper json) { this.json = json; }
 
     @Override public void afterConnectionEstablished(WebSocketSession session) {
         String userId = (String) session.getAttributes().get("userId");

@@ -1,5 +1,6 @@
 package vn.lmsp.controller;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -10,14 +11,10 @@ import java.sql.Connection;
 import java.util.Map;
 
 @RestController
+@RequiredArgsConstructor
 public class HealthController {
     private final DataSource dataSource;
     private final ConnectionFactory rabbit;
-
-    public HealthController(DataSource dataSource, ConnectionFactory rabbit) {
-        this.dataSource = dataSource;
-        this.rabbit = rabbit;
-    }
 
     @GetMapping("/health")
     public ResponseEntity<Map<String, Object>> health() {

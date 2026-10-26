@@ -1,5 +1,6 @@
 package vn.lmsp.controller;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.*;
 import org.springframework.security.core.Authentication;
@@ -14,9 +15,9 @@ import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/v1")
+@RequiredArgsConstructor
 public class MaterialController {
     private final MaterialService service;
-    public MaterialController(MaterialService service) { this.service=service; }
     @GetMapping("/classes/{classId}/materials")
     public Page list(@PathVariable Long classId, @AuthenticationPrincipal String actor, Authentication auth,
                      @RequestParam(defaultValue="1") int page, @RequestParam(defaultValue="20") int limit) {

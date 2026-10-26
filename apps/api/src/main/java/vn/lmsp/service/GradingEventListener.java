@@ -1,5 +1,6 @@
 package vn.lmsp.service;
 
+import lombok.RequiredArgsConstructor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Validator;
 import org.springframework.amqp.AmqpRejectAndDontRequeueException;
@@ -8,14 +9,11 @@ import org.springframework.stereotype.Component;
 import vn.lmsp.dto.GradingDtos.WorkerEvent;
 
 @Component
+@RequiredArgsConstructor
 public class GradingEventListener {
     private final ObjectMapper json;
     private final Validator validator;
     private final GradingEventService events;
-
-    public GradingEventListener(ObjectMapper json, Validator validator, GradingEventService events) {
-        this.json = json; this.validator = validator; this.events = events;
-    }
 
     @RabbitListener(queues = "q.grading.events")
     public void onEvent(byte[] body) {

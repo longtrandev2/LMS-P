@@ -1,5 +1,6 @@
 package vn.lmsp.service;
 
+import lombok.RequiredArgsConstructor;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
@@ -11,16 +12,11 @@ import vn.lmsp.model.User;
 import vn.lmsp.repository.QuestionVersionRepository;
 
 @Service
+@RequiredArgsConstructor
 public class QuestionVersionService {
     private final QuestionVersionRepository versions;
     private final QuestionReadService reader;
     private final ObjectMapper json;
-
-    public QuestionVersionService(QuestionVersionRepository versions, QuestionReadService reader, ObjectMapper json) {
-        this.versions = versions;
-        this.reader = reader;
-        this.json = json;
-    }
 
     @Transactional
     public void saveVersion(Question question, User actor) {

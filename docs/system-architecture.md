@@ -34,8 +34,8 @@
 | Thành phần | Công nghệ | Trách nhiệm |
 |---|---|---|
 | Web | React, TypeScript, Vite, React Router, TanStack Query, Tailwind, Monaco | UI cho student/lecturer/admin; REST; WS chỉ nhận tiến độ chấm |
-| API | Java 21, Spring Boot, Spring Web, Validation, Security, Data JPA, Flyway, Spring AMQP | REST `/api/v1`; auth/RBAC; nghiệp vụ; WS hub; sweeper kỳ thi |
-| Worker | Java 21, Spring AMQP, Docker Java client | Nhận tác vụ, SELECT code/snapshot đã ghim, điều phối sandbox và publish kết quả; API ghi DB |
+| API | Java 21, Spring Boot, Spring Web, Validation, Security, Data JPA, Flyway, Spring AMQP, Lombok | REST `/api/v1`; auth/RBAC; nghiệp vụ; WS hub; sweeper kỳ thi |
+| Worker | Java 21, Spring AMQP, Docker Java client, Lombok | Nhận tác vụ, SELECT code/snapshot đã ghim, điều phối sandbox và publish kết quả; API ghi DB |
 | Sandbox | Docker container dùng một lần | Chạy code không mạng, giới hạn tài nguyên và thời gian |
 | Database | MySQL 8.4 InnoDB | Dữ liệu giao dịch; schema do Flyway quản lý |
 | Broker | RabbitMQ 3.13 | Queue chấm bài, event hoàn tất, retry và DLQ |
@@ -60,6 +60,8 @@ apps/api/src/main/java/vn/lmsp/
 ```
 
 Tất cả REST controller nằm trong package `controller/`; tất cả service nghiệp vụ nằm trong package `service/`. Controller xác thực đầu vào và quyền; service áp dụng nghiệp vụ; repository truy cập dữ liệu. Entity không được lộ thành API response. Giữ file ngắn, tách theo trách nhiệm.
+
+Java dùng Lombok `@RequiredArgsConstructor` cho dependency `final`, `@Getter` cho accessor thuần và `@Setter` theo từng field cần ghi; `@Slf4j` cho logger. Constructor xử lý cấu hình và phương thức cập nhật có logic nghiệp vụ được giữ tường minh. Maven khai báo annotation processor để biên dịch ổn định với JDK mới.
 
 ### Quy ước mapping và truy vấn dữ liệu
 

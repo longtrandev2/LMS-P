@@ -3,18 +3,17 @@ package vn.lmsp.worker;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.Channel;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
+@Slf4j
 public class GradingConsumer {
-    private static final Logger log = LoggerFactory.getLogger(GradingConsumer.class);
     private final ObjectMapper mapper;
-
-    public GradingConsumer(ObjectMapper mapper) { this.mapper = mapper; }
 
     // Enable only after the sandbox worker processes/publishes results instead of merely acknowledging jobs.
     @RabbitListener(queues = "q.grading", autoStartup = "false")

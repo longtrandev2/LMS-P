@@ -1,5 +1,6 @@
 package vn.lmsp.model;
 
+import lombok.Getter;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -8,6 +9,7 @@ import java.time.LocalDateTime;
 @Table(name = "assignment_attempts", uniqueConstraints = {
         @UniqueConstraint(name = "uq_assignment_attempt_no", columnNames = {"assignment_id", "student_id", "attempt_no"}),
         @UniqueConstraint(name = "uq_assignment_attempt_key", columnNames = "idempotency_key")})
+@Getter
 public class AssignmentAttempt {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "assignment_id", nullable = false) private Assignment assignment;
@@ -24,12 +26,6 @@ public class AssignmentAttempt {
         this.assignment = assignment; this.student = student; this.attemptNo = attemptNo; this.late = late;
         this.latePenaltyPercent = penalty; this.score = score; this.idempotencyKey = idempotencyKey; this.submittedAt = submittedAt;
     }
-    public Long getId() { return id; }
     public Long getAssignmentId() { return assignment.getId(); }
     public Long getStudentId() { return student.getId(); }
-    public int getAttemptNo() { return attemptNo; }
-    public boolean isLate() { return late; }
-    public int getLatePenaltyPercent() { return latePenaltyPercent; }
-    public BigDecimal getScore() { return score; }
-    public LocalDateTime getSubmittedAt() { return submittedAt; }
 }

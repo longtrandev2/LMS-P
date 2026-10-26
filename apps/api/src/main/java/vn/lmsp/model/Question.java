@@ -1,5 +1,6 @@
 package vn.lmsp.model;
 
+import lombok.Getter;
 import jakarta.persistence.*;
 import vn.lmsp.enums.QuestionDifficulty;
 import vn.lmsp.enums.QuestionType;
@@ -7,6 +8,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "questions")
+@Getter
 public class Question {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "owner_id", nullable = false) private User owner;
@@ -25,21 +27,12 @@ public class Question {
     }
     @PrePersist void onCreate() { createdAt = LocalDateTime.now(); updatedAt = createdAt; }
     @PreUpdate void onUpdate() { updatedAt = LocalDateTime.now(); }
-    public Long getId() { return id; }
     public Long getOwnerId() { return owner.getId(); }
     public Long getCategoryId() { return category.getId(); }
     public Long getBankId() { return category.getBankId(); }
     public Long getCourseId() { return category.getBank().getCourseId(); }
     public String getCategoryName() { return category.getName(); }
     public String getBankName() { return category.getBank().getName(); }
-    public QuestionCategory getCategory() { return category; }
-    public QuestionType getType() { return type; }
-    public String getContent() { return content; }
-    public String getTopic() { return topic; }
-    public QuestionDifficulty getDifficulty() { return difficulty; }
-    public boolean isDeleted() { return deleted; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void update(String content, String topic, QuestionDifficulty difficulty, QuestionCategory category) {
         this.content = content; this.topic = topic; this.difficulty = difficulty; this.category = category;
     }

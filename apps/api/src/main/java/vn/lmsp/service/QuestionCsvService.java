@@ -1,5 +1,6 @@
 package vn.lmsp.service;
 
+import lombok.RequiredArgsConstructor;
 import java.util.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -12,6 +13,7 @@ import vn.lmsp.model.*;
 import vn.lmsp.repository.*;
 
 @Service
+@RequiredArgsConstructor
 public class QuestionCsvService {
     private final QuestionBankService banks;
     private final QuestionRepository questions;
@@ -19,12 +21,6 @@ public class QuestionCsvService {
     private final QuestionVersionService snapshots;
     private final UserRepository users;
     private final AuditService audit;
-
-    public QuestionCsvService(QuestionBankService banks, QuestionRepository questions, QuestionOptionRepository options,
-            QuestionVersionService snapshots, UserRepository users, AuditService audit) {
-        this.banks = banks; this.questions = questions; this.options = options;
-        this.snapshots = snapshots; this.users = users; this.audit = audit;
-    }
 
     @Transactional(readOnly = true)
     public QuestionCsvPreview preview(Long bankId, Long categoryId, QuestionCsvRequest request, Long actor, boolean admin) {

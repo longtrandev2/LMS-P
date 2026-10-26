@@ -1,5 +1,6 @@
 package vn.lmsp.service;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.lmsp.dto.AssignmentDtos.AssignmentDetails;
@@ -14,19 +15,12 @@ import vn.lmsp.repository.QuestionVersionRepository;
 
 @Service
 @Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class AssignmentReadService {
     private final AssignmentQuestionRepository links;
     private final QuestionVersionRepository versions;
     private final QuestionVersionService snapshots;
     private final AssignmentMapper mapper;
-
-    public AssignmentReadService(AssignmentQuestionRepository links, QuestionVersionRepository versions,
-            QuestionVersionService snapshots, AssignmentMapper mapper) {
-        this.links = links;
-        this.versions = versions;
-        this.snapshots = snapshots;
-        this.mapper = mapper;
-    }
 
     public AssignmentSummary summary(Assignment assignment) {
         return mapper.toSummary(assignment, links.findAllByAssignment_IdOrderByPositionAscIdAsc(assignment.getId()));

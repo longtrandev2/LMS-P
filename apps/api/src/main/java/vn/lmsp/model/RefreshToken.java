@@ -1,5 +1,6 @@
 package vn.lmsp.model;
 
+import lombok.Getter;
 import jakarta.persistence.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -7,6 +8,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "refresh_tokens")
+@Getter
 public class RefreshToken {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -24,8 +26,5 @@ public class RefreshToken {
     public RefreshToken(User user, String hash, LocalDateTime expiresAt) {
         this.user = user; this.tokenHash = hash; this.expiresAt = expiresAt; this.createdAt = LocalDateTime.now();
     }
-    public User getUser() { return user; }
-    public LocalDateTime getExpiresAt() { return expiresAt; }
-    public LocalDateTime getRevokedAt() { return revokedAt; }
     public void revoke() { revokedAt = LocalDateTime.now(); }
 }

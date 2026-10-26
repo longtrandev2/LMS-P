@@ -1,10 +1,12 @@
 package vn.lmsp.model;
 
+import lombok.Getter;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 
 @Entity
 @Table(name = "assignment_questions", uniqueConstraints = @UniqueConstraint(name = "uq_assignment_question", columnNames = {"assignment_id", "question_id"}))
+@Getter
 public class AssignmentQuestion {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "assignment_id", nullable = false) private Assignment assignment;
@@ -16,13 +18,8 @@ public class AssignmentQuestion {
     public AssignmentQuestion(Assignment assignment, Question question, BigDecimal points, int position) {
         this.assignment = assignment; this.question = question; this.points = points; this.position = position;
     }
-    public Long getId() { return id; }
     public Long getAssignmentId() { return assignment.getId(); }
     public Long getQuestionId() { return question.getId(); }
-    public Question getQuestion() { return question; }
-    public QuestionVersion getQuestionVersion() { return questionVersion; }
-    public BigDecimal getPoints() { return points; }
-    public int getPosition() { return position; }
     public void pin(QuestionVersion version) { questionVersion = version; }
     public void update(BigDecimal points, int position) { this.points = points; this.position = position; }
 }

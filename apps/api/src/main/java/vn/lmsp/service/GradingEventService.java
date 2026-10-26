@@ -1,5 +1,6 @@
 package vn.lmsp.service;
 
+import lombok.RequiredArgsConstructor;
 import java.time.LocalDateTime;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,6 +12,7 @@ import vn.lmsp.model.TestResult;
 import vn.lmsp.repository.*;
 
 @Service
+@RequiredArgsConstructor
 public class GradingEventService {
     private final SubmissionRepository submissions;
     private final GradingJobRepository jobs;
@@ -21,13 +23,6 @@ public class GradingEventService {
     private final GradingNotifier notifier;
     private final NotificationService notifications;
     private final AuditService audit;
-
-    public GradingEventService(SubmissionRepository submissions, GradingJobRepository jobs,
-            GradingResultRepository results, TestResultRepository tests, QuestionVersionService snapshots,
-            GradingScoreService scores, GradingNotifier notifier, NotificationService notifications, AuditService audit) {
-        this.submissions = submissions; this.jobs = jobs; this.results = results; this.tests = tests;
-        this.snapshots = snapshots; this.scores = scores; this.notifier = notifier; this.notifications = notifications; this.audit = audit;
-    }
 
     @Transactional
     public void apply(WorkerEvent event) {

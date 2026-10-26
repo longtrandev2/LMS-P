@@ -1,5 +1,6 @@
 package vn.lmsp.service;
 
+import lombok.RequiredArgsConstructor;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
@@ -14,13 +15,10 @@ import vn.lmsp.model.Submission;
 import vn.lmsp.security.GradingWebSocketHandler;
 
 @Component
+@RequiredArgsConstructor
 public class GradingNotifier {
     private final GradingWebSocketHandler sockets;
     private final ObjectMapper json;
-
-    public GradingNotifier(GradingWebSocketHandler sockets, ObjectMapper json) {
-        this.sockets = sockets; this.json = json;
-    }
 
     public void afterCommit(Submission submission, WorkerPayload payload) {
         Map<String, Object> data = new LinkedHashMap<>();

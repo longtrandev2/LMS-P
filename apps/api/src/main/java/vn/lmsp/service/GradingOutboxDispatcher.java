@@ -1,9 +1,9 @@
 package vn.lmsp.service;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.concurrent.TimeUnit;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -15,16 +15,13 @@ import vn.lmsp.mapper.GradingMapper;
 import vn.lmsp.repository.GradingJobRepository;
 
 @Service
+@RequiredArgsConstructor
+@Slf4j
 public class GradingOutboxDispatcher {
-    private static final Logger log = LoggerFactory.getLogger(GradingOutboxDispatcher.class);
     private final GradingJobRepository jobs;
     private final RabbitTemplate rabbit;
     private final ObjectMapper json;
     private final GradingMapper mapper;
-
-    public GradingOutboxDispatcher(GradingJobRepository jobs, RabbitTemplate rabbit, ObjectMapper json, GradingMapper mapper) {
-        this.jobs = jobs; this.rabbit = rabbit; this.json = json; this.mapper = mapper;
-    }
 
     @Transactional
     public boolean publishNext() {

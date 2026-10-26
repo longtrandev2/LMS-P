@@ -1,5 +1,6 @@
 package vn.lmsp.service;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.lmsp.dto.QuestionDtos.QuestionSnapshot;
@@ -14,21 +15,13 @@ import vn.lmsp.repository.TestCaseRepository;
 
 @Service
 @Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class QuestionReadService {
     private final QuestionOptionRepository options;
     private final QuestionProgrammingRepository programming;
     private final TestCaseRepository testCases;
     private final QuestionVersionRepository versions;
     private final QuestionMapper mapper;
-
-    public QuestionReadService(QuestionOptionRepository options, QuestionProgrammingRepository programming,
-            TestCaseRepository testCases, QuestionVersionRepository versions, QuestionMapper mapper) {
-        this.options = options;
-        this.programming = programming;
-        this.testCases = testCases;
-        this.versions = versions;
-        this.mapper = mapper;
-    }
 
     public QuestionSummary summary(Question question) {
         return mapper.toSummary(question, versions.maxVersion(question.getId()));

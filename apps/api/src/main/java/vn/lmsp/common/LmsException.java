@@ -1,7 +1,9 @@
 package vn.lmsp.common;
 
+import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
+@Getter
 public class LmsException extends RuntimeException {
     private final String code;
     private final HttpStatus status;
@@ -14,7 +16,4 @@ public class LmsException extends RuntimeException {
         this.details = details;
     }
 
-    public String getCode() { return code; }
-    public HttpStatus getStatus() { return status; }
-    public Object getDetails() { return details; }
 }

@@ -1,6 +1,7 @@
 package vn.lmsp.controller;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -15,9 +16,9 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/questions")
 @PreAuthorize("hasAnyRole('ADMIN','LECTURER')")
+@RequiredArgsConstructor
 public class QuestionController {
     private final QuestionService service;
-    public QuestionController(QuestionService service) { this.service = service; }
 
     @GetMapping
     public QuestionPage list(@AuthenticationPrincipal String actor, Authentication auth,

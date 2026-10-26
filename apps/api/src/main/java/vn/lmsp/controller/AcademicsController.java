@@ -1,5 +1,6 @@
 package vn.lmsp.controller;
 
+import lombok.RequiredArgsConstructor;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -13,12 +14,10 @@ import vn.lmsp.service.EnrollmentService;
 
 @RestController
 @RequestMapping("/api/v1")
+@RequiredArgsConstructor
 public class AcademicsController {
     private final AcademicsService service;
     private final EnrollmentService enrollmentService;
-    public AcademicsController(AcademicsService service, EnrollmentService enrollmentService) {
-        this.service = service; this.enrollmentService = enrollmentService;
-    }
 
     @GetMapping("/courses") @PreAuthorize("hasAnyRole('ADMIN','LECTURER')")
     public Page<CourseView> courses(@RequestParam(defaultValue="1") int page, @RequestParam(defaultValue="20") int limit,

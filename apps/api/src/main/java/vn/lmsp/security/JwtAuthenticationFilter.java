@@ -1,5 +1,6 @@
 package vn.lmsp.security;
 
+import lombok.RequiredArgsConstructor;
 import vn.lmsp.service.JwtTokenService;
 import vn.lmsp.repository.UserRepository;
 import vn.lmsp.enums.UserStatus;
@@ -18,10 +19,10 @@ import java.util.Collection;
 import java.util.List;
 
 @Component
+@RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtTokenService tokens;
     private final UserRepository users;
-    public JwtAuthenticationFilter(JwtTokenService tokens, UserRepository users) { this.tokens = tokens; this.users=users; }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
