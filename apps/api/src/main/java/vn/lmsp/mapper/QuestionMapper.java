@@ -30,7 +30,7 @@ public class QuestionMapper {
     public QuestionSnapshot toSnapshot(Question question, List<QuestionOption> options,
             QuestionProgramming programming, List<TestCase> testCases) {
         return new QuestionSnapshot(question.getType(), question.getContent(), question.getTopic(),
-                question.getDifficulty(), options.stream().map(this::toOptionView).toList(),
+                question.getDifficulty(), null, null, options.stream().map(this::toOptionView).toList(), null,
                 toProgrammingView(programming), testCases.stream().map(this::toTestCaseView).toList());
     }
 
@@ -49,9 +49,9 @@ public class QuestionMapper {
     }
 
     private ProgrammingView toProgrammingView(QuestionProgramming programming) {
-        return programming == null ? null : new ProgrammingView(programming.getStarterCode(),
-                programming.getSolutionCode(), programming.getAllowedLanguages(),
-                programming.getTimeLimitMs(), programming.getMemoryLimitMb());
+        return programming == null ? null : new ProgrammingView(programming.getStarterCode(), null,
+                programming.getSolutionCode(), null, programming.getAllowedLanguages(),
+                programming.getTimeLimitMs(), programming.getMemoryLimitMb(), null, null);
     }
 
     private TestCaseView toTestCaseView(TestCase testCase) {

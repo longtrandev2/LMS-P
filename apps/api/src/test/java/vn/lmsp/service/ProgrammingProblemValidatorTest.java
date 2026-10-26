@@ -29,6 +29,7 @@ class ProgrammingProblemValidatorTest {
 
     private QuestionSnapshot withTests(QuestionSnapshot source, List<TestCaseView> tests) {
         return new QuestionSnapshot(source.type(), source.content(), source.topic(), source.difficulty(),
-                source.options(), source.programming(), tests);
+                source.explanation(), source.scoring_mode(), source.options(), source.answer_spec(),
+                source.programming(), tests);
     }
 }

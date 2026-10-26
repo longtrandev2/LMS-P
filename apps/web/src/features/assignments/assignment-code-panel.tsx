@@ -12,7 +12,7 @@ import type { AssignmentQuestion, AssignmentSummary, AssignmentSubmission, Gradi
 const verdictText: Record<GradingVerdict, string> = {
   AC: "AC · Đạt tất cả test", WA: "WA · Sai kết quả", CE: "CE · Lỗi biên dịch",
   TLE: "TLE · Quá thời gian", MLE: "MLE · Vượt bộ nhớ", RE: "RE · Lỗi khi chạy",
-  SYSTEM_ERROR: "Lỗi hệ thống chấm",
+  OLE: "OLE · Output quá dài", OK: "Chạy xong", SYSTEM_ERROR: "Lỗi hệ thống chấm",
 };
 
 export function AssignmentCodePanel({ assignment, question, attempts, locked, window }: {

@@ -10,7 +10,7 @@ export function QuestionProgrammingFields({ value, onChange }: { value: Question
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="question-languages">Ngôn ngữ cho phép</Label>
-          <Input id="question-languages" value={value.allowed_languages?.join(", ") ?? ""} onChange={(event) => set({ allowed_languages: event.target.value.split(",").map((item) => item.trim()).filter(Boolean) })} placeholder="python, cpp, java, c" />
+          <Input id="question-languages" value={value.allowed_languages?.join(", ") ?? ""} onChange={(event) => set({ allowed_languages: event.target.value.split(",").map((item) => item.trim()).filter(Boolean) as QuestionProgramming["allowed_languages"] })} placeholder="python, cpp, java, c" />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-2"><Label htmlFor="question-time">Thời gian (ms)</Label><Input id="question-time" type="number" min={100} max={30000} value={value.time_limit_ms} onChange={(event) => set({ time_limit_ms: Number(event.target.value) })} /></div>

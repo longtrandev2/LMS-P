@@ -11,6 +11,14 @@ import { MyClassMaterialsPage } from "@/features/me/my-class-materials-page";
 import { AuditLogsPage } from "@/features/audit/audit-logs-page";
 import { ProfilePage } from "@/features/users/profile-page";
 import { QuestionsPage } from "@/features/questions/questions-page";
+import { QuestionEditorPage } from "@/features/questions/question-editor-page";
+import { AssignmentEditorPage } from "@/features/assignments/assignment-editor-page";
+import { AssignmentResultsPage } from "@/features/assignments/assignment-results-page";
+import { SubmissionDetailPage } from "@/features/assignments/submission-detail-page";
+import { StudentAssignmentPage } from "@/features/assignments/student-assignment-page";
+import { QuizAttemptPage } from "@/features/assignments/quiz-attempt-page";
+import { AttemptReviewPage } from "@/features/assignments/attempt-review-page";
+import { ProblemWorkspacePage } from "@/features/assignments/problem-workspace-page";
 import { AppShell } from "@/components/app-shell";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
 
@@ -35,6 +43,16 @@ export function AppRouter() {
       <Route path="/me/profile" element={<ProfilePage />} />
       <Route path="/courses" element={<CoursesPage />} />
       <Route path="/questions" element={<QuestionsPage />} />
+      <Route path="/questions/new" element={<QuestionEditorPage />} />
+      <Route path="/questions/:questionId/edit" element={<QuestionEditorPage />} />
+      <Route path="/classes/:classId/assignments/new" element={<AssignmentEditorPage />} />
+      <Route path="/classes/:classId/assignments/:assignmentId/edit" element={<AssignmentEditorPage />} />
+      <Route path="/classes/:classId/assignments/:assignmentId/results" element={<AssignmentResultsPage />} />
+      <Route path="/submissions/:submissionId" element={<SubmissionDetailPage />} />
+      <Route path="/me/classes/:classId/assignments/:assignmentId" element={<StudentAssignmentPage />} />
+      <Route path="/me/classes/:classId/assignments/:assignmentId/attempt" element={<QuizAttemptPage />} />
+      <Route path="/me/classes/:classId/assignments/:assignmentId/attempts/:attemptId" element={<AttemptReviewPage />} />
+      <Route path="/me/classes/:classId/assignments/:assignmentId/problems/:questionId" element={<ProblemWorkspacePage />} />
       <Route path="/courses/:id" element={<CourseRoute />} />
       <Route path="/classes/:id" element={<ClassRoute />} />
       <Route path="/me/classes" element={<MyClassesPage />} />

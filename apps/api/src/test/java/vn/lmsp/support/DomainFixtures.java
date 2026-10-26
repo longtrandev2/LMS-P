@@ -51,14 +51,15 @@ public final class DomainFixtures {
     }
 
     public static QuestionSnapshot mcqSnapshot(String content) {
-        return new QuestionSnapshot(QuestionType.mcq, content, "Java", QuestionDifficulty.medium,
-                List.of(new OptionView(11L, "Đúng", true, 1), new OptionView(12L, "Sai", false, 2)),
+        return new QuestionSnapshot(QuestionType.mcq, content, "Java", QuestionDifficulty.medium, null, null,
+                List.of(new OptionView(11L, "Đúng", true, 1), new OptionView(12L, "Sai", false, 2)), null,
                 null, List.of());
     }
 
     public static QuestionSnapshot programmingSnapshot() {
-        return new QuestionSnapshot(QuestionType.programming, "Cộng hai số", "Python", QuestionDifficulty.easy,
-                List.of(), new ProgrammingView("# starter", "private-sample-solution", List.of("python"), 1000, 128),
+        return new QuestionSnapshot(QuestionType.programming, "Cộng hai số", "Python", QuestionDifficulty.easy, null, null,
+                List.of(), null, new ProgrammingView("# starter", null, "private-sample-solution", "python",
+                        List.of("python"), 1000, 128, "token", null),
                 List.of(new TestCaseView("1 2", "3", true, BigDecimal.ONE, 1),
                         new TestCaseView("private-input", "private-output", false, BigDecimal.TEN, 2)));
     }

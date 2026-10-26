@@ -34,8 +34,10 @@ public final class QuestionDtos {
     public record TestCaseInput(@NotNull String input, @NotNull String expected_output, Boolean is_public,
                                 @DecimalMin("0.01") @DecimalMax("100.00") BigDecimal weight) { }
     public record OptionView(Long id, String content, boolean is_correct, int position) { }
-    public record ProgrammingView(String starter_code, String solution_code, List<String> allowed_languages,
-                                  int time_limit_ms, int memory_limit_mb) { }
+    /** Phần lập trình của câu hỏi/snapshot — docs/assessment-spec.md §4. `starter_code` là trường cũ, đọc tương thích. */
+    public record ProgrammingView(String starter_code, java.util.Map<String, String> starter_codes,
+                                  String solution_code, String solution_language, List<String> allowed_languages,
+                                  int time_limit_ms, int memory_limit_mb, String checker_mode, Double checker_epsilon) { }
     public record TestCaseView(String input, String expected_output, boolean is_public, BigDecimal weight, int position) { }
     public record QuestionSummary(Long id, Long owner_id, Long bank_id, Long course_id, Long category_id,
                                   String bank_name, String category_name, QuestionType type, String content, String topic,
@@ -53,6 +55,9 @@ public final class QuestionDtos {
     public record QuestionImportError(int row, String code, String reason) { }
     public record QuestionImportResult(int created, List<QuestionImportError> errors) { }
     public record QuestionPage(List<QuestionSummary> items, long total, int page, int limit) { }
+    /** Snapshot bất biến của một phiên bản — docs/assessment-spec.md §2. Trường mới vắng ở snapshot cũ đọc ra null. */
     public record QuestionSnapshot(QuestionType type, String content, String topic, QuestionDifficulty difficulty,
-                                   List<OptionView> options, ProgrammingView programming, List<TestCaseView> test_cases) { }
+                                   String explanation, vn.lmsp.enums.ScoringMode scoring_mode,
+                                   List<OptionView> options, vn.lmsp.dto.QuestionContentDtos.AnswerSpec answer_spec,
+                                   ProgrammingView programming, List<TestCaseView> test_cases) { }
 }
