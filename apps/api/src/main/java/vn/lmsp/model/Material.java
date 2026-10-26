@@ -9,6 +9,8 @@ import java.time.LocalDateTime;
 public class Material {
     @Id @GeneratedValue(strategy=GenerationType.IDENTITY) private Long id;
     @ManyToOne(fetch=FetchType.LAZY) @JoinColumn(name="class_id", nullable=false) private LmsClass lmsClass;
+    /** Buổi học liên quan (nullable — học liệu lớp chung khi chưa gắn buổi). */
+    @ManyToOne(fetch=FetchType.LAZY) @JoinColumn(name="session_id") private ClassSession session;
     @Column(nullable=false, length=200) private String title;
     @Column(columnDefinition="TEXT") private String description;
     @Enumerated(EnumType.STRING) @Column(nullable=false) private MaterialType type;
@@ -23,6 +25,9 @@ public class Material {
     @PrePersist void timestamp() { createdAt=LocalDateTime.now(); }
     public Long getId() { return id; }
     public Long getClassId() { return lmsClass.getId(); }
+    public ClassSession getSession() { return session; }
+    public Long getSessionId() { return session == null ? null : session.getId(); }
+    public void setSession(ClassSession value) { this.session = value; }
     public String getTitle() { return title; }
     public String getDescription() { return description; }
     public String getType() { return type.name(); }
