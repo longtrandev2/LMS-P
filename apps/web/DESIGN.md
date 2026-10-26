@@ -27,7 +27,7 @@ số liệu bịa, tên công nghệ trên UI, emoji làm icon, card lồng card
 | `--muted-foreground` | zinc-500 | zinc-400 | chữ phụ, meta |
 | `--border` / `--input` | zinc-200 / zinc-300 | zinc-800 / zinc-700 | viền 1px |
 | `--primary` | zinc-900 | zinc-100 | nút thường, link mạnh |
-| `--cta` | red-600 | red-500 | hành động chính |
+| `--cta` | red-600 | red-600 (chữ trắng đạt 4.5:1) | hành động chính |
 | `--success` / `--destructive` / `--warning` | green-700 / red-600 / amber-700 | green-500 / red-400 / amber-400 | trạng thái |
 
 `--gold` là tên cũ = `--warning`. Radius `--radius: 10px` (card), control 8px. Không dùng màu hex trực tiếp trong component.
@@ -83,6 +83,7 @@ số liệu bịa, tên công nghệ trên UI, emoji làm icon, card lồng card
 
 ## 7. Chuyển động & truy cập
 
+- Route tải lười (`React.lazy` trong `router.tsx`): mỗi trang một chunk, editor code/Markdown/zip chỉ tải khi cần.
 - Chỉ `transition-colors 150–200ms`; mở panel/dialog theo animation sẵn của Radix; tôn trọng `prefers-reduced-motion`.
 - Focus ring 2px `--ring` thấy rõ ở cả hai theme; mọi input có label; icon-only có `aria-label`; tương phản chữ ≥ 4.5:1.
 - Đổi theme: `.theme-transition` gắn tạm ~250ms.
