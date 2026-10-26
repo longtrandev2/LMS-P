@@ -8,7 +8,7 @@ import { ClassDetailPage } from "@/features/classes/class-detail-page";
 import { MyClassesPage } from "@/features/me/my-classes-page";
 import { MyClassMaterialsPage } from "@/features/me/my-class-materials-page";
 import { AuditLogsPage } from "@/features/audit/audit-logs-page";
-import { AppShell } from "@/components/app-shell";
+import { AppShell } from "@/components/layout/app-shell";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
 
 function ProtectedLayout() {

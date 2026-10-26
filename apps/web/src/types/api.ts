@@ -11,6 +11,21 @@ export interface CurrentUser {
   student_code?: string | null;
   roles: Role[];
   status: UserStatus;
+  phone?: string | null;
+  /** Path tương đối do BE trả (vd "/api/v1/users/1/avatar"), null nếu chưa có */
+  avatar_url?: string | null;
+}
+
+/** GET /auth/me, PATCH /users/me, POST/DELETE /users/me/avatar (UserSummary/UserView BE) */
+export interface SelfUserView {
+  id: number;
+  email: string;
+  full_name: string;
+  student_code?: string | null;
+  phone?: string | null;
+  status: UserStatus;
+  roles: Role[];
+  avatar_url?: string | null;
 }
 
 export interface User {
@@ -39,6 +54,8 @@ export interface Course {
   created_at: string;
 }
 
+export type ClassStatus = "active" | "locked";
+
 export interface ClassSummary {
   id: number;
   course_id: number;
@@ -49,6 +66,7 @@ export interface ClassSummary {
   lecturer_name: string;
   course_code: string;
   course_name: string;
+  status?: ClassStatus;
 }
 
 export interface ClassStudent {
@@ -66,6 +84,25 @@ export interface Paginated<T> {
   total: number;
   page: number;
   limit: number;
+}
+
+/** GET /me/schedule?from&to — một buổi học trong lịch tuần (FR-CRS-06) */
+export interface SessionView {
+  id: number;
+  class_id: number;
+  class_code: string;
+  class_name: string;
+  /** ISO yyyy-MM-dd */
+  session_date: string;
+  period_start: number;
+  period_end: number;
+  /** HH:mm:ss — giờ bắt đầu/ kết thúc của buổi */
+  start_time: string;
+  end_time: string;
+  room?: string | null;
+  mode: "ly_thuyet" | "thuc_hanh";
+  delivery: "truc_tiep" | "truc_tuyen";
+  title?: string | null;
 }
 
 export interface LoginResponse {
