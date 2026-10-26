@@ -1,4 +1,4 @@
-import { MoreHorizontal, Pencil, KeyRound, Lock, LockOpen } from "lucide-react";
+import { Eye, MoreHorizontal, Pencil, KeyRound, Lock, LockOpen } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -40,13 +40,13 @@ export function UsersTable({ users, onEdit, onResetPassword, onChanged }: UsersT
     <>
     <Table>
       <TableHeader>
-        <TableRow className="bg-muted/50">
+        <TableRow>
           <TableHead>Người dùng</TableHead>
-          <TableHead>Mã SV</TableHead>
+          <TableHead className="hidden md:table-cell">Mã SV</TableHead>
           <TableHead>Vai trò</TableHead>
           <TableHead>Trạng thái</TableHead>
-          <TableHead>Ngày tạo</TableHead>
-          <TableHead className="w-12 text-right">
+          <TableHead className="hidden lg:table-cell">Ngày tạo</TableHead>
+          <TableHead className="w-px">
             <span className="sr-only">Thao tác</span>
           </TableHead>
         </TableRow>
@@ -56,9 +56,9 @@ export function UsersTable({ users, onEdit, onResetPassword, onChanged }: UsersT
           <TableRow key={user.id}>
             <TableCell>
               <p className="font-medium">{user.full_name}</p>
-              <p className="text-xs text-muted-foreground">{user.email}</p>
+              <p className="max-w-56 truncate text-xs text-muted-foreground">{user.email}</p>
             </TableCell>
-            <TableCell className="font-mono text-xs">
+            <TableCell className="hidden font-mono text-xs md:table-cell">
               {user.student_code ?? "—"}
             </TableCell>
             <TableCell>
@@ -71,7 +71,7 @@ export function UsersTable({ users, onEdit, onResetPassword, onChanged }: UsersT
             <TableCell>
               <StatusBadge status={user.status} />
             </TableCell>
-            <TableCell className="text-sm text-muted-foreground">
+            <TableCell className="hidden text-muted-foreground tabular-nums lg:table-cell">
               {formatDate(user.created_at)}
             </TableCell>
             <TableCell className="text-right">
@@ -81,8 +81,8 @@ export function UsersTable({ users, onEdit, onResetPassword, onChanged }: UsersT
                     <MoreHorizontal aria-hidden />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem onClick={() => setDetailsUser(user)}>Xem chi tiết</DropdownMenuItem>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setDetailsUser(user)}><Eye aria-hidden /> Xem chi tiết</DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => onEdit(user)}>
                     <Pencil aria-hidden /> Chỉnh sửa
@@ -93,7 +93,7 @@ export function UsersTable({ users, onEdit, onResetPassword, onChanged }: UsersT
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={() => setLockingUser(user)}
-                    className={user.status === "active" ? "text-destructive" : "text-success"}
+                    variant={user.status === "active" ? "destructive" : "default"}
                   >
                     {user.status === "active" ? (
                       <>

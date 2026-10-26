@@ -1,6 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 
 export interface ClassSettings {
   maxStudents: string;
@@ -24,10 +24,10 @@ export function ClassSettingsFields({ value, onChange }: {
       </div>
       <div className="space-y-2">
         <Label htmlFor="class-status">Trạng thái</Label>
-        <Select value={value.status} onValueChange={(v) => set("status", v as ClassSettings["status"])}>
-          <SelectTrigger id="class-status"><SelectValue /></SelectTrigger>
-          <SelectContent><SelectItem value="active">Đang hoạt động</SelectItem><SelectItem value="locked">Đã khóa</SelectItem></SelectContent>
-        </Select>
+        <div className="flex h-9 items-center gap-2.5">
+          <Switch id="class-status" checked={value.status === "active"} onCheckedChange={(on) => set("status", on ? "active" : "locked")} />
+          <span className="text-sm text-muted-foreground">{value.status === "active" ? "Đang hoạt động" : "Đã khóa"}</span>
+        </div>
       </div>
       <div className="space-y-2"><Label htmlFor="enroll-from">Mở ghi danh lúc</Label><Input id="enroll-from" type="datetime-local" value={value.enrollFrom} onChange={(e) => set("enrollFrom", e.target.value)} /></div>
       <div className="space-y-2"><Label htmlFor="enroll-until">Đóng ghi danh lúc</Label><Input id="enroll-until" type="datetime-local" value={value.enrollUntil} onChange={(e) => set("enrollUntil", e.target.value)} /></div>

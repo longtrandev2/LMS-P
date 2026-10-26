@@ -47,7 +47,7 @@ export function RemoveStudentButton({ classId, student, onRemoved }: RemoveStude
         variant="ghost"
         size="icon-sm"
         aria-label={`Xóa ${student.full_name} khỏi lớp`}
-        className="text-destructive hover:text-destructive"
+        className="text-muted-foreground hover:text-destructive"
         onClick={() => setOpen(true)}
       >
         <UserMinus aria-hidden />
@@ -55,7 +55,7 @@ export function RemoveStudentButton({ classId, student, onRemoved }: RemoveStude
       <AlertDialog open={open} onOpenChange={setOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="font-heading">Xóa sinh viên khỏi lớp?</AlertDialogTitle>
+            <AlertDialogTitle>Xóa sinh viên khỏi lớp?</AlertDialogTitle>
             <AlertDialogDescription>
               {student.full_name}
               {student.student_code ? ` (${student.student_code})` : ""} sẽ mất quyền truy cập toàn
@@ -65,7 +65,7 @@ export function RemoveStudentButton({ classId, student, onRemoved }: RemoveStude
           <AlertDialogFooter>
             <AlertDialogCancel>Hủy</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-destructive text-white hover:bg-destructive/90"
+              variant="destructive"
               disabled={removing}
               onClick={(e) => {
                 e.preventDefault();

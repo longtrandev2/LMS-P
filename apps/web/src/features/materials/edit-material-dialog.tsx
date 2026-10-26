@@ -57,7 +57,7 @@ export function EditMaterialDialog({ material, onOpenChange, classId }: EditMate
     <Dialog open onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="font-heading">Sửa học liệu</DialogTitle>
+          <DialogTitle>Sửa học liệu</DialogTitle>
           <DialogDescription>Chỉnh sửa tiêu đề, mô tả và phân loại.</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4" noValidate>

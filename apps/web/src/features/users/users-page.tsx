@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { Download, Upload, UserPlus } from "lucide-react";
+import { Download, Upload, UserPlus, Users } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { ListToolbar, SearchField } from "@/components/list-toolbar";
 import {
   Select,
   SelectContent,
@@ -70,7 +69,7 @@ export function UsersPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Quản lý người dùng"
+        title="Người dùng"
         description="Tài khoản sinh viên, giảng viên và quản trị trong hệ thống."
         actions={
           <>
@@ -90,12 +89,11 @@ export function UsersPage() {
         }
       />
 
-      <Card>
-        <CardContent className="space-y-0 p-0">
-          {/* Bộ lọc */}
-          <div className="flex flex-wrap items-center gap-3 border-b px-4 py-3">
-            <Input aria-label="Tìm theo tên, email hoặc mã sinh viên" className="w-full sm:w-64" placeholder="Tìm người dùng…" value={search} onChange={(event)=>setSearch(event.target.value)} />
-            <UserSortSelect value={sort} onChange={setSort} />
+      <section className="overflow-hidden rounded-xl border bg-card">
+          <ListToolbar search={<SearchField value={search} onChange={setSearch} placeholder="Tìm theo tên, email hoặc mã SV" />}>
+            {query.isFetching && !query.isPending ? (
+              <span className="text-xs text-muted-foreground" aria-live="polite">Đang tải…</span>
+            ) : null}
             <Select
               value={roleFilter}
               onValueChange={(v) => {
@@ -103,10 +101,10 @@ export function UsersPage() {
                 setPage(1);
               }}
             >
-              <SelectTrigger className="w-40" aria-label="Lọc theo vai trò">
+              <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-36" aria-label="Lọc theo vai trò">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent align="end">
                 <SelectItem value="all">Mọi vai trò</SelectItem>
                 <SelectItem value="student">Sinh viên</SelectItem>
                 <SelectItem value="lecturer">Giảng viên</SelectItem>
@@ -120,19 +118,17 @@ export function UsersPage() {
                 setPage(1);
               }}
             >
-              <SelectTrigger className="w-40" aria-label="Lọc theo trạng thái">
+              <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-40" aria-label="Lọc theo trạng thái">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent align="end">
                 <SelectItem value="all">Mọi trạng thái</SelectItem>
                 <SelectItem value="active">Đang hoạt động</SelectItem>
                 <SelectItem value="locked">Đã khóa</SelectItem>
               </SelectContent>
             </Select>
-            {query.isFetching ? (
-              <span className="text-xs text-muted-foreground">Đang tải…</span>
-            ) : null}
-          </div>
+            <UserSortSelect value={sort} onChange={setSort} />
+          </ListToolbar>
 
           {query.isPending ? (
             <TableSkeleton />
@@ -140,13 +136,14 @@ export function UsersPage() {
             <ErrorState error={query.error} onRetry={() => query.refetch()} />
           ) : data && data.items.length === 0 ? (
             <EmptyState
-              title="Chưa có người dùng nào"
-              description="Thêm từng người dùng hoặc nhập danh sách từ tệp CSV."
-              action={
-                <Button onClick={() => { setEditingUser(null); setFormOpen(true); }}>
+              icon={Users}
+              title={filters.q || filters.role || filters.status ? "Không có người dùng phù hợp" : "Chưa có người dùng nào"}
+              description={filters.q || filters.role || filters.status ? "Thử đổi từ khóa hoặc bộ lọc." : "Thêm từng người dùng hoặc nhập danh sách từ tệp CSV."}
+              action={filters.q || filters.role || filters.status ? undefined : (
+                <Button size="sm" onClick={() => { setEditingUser(null); setFormOpen(true); }}>
                   <UserPlus aria-hidden /> Thêm người dùng
                 </Button>
-              }
+              )}
             />
           ) : data ? (
             <>
@@ -167,8 +164,7 @@ export function UsersPage() {
               />
             </>
           ) : null}
-        </CardContent>
-      </Card>
+      </section>
 
       {formOpen ? (
         <UserFormDialog

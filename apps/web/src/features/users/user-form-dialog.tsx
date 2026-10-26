@@ -96,7 +96,7 @@ export function UserFormDialog({ onOpenChange, user, onSaved }: UserFormDialogPr
     <Dialog open onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="font-heading">
+          <DialogTitle>
             {isEdit ? "Sửa người dùng" : "Tạo người dùng"}
           </DialogTitle>
           <DialogDescription>

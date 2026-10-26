@@ -33,10 +33,10 @@ export function ImportUsersPreviewDialog({ open, onOpenChange, onImported }: Pro
   return (
     <Dialog open={open} onOpenChange={(value)=>{onOpenChange(value);if(!value)reset();}}>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-xl">
-        <DialogHeader><DialogTitle className="font-heading">Nhập người dùng từ CSV</DialogTitle><DialogDescription>Tệp cần có cột email, full_name, student_code và role. Kiểm tra dữ liệu trước khi nhập.</DialogDescription></DialogHeader>
+        <DialogHeader><DialogTitle>Nhập người dùng từ CSV</DialogTitle><DialogDescription>Tệp cần có cột email, full_name, student_code và role. Kiểm tra dữ liệu trước khi nhập.</DialogDescription></DialogHeader>
         {phase==="select" ? <div className="space-y-3">
           <Button type="button" variant="link" className="px-0" onClick={downloadTemplate}>Tải tệp CSV mẫu</Button>
-          <button type="button" onClick={()=>inputRef.current?.click()} className="flex w-full cursor-pointer flex-col items-center gap-2 rounded-lg border border-dashed px-6 py-10 text-center hover:border-primary/50 hover:bg-muted/50">
+          <button type="button" onClick={()=>inputRef.current?.click()} className="flex w-full cursor-pointer flex-col items-center gap-2 rounded-lg border border-dashed px-6 py-10 text-center transition-colors hover:border-input hover:bg-muted/50 outline-none focus-visible:ring-2 focus-visible:ring-ring">
             <FileSpreadsheet className="size-8 text-muted-foreground" aria-hidden/><span className="text-sm font-medium">{file?.name??"Chọn tệp CSV từ máy tính"}</span><span className="text-xs text-muted-foreground">{file?`${(file.size/1024).toFixed(0)} KB — bấm để chọn tệp khác`:"Mỗi dòng gồm một tài khoản"}</span>
           </button>
           <input ref={inputRef} type="file" accept=".csv,text/csv" className="sr-only" aria-label="Chọn tệp CSV" onChange={(event)=>setFile(event.target.files?.[0]??null)}/>

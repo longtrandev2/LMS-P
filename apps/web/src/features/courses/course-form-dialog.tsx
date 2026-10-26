@@ -66,7 +66,7 @@ export function CourseFormDialog({ onOpenChange, course, onSaved }: CourseFormDi
     <Dialog open onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="font-heading">
+          <DialogTitle>
             {isEdit ? "Sửa học phần" : "Tạo học phần"}
           </DialogTitle>
           <DialogDescription>Học phần là môn học; mỗi học phần có thể mở nhiều lớp theo từng học kỳ.</DialogDescription>

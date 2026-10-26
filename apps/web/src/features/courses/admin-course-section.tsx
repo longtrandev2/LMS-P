@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { BookOpen, MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ListToolbar, SearchField } from "@/components/list-toolbar";
 import { DataTablePagination } from "@/components/data-table-pagination";
 import { SortSelect } from "@/components/sort-select";
 import { EmptyState, ErrorState, TableSkeleton } from "@/components/state-blocks";
@@ -19,45 +21,63 @@ interface Props {
   onDelete: (course: Course) => void;
 }
 
+const SORTS = [{ value: "code", label: "Theo mã" }, { value: "name", label: "Theo tên" }, { value: "created_at", label: "Theo ngày tạo" }];
+
+/** Danh sách học phần (pattern Danh sách): toolbar → bảng → phân trang; hành động phụ trong menu `…`. */
 export function AdminCourseSection({ onCreate, onOpenClass, onEdit, onDelete }: Props) {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState("code");
   useEffect(() => setPage(1), [search]);
+  const filters = { page, limit: 10, q: search.trim() || undefined, sort };
   const query = useQuery({
-    queryKey: queryKeys.courses.list({ page, limit: 10, q: search.trim() || undefined, sort }),
-    queryFn: ({ signal }) => api.get<Paginated<Course>>("/courses", { page, limit: 10, q: search.trim() || undefined, sort }, signal),
+    queryKey: queryKeys.courses.list(filters),
+    queryFn: ({ signal }) => api.get<Paginated<Course>>("/courses", filters, signal),
     placeholderData: keepPreviousData,
   });
 
-  return <Card>
-    <CardHeader className="border-b">
-      <CardTitle>Học phần <span className="ml-1 text-sm font-normal text-muted-foreground">{query.data?.total ?? 0}</span></CardTitle>
-      <CardDescription>Tạo môn học trước, sau đó mở các lớp học phần theo học kỳ.</CardDescription>
-    </CardHeader>
-    <CardContent className="space-y-4">
-      <div className="flex flex-wrap gap-3">
-        <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Tìm mã hoặc tên học phần" aria-label="Tìm học phần" className="max-w-sm" />
-        <SortSelect value={sort} onChange={(value) => { setSort(value); setPage(1); }} options={[{ value: "code", label: "Theo mã" }, { value: "name", label: "Theo tên" }, { value: "created_at", label: "Theo ngày tạo" }]} />
+  return (
+    <section aria-labelledby="courses-title" className="space-y-3">
+      <div>
+        <h2 id="courses-title" className="text-base font-semibold">
+          Học phần <span className="ml-1 text-sm font-normal text-muted-foreground tabular-nums">{query.data?.total ?? ""}</span>
+        </h2>
+        <p className="text-sm text-muted-foreground">Tạo môn học trước, sau đó mở các lớp học phần theo học kỳ.</p>
       </div>
-      {query.isPending ? <TableSkeleton cols={4} /> : query.isError ? <ErrorState error={query.error} onRetry={() => query.refetch()} />
-        : query.data?.items.length === 0 ? <EmptyState compact title={search ? "Không tìm thấy học phần" : "Chưa có học phần"}
-            description={search ? "Thử mã hoặc tên khác." : "Tạo học phần để bắt đầu mở lớp."}
-            action={!search ? <Button onClick={onCreate}><Plus aria-hidden /> Tạo học phần</Button> : undefined} />
-        : <Table>
-          <TableHeader><TableRow><TableHead>Mã học phần</TableHead><TableHead>Tên học phần</TableHead><TableHead>Mô tả</TableHead><TableHead className="text-right">Thao tác</TableHead></TableRow></TableHeader>
-          <TableBody>{query.data?.items.map((course) => <TableRow key={course.id}>
-            <TableCell className="font-mono font-medium">{course.code}</TableCell>
-            <TableCell className="font-medium">{course.name}</TableCell>
-            <TableCell className="max-w-48 truncate text-muted-foreground">{course.description || "—"}</TableCell>
-            <TableCell><div className="flex justify-end gap-1">
-              <Button size="sm" onClick={() => onOpenClass(course)}><Plus aria-hidden /> Mở lớp & gán GV</Button>
-              <Button variant="ghost" size="icon-sm" aria-label={`Sửa học phần ${course.code}`} onClick={() => onEdit(course)}><Pencil aria-hidden /></Button>
-              <Button variant="ghost" size="icon-sm" className="text-destructive hover:text-destructive" aria-label={`Xóa học phần ${course.code}`} onClick={() => onDelete(course)}><Trash2 aria-hidden /></Button>
-            </div></TableCell>
-          </TableRow>)}</TableBody>
-        </Table>}
-    </CardContent>
-    {query.data ? <DataTablePagination page={query.data.page} limit={query.data.limit} total={query.data.total} onPageChange={setPage} /> : null}
-  </Card>;
+      <div className="overflow-hidden rounded-xl border bg-card">
+        <ListToolbar search={<SearchField value={search} onChange={setSearch} placeholder="Tìm mã hoặc tên học phần" />}>
+          <SortSelect value={sort} onChange={(value) => { setSort(value); setPage(1); }} options={SORTS} />
+        </ListToolbar>
+        {query.isPending ? <TableSkeleton cols={4} rows={4} /> : query.isError ? <ErrorState error={query.error} onRetry={() => query.refetch()} />
+          : query.data?.items.length === 0 ? <EmptyState compact icon={BookOpen} title={search ? "Không tìm thấy học phần" : "Chưa có học phần"}
+              description={search ? "Thử mã hoặc tên khác." : "Tạo học phần để bắt đầu mở lớp."}
+              action={!search ? <Button size="sm" onClick={onCreate}><Plus aria-hidden /> Tạo học phần</Button> : undefined} />
+          : <Table>
+            <TableHeader><TableRow>
+              <TableHead className="w-32">Mã</TableHead><TableHead>Tên học phần</TableHead>
+              <TableHead className="hidden md:table-cell">Mô tả</TableHead><TableHead className="w-px"><span className="sr-only">Thao tác</span></TableHead>
+            </TableRow></TableHeader>
+            <TableBody>{query.data?.items.map((course) => <TableRow key={course.id}>
+              <TableCell className="font-mono text-xs font-medium">{course.code}</TableCell>
+              <TableCell className="font-medium">{course.name}</TableCell>
+              <TableCell className="hidden max-w-72 truncate text-muted-foreground md:table-cell">{course.description || "—"}</TableCell>
+              <TableCell><div className="flex justify-end gap-1">
+                <Button size="sm" variant="outline" onClick={() => onOpenClass(course)}><Plus aria-hidden /> Mở lớp</Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon-sm" aria-label={`Thao tác với học phần ${course.code}`}><MoreHorizontal aria-hidden /></Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => onEdit(course)}><Pencil aria-hidden /> Sửa học phần</DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem variant="destructive" onClick={() => onDelete(course)}><Trash2 aria-hidden /> Xóa học phần</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div></TableCell>
+            </TableRow>)}</TableBody>
+          </Table>}
+        {query.data && query.data.items.length > 0 ? <DataTablePagination page={query.data.page} limit={query.data.limit} total={query.data.total} onPageChange={setPage} /> : null}
+      </div>
+    </section>
+  );
 }
