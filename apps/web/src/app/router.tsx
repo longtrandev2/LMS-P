@@ -9,6 +9,8 @@ import { MyClassesPage } from "@/features/me/my-classes-page";
 import { MyClassMaterialsPage } from "@/features/me/my-class-materials-page";
 import { DashboardPage } from "@/features/me/dashboard-page";
 import { SchedulePage } from "@/features/me/schedule-page";
+import { NotificationsPage } from "@/features/me/notifications-page";
+import { ProfilePage } from "@/features/me/profile-page";
 import { AuditLogsPage } from "@/features/audit/audit-logs-page";
 import { AppShell } from "@/components/layout/app-shell";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
@@ -35,6 +37,8 @@ export function AppRouter() {
       <Route path="/classes/:id" element={<ClassRoute />} />
       <Route path="/me" element={<DashboardPage />} />
       <Route path="/me/schedule" element={<SchedulePage />} />
+      <Route path="/me/notifications" element={<NotificationsPage />} />
+      <Route path="/me/profile" element={<ProfilePage />} />
       <Route path="/me/classes" element={<MyClassesPage />} />
       <Route path="/me/classes/:id" element={<MyClassRoute />} />
     </Route>
