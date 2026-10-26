@@ -2,8 +2,12 @@ package vn.lmsp.model;
 
 import lombok.Getter;
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+import vn.lmsp.dto.QuestionContentDtos.AnswerSpec;
 import vn.lmsp.enums.QuestionDifficulty;
 import vn.lmsp.enums.QuestionType;
+import vn.lmsp.enums.ScoringMode;
 import java.time.LocalDateTime;
 
 @Entity
@@ -15,6 +19,10 @@ public class Question {
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "category_id", nullable = false) private QuestionCategory category;
     @Enumerated(EnumType.STRING) @Column(nullable = false) private QuestionType type;
     @Column(nullable = false, columnDefinition = "TEXT") private String content;
+    @Column(columnDefinition = "TEXT") private String explanation;
+    @Enumerated(EnumType.STRING) @Column(name = "scoring_mode", nullable = false, length = 20)
+    private ScoringMode scoringMode = ScoringMode.all_or_nothing;
+    @JdbcTypeCode(SqlTypes.JSON) @Column(name = "answer_spec", columnDefinition = "json") private AnswerSpec answerSpec;
     @Column(length = 100) private String topic;
     @Enumerated(EnumType.STRING) @Column(nullable = false) private QuestionDifficulty difficulty;
     @Column(name = "is_deleted", nullable = false) private boolean deleted;
@@ -35,6 +43,10 @@ public class Question {
     public String getBankName() { return category.getBank().getName(); }
     public void update(String content, String topic, QuestionDifficulty difficulty, QuestionCategory category) {
         this.content = content; this.topic = topic; this.difficulty = difficulty; this.category = category;
+    }
+    /** Phần đáp án/chấm đã được QuestionContentValidator chuẩn hóa. */
+    public void updateAnswer(String explanation, ScoringMode scoringMode, AnswerSpec answerSpec) {
+        this.explanation = explanation; this.scoringMode = scoringMode; this.answerSpec = answerSpec;
     }
     public void touch() { updatedAt = LocalDateTime.now(); }
     public void softDelete() { deleted = true; }
