@@ -40,25 +40,25 @@ export function EnrollStudentsDialog({ onOpenChange, classId, onEnrolled }: Enro
   const [bulkText, setBulkText] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [rowErrors, setRowErrors] = useState<{ row: number; reason: string }[]>([]);
 
   async function enroll(rows: { student_code?: string; email?: string }[]) {
     setSubmitting(true);
+    setRowErrors([]);
     try {
       const data = await api.post<{ added: number; errors: { row: number; code: string; reason: string }[] }>(
         `/classes/${classId}/enrollments`,
         { students: rows }
       );
-      if (data.added < rows.length) {
-        const firstError = data.errors[0]?.reason ?? "";
-        toast.success(
-          `Đã ghi danh ${data.added} sinh viên; ${rows.length - data.added} dòng lỗi${firstError ? `: ${firstError}` : ""}.`
-        );
+      if (data.errors.length > 0) {
+        setRowErrors(data.errors);
+        toast.success(`Đã ghi danh ${data.added} sinh viên; ${data.errors.length} dòng lỗi.`);
       } else {
         toast.success(`Đã ghi danh ${data.added} sinh viên vào lớp.`);
+        onOpenChange(false);
+        setSingleId("");
+        setBulkText("");
       }
-      onOpenChange(false);
-      setSingleId("");
-      setBulkText("");
       setErrors({});
       onEnrolled();
     } catch (error) {
@@ -145,6 +145,19 @@ export function EnrollStudentsDialog({ onOpenChange, classId, onEnrolled }: Enro
             </form>
           </TabsContent>
         </Tabs>
+
+        {rowErrors.length > 0 ? (
+          <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive" role="alert">
+            <p className="font-medium">{rowErrors.length} dòng không ghi danh được:</p>
+            <ul className="mt-1 list-disc space-y-0.5 pl-4">
+              {rowErrors.map((item) => (
+                <li key={item.row}>
+                  Dòng {item.row}: {item.reason}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
       </DialogContent>
     </Dialog>
   );
