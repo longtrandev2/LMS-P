@@ -16,7 +16,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByStudentCode(String studentCode);
     @EntityGraph(attributePaths = "roles") Optional<User> findWithRolesById(Long id);
     @EntityGraph(attributePaths = "roles")
-    @Query(value="select distinct u from User u left join u.roles r where (:status is null or u.status=:status) and (:role is null or r.name=:role) and (:q is null or lower(u.email) like lower(concat('%',:q,'%')) or lower(u.fullName) like lower(concat('%',:q,'%'))) order by u.id",
-           countQuery="select count(distinct u) from User u left join u.roles r where (:status is null or u.status=:status) and (:role is null or r.name=:role) and (:q is null or lower(u.email) like lower(concat('%',:q,'%')) or lower(u.fullName) like lower(concat('%',:q,'%')))")
+    @Query(value="select distinct u from User u left join u.roles r where (:status is null or u.status=:status) and (:role is null or r.name=:role) and (:q is null or lower(u.email) like lower(concat('%',:q,'%')) or lower(u.fullName) like lower(concat('%',:q,'%')) or lower(u.studentCode) like lower(concat('%',:q,'%')))",
+           countQuery="select count(distinct u) from User u left join u.roles r where (:status is null or u.status=:status) and (:role is null or r.name=:role) and (:q is null or lower(u.email) like lower(concat('%',:q,'%')) or lower(u.fullName) like lower(concat('%',:q,'%')) or lower(u.studentCode) like lower(concat('%',:q,'%')))")
     Page<User> search(@Param("role") String role,@Param("status") UserStatus status,@Param("q") String query,Pageable pageable);
 }
