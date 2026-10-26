@@ -21,14 +21,18 @@ function wsUrl(token: string): string {
 interface UseWebSocketOptions {
   /** Nhận mọi event server-push theo envelope {type, ts, data} */
   onMessage?: (type: string, data: unknown) => void;
+  /** Gọi mỗi lần (re)connect thành công — dùng để đọc lại trạng thái đang chờ bằng REST (message-contracts §6). */
+  onOpen?: () => void;
 }
 
-export function useWebSocket(token: string | null, { onMessage }: UseWebSocketOptions = {}): void {
+export function useWebSocket(token: string | null, { onMessage, onOpen }: UseWebSocketOptions = {}): void {
   // Giữ handler mới nhất trong ref — tránh reconnect khi component cha re-render
   const handlerRef = useRef(onMessage);
+  const openRef = useRef(onOpen);
 
   useEffect(() => {
     handlerRef.current = onMessage;
+    openRef.current = onOpen;
   });
 
   useEffect(() => {
@@ -55,6 +59,7 @@ export function useWebSocket(token: string | null, { onMessage }: UseWebSocketOp
       ws = new WebSocket(wsUrl(token as string));
       ws.onopen = () => {
         attempts = 0;
+        openRef.current?.();
         clearPing();
         pingTimer = setInterval(() => {
           if (ws?.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: "ping" }));
