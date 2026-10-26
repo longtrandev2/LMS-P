@@ -2,6 +2,8 @@ import type { QuestionType, QuestionDifficulty, QuestionTestCase } from "./quest
 
 export type AssignmentCategory = "quiz" | "assignment" | "midterm" | "final";
 export type ScorePolicy = "best" | "last";
+export type GradingVerdict = "AC" | "WA" | "CE" | "TLE" | "MLE" | "RE" | "SYSTEM_ERROR";
+export type SubmissionStatus = "pending" | "grading" | "completed" | "failed";
 export interface AssignmentSummary {
   id: number;
   class_id: number;
@@ -57,7 +59,7 @@ export interface QuizAttempt {
   question_scores: QuizQuestionScore[];
 }
 export interface AssignmentSubmission {
-  status: "pending" | "grading" | "completed" | "failed";
+  status: SubmissionStatus;
   type: "mcq" | "code";
   language?: string | null;
   id: number;
@@ -69,7 +71,23 @@ export interface AssignmentSubmission {
   attempt_no: number;
   selected_option_ids?: number[] | null;
   score?: number | null;
+  verdict?: GradingVerdict | null;
   is_late: boolean;
   submitted_at: string;
+}
+
+export interface SubmissionDetails extends AssignmentSubmission {
+  question_version_id: number;
+  source_code?: string | null;
+  result?: {
+    grading_attempt: number;
+    status: string;
+    verdict: GradingVerdict | null;
+    compile_error: boolean;
+    compile_output?: string | null;
+    error_message?: string | null;
+    graded_at: string;
+    duration_ms: number;
+  } | null;
 }
 

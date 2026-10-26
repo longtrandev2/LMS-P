@@ -10,7 +10,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import vn.lmsp.dto.GradingDtos.WorkerPayload;
-import vn.lmsp.enums.TestResultStatus;
 import vn.lmsp.model.Submission;
 import vn.lmsp.security.GradingWebSocketHandler;
 
@@ -24,10 +23,7 @@ public class GradingNotifier {
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("submission_id", submission.getId());
         data.put("status", submission.getStatus());
-        data.put("score", submission.getScore());
-        var tests = payload.test_results() == null ? java.util.List.<vn.lmsp.dto.GradingDtos.WorkerTestResult>of() : payload.test_results();
-        data.put("total_tests", tests.size());
-        data.put("passed_tests", tests.stream().filter(test -> test.status() == TestResultStatus.passed).count());
+        data.put("verdict", payload.verdict());
         data.put("compile_error", payload.compile_error());
         String userId = submission.getStudentId().toString();
         boolean terminal = submission.isTerminal();

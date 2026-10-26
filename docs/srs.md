@@ -133,14 +133,14 @@ Giao diện admin có khu quản lý học phần và khu quản lý lớp riên
 |---|---|---|
 | FR-GRD-01 | M | Nộp code (ngôn ngữ trong danh sách cho phép) → validate → lưu submission `pending` → publish RabbitMQ → **202 Accepted** + submission_id |
 | FR-GRD-02 | M | Idempotency-Key chống nộp trùng (unique index) |
-| FR-GRD-03 | M | Worker: biên dịch → chạy từng test trong sandbox (không mạng, giới hạn CPU/bộ nhớ/PID/thời gian/đầu ra) → so sánh → tính điểm theo trọng số test |
-| FR-GRD-04 | M | Trạng thái `pending → grading → completed | failed`; hiển thị lỗi biên dịch, stdout/stderr (cắt ngắn), trạng thái từng test; test ẩn chỉ trả pass/fail (BR4) |
+| FR-GRD-03 | M | Worker: biên dịch → chạy từng test trong sandbox (không mạng, giới hạn CPU/bộ nhớ/PID/thời gian/đầu ra) → verdict AC khi mọi test đạt; nếu không, verdict WA/CE/TLE/MLE/RE. Không tính điểm theo test |
+| FR-GRD-04 | M | Trạng thái `pending → grading → completed | failed`; lưu và hiển thị verdict, lỗi biên dịch/hệ thống đã cắt ngắn. `completed` nghĩa là lượt chấm kết thúc, verdict `AC` mới nghĩa là lời giải đúng |
 | FR-GRD-05 | M | WS đẩy trạng thái + kết quả chấm realtime tới sinh viên |
 | FR-GRD-06 | S | Nút "Run" chạy thử với test công khai, không ghi điểm |
 | FR-GRD-07 | S | Lecturer regrade — tạo kết quả mới, giữ lịch sử (BR8); lecturer thấy cả test ẩn |
 | FR-GRD-08 | M | Retry có giới hạn → DLQ khi lỗi hệ thống; submission `failed` + thông báo |
 
-Triển khai phần API M6: lưu bài nộp và job outbox trong cùng transaction; publisher dùng confirm và retry khi broker chưa sẵn sàng. Worker đọc code/snapshot đã ghim từ DB, gửi kết quả theo `docs/message-contracts.md` v2; API kiểm tra kết quả, tính điểm theo trọng số/phạt muộn, lưu transaction rồi mới ACK và phát WebSocket. Worker mẫu tắt listener để giữ job trong queue cho tới khi sandbox ở phần 2 được triển khai. Run thử, regrade và thực thi sandbox thuộc phần tiếp theo.
+M6: API lưu bài nộp và job outbox trong cùng transaction; publisher dùng confirm và retry khi broker chưa sẵn sàng. Worker đọc code/snapshot đã ghim từ DB, biên dịch và chạy test trong sandbox; gửi verdict tổng AC/WA/CE/TLE/MLE/RE theo `docs/message-contracts.md`. API kiểm tra kết quả, lưu transaction rồi mới ACK và phát WebSocket. Không có điểm từng test trong v1. Sandbox bắt buộc không mạng và giới hạn tài nguyên theo BR10. Run thử và regrade thuộc phần tiếp theo.
 
 ### M7 — Kỳ thi
 | ID | Ưu tiên | Yêu cầu |
@@ -187,9 +187,9 @@ Triển khai phần API M6: lưu bài nộp và job outbox trong cùng transacti
 1. Lecturer tạo bài tập, gắn câu hỏi lập trình + test case, đặt chính sách.
 2. Student viết code (Monaco editor), có thể Run thử test công khai.
 3. Student nộp → server kiểm tra quyền/hạn/lượt → lưu `pending` (transaction) → publish `grading.submit` lên RabbitMQ (priority thường) → 202 + submission_id.
-4. Worker consume → tải code + test từ DB → biên dịch (lỗi → `compile_error`, trả kết quả) → chạy từng test trong container sandbox one-shot.
-5. So sánh output → tính điểm theo trọng số → ghi grading_result + test_results → ack message.
-6. Worker publish `events.ws` → API broadcast WS → UI cập nhật live; ghi notification.
+4. Worker consume → tải code + snapshot test từ DB → biên dịch và chạy từng test trong sandbox one-shot không mạng.
+5. Tất cả test đạt thì verdict `AC`; sai output/lỗi chạy/quá thời gian/quá bộ nhớ/biên dịch lỗi trả `WA`/`RE`/`TLE`/`MLE`/`CE`. Không tính điểm từng test; API lưu verdict và lỗi cần thiết rồi ACK event.
+6. API phát WebSocket sau commit; UI hiển thị trạng thái/verdict và notification.
 
 ### B — Kỳ thi
 1. Lecturer tạo + publish kỳ thi (đề, thời lượng, lịch, quy chế).
@@ -217,7 +217,7 @@ Triển khai phần API M6: lưu bài nộp và job outbox trong cùng transacti
 | BR3 | Max attempts, hạn nộp, phạt nộp muộn cấu hình từng bài; server kiểm soát kể cả khi nhiều request nộp đồng thời. `max_attempts` NULL = không giới hạn. Với `category=quiz`, 1 request nộp cả bài = 1 lượt, tính `best/last` trên **tổng điểm từng lượt**. Với bài không phải quiz, mỗi lần nộp một câu = 1 lượt **của câu đó**, tính `best/last` riêng cho từng câu rồi cộng điểm câu thành điểm bài. Run thử và xem đề không tính lượt. Kỳ thi dùng 1 phiên/thí sinh theo M7, không dùng `max_attempts` của bài tập |
 | BR4 | Test ẩn KHÔNG bao giờ trả input/expected về client; chỉ pass/fail |
 | BR5 | Thời gian thi tính bởi server; nộp sau ends_at bị từ chối |
-| BR6 | Điểm câu lập trình = điểm câu × (Σ trọng số test đạt / Σ trọng số test); vượt thời gian/bộ nhớ = không đạt |
+| BR6 | Verdict câu lập trình là AC chỉ khi mọi test trong snapshot đạt; sai output/lỗi chạy/quá thời gian/quá bộ nhớ/biên dịch lỗi lần lượt là WA/RE/TLE/MLE/CE. V1 không tính điểm theo test |
 | BR7 | Mọi thay đổi điểm, đề thi, cấu hình, phân quyền → audit log (ai, khi nào, before/after) |
 | BR8 | Submission bất biến (không sửa/xóa); regrade tạo grading_result mới gắn cùng submission và dùng đúng phiên bản câu hỏi/test case mà submission đã tham chiếu |
 | BR9 | Đề thi chỉ hiển thị sau thời điểm bắt đầu phiên của thí sinh đó |

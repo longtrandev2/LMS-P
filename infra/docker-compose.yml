@@ -8,7 +8,7 @@ services:
       MYSQL_USER: ${MYSQL_USER:-lms}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-lms}
     volumes: [mysql-data:/var/lib/mysql]
-    ports: ["3308:3306"]
+    ports: ["${MYSQL_BIND_ADDRESS:-127.0.0.1}:3308:3306"]
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "--protocol=tcp", "-h", "127.0.0.1", "-P", "3306", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-root}"]
       interval: 10s
@@ -60,13 +60,47 @@ services:
   worker:
     build: ../apps/worker
     environment:
+      MYSQL_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-lms}?useUnicode=true&characterEncoding=utf8&serverTimezone=UTC
+      MYSQL_USER: ${MYSQL_WORKER_USER:-lms_worker}
+      MYSQL_PASSWORD: ${MYSQL_WORKER_PASSWORD:-lmsp_worker_local_only}
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_USER: ${RABBITMQ_USER:-lms}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASS:-lms}
       WORKER_PREFETCH: ${WORKER_PREFETCH:-2}
+      GRADER_IMAGE: lmsp-grader:local
+      GRADING_JOB_TIMEOUT_SECONDS: ${GRADING_JOB_TIMEOUT_SECONDS:-120}
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    # Trusted worker only: access to Docker daemon is equivalent to host-level control.
+    # Never mount this socket into the API or a grading sandbox.
     volumes: [/var/run/docker.sock:/var/run/docker.sock]
     depends_on:
+      mysql: {condition: service_healthy}
       rabbitmq: {condition: service_healthy}
+      worker-db-permissions: {condition: service_completed_successfully}
+      grader-image: {condition: service_completed_successfully}
+    networks: [lms-internal]
+  worker-db-permissions:
+    image: mysql:8.4
+    entrypoint: ["bash", "/grant-worker-readonly.sh"]
+    environment:
+      MYSQL_HOST: 127.0.0.1
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-lms}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_WORKER_USER: ${MYSQL_WORKER_USER:-lms_worker}
+      MYSQL_WORKER_PASSWORD: ${MYSQL_WORKER_PASSWORD:-lmsp_worker_local_only}
+    volumes: [./mysql/grant-worker-readonly.sh:/grant-worker-readonly.sh:ro]
+    network_mode: "service:mysql"
+    depends_on:
+      mysql: {condition: service_healthy}
+  grader-image:
+    image: lmsp-grader:local
+    build:
+      context: ../apps/worker/grader
+    entrypoint: ["/bin/true"]
     networks: [lms-internal]
   web:
     build:

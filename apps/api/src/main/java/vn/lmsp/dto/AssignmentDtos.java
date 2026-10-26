@@ -47,6 +47,6 @@ public final class AssignmentDtos {
     public record SubmissionView(Long id, Long assignment_id, Long student_id, String student_full_name,
             String student_code, Long question_id, int attempt_no,
             List<Long> selected_option_ids, BigDecimal score, boolean is_late, LocalDateTime submitted_at,
-            SubmissionStatus status, SubmissionType type, String language) { }
+            SubmissionStatus status, SubmissionType type, String language, vn.lmsp.enums.GradingVerdict verdict) { }
     public record AssignmentPage(List<AssignmentSummary> items, long total, int page, int limit) { }
 }

@@ -96,7 +96,7 @@ try {
   assert.equal(replay.submission_id, accepted.submission_id);
   await api(path, student.access_token, "POST", { ...code, source_code: "print(4)" }, 409, key);
   const job = await takeJob(accepted.submission_id);
-  assert.equal(job.schema_version, 2);
+  assert.equal(job.schema_version, 3);
   assert.equal(job.student_id, student.user.id);
   assert.equal(job.source_code, undefined);
   const detailPath = "/submissions/" + accepted.submission_id;
@@ -108,23 +108,18 @@ try {
   const payload = { job_id: job.job_id, submission_id: accepted.submission_id, status: "grading" };
   await publish({ event: "submission.status", payload, user_id: admin.user.id });
   await until(async () => (await api(detailPath, student.access_token)).status === "grading", "grading status");
-  const completed = { ...payload, status: "completed", duration_ms: 5, test_results: [
-    { position: 1, status: "passed", output: "3", time_ms: 2, memory_kb: 128 },
-    { position: 2, status: "wrong_answer", output: "private-output", time_ms: 3, memory_kb: 128 },
-  ] };
+  const completed = { ...payload, status: "completed", verdict: "AC", compile_error: false, duration_ms: 5 };
   await publish({ event: "submission.graded", payload: completed, user_id: admin.user.id });
   const result = await until(async () => {
     const detail = await api(detailPath, student.access_token);
     return detail.status === "completed" ? detail : null;
   }, "persisted grade");
-  assert.equal(result.score, 2.5);
-  const hidden = result.result.tests.find(test => test.position === 2);
-  assert.equal(hidden.status, "failed");
-  for (const field of ["input", "expected_output", "output", "time_ms", "memory_kb", "score"]) assert.equal(hidden[field], null);
+  assert.equal(result.score, null);
+  assert.equal(result.verdict, "AC");
   assert(!JSON.stringify(result).includes("private-"));
   const privileged = await api(detailPath, lecturer.access_token);
-  assert.equal(privileged.result.tests[1].input, "private-input");
-  await until(() => own.events.some(event => event.type === "submission.graded" && event.data.score === 2.5), "WS terminal");
+  assert.equal(privileged.result.verdict, "AC");
+  await until(() => own.events.some(event => event.type === "submission.graded" && event.data.verdict === "AC"), "WS terminal");
   assert(!unrelated.events.some(event => event.type.startsWith("submission.")), "WS must use DB owner");
   await publish({ event: "submission.graded", payload: completed });
   await publish({ event: "submission.status", payload });
@@ -140,17 +135,18 @@ try {
   const secondJob = await takeJob(second.submission_id);
   const deadBefore = (await broker("/queues/%2F/q.grading.events.dead")).messages;
   await publish({ event: "submission.graded", payload: { ...completed,
-    job_id: secondJob.job_id, submission_id: second.submission_id, test_results: completed.test_results.slice(0, 1) } });
+    job_id: secondJob.job_id, submission_id: second.submission_id, verdict: null } });
   await until(async () => (await broker("/queues/%2F/q.grading.events.dead")).messages > deadBefore, "invalid-result DLQ");
   assert.equal((await api("/submissions/" + second.submission_id, student.access_token)).status, "pending");
   await publish({ event: "submission.graded", payload: { job_id: secondJob.job_id,
-    submission_id: second.submission_id, status: "failed", error_message: "private-input" } });
+    submission_id: second.submission_id, status: "failed", verdict: "SYSTEM_ERROR", compile_error: false,
+    error_message: "private-input" } });
   await until(async () => (await api("/submissions/" + second.submission_id, student.access_token)).status === "failed", "system failure");
   const failed = await api("/submissions/" + second.submission_id, student.access_token);
   assert.equal(failed.score, null);
   assert(!JSON.stringify(failed).includes("private-input"));
   await api(path, student.access_token, "POST", code, 409, randomUUID());
-  console.log("PASS: real DB/broker submission, outbox, idempotency, grading, WS routing, hidden tests, RBAC, DLQ and attempt limit.");
+  console.log("PASS: real DB/broker submission, outbox, idempotency, verdict grading, WS routing, RBAC, DLQ and attempt limit.");
 } finally {
   own.socket.close();
   unrelated.socket.close();

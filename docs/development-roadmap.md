@@ -12,7 +12,7 @@ Trạng thái bản Java ngày 2026-10-25:
 
 - P0/P1: đã có Docker Compose, auth/user/profile, học phần/lớp/xếp sinh viên, học liệu, thông báo và audit. Các luồng cần tiếp tục có kiểm thử tích hợp theo từng nghiệp vụ.
 - P2: đã có ngân hàng câu hỏi theo học phần, danh mục tùy chọn, CSV MCQ, snapshot, bài tập và quiz MCQ. Sổ điểm M8 chưa triển khai.
-- P3 phần 1: API nhận code, outbox publish confirm, nhận/lưu kết quả và WS đã có; contract V2 và kiểm tra bằng worker giả lập nằm trong docs/grading-api-handoff.md. Worker mẫu tắt listener để giữ job, phần 2 triển khai sandbox và retry/ACK thật. Run/regrade chưa có.
+- P3: API nhận code/outbox, worker sandbox, verdict AC/WA/CE/TLE/MLE/RE, WebSocket và giao diện nộp code. V1 chỉ lưu verdict, chưa chấm điểm từng test; Run/regrade chưa có.
 - P4: kỳ thi M7 chưa triển khai.
 - P5: đã chuẩn hóa mapping DTO và có 34 kiểm thử Java cho response/snapshot/quiz/API chấm code; thêm kiểm tra tích hợp M6 với DB/broker riêng và worker giả lập. Cấu hình hệ thống, thống kê quản trị và kiểm thử các nghiệp vụ còn lại tiếp tục bổ sung.
 
@@ -47,8 +47,8 @@ Nếu gấp show giữa chừng: P0 → P1 → nhảy P3 (P2 đưa về sau) —
 - Xong khi: `max_attempts`/deadline/late enforce theo lượt toàn bài quiz hoặc từng câu bài khác; nộp trùng Idempotency-Key không tăng lượt; điểm tổng khớp công thức FR-GB-02 (case test tay).
 
 ## P3 ⭐ — Chấm lập trình (M6)
-- Việc: submit code → pending + publish Spring AMQP + Idempotency-Key; worker consumer (manual ack, retry, DLQ, priority); runner Docker sandbox (limits đầy đủ BR10); grader compare + score trọng số; grading_results/test_results; API consume q.grading.events → WS push `submission.status/graded`; UI Monaco editor + panel kết quả từng test live + trạng thái; regrade; (S nếu kịp: Run thử, verify đề).
-- Xong khi: nộp code Python đúng/sai/compile error/timeout → đúng trạng thái + điểm; test ẩn không lộ (check response); kill worker giữa chừng → redeliver chấm tiếp; `--scale worker=2` hai worker cùng kéo queue.
+- Việc: submit code → pending + outbox; worker consumer (manual ack, retry, DLQ); runner Docker sandbox không mạng, giới hạn CPU/RAM/PID/time/output; verdict AC/WA/CE/TLE/MLE/RE; API consume q.grading.events → DB + WS; UI editor/nộp/xem verdict. V1 không tính điểm từng test. Regrade và Run thử để phase tiếp.
+- Xong khi: nộp code Python/C/C++/Java đúng/sai/compile error/timeout → verdict đúng; test ẩn không lộ; kill worker giữa chừng → redelivery; scale nhiều worker.
 
 ## P4 — Kỳ thi (M7)
 - Việc: exams CRUD (hạng mục midterm/final) + publish snapshot câu hỏi + notify; sessions (BR9 shuffle, ends_at server); exam_answers autosave PUT; sweeper 10s auto-submit (MCQ chấm + code priority 10); đồng hồ thi lấy mốc từ REST và client đếm ngược; finish tay; monitor lecturer (poll 5s) + exam_events log; UI phòng thi (đề + editor + countdown + autosave indicator), màn hình monitor.

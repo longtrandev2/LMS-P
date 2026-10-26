@@ -99,19 +99,20 @@
 | POST | /assignments/{id}/publish | lec | Kiểm tra câu hỏi, ghim version hiện hành cùng điểm/thứ tự; sau đó nội dung assessment bất biến, metadata/lịch có thể điều chỉnh qua endpoint riêng |
 | GET/POST | /assignments/{id}/quiz-attempts | student | Chỉ `category=quiz`: GET lịch sử lượt của tôi; POST nộp `{answers: [{question_id, selected_option_ids}]}` + Idempotency-Key → chấm MCQ đồng bộ, trả `{attempt_id, attempt_no, score, question_scores}`. Câu không có trong `answers` = bỏ trống, 0 điểm; câu lạ/trùng bị từ chối; một POST chỉ tính một lượt |
 | POST | /assignments/{id}/questions/{qid}/submissions | student | Chỉ bài **không phải quiz**: nộp từng câu (mcq: `{selected_option_ids}`; code: `{language, source_code}`) + Idempotency-Key. `max_attempts` và best/last tính riêng cho câu; MCQ chấm đồng bộ; code cần worker sandbox |
-| POST | /assignments/{id}/questions/{qid}/run | student | Run thử test công khai không tính lượt/điểm; hiện trả `501 RUNNER_UNAVAILABLE` đến khi worker có sandbox |
-| GET | /submissions/{id} | owner/lec | Trạng thái + kết quả (BR4: test ẩn chỉ pass/fail) |
+| POST | /assignments/{id}/questions/{qid}/run | student | Run thử test công khai không tính lượt/điểm; hiện trả `501 RUNNER_UNAVAILABLE` |
+| GET | /submissions/{id} | owner/lec | Trạng thái + verdict AC/WA/CE/TLE/MLE/RE; không trả dữ liệu test |
 | GET | /me/submissions?assignment_id= | student | Lịch sử nộp từng câu; lịch sử quiz theo `/assignments/{id}/quiz-attempts` |
 | GET | /assignments/{id}/submissions | lec | Danh sách lượt nộp có tên/mã sinh viên, câu hỏi, trạng thái và điểm; giao diện giảng viên hỗ trợ lọc theo sinh viên/trạng thái |
 | POST | /submissions/{id}/regrade | lec | Chấm lại (BR8) → 202 |
 
-### Phần API chấm code (M6, 2026-10-25)
+### Chấm code (M6)
 
 - POST code ở đường dẫn submissions trên nhận `language` (`python/c/cpp/java`, phải nằm trong snapshot), `source_code` (UTF-8 tối đa 128KiB, không rỗng), không kèm đáp án MCQ. Trả `202 {submission_id, status:"pending"}` sau khi lưu bài nộp và outbox; key trùng cùng nội dung trả bản gốc `200`, key trùng khác nội dung/phạm vi trả `409 IDEMPOTENCY_CONFLICT`.
 - API khóa bài tập khi kiểm tra lượt/hạn; chỉ nhận bài của lớp đang học và assessment đã publish. Điểm tối đa và phần trăm phạt muộn được ghim vào submission. Code không được sửa sau khi nộp.
-- GET `/submissions/{id}` trả metadata, status, score, code của bài nộp và kết quả chấm mới nhất. Chủ bài nộp, giảng viên phụ trách hoặc admin được đọc. Student chỉ nhận `passed/failed` cho test ẩn; input/expected/output/time/memory/điểm test ẩn là null. Đáp án mẫu không xuất hiện trong response.
-- Lịch sử `/me/submissions` và `/assignments/{id}/submissions` bổ sung `status`, `type`, `language`; điểm bài đang chờ là null.
-- WebSocket chỉ báo thay đổi sau khi kết quả đã commit, lấy người nhận từ submission trong DB. Client đọc lại GET khi reconnect. Run thử/regrade chưa triển khai trong phần 1.
+- GET `/submissions/{id}` trả metadata, status, verdict và log lỗi đã cắt ngắn; không trả input/output của test hay solution. Chủ bài nộp, giảng viên phụ trách hoặc admin được đọc.
+- Verdict `AC` chỉ khi tất cả test trong snapshot đạt; kết quả khác là `WA`, `CE`, `TLE`, `MLE`, `RE`. V1 không tính score hay điểm từng test; `score` giữ null.
+- Lịch sử `/me/submissions` và `/assignments/{id}/submissions` bổ sung `status`, `type`, `language`, `verdict`.
+- WebSocket chỉ báo thay đổi sau khi kết quả đã commit, lấy người nhận từ submission trong DB. Client đọc lại GET khi reconnect. Run thử/regrade chưa triển khai.
 
 ## 7. Exams (M7)
 
