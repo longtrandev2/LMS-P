@@ -2,7 +2,7 @@
 
 | Thuộc tính | Giá trị |
 |---|---|
-| Phiên bản | 1.7 — 2026-10-25 |
+| Phiên bản | 1.8 — 2026-10-27 (câu hỏi đa loại, xem lại, chấm code chuẩn CP — `assessment-spec.md`) |
 | Trạng thái | Baseline (spec-first, chuẩn đối chiếu cho DB/API/kiến trúc/plan) |
 | Nguồn требования | Subject gốc của giảng viên (English, bản gốc trong repo docs) |
 | Tham khảo mở rộng | `LMS – Phân tích nghiệp vụ và kiến trúc công nghệ.md` — CHỈ tham khảo, phạm vi lấy theo Subject + tài liệu này |
@@ -19,7 +19,7 @@
 **Trong phạm vi (v1):**
 - Quản lý tài khoản, xác thực JWT, phân quyền RBAC (student / lecturer / admin).
 - Khóa học, lớp học, ghi danh, học liệu (upload/download).
-- Ngân hàng câu hỏi: trắc nghiệm MCQ + lập trình (kèm test case công khai/ẩn).
+- Ngân hàng câu hỏi: 8 loại câu khách quan chấm tự động (một/nhiều đáp án, đúng-sai, trả lời ngắn, đáp số, điền chỗ trống, ghép cặp, sắp xếp) + lập trình (test mẫu/ẩn, checker, kiểm tra đề bằng lời giải mẫu).
 - Bài tập & quiz: hạn nộp, số lần nộp, nộp muộn, chính sách chấm.
 - Bài tập lập trình: nộp code → hàng đợi RabbitMQ → worker chấm trong sandbox Docker cô lập → kết quả realtime qua WebSocket.
 - Kỳ thi: lịch thi, phiên thi, đồng hồ server, tự lưu bài, tự động nộp, giám sát của giảng viên.
@@ -110,21 +110,21 @@ Giao diện admin có khu quản lý học phần và khu quản lý lớp riên
 | ID | Ưu tiên | Yêu cầu |
 |---|---|---|
 | FR-QB-01 | M | Giảng viên được phân công lớp của học phần có thể tạo nhiều ngân hàng câu hỏi trong học phần đó; mỗi ngân hàng có chủ sở hữu, phạm vi `private` hoặc `shared`, và danh mục “Chưa phân loại” mặc định. Ngân hàng cũ không gắn học phần được giữ để tương thích dữ liệu. |
-| FR-QB-02 | M | CRUD câu hỏi lập trình: đề bài, starter code, ngôn ngữ, giới hạn thời gian/bộ nhớ; thuộc một ngân hàng của học phần và danh mục mặc định/tự chọn. Ngân hàng cá nhân cũ vẫn đọc và dùng được để tương thích dữ liệu. |
-| FR-QB-03 | M | CRUD test case: input, expected output, công khai/ẩn, trọng số, thứ tự |
+| FR-QB-02 | M | CRUD câu hỏi theo 9 loại ở `assessment-spec.md` §1: nội dung Markdown, giải thích đáp án, cách chấm (trọn/từng phần), đáp án theo loại. Câu lập trình: đề Markdown (mô tả, input, output, ràng buộc), ngôn ngữ cho phép (chọn ≥ 1), giới hạn thời gian/bộ nhớ, checker (`token`/`line`/`float`), starter code theo từng ngôn ngữ, lời giải mẫu kèm ngôn ngữ. Câu thuộc một ngân hàng của học phần và danh mục mặc định/tự chọn; lưu câu và test trong một thao tác, mỗi lần lưu một phiên bản. Ngân hàng cá nhân cũ vẫn đọc và dùng được để tương thích dữ liệu. |
+| FR-QB-03 | M | Test case: input, expected output, mẫu (công khai, hiện làm ví dụ trong đề) hoặc ẩn (mặc định), thứ tự. Nhập bằng tay, tải nhiều file `.in`/`.out`, hoặc tải một file zip (cặp `N.in` + `N.out`/`N.ans`), có xem trước trước khi nạp. Không chấm điểm theo test (BR6). |
 | FR-QB-04 | M | Tìm/lọc theo ngân hàng, danh mục, nội dung, loại/chủ đề/độ khó. Chủ ngân hàng được sửa; giảng viên được phân công cùng học phần chỉ xem và dùng ngân hàng `shared`, trừ khi được cấp quyền `edit`; quyền `view`/`edit` có thể cấp cho từng giảng viên. Ngân hàng `private` chỉ chủ sở hữu và người được cấp quyền truy cập. Câu hỏi tái sử dụng cho nhiều bài. Admin chỉ giám sát và xử lý đặc biệt, không tạo nội dung chuyên môn thường ngày. |
-| FR-QB-05 | S | Lecturer chạy thử solution mẫu để kiểm tra đề |
+| FR-QB-05 | M | Kiểm tra đề: chạy lời giải mẫu trên mọi test trong sandbox, hiện kết quả từng test (verdict, thời gian, output, so với expected); sinh expected output cho test còn trống từ lời giải. Xuất bản bị chặn khi lời giải mẫu không AC trên phiên bản sắp ghim; chưa kiểm tra thì phải xác nhận và ghi audit (`assessment-spec.md` §7). |
 | FR-QB-06 | M | Mỗi lần xuất bản bài tập/kỳ thi phải ghim nội dung và phiên bản các câu hỏi, lựa chọn/đáp án, giới hạn code, test case, điểm và thứ tự. Sửa ngân hàng sau đó không đổi assessment đã xuất bản; muốn đổi nội dung/cấu trúc đề phải tạo bản nháp mới. Giảng viên được điều chỉnh metadata và lịch đã xuất bản theo FR-ASG-07; mọi thay đổi được audit |
-| FR-QB-07 | M | Nhập hàng loạt câu MCQ từ CSV vào danh mục đã chọn; nếu không chọn danh mục thì dùng “Chưa phân loại”. Có file mẫu, xem trước và báo lỗi/trùng từng dòng trước khi xác nhận. CSV v1 không nhập câu lập trình/test case |
+| FR-QB-07 | M | Nhập hàng loạt câu từ CSV (loại một đáp án, nhiều đáp án, đúng-sai, trả lời ngắn; kèm giải thích) vào danh mục chọn trong hộp thoại; mặc định “Chưa phân loại”. Có file mẫu (UTF-8 có BOM, nhận dấu phân cách `,` hoặc `;`), xem trước và báo lỗi/trùng từng dòng trước khi xác nhận. CSV không nhập câu lập trình/test case |
 
 ### M5 — Bài tập & Quiz
 | ID | Ưu tiên | Yêu cầu |
 |---|---|---|
-| FR-ASG-01 | M | Giảng viên tạo đề từ câu hỏi trong ngân hàng mình được phép dùng, chọn một hoặc nhiều lớp được phân công trong cùng học phần; mỗi lớp nhận một bản bài riêng để theo dõi điểm và hạn nộp. Giảng viên đặt điểm/thứ tự/hạn nộp rồi xuất bản; khi xuất bản cố định danh sách câu, phiên bản câu hỏi, điểm và thứ tự. Bài có hạng mục `quiz` chỉ gồm câu MCQ trong v1. Admin không tạo/xuất bản đề thường ngày. |
-| FR-ASG-02 | M | Chính sách: available_from, due_at, max_attempts (NULL = không giới hạn), nộp muộn (late_due_at + phạt %), score_policy (best/last), hạng mục điểm (quiz/assignment/midterm/final). Các mốc thời gian được chuẩn hóa và kiểm tra theo UTC; giao diện nhận/hiển thị giờ địa phương. Với quiz, lượt và best/last áp dụng cho **toàn bài**; với bài khác, áp dụng cho **từng câu** |
-| FR-ASG-03 | M | Làm quiz: nộp đáp án của cả bài trong một request có Idempotency-Key; câu bỏ trống được 0 điểm; server lưu một lượt quiz cùng các đáp án trong một transaction, chấm MCQ đồng bộ và trả điểm của lượt ngay |
+| FR-ASG-01 | M | Giảng viên tạo đề từ câu hỏi trong ngân hàng mình được phép dùng: chọn tay hoặc **bốc ngẫu nhiên** theo quy tắc (ngân hàng/danh mục × độ khó × loại × số câu) rồi xem lại và chỉnh trước khi lưu; đặt tổng điểm và chia đều hoặc đặt điểm từng câu. Chọn một hoặc nhiều lớp được phân công trong cùng học phần; mỗi lớp nhận một bản bài riêng. Khi xuất bản cố định danh sách câu, phiên bản câu hỏi, điểm và thứ tự. Bài có hạng mục `quiz` gồm mọi loại câu trừ lập trình. Admin không tạo/xuất bản đề thường ngày. |
+| FR-ASG-02 | M | Chính sách: available_from, due_at, max_attempts (NULL = không giới hạn; UI mặc định 1), nộp muộn (late_due_at + phạt %), score_policy (best/last), hạng mục điểm (quiz/assignment/midterm/final), xem lại (`never`/`after_submit`/`after_close`, có hiện đáp án đúng + giải thích hay không), trộn thứ tự câu và trộn lựa chọn theo sinh viên. Các mốc thời gian chuẩn hóa và kiểm tra theo UTC; giao diện nhận/hiển thị giờ địa phương. Với quiz, lượt và best/last áp dụng cho **toàn bài**; với bài khác, áp dụng cho **từng câu** |
+| FR-ASG-03 | M | Làm quiz trên trang riêng: điều hướng câu, đánh dấu câu, nháp tự lưu trên trình duyệt, xác nhận khi nộp và cảnh báo câu bỏ trống. Nộp cả bài trong một request có Idempotency-Key; câu bỏ trống được 0 điểm; server lưu một lượt cùng các câu trả lời trong một transaction, chấm đồng bộ, trả tổng điểm lượt ngay; chi tiết từng câu theo chính sách xem lại |
 | FR-ASG-04 | M | Server kiểm tra hạn nộp + lượt nộp theo BR3; quá hạn từ chối hoặc đánh dấu muộn trừ %. Chỉ nộp chính thức mới tính lượt; mở đề và Run thử test công khai không tính lượt |
-| FR-ASG-05 | M | Student xem lịch sử lượt quiz hoặc lần nộp từng câu, kết quả từng test công khai, điểm |
+| FR-ASG-05 | M | Student xem lịch sử lượt quiz hoặc lần nộp từng câu; xem lại bài làm (câu trả lời, điểm từng câu, đáp án đúng, giải thích) theo chính sách xem lại; bài code xem verdict, kết quả từng test đã chạy (chi tiết test mẫu), code đã nộp và lịch sử chấm |
 | FR-ASG-06 | S | Lecturer xem danh sách bài nộp theo bài/lớp |
 | FR-ASG-07 | M | Sau khi xuất bản, giảng viên phụ trách vẫn có thể sửa tiêu đề, mô tả, thời điểm mở, hạn nộp và chính sách nộp muộn; nhập lý do và ghi audit before/after. Không được thay hạng mục, câu hỏi, phiên bản câu hỏi, điểm, thứ tự, số lượt hoặc cách tính điểm. Thay đổi chỉ ảnh hưởng các lượt nộp tiếp theo; các bài đã nộp giữ nguyên dữ liệu và điểm đã ghim |
 
@@ -133,14 +133,14 @@ Giao diện admin có khu quản lý học phần và khu quản lý lớp riên
 |---|---|---|
 | FR-GRD-01 | M | Nộp code (ngôn ngữ trong danh sách cho phép) → validate → lưu submission `pending` → publish RabbitMQ → **202 Accepted** + submission_id |
 | FR-GRD-02 | M | Idempotency-Key chống nộp trùng (unique index) |
-| FR-GRD-03 | M | Worker: biên dịch → chạy từng test trong sandbox (không mạng, giới hạn CPU/bộ nhớ/PID/thời gian/đầu ra) → verdict AC khi mọi test đạt; nếu không, verdict WA/CE/TLE/MLE/RE. Không tính điểm theo test |
-| FR-GRD-04 | M | Trạng thái `pending → grading → completed | failed`; lưu và hiển thị verdict, lỗi biên dịch/hệ thống đã cắt ngắn. `completed` nghĩa là lượt chấm kết thúc, verdict `AC` mới nghĩa là lời giải đúng |
+| FR-GRD-03 | M | Worker: biên dịch → chạy lần lượt các test trong sandbox (không mạng, giới hạn CPU/bộ nhớ/PID/thời gian/đầu ra) bằng checker của đề, dừng ở test sai đầu tiên → verdict AC khi mọi test đạt; nếu không, verdict WA/CE/TLE/MLE/RE/OLE của test sai đầu tiên. Gửi kết quả từng test đã chạy. Điểm câu: AC = điểm câu sau phạt muộn, còn lại 0 (`assessment-spec.md` §5) |
+| FR-GRD-04 | M | Trạng thái `pending → grading → completed | failed`; lưu và hiển thị verdict, test sai đầu tiên, bảng kết quả từng test, lỗi biên dịch/hệ thống đã cắt ngắn. `completed` nghĩa là lượt chấm kết thúc, verdict `AC` mới nghĩa là lời giải đúng. `failed` là lỗi hệ thống, không tính lượt |
 | FR-GRD-05 | M | WS đẩy trạng thái + kết quả chấm realtime tới sinh viên |
-| FR-GRD-06 | S | Nút "Run" chạy thử với test công khai, không ghi điểm |
-| FR-GRD-07 | S | Lecturer regrade — tạo kết quả mới, giữ lịch sử (BR8); lecturer thấy cả test ẩn |
+| FR-GRD-06 | M | Nút "Chạy thử" chạy code trên test mẫu hoặc một input tự nhập, không tính lượt, không ghi điểm, tối đa 6 lần/phút |
+| FR-GRD-07 | M | Lecturer xem chi tiết bài nộp (code, mọi test kể cả ẩn, lỗi biên dịch) và chấm lại kèm lý do — tạo kết quả mới, giữ lịch sử (BR8), ghi audit |
 | FR-GRD-08 | M | Retry có giới hạn → DLQ khi lỗi hệ thống; submission `failed` + thông báo |
 
-M6: API lưu bài nộp và job outbox trong cùng transaction; publisher dùng confirm và retry khi broker chưa sẵn sàng. Worker đọc code/snapshot đã ghim từ DB, biên dịch và chạy test trong sandbox; gửi verdict tổng AC/WA/CE/TLE/MLE/RE theo `docs/message-contracts.md`. API kiểm tra kết quả, lưu transaction rồi mới ACK và phát WebSocket. Không có điểm từng test trong v1. Sandbox bắt buộc không mạng và giới hạn tài nguyên theo BR10. Run thử và regrade thuộc phần tiếp theo.
+M6: API lưu bài nộp và job outbox trong cùng transaction; publisher dùng confirm và retry khi broker chưa sẵn sàng. Worker đọc code/snapshot đã ghim từ DB, biên dịch và chạy test trong sandbox; gửi verdict tổng và kết quả từng test theo `docs/message-contracts.md`. API kiểm tra kết quả, lưu transaction rồi mới ACK và phát WebSocket. Sandbox bắt buộc không mạng và giới hạn tài nguyên theo BR10. Kiểm tra đề và chạy thử dùng chung hạ tầng run job (`assessment-spec.md` §7).
 
 ### M7 — Kỳ thi
 | ID | Ưu tiên | Yêu cầu |
@@ -185,7 +185,7 @@ M6: API lưu bài nộp và job outbox trong cùng transaction; publisher dùng 
 
 ### A — Nộp & chấm bài lập trình
 1. Lecturer tạo bài tập, gắn câu hỏi lập trình + test case, đặt chính sách.
-2. Student viết code (Monaco editor), có thể Run thử test công khai.
+2. Student mở workspace bài code (editor CodeMirror, đề + ví dụ mẫu), có thể Chạy thử trên test mẫu hoặc input tự nhập.
 3. Student nộp → server kiểm tra quyền/hạn/lượt → lưu `pending` (transaction) → publish `grading.submit` lên RabbitMQ (priority thường) → 202 + submission_id.
 4. Worker consume → tải code + snapshot test từ DB → biên dịch và chạy từng test trong sandbox one-shot không mạng.
 5. Tất cả test đạt thì verdict `AC`; sai output/lỗi chạy/quá thời gian/quá bộ nhớ/biên dịch lỗi trả `WA`/`RE`/`TLE`/`MLE`/`CE`. Không tính điểm từng test; API lưu verdict và lỗi cần thiết rồi ACK event.
@@ -203,8 +203,9 @@ M6: API lưu bài nộp và job outbox trong cùng transaction; publisher dùng 
 
 ### D — Làm quiz
 1. Student mở quiz đã xuất bản trong khung thời gian cho phép; thao tác xem đề không tính lượt.
-2. Student nộp đáp án MCQ của cả bài một lần; câu bỏ trống tính 0 điểm. Server kiểm tra hạn và `max_attempts` theo **số lượt quiz** đã nộp.
-3. Server tạo một lượt quiz và các submission theo câu trong cùng transaction, chấm đồng bộ, trả điểm lượt. Nộp lại tạo lượt mới; Idempotency-Key trùng trả lượt cũ và không tăng bộ đếm.
+2. Student làm bài trên trang quiz (thứ tự câu/lựa chọn có thể được trộn theo từng sinh viên) và nộp cả bài một lần; câu bỏ trống tính 0 điểm. Server kiểm tra hạn và `max_attempts` theo **số lượt quiz** đã nộp.
+3. Server tạo một lượt quiz và các submission theo câu trong cùng transaction, chấm đồng bộ, trả tổng điểm lượt. Nộp lại tạo lượt mới; Idempotency-Key trùng trả lượt cũ và không tăng bộ đếm.
+4. Student xem lại lượt đã nộp theo chính sách xem lại của bài (không / ngay sau khi nộp / sau khi đóng bài).
 
 ---
 
@@ -217,7 +218,8 @@ M6: API lưu bài nộp và job outbox trong cùng transaction; publisher dùng 
 | BR3 | Max attempts, hạn nộp, phạt nộp muộn cấu hình từng bài; server kiểm soát kể cả khi nhiều request nộp đồng thời. `max_attempts` NULL = không giới hạn. Với `category=quiz`, 1 request nộp cả bài = 1 lượt, tính `best/last` trên **tổng điểm từng lượt**. Với bài không phải quiz, mỗi lần nộp một câu = 1 lượt **của câu đó**, tính `best/last` riêng cho từng câu rồi cộng điểm câu thành điểm bài. Run thử và xem đề không tính lượt. Kỳ thi dùng 1 phiên/thí sinh theo M7, không dùng `max_attempts` của bài tập |
 | BR4 | Test ẩn KHÔNG bao giờ trả input/expected về client; chỉ pass/fail |
 | BR5 | Thời gian thi tính bởi server; nộp sau ends_at bị từ chối |
-| BR6 | Verdict câu lập trình là AC chỉ khi mọi test trong snapshot đạt; sai output/lỗi chạy/quá thời gian/quá bộ nhớ/biên dịch lỗi lần lượt là WA/RE/TLE/MLE/CE. V1 không tính điểm theo test |
+| BR6 | Verdict câu lập trình là AC chỉ khi mọi test trong snapshot đạt theo checker của đề; sai output/lỗi chạy/quá thời gian/quá bộ nhớ/vượt output/biên dịch lỗi lần lượt là WA/RE/TLE/MLE/OLE/CE. Chấm nhị phân: AC được trọn điểm câu (sau phạt muộn), còn lại 0; không tính điểm theo test. Lỗi hệ thống (`SYSTEM_ERROR`) không phải lỗi sinh viên và không tính lượt |
+| BR16 | Đáp án đúng, giải thích, test ẩn và lời giải mẫu không bao giờ trả cho sinh viên trước khi chính sách xem lại cho phép; test ẩn và lời giải mẫu không bao giờ trả cho sinh viên |
 | BR7 | Mọi thay đổi điểm, đề thi, cấu hình, phân quyền → audit log (ai, khi nào, before/after) |
 | BR8 | Submission bất biến (không sửa/xóa); regrade tạo grading_result mới gắn cùng submission và dùng đúng phiên bản câu hỏi/test case mà submission đã tham chiếu |
 | BR9 | Đề thi chỉ hiển thị sau thời điểm bắt đầu phiên của thí sinh đó |
