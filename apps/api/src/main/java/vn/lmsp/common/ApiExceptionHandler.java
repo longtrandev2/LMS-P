@@ -8,6 +8,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MultipartException;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
@@ -38,5 +39,9 @@ public class ApiExceptionHandler {
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ApiErrorBody> invalidParameter(MethodArgumentTypeMismatchException error) {
         return ResponseEntity.badRequest().body(new ApiErrorBody(new ApiErrorBody.ErrorDetail("VALIDATION_ERROR", "Tham số không hợp lệ: " + error.getName(), null)));
+    }
+    @ExceptionHandler(MultipartException.class)
+    public ResponseEntity<ApiErrorBody> uploadRejected(MultipartException error) {
+        return ResponseEntity.badRequest().body(new ApiErrorBody(new ApiErrorBody.ErrorDetail("VALIDATION_ERROR", "Tệp tải lên vượt quá giới hạn cho phép", null)));
     }
 }

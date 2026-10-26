@@ -50,6 +50,8 @@ public class ClassSessionService {
     @Transactional public SessionView update(Long classId, Long sessionId, SessionPatch input) {
         ClassSession session = session(classId, sessionId);
         requireUpcoming(session, "sửa");
+        if (input.session_date() != null && input.session_date().isBefore(LocalDate.now()))
+            throw failure("VALIDATION_ERROR", "Không thể chuyển buổi học về ngày đã diễn ra", HttpStatus.CONFLICT);
         int start = input.period_start() != null ? input.period_start() : session.getPeriodStart();
         int end = input.period_end() != null ? input.period_end() : session.getPeriodEnd();
         if (start < 1 || end < start || end > ClassPeriods.MAX_PERIOD) throw invalid("Tiết phải từ 1 đến 12 và period_start <= period_end");

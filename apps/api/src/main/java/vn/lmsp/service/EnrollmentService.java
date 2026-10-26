@@ -34,7 +34,7 @@ public class EnrollmentService {
      * {"students":[...]} hoặc mảng legacy — bulk trả lỗi theo dòng (api-spec §3, BR11).
      */
     @Transactional public EnrollOutcome enroll(Long classId, JsonNode body, Long actorId) {
-        LmsClass item = clazz(classId);
+        LmsClass item = classes.findByIdForUpdate(classId).orElseThrow(() -> notFound("Không tìm thấy lớp học"));
         if (item.getStatus() == ClassStatus.locked) throw failure("VALIDATION_ERROR", "Lớp đã bị khóa", HttpStatus.CONFLICT);
         List<EnrollRow> rows = parseRows(body);
         boolean single = !body.isArray() && !body.has("students");
