@@ -122,6 +122,8 @@ export interface QuizAttempt {
 export interface CorrectAnswer {
   option_ids?: number[];
   accepted?: string[];
+  case_sensitive?: boolean | null;
+  blanks_case_sensitive?: boolean[] | null;
   value?: number;
   tolerance?: number;
   blanks?: string[][];
@@ -188,6 +190,8 @@ export interface SubmissionDetails extends AssignmentSubmission {
   max_score?: number;
   source_code?: string | null;
   response?: AnswerResponse | null;
+  correct_answer?: CorrectAnswer | null;
+  explanation?: string | null;
   review_available?: boolean;
   result?: GradingResultView | null;
   /** Lịch sử chấm, mới nhất trước. */
