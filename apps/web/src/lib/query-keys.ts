@@ -27,5 +27,6 @@ export const queryKeys = {
   },
   me: {
     classes: () => ["me", "classes"] as const,
+    schedule: (from: string, to: string) => ["me", "schedule", from, to] as const,
   },
 } as const;

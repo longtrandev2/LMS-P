@@ -8,6 +8,7 @@ import { ClassDetailPage } from "@/features/classes/class-detail-page";
 import { MyClassesPage } from "@/features/me/my-classes-page";
 import { MyClassMaterialsPage } from "@/features/me/my-class-materials-page";
 import { DashboardPage } from "@/features/me/dashboard-page";
+import { SchedulePage } from "@/features/me/schedule-page";
 import { AuditLogsPage } from "@/features/audit/audit-logs-page";
 import { AppShell } from "@/components/layout/app-shell";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
@@ -33,6 +34,7 @@ export function AppRouter() {
       <Route path="/courses/:id" element={<CourseRoute />} />
       <Route path="/classes/:id" element={<ClassRoute />} />
       <Route path="/me" element={<DashboardPage />} />
+      <Route path="/me/schedule" element={<SchedulePage />} />
       <Route path="/me/classes" element={<MyClassesPage />} />
       <Route path="/me/classes/:id" element={<MyClassRoute />} />
     </Route>
