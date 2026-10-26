@@ -6,7 +6,7 @@ import { CoursesPage } from "@/features/courses/courses-page";
 import { CourseClassesPage } from "@/features/classes/course-classes-page";
 import { ClassDetailPage } from "@/features/classes/class-detail-page";
 import { MyClassesPage } from "@/features/me/my-classes-page";
-import { MyClassMaterialsPage } from "@/features/me/my-class-materials-page";
+import { MyClassPage } from "@/features/me/my-class-page";
 import { DashboardPage } from "@/features/me/dashboard-page";
 import { SchedulePage } from "@/features/me/schedule-page";
 import { NotificationsPage } from "@/features/me/notifications-page";
@@ -23,7 +23,7 @@ function ProtectedLayout() {
 }
 function CourseRoute() { const { id = "" } = useParams(); return <CourseClassesPage courseId={id} />; }
 function ClassRoute() { const { id = "" } = useParams(); return <ClassDetailPage classId={id} />; }
-function MyClassRoute() { const { id = "" } = useParams(); return <MyClassMaterialsPage classId={id} />; }
+function MyClassRoute() { const { id = "" } = useParams(); return <MyClassPage classId={id} />; }
 
 export function AppRouter() {
   return <Routes>
