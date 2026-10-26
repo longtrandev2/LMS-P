@@ -1,6 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { FileQuestion, History, Library, School, Users, type LucideIcon } from "lucide-react";
-import { Logo } from "@/components/logo";
+import { FileQuestion, History, Library, PanelLeftClose, PanelLeftOpen, School, Users, type LucideIcon } from "lucide-react";
 import { UserMenu } from "@/components/user-menu";
 import { hasRole, useAuthStore } from "@/stores/auth";
 import { cn } from "@/lib/utils";
@@ -50,54 +49,58 @@ function navFor(user: CurrentUser | null): NavGroup[] {
 
 const within = (pathname: string, prefix: string) => pathname === prefix || pathname.startsWith(`${prefix}/`);
 
-export function BrandMark() {
-  return (
-    <Link to="/" aria-label="LMS-P — trang chủ" className="flex h-14 shrink-0 items-center px-4 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset">
-      <Logo size={24} />
-    </Link>
-  );
-}
-
-export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
+/**
+ * Sidebar kiểu Frappe LMS — DESIGN.md §4: đầu là workspace (logo + người dùng), mục đang chọn là ô trắng nổi,
+ * cuối là nút thu gọn. `collapsed` chỉ hiện icon.
+ */
+export function Sidebar({ collapsed = false, onToggle, onNavigate }: {
+  collapsed?: boolean; onToggle?: () => void; onNavigate?: () => void;
+}) {
   const pathname = useLocation().pathname;
   const groups = navFor(useAuthStore((s) => s.user));
+  const multipleGroups = groups.length > 1;
 
   return (
-    <nav aria-label="Điều hướng chính" className="flex flex-1 flex-col gap-5 overflow-y-auto px-3 py-3">
-      {groups.map((group) => (
-        <div key={group.group} className="space-y-0.5">
-          <p className="px-2 pb-1 text-xs font-medium text-muted-foreground">{group.group}</p>
-          {group.items.map((item) => {
-            const active = within(pathname, item.href) || (item.match ?? []).some((p) => within(pathname, p));
-            return (
-              <Link
-                key={item.href}
-                to={item.href}
-                onClick={onNavigate}
-                aria-current={active ? "page" : undefined}
-                className={cn(
-                  "relative flex h-8 items-center gap-2 rounded-md px-2 text-sm font-medium transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring",
-                  active
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground before:absolute before:inset-y-1.5 before:-left-3 before:w-0.5 before:rounded-r-full before:bg-cta"
-                    : "text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground"
-                )}
-              >
-                <item.icon className={cn("size-4 shrink-0", active ? "text-foreground" : "text-muted-foreground")} aria-hidden />
-                <span className="truncate">{item.label}</span>
-              </Link>
-            );
-          })}
+    <div className="flex h-full flex-col">
+      <div className="shrink-0 p-2"><UserMenu collapsed={collapsed} onNavigate={onNavigate} /></div>
+      <nav aria-label="Điều hướng chính" className="flex flex-1 flex-col gap-4 overflow-y-auto px-2 py-2">
+        {groups.map((group) => (
+          <div key={group.group} className="space-y-0.5">
+            {multipleGroups && !collapsed ? <p className="px-2 pb-1 text-xs text-muted-foreground">{group.group}</p> : null}
+            {group.items.map((item) => {
+              const active = within(pathname, item.href) || (item.match ?? []).some((p) => within(pathname, p));
+              return (
+                <Link
+                  key={item.href}
+                  to={item.href}
+                  onClick={onNavigate}
+                  title={collapsed ? item.label : undefined}
+                  aria-current={active ? "page" : undefined}
+                  className={cn(
+                    "flex h-8 items-center gap-2.5 rounded-md px-2 text-sm transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring",
+                    collapsed && "justify-center px-0",
+                    active
+                      ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground shadow-sm"
+                      : "text-sidebar-foreground hover:bg-accent"
+                  )}
+                >
+                  <item.icon className={cn("size-4 shrink-0", active ? "text-foreground" : "text-muted-foreground")} aria-hidden />
+                  {collapsed ? <span className="sr-only">{item.label}</span> : <span className="truncate">{item.label}</span>}
+                </Link>
+              );
+            })}
+          </div>
+        ))}
+      </nav>
+      {onToggle ? (
+        <div className="shrink-0 p-2">
+          <button type="button" onClick={onToggle} aria-label={collapsed ? "Mở rộng thanh bên" : "Thu gọn thanh bên"}
+            className={cn("flex h-8 w-full items-center gap-2.5 rounded-md px-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring outline-none",
+              collapsed && "justify-center px-0")}>
+            {collapsed ? <PanelLeftOpen className="size-4" aria-hidden /> : <><PanelLeftClose className="size-4" aria-hidden /> Thu gọn</>}
+          </button>
         </div>
-      ))}
-    </nav>
-  );
-}
-
-/** Cuối sidebar: hàng tài khoản (hồ sơ / đăng xuất). */
-export function SidebarAccount({ onNavigate }: { onNavigate?: () => void }) {
-  return (
-    <div className="shrink-0 border-t border-sidebar-border p-2">
-      <UserMenu variant="row" onNavigate={onNavigate} />
+      ) : null}
     </div>
   );
 }

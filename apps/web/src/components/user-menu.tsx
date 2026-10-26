@@ -1,27 +1,35 @@
 import { useNavigate } from "react-router-dom";
-import { ChevronsUpDown, LogOut, UserRound } from "lucide-react";
+import { Check, ChevronDown, LogOut, Monitor, Moon, Sun, UserRound } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ROLE_LABELS } from "@/components/role-status-badges";
+import { LogoMark } from "@/components/logo";
+import { useTheme, type ThemeMode } from "@/components/theme-provider";
 import { useAvatarUrl } from "@/hooks/use-avatar-url";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth";
+
+const THEMES: { value: ThemeMode; label: string; icon: typeof Sun }[] = [
+  { value: "light", label: "Sáng", icon: Sun },
+  { value: "dark", label: "Tối", icon: Moon },
+  { value: "system", label: "Theo hệ thống", icon: Monitor },
+];
 
 function initialsOf(name?: string | null): string {
   return (name ?? "?").split(" ").filter(Boolean).slice(-2).map((w) => w[0]).join("").toUpperCase();
 }
 
 /**
- * Menu tài khoản. `variant="avatar"`: nút tròn ở topbar; `variant="row"`: hàng tài khoản cuối sidebar.
+ * Đầu sidebar kiểu Frappe LMS: logo + tên hệ thống + người dùng; bấm mở menu hồ sơ / giao diện / đăng xuất.
+ * `collapsed`: chỉ hiện logo (sidebar thu gọn).
  */
-export function UserMenu({ variant = "avatar", onNavigate }: { variant?: "avatar" | "row"; onNavigate?: () => void }) {
+export function UserMenu({ collapsed = false, onNavigate }: { collapsed?: boolean; onNavigate?: () => void }) {
   const navigate = useNavigate();
   const { user, refreshToken, clearSession } = useAuthStore();
+  const { theme, setTheme } = useTheme();
   const avatarSrc = useAvatarUrl(user?.avatar_url);
-  const roles = user?.roles.map((r) => ROLE_LABELS[r]).join(" · ");
 
   const handleLogout = async () => {
     try {
@@ -34,42 +42,50 @@ export function UserMenu({ variant = "avatar", onNavigate }: { variant?: "avatar
     navigate("/login", { replace: true });
   };
 
-  const avatar = (
-    <Avatar className="size-7">
-      {avatarSrc ? <AvatarImage src={avatarSrc} alt="" /> : null}
-      <AvatarFallback>{initialsOf(user?.full_name)}</AvatarFallback>
-    </Avatar>
-  );
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        aria-label="Tài khoản"
+        aria-label="Tài khoản và cài đặt"
         className={cn(
-          "flex items-center gap-2.5 rounded-md text-left outline-none transition-colors duration-150 hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring data-[state=open]:bg-accent",
-          variant === "row" ? "w-full p-1.5" : "p-0.5"
+          "flex w-full items-center gap-2.5 rounded-lg p-1.5 text-left outline-none transition-colors duration-150 hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring data-[state=open]:bg-accent",
+          collapsed && "justify-center"
         )}
       >
-        {avatar}
-        {variant === "row" ? (
+        <LogoMark size={30} className="shrink-0" />
+        {collapsed ? null : (
           <>
-            <span className="min-w-0 flex-1">
-              <span className="block truncate text-sm font-medium text-foreground">{user?.full_name}</span>
-              <span className="block truncate text-xs text-muted-foreground">{roles}</span>
+            <span className="min-w-0 flex-1 leading-tight">
+              <span className="block truncate text-sm font-semibold text-foreground">LMS-P</span>
+              <span className="block truncate text-xs text-muted-foreground">{user?.full_name}</span>
             </span>
-            <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+            <ChevronDown className="size-4 shrink-0 text-muted-foreground" aria-hidden />
           </>
-        ) : null}
+        )}
       </DropdownMenuTrigger>
-      <DropdownMenuContent align={variant === "row" ? "start" : "end"} side={variant === "row" ? "top" : "bottom"} className="w-60">
-        <DropdownMenuLabel className="font-normal">
-          <p className="truncate text-sm font-medium text-foreground">{user?.full_name}</p>
-          <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
+      <DropdownMenuContent align="start" className="w-60">
+        <DropdownMenuLabel className="flex items-center gap-2.5 font-normal">
+          <Avatar className="size-8">
+            {avatarSrc ? <AvatarImage src={avatarSrc} alt="" /> : null}
+            <AvatarFallback>{initialsOf(user?.full_name)}</AvatarFallback>
+          </Avatar>
+          <span className="min-w-0">
+            <span className="block truncate text-sm font-medium text-foreground">{user?.full_name}</span>
+            <span className="block truncate text-xs text-muted-foreground">{user?.email}</span>
+          </span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => { onNavigate?.(); navigate("/me/profile"); }}>
           <UserRound aria-hidden /> Hồ sơ của tôi
         </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">Giao diện</DropdownMenuLabel>
+        {THEMES.map((item) => (
+          <DropdownMenuItem key={item.value} onClick={() => setTheme(item.value)}>
+            <item.icon aria-hidden /> {item.label}
+            {theme === item.value ? <Check className="ml-auto" aria-label="Đang chọn" /> : null}
+          </DropdownMenuItem>
+        ))}
+        <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout}>
           <LogOut aria-hidden /> Đăng xuất
         </DropdownMenuItem>

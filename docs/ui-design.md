@@ -4,15 +4,16 @@
 
 ## Hướng và màu sắc
 
-- Monochrome product kiểu Linear/Vercel: thang xám zinc cho nội dung, bề mặt, viền và nút thường.
-- Đỏ CTA chỉ cho một hành động chính mỗi màn và vạch mục đang chọn ở sidebar.
+- Bám Frappe LMS / ClassroomIO (token frappe-ui): nền trắng, sidebar xám nhạt, nút chính đen, nút phụ xám đặc, ít viền.
+- Không còn nút đỏ; đỏ chỉ dùng cho lỗi/xóa.
 - Xanh lá cho đạt/thành công, đỏ cho lỗi/sai/xóa, cam cho cảnh báo (quá thời gian, nộp muộn, sắp hết hạn).
-- Font Be Vietnam Pro (đóng gói cùng ứng dụng, hiển thị đủ tiếng Việt khi không có Internet); code và mã định danh dùng Geist Mono.
+- Font Inter (đóng gói cùng ứng dụng, đủ dấu tiếng Việt khi không có Internet); code và mã định danh dùng Geist Mono.
 - Có chế độ sáng và tối; token ở `apps/web/src/app/design-tokens.css`.
 
 ## Bố cục
 
-- Sidebar desktop 240px nhóm theo vai trò; màn hình nhỏ chuyển thành menu trượt. Topbar có breadcrumb, thông báo, theme, tài khoản.
+- Sidebar desktop 240px (thu gọn được) có khối workspace ở đầu; màn hình nhỏ chuyển thành menu trượt. Topbar chỉ có breadcrumb tên thật và chuông.
+- Không có trang giới thiệu: `/` chuyển thẳng vào ứng dụng hoặc màn đăng nhập.
 - Trang danh sách: thanh công cụ → bảng có phân trang. Trang lớp: header lớp + tab ngang (Tổng quan, Học liệu, Bài tập, Sinh viên, Kết quả).
 - Trang chủ theo vai trò có khối "Sắp đến hạn" và các lớp.
 - Soạn câu hỏi, soạn bài, làm quiz, workspace code, chi tiết bài nộp là trang riêng (`docs/assessment-spec.md` §8), không dùng dialog.

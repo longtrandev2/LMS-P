@@ -13,7 +13,7 @@ export function EditorHeader({ backHref, bankName, title, version, dirty, saving
 }) {
   const saved = version != null && !dirty;
   const status = version == null ? "Chưa lưu" : dirty ? `Có thay đổi chưa lưu · phiên bản ${version}` : `Đã lưu phiên bản ${version}`;
-  return <div className="sticky top-14 z-20 -mx-4 -mt-6 border-b bg-background/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:-mt-8 sm:px-6">
+  return <div className="sticky top-12 z-20 -mx-4 -mt-6 border-b bg-background/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:-mt-8 sm:px-6">
     <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
       <div className="flex min-w-0 items-center gap-2">
         <Button asChild variant="ghost" size="icon-sm" className="shrink-0">

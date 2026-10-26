@@ -17,7 +17,7 @@ function Progress({ answered, total, className }: { answered: number; total: num
 export function QuizHeader({ title, subtitle, backTo, answered, total, onSubmit, submitting }: {
   title: string; subtitle: string; backTo: string; answered: number; total: number; onSubmit: () => void; submitting: boolean;
 }) {
-  return <div className="sticky top-14 z-20 -mx-4 -mt-6 border-b bg-background/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:-mt-8 sm:px-6">
+  return <div className="sticky top-12 z-20 -mx-4 -mt-6 border-b bg-background/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:-mt-8 sm:px-6">
     <div className="flex items-center gap-3">
       <Button asChild variant="ghost" size="icon-sm">
         <Link to={backTo} aria-label="Về trang bài (nháp vẫn được lưu)"><ArrowLeft aria-hidden /></Link>

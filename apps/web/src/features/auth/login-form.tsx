@@ -46,10 +46,6 @@ export function LoginForm() {
 
   return (
     <div className="space-y-6">
-      <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">Đăng nhập</h1>
-        <p className="text-sm text-muted-foreground">Dùng tài khoản do trường cấp để truy cập hệ thống.</p>
-      </div>
       <form onSubmit={handleSubmit} className="space-y-4" noValidate>
         <div className="space-y-1.5">
           <Label htmlFor="email">Email</Label>

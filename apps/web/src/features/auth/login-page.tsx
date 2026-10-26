@@ -1,45 +1,21 @@
-import { Link } from "react-router-dom";
 import { LoginForm } from "@/features/auth/login-form";
-import { Logo } from "@/components/logo";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { DeadlinesFragment, SubmissionFragment } from "@/components/landing/product-fragments";
+import { LogoMark } from "@/components/logo";
 
-/**
- * Đăng nhập 2 cột: trái form gọn (CTA đỏ), phải panel đơn sắc đảo màu mô tả hệ thống bằng
- * mảnh giao diện thật. Panel ẩn dưới `lg`.
- */
+/** Đăng nhập kiểu Frappe: nền xám nhạt, một khối form gọn giữa màn hình, không panel minh họa. */
 export function LoginPage() {
   return (
-    <div className="grid min-h-dvh bg-background lg:grid-cols-2">
-      <section className="flex flex-col px-4 py-5 sm:px-8">
-        <div className="flex items-center justify-between">
-          <Link to="/" aria-label="LMS-P — trang chủ" className="rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring">
-            <Logo size={24} />
-          </Link>
-          <ThemeToggle />
+    <div className="flex min-h-dvh flex-col items-center justify-center bg-sidebar px-4 py-10">
+      <div className="mb-6 flex flex-col items-center gap-3 text-center">
+        <LogoMark size={40} />
+        <div>
+          <h1 className="text-xl font-semibold">Đăng nhập vào LMS-P</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Lập trình mạng · Hệ thống học tập</p>
         </div>
-        <div className="flex flex-1 items-center justify-center py-10">
-          <div className="w-full max-w-sm">
-            <LoginForm />
-          </div>
-        </div>
-        <p className="text-xs text-muted-foreground">Tài khoản do quản trị viên của khoa cấp.</p>
-      </section>
-
-      <section aria-label="Giới thiệu hệ thống" className="hidden flex-col justify-center gap-10 bg-foreground p-12 text-background lg:flex xl:p-16">
-        <div className="max-w-md space-y-3">
-          <h2 className="text-2xl font-semibold tracking-tight text-balance">
-            Bài tập, quiz và kết quả chấm code của mọi lớp ở một chỗ.
-          </h2>
-          <p className="text-sm text-background/70">
-            Xem bài sắp đến hạn, nộp bài lập trình và nhận kết quả từng test ngay khi chấm xong.
-          </p>
-        </div>
-        <div className="grid max-w-md gap-3">
-          <DeadlinesFragment className="border-background/10" />
-          <SubmissionFragment className="ml-8 border-background/10" />
-        </div>
-      </section>
+      </div>
+      <div className="w-full max-w-sm rounded-xl bg-card p-6 shadow-md">
+        <LoginForm />
+      </div>
+      <p className="mt-6 text-xs text-muted-foreground">Tài khoản do quản trị viên của khoa cấp.</p>
     </div>
   );
 }

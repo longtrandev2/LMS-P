@@ -1,7 +1,6 @@
 import * as React from "react"
 import { cn } from "cn"
 import { Slot } from "radix-ui"
-import { ChevronRight } from "lucide-react"
 
 /** Breadcrumb — mục cha nhạt, trang hiện tại đậm (DESIGN.md §4). */
 function Breadcrumb({ ...props }: React.ComponentProps<"nav">) {
@@ -57,7 +56,7 @@ function BreadcrumbSeparator({ children, className, ...props }: React.ComponentP
       className={cn("shrink-0 text-muted-foreground/60 [&>svg]:size-3.5", className)}
       {...props}
     >
-      {children ?? <ChevronRight />}
+      {children ?? <span className="text-sm">/</span>}
     </li>
   )
 }
