@@ -25,6 +25,9 @@ public class GradingResult {
     @Column(name = "error_message", columnDefinition = "TEXT") private String errorMessage;
     @Column(name = "graded_at", nullable = false) private LocalDateTime gradedAt;
     @Column(name = "duration_ms", nullable = false) private int durationMs;
+    @Column(name = "tests_total") private Integer testsTotal;
+    @Column(name = "tests_passed") private Integer testsPassed;
+    @Column(name = "failed_test") private Integer failedTest;
 
     protected GradingResult() { }
     public GradingResult(GradingJob job, GradingVerdict verdict, boolean failed, boolean compileError,
@@ -40,5 +43,9 @@ public class GradingResult {
         this.errorMessage = Utf8Text.truncate(errorMessage, 8192);
         this.gradedAt = now;
         this.durationMs = durationMs;
+    }
+    /** Tóm tắt test (event v4); event v3 không có nên để NULL. */
+    public void summarizeTests(Integer total, Integer passed, Integer failedPosition) {
+        this.testsTotal = total; this.testsPassed = passed; this.failedTest = failedPosition;
     }
 }

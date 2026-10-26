@@ -17,15 +17,23 @@ public class SubmissionPolicy {
         return key.toLowerCase(Locale.ROOT);
     }
 
+    /** Cửa sổ nộp (kể cả nộp muộn). Chưa mở → 409 CONFLICT; quá hạn → 409 DEADLINE_PASSED. */
     public Window window(Assignment assignment, LocalDateTime now) {
-        if (assignment.getAvailableFrom() != null && now.isBefore(assignment.getAvailableFrom())) throw conflict("Bài chưa mở");
+        if (assignment.getAvailableFrom() != null && now.isBefore(assignment.getAvailableFrom()))
+            throw new LmsException("CONFLICT", "Bài chưa mở", HttpStatus.CONFLICT, null);
         if (!now.isAfter(assignment.getDueAt())) return new Window(false, 0);
         if (!assignment.isAllowLate() || assignment.getLateDueAt() == null || now.isAfter(assignment.getLateDueAt()))
-            throw conflict("Đã hết hạn nộp bài");
+            throw new LmsException("DEADLINE_PASSED", "Đã hết hạn nộp bài", HttpStatus.CONFLICT, null);
         return new Window(true, assignment.getLatePenaltyPercent());
     }
 
-    private LmsException conflict(String message) {
-        return new LmsException("CONFLICT", message, HttpStatus.CONFLICT, null);
+    /** `max_attempts` NULL = không giới hạn. */
+    public void requireAttemptLeft(Assignment assignment, long used, String message) {
+        if (assignment.getMaxAttempts() != null && used >= assignment.getMaxAttempts())
+            throw new LmsException("ATTEMPT_EXCEEDED", message, HttpStatus.CONFLICT, null);
+    }
+
+    public LmsException idempotencyConflict() {
+        return new LmsException("IDEMPOTENCY_CONFLICT", "Idempotency-Key đã dùng cho nội dung khác", HttpStatus.CONFLICT, null);
     }
 }
