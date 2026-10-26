@@ -22,36 +22,36 @@ interface EnrollStudentsDialogProps {
   onEnrolled: () => void;
 }
 
-/** ID sinh viên là số nguyên (BIGINT) — parse và báo lỗi dòng không hợp lệ */
-function parseIds(text: string): { ids: number[]; invalid: string[] } {
-  const ids: number[] = [];
-  const invalid: string[] = [];
+/** Mã sinh viên hoặc email (api-spec §3) — mỗi dòng 1 định danh */
+function parseIdentifiers(text: string): { rows: { student_code?: string; email?: string }[] } {
+  const rows: { student_code?: string; email?: string }[] = [];
   for (const line of text.split(/[\n,;]+/)) {
     const token = line.trim();
     if (!token) continue;
-    if (/^\d+$/.test(token)) ids.push(Number(token));
-    else invalid.push(token);
+    if (token.includes("@")) rows.push({ email: token });
+    else rows.push({ student_code: token });
   }
-  return { ids, invalid };
+  return { rows };
 }
 
-/** POST /classes/{id}/enrollments — body [{student_id}] (1 hoặc bulk theo api-spec §3) */
+/** POST /classes/{id}/enrollments — body {"students":[{student_code}|{email}]} (api-spec §3) */
 export function EnrollStudentsDialog({ onOpenChange, classId, onEnrolled }: EnrollStudentsDialogProps) {
   const [singleId, setSingleId] = useState("");
   const [bulkText, setBulkText] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  async function enroll(ids: number[]) {
+  async function enroll(rows: { student_code?: string; email?: string }[]) {
     setSubmitting(true);
     try {
-      const data = await api.post<{ added: number }>(
+      const data = await api.post<{ added: number; errors: { row: number; code: string; reason: string }[] }>(
         `/classes/${classId}/enrollments`,
-        ids.map((student_id) => ({ student_id }))
+        { students: rows }
       );
-      if (data.added < ids.length) {
+      if (data.added < rows.length) {
+        const firstError = data.errors[0]?.reason ?? "";
         toast.success(
-          `Đã ghi danh ${data.added} sinh viên; ${ids.length - data.added} đã ở trong lớp từ trước.`
+          `Đã ghi danh ${data.added} sinh viên; ${rows.length - data.added} dòng lỗi${firstError ? `: ${firstError}` : ""}.`
         );
       } else {
         toast.success(`Đã ghi danh ${data.added} sinh viên vào lớp.`);
@@ -70,27 +70,22 @@ export function EnrollStudentsDialog({ onOpenChange, classId, onEnrolled }: Enro
 
   function handleSingle(e: React.FormEvent) {
     e.preventDefault();
-    if (!/^\d+$/.test(singleId.trim())) {
-      setErrors((prev) => ({ ...prev, single: "ID sinh viên là số (vd: 42)." }));
+    const token = singleId.trim();
+    if (!token) {
+      setErrors((prev) => ({ ...prev, single: "Nhập mã sinh viên hoặc email." }));
       return;
     }
-    enroll([Number(singleId.trim())]);
+    enroll(token.includes("@") ? [{ email: token }] : [{ student_code: token }]);
   }
 
   function handleBulk(e: React.FormEvent) {
     e.preventDefault();
-    const { ids, invalid } = parseIds(bulkText);
-    if (ids.length === 0) {
-      setErrors((prev) => ({ ...prev, bulk: "Dán ít nhất một ID sinh viên (số)." }));
+    const { rows } = parseIdentifiers(bulkText);
+    if (rows.length === 0) {
+      setErrors((prev) => ({ ...prev, bulk: "Dán ít nhất một mã sinh viên hoặc email." }));
       return;
     }
-    if (invalid.length > 0) {
-      setErrors((prev) => ({
-        ...prev,
-        bulk: `Các dòng không phải số bị bỏ qua: ${invalid.slice(0, 3).join(", ")}${invalid.length > 3 ? "…" : ""}`,
-      }));
-    }
-    enroll(ids);
+    enroll(rows);
   }
 
   return (
@@ -99,7 +94,7 @@ export function EnrollStudentsDialog({ onOpenChange, classId, onEnrolled }: Enro
         <DialogHeader>
           <DialogTitle className="font-heading">Thêm sinh viên vào lớp</DialogTitle>
           <DialogDescription>
-            Ghi danh từng sinh viên hoặc dán danh sách ID hàng loạt.
+            Ghi danh từng sinh viên hoặc dán danh sách mã SV / email hàng loạt.
           </DialogDescription>
         </DialogHeader>
 
@@ -112,14 +107,13 @@ export function EnrollStudentsDialog({ onOpenChange, classId, onEnrolled }: Enro
           <TabsContent value="single">
             <form onSubmit={handleSingle} className="space-y-4 pt-2" noValidate>
               <div className="space-y-2">
-                <Label htmlFor="enroll-single">ID sinh viên</Label>
+                <Label htmlFor="enroll-single">Mã sinh viên hoặc email</Label>
                 <Input
                   id="enroll-single"
-                  inputMode="numeric"
                   value={singleId}
                   onChange={(e) => setSingleId(e.target.value)}
                   className="font-mono"
-                  placeholder="Số ID tài khoản, vd: 42"
+                  placeholder="VD: SV2021001 hoặc sv@school.edu"
                   aria-invalid={!!errors.single}
                 />
                 {errors.single ? <FieldError text={errors.single} /> : null}
@@ -133,15 +127,14 @@ export function EnrollStudentsDialog({ onOpenChange, classId, onEnrolled }: Enro
           <TabsContent value="bulk">
             <form onSubmit={handleBulk} className="space-y-4 pt-2" noValidate>
               <div className="space-y-2">
-                <Label htmlFor="enroll-bulk">Danh sách ID sinh viên</Label>
+                <Label htmlFor="enroll-bulk">Danh sách mã SV / email</Label>
                 <Textarea
                   id="enroll-bulk"
-                  inputMode="numeric"
                   value={bulkText}
                   onChange={(e) => setBulkText(e.target.value)}
                   rows={6}
                   className="font-mono text-sm"
-                  placeholder={"Mỗi dòng một ID số, ví dụ:\n42\n57"}
+                  placeholder={"Mỗi dòng một mã SV hoặc email, ví dụ:\nSV2021001\nsv@school.edu"}
                   aria-invalid={!!errors.bulk}
                 />
                 {errors.bulk ? <FieldError text={errors.bulk} /> : null}
