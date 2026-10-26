@@ -1,9 +1,11 @@
 package vn.lmsp.model;
 
+import lombok.Getter;
 import jakarta.persistence.*;
 
 @Entity
 @Table(name = "question_options")
+@Getter
 public class QuestionOption {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "question_id", nullable = false) private Question question;
@@ -14,8 +16,4 @@ public class QuestionOption {
     public QuestionOption(Question question, String content, boolean correct, int position) {
         this.question = question; this.content = content; this.correct = correct; this.position = position;
     }
-    public Long getId() { return id; }
-    public String getContent() { return content; }
-    public boolean isCorrect() { return correct; }
-    public int getPosition() { return position; }
 }

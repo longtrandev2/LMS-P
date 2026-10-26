@@ -1,5 +1,6 @@
 package vn.lmsp.model;
 
+import lombok.Getter;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -9,6 +10,7 @@ import vn.lmsp.common.Utf8Text;
 @Table(name = "grading_results", uniqueConstraints = {
         @UniqueConstraint(name = "uq_grading_result_job", columnNames = "grading_job_id"),
         @UniqueConstraint(name = "uq_grading_result_attempt", columnNames = {"submission_id", "attempt_no"})})
+@Getter
 public class GradingResult {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "submission_id", nullable = false) private Submission submission;
@@ -36,13 +38,4 @@ public class GradingResult {
         this.gradedAt = now;
         this.durationMs = durationMs;
     }
-    public Long getId() { return id; }
-    public int getAttemptNo() { return attemptNo; }
-    public String getStatus() { return status; }
-    public BigDecimal getTotalScore() { return totalScore; }
-    public boolean isCompileError() { return compileError; }
-    public String getCompileOutput() { return compileOutput; }
-    public String getErrorMessage() { return errorMessage; }
-    public LocalDateTime getGradedAt() { return gradedAt; }
-    public int getDurationMs() { return durationMs; }
 }

@@ -1,5 +1,6 @@
 package vn.lmsp.service;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import vn.lmsp.common.LmsException;
@@ -12,13 +13,12 @@ import vn.lmsp.repository.ClassRepository;
 import vn.lmsp.repository.EnrollmentRepository;
 
 @Component
+@RequiredArgsConstructor
 public class AssignmentAccess {
     private final AssignmentRepository assignments;
     private final ClassRepository classes;
     private final EnrollmentRepository enrollments;
-    public AssignmentAccess(AssignmentRepository assignments, ClassRepository classes, EnrollmentRepository enrollments) {
-        this.assignments = assignments; this.classes = classes; this.enrollments = enrollments;
-    }
+
     public LmsClass lecturerClass(Long id, Long actor, boolean admin) {
         LmsClass item = classes.findById(id).orElseThrow(() -> notFound("Không tìm thấy lớp học"));
         if (!admin && !item.getLecturerId().equals(actor)) throw denied();

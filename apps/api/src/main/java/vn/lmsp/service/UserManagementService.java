@@ -1,5 +1,6 @@
 package vn.lmsp.service;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -18,6 +19,7 @@ import java.security.SecureRandom;
 import java.util.*;
 
 @Service
+@RequiredArgsConstructor
 public class UserManagementService {
     private final UserRepository users; private final RoleRepository roles; private final RefreshTokenRepository tokens;
     private final PasswordEncoder passwords; private final AuditService audit; private final EnrollmentRepository enrollments;
@@ -25,12 +27,7 @@ public class UserManagementService {
     private final UserMapper mapper;
     private final AcademicsMapper academicsMapper;
     private final SecureRandom random=new SecureRandom(); private static final String ALPHABET="abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-    public UserManagementService(UserRepository users,RoleRepository roles,RefreshTokenRepository tokens,PasswordEncoder passwords,
-                                 AuditService audit,EnrollmentRepository enrollments,ClassRepository classes,
-                                 UserMapper mapper,AcademicsMapper academicsMapper) {
-        this.users=users; this.roles=roles; this.tokens=tokens; this.passwords=passwords; this.audit=audit;
-        this.enrollments=enrollments; this.classes=classes; this.mapper=mapper; this.academicsMapper=academicsMapper;
-    }
+
     @Transactional(readOnly=true) public Page<UserView> list(String role,String status,String q,String sort,int page,int limit) {
         UserStatus value=status==null ? null : parseStatus(status);
         var result=users.search(blankNull(role),value,blankNull(q),PageRequest.of(page-1,limit,userSort(sort)));

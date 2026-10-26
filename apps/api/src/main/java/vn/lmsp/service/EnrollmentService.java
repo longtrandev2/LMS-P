@@ -1,5 +1,6 @@
 package vn.lmsp.service;
 
+import lombok.RequiredArgsConstructor;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -25,18 +26,13 @@ import vn.lmsp.repository.EnrollmentRepository;
 import vn.lmsp.repository.UserRepository;
 
 @Service
+@RequiredArgsConstructor
 public class EnrollmentService {
     private final ClassRepository classes;
     private final EnrollmentRepository enrollments;
     private final UserRepository users;
     private final AuditService audit;
     private final AcademicsMapper mapper;
-
-    public EnrollmentService(ClassRepository classes, EnrollmentRepository enrollments, UserRepository users,
-                             AuditService audit, AcademicsMapper mapper) {
-        this.classes = classes; this.enrollments = enrollments; this.users = users;
-        this.audit = audit; this.mapper = mapper;
-    }
 
     @Transactional
     public EnrollResult enroll(Long classId, List<EnrollTarget> targets, Long actorId, boolean adminOverride) {

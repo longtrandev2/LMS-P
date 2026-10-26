@@ -1,5 +1,6 @@
 package vn.lmsp.service;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -16,6 +17,7 @@ import java.math.BigDecimal;
 import java.util.*;
 
 @Service
+@RequiredArgsConstructor
 public class QuestionService {
     private final QuestionRepository questions;
     private final QuestionOptionRepository options;
@@ -28,13 +30,6 @@ public class QuestionService {
     private final QuestionBankService banks;
     private final AuditService audit;
 
-    public QuestionService(QuestionRepository questions, QuestionOptionRepository options,
-            QuestionProgrammingRepository programming, TestCaseRepository testCases,
-            UserRepository users, QuestionReadService reader, QuestionVersionService snapshots,
-            QuestionMapper mapper, QuestionBankService banks, AuditService audit) {
-        this.questions = questions; this.options = options; this.programming = programming; this.testCases = testCases;
-        this.users = users; this.reader = reader; this.snapshots = snapshots; this.mapper = mapper; this.banks = banks; this.audit = audit;
-    }
     @Transactional(readOnly = true)
     public QuestionPage list(Long actor, boolean admin, Long bankId, Long categoryId, QuestionType type,
             String topic, QuestionDifficulty difficulty, String query, int page, int limit, String sort) {

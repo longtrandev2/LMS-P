@@ -2,6 +2,7 @@ package vn.lmsp.controller;
 
 import jakarta.validation.Valid;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -14,10 +15,10 @@ import vn.lmsp.service.QuestionCsvService;
 @RestController
 @RequestMapping("/api/v1")
 @PreAuthorize("hasAnyRole('ADMIN','LECTURER')")
+@RequiredArgsConstructor
 public class QuestionBankController {
     private final QuestionBankService service;
     private final QuestionCsvService csv;
-    public QuestionBankController(QuestionBankService service, QuestionCsvService csv) { this.service = service; this.csv = csv; }
 
     @GetMapping("/question-banks")
     public List<QuestionBankView> banks(@AuthenticationPrincipal String actor, Authentication auth,

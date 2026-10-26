@@ -1,6 +1,7 @@
 package vn.lmsp.controller;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
@@ -17,10 +18,10 @@ import vn.lmsp.service.UserAvatarService;
 
 @RestController
 @RequestMapping("/api/v1/users")
+@RequiredArgsConstructor
 public class UserManagementController {
     private final UserManagementService service;
     private final UserAvatarService avatars;
-    public UserManagementController(UserManagementService service,UserAvatarService avatars) { this.service=service; this.avatars=avatars; }
     @PatchMapping("/me") public UserView updateMe(@AuthenticationPrincipal String actor,@Valid @RequestBody UpdateMe body) {
         return service.updateMe(Long.valueOf(actor),body);
     }

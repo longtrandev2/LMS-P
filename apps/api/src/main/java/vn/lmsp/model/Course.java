@@ -1,10 +1,12 @@
 package vn.lmsp.model;
 
+import lombok.Getter;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "courses")
+@Getter
 public class Course {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
     @Column(nullable = false, unique = true, length = 20) private String code;
@@ -17,12 +19,7 @@ public class Course {
         this.code = code; this.name = name; this.description = description; this.creator = creator;
     }
     @PrePersist void createTimestamp() { createdAt = LocalDateTime.now(); }
-    public Long getId() { return id; }
-    public String getCode() { return code; }
-    public String getName() { return name; }
-    public String getDescription() { return description; }
     public Long getCreatedBy() { return creator.getId(); }
-    public LocalDateTime getCreatedAt() { return createdAt; }
     public void update(String code, String name, String description) {
         if (code != null) this.code = code;
         if (name != null) this.name = name;

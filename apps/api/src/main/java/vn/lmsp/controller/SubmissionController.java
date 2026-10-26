@@ -1,5 +1,6 @@
 package vn.lmsp.controller;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -9,10 +10,9 @@ import vn.lmsp.service.SubmissionReadService;
 
 @RestController
 @RequestMapping("/api/v1/submissions")
+@RequiredArgsConstructor
 public class SubmissionController {
     private final SubmissionReadService submissions;
-
-    public SubmissionController(SubmissionReadService submissions) { this.submissions = submissions; }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('STUDENT','LECTURER','ADMIN')")

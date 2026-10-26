@@ -1,6 +1,7 @@
 package vn.lmsp.controller;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -12,9 +13,9 @@ import vn.lmsp.service.AuthService;
 
 @RestController
 @RequestMapping("/api/v1/auth")
+@RequiredArgsConstructor
 public class AuthController {
     private final AuthService auth;
-    public AuthController(AuthService auth) { this.auth = auth; }
     @PostMapping("/login") public TokenPair login(@Valid @RequestBody LoginRequest request) {
         return auth.login(request.email(), request.password());
     }

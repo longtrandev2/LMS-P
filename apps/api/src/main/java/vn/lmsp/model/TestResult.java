@@ -1,5 +1,6 @@
 package vn.lmsp.model;
 
+import lombok.Getter;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import vn.lmsp.common.Utf8Text;
@@ -8,6 +9,7 @@ import vn.lmsp.enums.TestResultStatus;
 @Entity
 @Table(name = "test_results", uniqueConstraints = @UniqueConstraint(
         name = "uq_test_result_position", columnNames = {"grading_result_id", "test_case_position"}))
+@Getter
 public class TestResult {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "grading_result_id", nullable = false) private GradingResult result;
@@ -29,10 +31,4 @@ public class TestResult {
         this.memoryKb = memoryKb;
         this.score = score;
     }
-    public int getPosition() { return position; }
-    public TestResultStatus getStatus() { return status; }
-    public String getOutput() { return output; }
-    public int getTimeMs() { return timeMs; }
-    public Integer getMemoryKb() { return memoryKb; }
-    public BigDecimal getScore() { return score; }
 }

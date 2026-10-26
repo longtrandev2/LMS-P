@@ -1,5 +1,6 @@
 package vn.lmsp.controller;
 
+import lombok.RequiredArgsConstructor;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,13 +16,12 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1")
+@RequiredArgsConstructor
 public class AssignmentController {
     private final AssignmentService assignments;
     private final AssignmentSubmissionService submissions;
     private final ProgrammingSubmissionService programming;
-    public AssignmentController(AssignmentService assignments, AssignmentSubmissionService submissions, ProgrammingSubmissionService programming) {
-        this.assignments = assignments; this.submissions = submissions; this.programming = programming;
-    }
+
     @GetMapping("/classes/{classId}/assignments")
     @PreAuthorize("hasAnyRole('ADMIN','LECTURER','STUDENT')")
     public AssignmentPage list(@PathVariable Long classId, @AuthenticationPrincipal String actor, Authentication auth,

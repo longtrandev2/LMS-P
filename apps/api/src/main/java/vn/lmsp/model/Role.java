@@ -1,9 +1,11 @@
 package vn.lmsp.model;
 
+import lombok.Getter;
 import jakarta.persistence.*;
 
 @Entity
 @Table(name = "roles")
+@Getter
 public class Role {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Short id;
@@ -12,5 +14,4 @@ public class Role {
     @Column(length = 255)
     private String description;
     protected Role() { }
-    public String getName() { return name; }
 }

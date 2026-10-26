@@ -1,5 +1,6 @@
 package vn.lmsp.security;
 
+import lombok.RequiredArgsConstructor;
 import vn.lmsp.service.JwtTokenService;
 
 import org.springframework.http.server.ServerHttpRequest;
@@ -11,12 +12,11 @@ import java.net.URI;
 import java.util.Map;
 
 @Component
+@RequiredArgsConstructor
 public class GradingHandshakeInterceptor implements HandshakeInterceptor {
     private final JwtTokenService tokens;
     private final vn.lmsp.repository.UserRepository users;
-    public GradingHandshakeInterceptor(JwtTokenService tokens, vn.lmsp.repository.UserRepository users) {
-        this.tokens = tokens; this.users = users;
-    }
+
     @Override
     public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response, WebSocketHandler handler, Map<String, Object> attributes) {
         try {

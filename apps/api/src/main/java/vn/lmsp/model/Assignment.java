@@ -1,5 +1,6 @@
 package vn.lmsp.model;
 
+import lombok.Getter;
 import jakarta.persistence.*;
 import vn.lmsp.common.UtcTime;
 import vn.lmsp.enums.AssignmentCategory;
@@ -8,6 +9,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "assignments")
+@Getter
 public class Assignment {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "class_id", nullable = false) private LmsClass lmsClass;
@@ -36,23 +38,8 @@ public class Assignment {
     }
     @PrePersist void onCreate() { createdAt = UtcTime.now(); updatedAt = createdAt; }
     @PreUpdate void onUpdate() { updatedAt = UtcTime.now(); }
-    public Long getId() { return id; }
-    public LmsClass getLmsClass() { return lmsClass; }
     public Long getClassId() { return lmsClass.getId(); }
     public Long getLecturerId() { return lmsClass.getLecturerId(); }
-    public String getTitle() { return title; }
-    public String getDescription() { return description; }
-    public AssignmentCategory getCategory() { return category; }
-    public LocalDateTime getAvailableFrom() { return availableFrom; }
-    public LocalDateTime getDueAt() { return dueAt; }
-    public boolean isAllowLate() { return allowLate; }
-    public LocalDateTime getLateDueAt() { return lateDueAt; }
-    public int getLatePenaltyPercent() { return latePenaltyPercent; }
-    public Integer getMaxAttempts() { return maxAttempts; }
-    public ScorePolicy getScorePolicy() { return scorePolicy; }
-    public boolean isPublished() { return published; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void update(String title, String description, AssignmentCategory category, LocalDateTime availableFrom,
             LocalDateTime dueAt, boolean allowLate, LocalDateTime lateDueAt, int penalty, Integer maxAttempts, ScorePolicy policy) {
         this.title = title; this.description = description; this.category = category; this.availableFrom = availableFrom;

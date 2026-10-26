@@ -1,16 +1,19 @@
 package vn.lmsp.model;
 
+import lombok.Getter;
+import lombok.Setter;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import vn.lmsp.enums.BankPermission;
 
 @Entity
 @Table(name = "question_bank_permissions")
+@Getter
 public class QuestionBankPermission {
     @EmbeddedId private Key id;
     @ManyToOne(fetch = FetchType.LAZY) @MapsId("bankId") @JoinColumn(name = "bank_id") private QuestionBank bank;
     @ManyToOne(fetch = FetchType.LAZY) @MapsId("lecturerId") @JoinColumn(name = "lecturer_id") private User lecturer;
-    @Enumerated(EnumType.STRING) @Column(nullable = false) private BankPermission permission;
+    @Setter @Enumerated(EnumType.STRING) @Column(nullable = false) private BankPermission permission;
     @Column(name = "granted_at", nullable = false) private LocalDateTime grantedAt;
 
     protected QuestionBankPermission() { }
@@ -21,8 +24,6 @@ public class QuestionBankPermission {
     }
     public Long getBankId() { return id.bankId; }
     public Long getLecturerId() { return id.lecturerId; }
-    public BankPermission getPermission() { return permission; }
-    public void setPermission(BankPermission value) { permission = value; }
 
     @Embeddable
     public static class Key implements java.io.Serializable {

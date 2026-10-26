@@ -1,5 +1,6 @@
 package vn.lmsp.model;
 
+import lombok.Getter;
 import jakarta.persistence.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -7,6 +8,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "question_programming")
+@Getter
 public class QuestionProgramming {
     @Id @Column(name = "question_id") private Long questionId;
     @MapsId @OneToOne(fetch = FetchType.LAZY) @JoinColumn(name = "question_id") private Question question;
@@ -24,9 +26,4 @@ public class QuestionProgramming {
         this.starterCode = starterCode; this.solutionCode = solutionCode; this.allowedLanguages = languages;
         this.timeLimitMs = timeLimitMs; this.memoryLimitMb = memoryLimitMb;
     }
-    public String getStarterCode() { return starterCode; }
-    public String getSolutionCode() { return solutionCode; }
-    public List<String> getAllowedLanguages() { return allowedLanguages; }
-    public int getTimeLimitMs() { return timeLimitMs; }
-    public int getMemoryLimitMb() { return memoryLimitMb; }
 }

@@ -1,5 +1,6 @@
 package vn.lmsp.model;
 
+import lombok.Getter;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -8,6 +9,8 @@ import java.util.UUID;
 @Table(name = "grading_jobs", uniqueConstraints = {
         @UniqueConstraint(name = "uq_grading_job_uuid", columnNames = "job_id"),
         @UniqueConstraint(name = "uq_grading_job_attempt", columnNames = {"submission_id", "attempt_no"})})
+
+@Getter
 public class GradingJob {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
     @Column(name = "job_id", nullable = false, columnDefinition = "char(36)") private String jobId;
@@ -28,13 +31,6 @@ public class GradingJob {
         this.createdAt = now;
         this.nextAttemptAt = now;
     }
-    public Long getId() { return id; }
-    public String getJobId() { return jobId; }
-    public Submission getSubmission() { return submission; }
-    public int getAttemptNo() { return attemptNo; }
-    public int getPriority() { return priority; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public LocalDateTime getPublishedAt() { return publishedAt; }
     public void published(LocalDateTime now) { publishedAt = now; }
     public void retryLater(LocalDateTime now) {
         publishAttempts++;

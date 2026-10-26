@@ -1,11 +1,13 @@
 package vn.lmsp.model;
 
+import lombok.Getter;
 import jakarta.persistence.*;
 import vn.lmsp.enums.MaterialType;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name="materials")
+@Getter
 public class Material {
     @Id @GeneratedValue(strategy=GenerationType.IDENTITY) private Long id;
     @ManyToOne(fetch=FetchType.LAZY) @JoinColumn(name="class_id", nullable=false) private LmsClass lmsClass;
@@ -21,14 +23,8 @@ public class Material {
         this.lmsClass=lmsClass; this.title=title; this.description=description; this.type=MaterialType.valueOf(type); this.filePath=filePath; this.sizeBytes=sizeBytes; this.uploader=uploader;
     }
     @PrePersist void timestamp() { createdAt=LocalDateTime.now(); }
-    public Long getId() { return id; }
     public Long getClassId() { return lmsClass.getId(); }
-    public String getTitle() { return title; }
-    public String getDescription() { return description; }
     public String getType() { return type.name(); }
-    public String getFilePath() { return filePath; }
-    public long getSizeBytes() { return sizeBytes; }
     public Long getUploadedBy() { return uploader.getId(); }
-    public LocalDateTime getCreatedAt() { return createdAt; }
     public void update(String title, String description) { if(title!=null) this.title=title; if(description!=null) this.description=description; }
 }

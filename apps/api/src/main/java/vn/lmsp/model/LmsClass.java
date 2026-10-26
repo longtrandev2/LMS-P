@@ -1,5 +1,6 @@
 package vn.lmsp.model;
 
+import lombok.Getter;
 import jakarta.persistence.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -9,6 +10,7 @@ import vn.lmsp.enums.ClassStatus;
 
 @Entity
 @Table(name = "classes", uniqueConstraints = @UniqueConstraint(name = "uq_classes_course_code", columnNames = {"course_id", "code"}))
+@Getter
 public class LmsClass {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "course_id", nullable = false) private Course course;
@@ -34,22 +36,8 @@ public class LmsClass {
         this.status = status == null ? ClassStatus.active : status;
     }
     @PrePersist void createTimestamp() { createdAt = LocalDateTime.now(); }
-    public Long getId() { return id; }
-    public Course getCourse() { return course; }
     public Long getCourseId() { return course.getId(); }
-    public String getCode() { return code; }
-    public String getName() { return name; }
-    public String getSemester() { return semester; }
-    public User getLecturer() { return lecturer; }
     public Long getLecturerId() { return lecturer.getId(); }
-    public Integer getMaxStudents() { return maxStudents; }
-    public LocalDateTime getEnrollFrom() { return enrollFrom; }
-    public LocalDateTime getEnrollUntil() { return enrollUntil; }
-    public String getRoom() { return room; }
-    public String getSchedule() { return schedule; }
-    public ClassStatus getStatus() { return status; }
-    public JsonNode getGradePolicy() { return gradePolicy; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
     public void update(String code, String name, String semester, User lecturer, JsonNode policy,
                        Integer maxStudents, LocalDateTime enrollFrom, LocalDateTime enrollUntil,
                        String room, String schedule, ClassStatus status) {

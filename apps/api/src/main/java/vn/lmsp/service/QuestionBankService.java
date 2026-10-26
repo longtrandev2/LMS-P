@@ -1,5 +1,6 @@
 package vn.lmsp.service;
 
+import lombok.RequiredArgsConstructor;
 import java.util.List;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
@@ -13,6 +14,7 @@ import vn.lmsp.model.*;
 import vn.lmsp.repository.*;
 
 @Service
+@RequiredArgsConstructor
 public class QuestionBankService {
     private final QuestionBankRepository banks;
     private final QuestionCategoryRepository categories;
@@ -24,15 +26,6 @@ public class QuestionBankService {
     private final QuestionBankMapper mapper;
     private final QuestionBankAccessService access;
     private final QuestionBankPermissionRepository permissions;
-
-    public QuestionBankService(QuestionBankRepository banks, QuestionCategoryRepository categories,
-            QuestionRepository questions, CourseRepository courses, ClassRepository classes,
-            UserRepository users, AuditService audit, QuestionBankMapper mapper,
-            QuestionBankAccessService access, QuestionBankPermissionRepository permissions) {
-        this.banks = banks; this.categories = categories; this.questions = questions; this.courses = courses;
-        this.classes = classes; this.users = users; this.audit = audit; this.mapper = mapper;
-        this.access = access; this.permissions = permissions;
-    }
 
     @Transactional(readOnly = true)
     public List<QuestionBankView> list(Long actor, boolean admin, Long courseId) {

@@ -1,5 +1,6 @@
 package vn.lmsp.model;
 
+import lombok.Getter;
 import jakarta.persistence.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -8,6 +9,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name="audit_logs")
+@Getter
 public class AuditLog {
     @Id @GeneratedValue(strategy=GenerationType.IDENTITY) private Long id;
     @Column(name="actor_id") private Long actorId;
@@ -23,13 +25,4 @@ public class AuditLog {
         this.actorId=actorId; this.action=action; this.entityType=entityType; this.entityId=entityId;
         this.oldValue=oldValue; this.newValue=newValue; this.ip=ip; this.createdAt=LocalDateTime.now();
     }
-    public Long getId() { return id; }
-    public Long getActorId() { return actorId; }
-    public String getAction() { return action; }
-    public String getEntityType() { return entityType; }
-    public Long getEntityId() { return entityId; }
-    public JsonNode getOldValue() { return oldValue; }
-    public JsonNode getNewValue() { return newValue; }
-    public String getIp() { return ip; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
 }

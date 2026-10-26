@@ -2,6 +2,7 @@ package vn.lmsp.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,10 +16,10 @@ import java.time.LocalDateTime;
 import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class AuditService {
-    private final AuditMapper mapper;
     private final AuditLogRepository logs; private final ObjectMapper json;
-    public AuditService(AuditLogRepository logs,ObjectMapper json,AuditMapper mapper) { this.logs=logs; this.json=json; this.mapper=mapper; }
+    private final AuditMapper mapper;
     @Transactional public void record(Long actor,String action,String entity,Long entityId,Map<String,Object> oldValue,Map<String,Object> newValue) {
         logs.save(new AuditLog(actor,action,entity,entityId,encode(oldValue),encode(newValue),clientIp()));
     }

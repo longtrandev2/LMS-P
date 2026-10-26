@@ -1,5 +1,6 @@
 package vn.lmsp.service;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -9,6 +10,7 @@ import vn.lmsp.mapper.GradingMapper;
 import vn.lmsp.repository.*;
 
 @Service
+@RequiredArgsConstructor
 public class SubmissionReadService {
     private final SubmissionRepository submissions;
     private final GradingResultRepository results;
@@ -16,12 +18,6 @@ public class SubmissionReadService {
     private final AssignmentAccess access;
     private final QuestionVersionService snapshots;
     private final GradingMapper mapper;
-
-    public SubmissionReadService(SubmissionRepository submissions, GradingResultRepository results,
-            TestResultRepository tests, AssignmentAccess access, QuestionVersionService snapshots, GradingMapper mapper) {
-        this.submissions = submissions; this.results = results; this.tests = tests;
-        this.access = access; this.snapshots = snapshots; this.mapper = mapper;
-    }
 
     @Transactional(readOnly = true)
     public SubmissionDetails get(Long id, Long actor, boolean lecturer, boolean admin) {

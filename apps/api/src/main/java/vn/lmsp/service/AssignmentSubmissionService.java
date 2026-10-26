@@ -1,5 +1,6 @@
 package vn.lmsp.service;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +19,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
+@RequiredArgsConstructor
 public class AssignmentSubmissionService {
     private final AssignmentAccess access;
     private final AssignmentQuestionRepository links;
@@ -28,12 +30,7 @@ public class AssignmentSubmissionService {
     private final SubmissionMapper mapper;
     private final AuditService audit;
     private final SubmissionPolicy policy;
-    public AssignmentSubmissionService(AssignmentAccess access, AssignmentQuestionRepository links,
-            AssignmentAttemptRepository attempts, SubmissionRepository submissions, UserRepository users,
-            QuestionVersionService snapshots, SubmissionMapper mapper, AuditService audit, SubmissionPolicy policy) {
-        this.access = access; this.links = links; this.attempts = attempts; this.submissions = submissions;
-        this.users = users; this.snapshots = snapshots; this.mapper = mapper; this.audit = audit; this.policy = policy;
-    }
+
     @Transactional
     public QuizAttemptView submitQuiz(Long assignmentId, Long studentId, String rawKey, QuizSubmitInput body) {
         Assignment assignment = access.studentAssignment(assignmentId, studentId, true);

@@ -1,5 +1,6 @@
 package vn.lmsp.service;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import vn.lmsp.enums.BankPermission;
 import vn.lmsp.model.QuestionBank;
@@ -7,13 +8,10 @@ import vn.lmsp.repository.ClassRepository;
 import vn.lmsp.repository.QuestionBankPermissionRepository;
 
 @Service
+@RequiredArgsConstructor
 public class QuestionBankAccessService {
     private final ClassRepository classes;
     private final QuestionBankPermissionRepository permissions;
-
-    public QuestionBankAccessService(ClassRepository classes, QuestionBankPermissionRepository permissions) {
-        this.classes = classes; this.permissions = permissions;
-    }
 
     public boolean canView(QuestionBank bank, Long actor, boolean admin) {
         if (admin || bank.getOwnerId().equals(actor)) return true;

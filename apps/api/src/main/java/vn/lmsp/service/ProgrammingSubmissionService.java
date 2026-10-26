@@ -1,5 +1,6 @@
 package vn.lmsp.service;
 
+import lombok.RequiredArgsConstructor;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -18,6 +19,7 @@ import vn.lmsp.model.*;
 import vn.lmsp.repository.*;
 
 @Service
+@RequiredArgsConstructor
 public class ProgrammingSubmissionService {
     public record Receipt(Accepted accepted, boolean replayed) { }
     private final AssignmentAccess access;
@@ -30,14 +32,6 @@ public class ProgrammingSubmissionService {
     private final GradingScoreService scores;
     private final GradingMapper mapper;
     private final AuditService audit;
-
-    public ProgrammingSubmissionService(AssignmentAccess access, AssignmentQuestionRepository links,
-            SubmissionRepository submissions, GradingJobRepository jobs, UserRepository users,
-            QuestionVersionService snapshots, SubmissionPolicy policy, GradingScoreService scores,
-            GradingMapper mapper, AuditService audit) {
-        this.access = access; this.links = links; this.submissions = submissions; this.jobs = jobs; this.users = users;
-        this.snapshots = snapshots; this.policy = policy; this.scores = scores; this.mapper = mapper; this.audit = audit;
-    }
 
     @Transactional
     public Receipt submit(Long assignmentId, Long questionId, Long studentId, String rawKey, QuestionSubmissionInput body) {

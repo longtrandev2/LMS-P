@@ -1,5 +1,6 @@
 package vn.lmsp.model;
 
+import lombok.Getter;
 import jakarta.persistence.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -14,6 +15,7 @@ import java.util.List;
         @UniqueConstraint(name = "uq_submission_attempt_question", columnNames = {"assignment_attempt_id", "question_id"}),
         @UniqueConstraint(name = "uq_assignment_question_attempt", columnNames = {"assignment_id", "student_id", "question_id", "attempt_no"}),
         @UniqueConstraint(name = "uq_submission_idempotency", columnNames = "idempotency_key")})
+@Getter
 public class Submission {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "student_id", nullable = false) private User student;
@@ -53,25 +55,12 @@ public class Submission {
         item.maxScore = link.getPoints(); item.idempotencyKey = key; item.submittedAt = now;
         return item;
     }
-    public Long getId() { return id; }
     public Long getAssignmentId() { return assignment.getId(); }
     public Long getAssignmentAttemptId() { return assignmentAttempt == null ? null : assignmentAttempt.getId(); }
     public Long getStudentId() { return student.getId(); }
     public String getStudentFullName() { return student.getFullName(); }
     public String getStudentCode() { return student.getStudentCode(); }
     public Long getQuestionId() { return question.getId(); }
-    public int getAttemptNo() { return attemptNo; }
-    public BigDecimal getScore() { return score; }
-    public List<Long> getSelectedOptionIds() { return selectedOptionIds; }
-    public boolean isLate() { return late; }
-    public LocalDateTime getSubmittedAt() { return submittedAt; }
-    public SubmissionStatus getStatus() { return status; }
-    public SubmissionType getType() { return type; }
-    public String getLanguage() { return language; }
-    public String getSourceCode() { return sourceCode; }
-    public QuestionVersion getQuestionVersion() { return questionVersion; }
-    public BigDecimal getMaxScore() { return maxScore; }
-    public int getLatePenaltyPercent() { return latePenaltyPercent; }
     public boolean isTerminal() { return status == SubmissionStatus.completed || status == SubmissionStatus.failed; }
     public void startGrading() { if (status == SubmissionStatus.pending) status = SubmissionStatus.grading; }
     public void finish(SubmissionStatus status, BigDecimal score) { this.status = status; this.score = score; }

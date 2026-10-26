@@ -1,10 +1,12 @@
 package vn.lmsp.model;
 
+import lombok.Getter;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 
 @Entity
 @Table(name = "test_cases")
+@Getter
 public class TestCase {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "question_id", nullable = false) private Question question;
@@ -18,9 +20,4 @@ public class TestCase {
         this.question = question; this.input = input; this.expectedOutput = expectedOutput;
         this.publicCase = publicCase; this.weight = weight; this.position = position;
     }
-    public String getInput() { return input; }
-    public String getExpectedOutput() { return expectedOutput; }
-    public boolean isPublicCase() { return publicCase; }
-    public BigDecimal getWeight() { return weight; }
-    public int getPosition() { return position; }
 }

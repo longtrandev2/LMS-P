@@ -1,5 +1,6 @@
 package vn.lmsp.model;
 
+import lombok.Getter;
 import jakarta.persistence.*;
 import vn.lmsp.enums.EnrollmentStatus;
 import vn.lmsp.enums.EnrollmentVia;
@@ -7,6 +8,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "enrollments", uniqueConstraints = @UniqueConstraint(name = "uq_enrollments_class_student", columnNames = {"class_id", "student_id"}))
+@Getter
 public class Enrollment {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "class_id", nullable = false) private LmsClass lmsClass;
@@ -17,12 +19,6 @@ public class Enrollment {
     protected Enrollment() { }
     public Enrollment(LmsClass lmsClass, User student, EnrollmentVia via) { this.lmsClass = lmsClass; this.student = student; this.enrolledVia = via; }
     @PrePersist void createTimestamp() { enrolledAt = LocalDateTime.now(); }
-    public Long getId() { return id; }
-    public LmsClass getLmsClass() { return lmsClass; }
-    public User getStudent() { return student; }
-    public EnrollmentStatus getStatus() { return status; }
-    public LocalDateTime getEnrolledAt() { return enrolledAt; }
-    public EnrollmentVia getEnrolledVia() { return enrolledVia; }
     public void reactivate(EnrollmentVia via) { status = EnrollmentStatus.active; enrolledAt = LocalDateTime.now(); enrolledVia = via; }
     public void drop() { status = EnrollmentStatus.dropped; }
 }

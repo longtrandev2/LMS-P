@@ -1,5 +1,6 @@
 package vn.lmsp.model;
 
+import lombok.Getter;
 import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.persistence.*;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -8,6 +9,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "question_versions", uniqueConstraints = @UniqueConstraint(name = "uq_question_versions_no", columnNames = {"question_id", "version_no"}))
+@Getter
 public class QuestionVersion {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "question_id", nullable = false) private Question question;
@@ -20,7 +22,4 @@ public class QuestionVersion {
         this.question = question; this.versionNo = versionNo; this.snapshot = snapshot; this.creator = creator;
     }
     @PrePersist void timestamp() { createdAt = LocalDateTime.now(); }
-    public Long getId() { return id; }
-    public int getVersionNo() { return versionNo; }
-    public JsonNode getSnapshot() { return snapshot; }
 }

@@ -1,5 +1,6 @@
 package vn.lmsp.service;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +18,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
+@RequiredArgsConstructor
 public class AssignmentService {
     private final AssignmentRepository assignments;
     private final AssignmentQuestionRepository links;
@@ -30,13 +32,7 @@ public class AssignmentService {
     private final QuestionBankService banks;
     private final QuestionVersionService snapshots;
     private final GradingScoreService grading;
-    public AssignmentService(AssignmentRepository assignments, AssignmentQuestionRepository links, AssignmentAccess access,
-            AssignmentReadService reader, QuestionRepository questions, QuestionVersionRepository versions,
-            UserRepository users, AssignmentMapper mapper, AuditService audit, QuestionBankService banks,
-            QuestionVersionService snapshots, GradingScoreService grading) {
-        this.assignments = assignments; this.links = links; this.access = access; this.reader = reader;
-        this.questions = questions; this.versions = versions; this.users = users; this.mapper = mapper; this.audit = audit; this.banks = banks; this.snapshots = snapshots; this.grading = grading;
-    }
+
     @Transactional(readOnly = true)
     public AssignmentPage list(Long classId, Long actor, boolean student, boolean admin, int page, int limit) {
         List<Assignment> all = student ? studentList(classId, actor) : lecturerList(classId, actor, admin);

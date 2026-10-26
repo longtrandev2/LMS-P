@@ -1,5 +1,6 @@
 package vn.lmsp.service;
 
+import lombok.RequiredArgsConstructor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
@@ -15,14 +16,13 @@ import vn.lmsp.repository.UserRepository;
 import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class NotificationService {
     private final NotificationRepository notifications;
     private final UserRepository users;
     private final ObjectMapper json;
     private final NotificationMapper mapper;
-    public NotificationService(NotificationRepository notifications, UserRepository users, ObjectMapper json, NotificationMapper mapper) {
-        this.notifications=notifications; this.users=users; this.json=json; this.mapper=mapper;
-    }
+
     @Transactional(readOnly=true) public Page list(Long userId, Boolean read, int page, int limit) {
         var request=PageRequest.of(page-1, limit);
         var result=read == null ? notifications.findByUser_Id(userId, request) : notifications.findByUser_IdAndRead(userId, read, request);

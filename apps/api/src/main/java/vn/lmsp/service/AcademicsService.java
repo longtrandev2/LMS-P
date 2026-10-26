@@ -1,5 +1,6 @@
 package vn.lmsp.service;
 
+import lombok.RequiredArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -23,6 +24,7 @@ import vn.lmsp.repository.EnrollmentRepository;
 import vn.lmsp.repository.UserRepository;
 
 @Service
+@RequiredArgsConstructor
 public class AcademicsService {
     private final CourseRepository courses;
     private final ClassRepository classes;
@@ -30,11 +32,6 @@ public class AcademicsService {
     private final UserRepository users;
     private final AuditService audit;
     private final AcademicsMapper mapper;
-
-    public AcademicsService(CourseRepository courses, ClassRepository classes, EnrollmentRepository enrollments,
-                            UserRepository users, AuditService audit, AcademicsMapper mapper) {
-        this.courses = courses; this.classes = classes; this.enrollments = enrollments; this.users = users; this.audit = audit; this.mapper = mapper;
-    }
 
     @Transactional(readOnly = true)
     public Page<CourseView> courses(int page, int limit, String query, String sort, Long actorId, boolean admin) {
