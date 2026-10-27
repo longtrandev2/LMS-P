@@ -23,7 +23,10 @@ import vn.lmsp.repository.GradingResultRepository;
 import vn.lmsp.repository.SubmissionRepository;
 import vn.lmsp.repository.TestResultRepository;
 
-/** Áp event chấm của worker — docs/message-contracts.md §3. API không nhận điểm từ worker. */
+/**
+ * Áp event chấm của worker — docs/message-contracts.md §3. API không nhận điểm từ worker. Bài code thuộc một lượt
+ * (phiên làm bài) chấm xong thì tính lại điểm lượt — exam-spec.md §5.6.
+ */
 @Service
 @RequiredArgsConstructor
 public class GradingEventService {
@@ -38,10 +41,12 @@ public class GradingEventService {
     private final GradingNotifier notifier;
     private final NotificationService notifications;
     private final AuditService audit;
+    private final AttemptScoreRefresher attemptScores;
 
     @Transactional
     public void apply(WorkerEvent event) {
         var payload = event.payload();
+        if ("submission.graded".equals(event.event())) attemptScores.lockAttemptOf(payload.submission_id());
         var submission = submissions.findLockedById(payload.submission_id())
                 .orElseThrow(() -> new IllegalArgumentException("Unknown submission"));
         var job = jobs.findByJobId(payload.job_id())
@@ -88,6 +93,7 @@ public class GradingEventService {
             testResults.save(new TestResult(result, test.position(), test.verdict(), test.output(),
                     test.time_ms() == null ? 0 : test.time_ms(), test.memory_kb(), BigDecimal.ZERO));
         submission.finish(payload.status(), payload.verdict());
+        attemptScores.refresh(submission.getAssignmentAttemptId());
         audit.record(null, "submission.graded", "submission", submission.getId(), null,
                 Map.of("status", payload.status().name(), "verdict", payload.verdict().name(),
                         "grading_attempt", job.getAttemptNo()));

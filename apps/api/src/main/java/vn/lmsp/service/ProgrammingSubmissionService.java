@@ -41,6 +41,7 @@ public class ProgrammingSubmissionService {
     @Transactional
     public Receipt submit(Long assignmentId, Long questionId, Long studentId, String rawKey, QuestionSubmissionInput body) {
         Assignment assignment = access.studentAssignment(assignmentId, studentId, true);
+        if (assignment.isSessionBased()) throw AssignmentSubmissionService.sessionOnly();
         String key = policy.key(rawKey);
         validateBody(body);
         var old = submissions.findByIdempotencyKey(key);

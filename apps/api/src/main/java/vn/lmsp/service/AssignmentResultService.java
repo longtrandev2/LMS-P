@@ -15,7 +15,9 @@ import vn.lmsp.repository.*;
 
 /**
  * `GET /assignments/{id}/results` — bảng kết quả theo sinh viên (docs/api-spec.md §6). `final_score` theo `score_policy`:
- * quiz theo lượt; bài khác best/last từng câu rồi cộng. Submission `failed`/đang chấm không tính điểm nhưng vẫn đếm.
+ * quiz và bài giao theo phiên theo lượt; bài khác best/last từng câu rồi cộng. Submission `failed`/đang chấm không tính
+ * điểm nhưng vẫn đếm. Bài giao theo phiên (docs/exam-spec.md §6): `max_score` = điểm một đề, `questions` chỉ gồm câu cố
+ * định có ở mọi đề.
  */
 @Service
 @RequiredArgsConstructor
@@ -25,15 +27,19 @@ public class AssignmentResultService {
     private final AssignmentAttemptRepository attempts;
     private final SubmissionRepository submissions;
     private final EnrollmentRepository enrollments;
+    private final PaperProvider papers;
 
     @Transactional(readOnly = true)
     public ResultsTable results(Long assignmentId, Long actorId, boolean admin) {
         Assignment assignment = access.lecturerAssignment(assignmentId, actorId, admin, false);
+        boolean sessionBased = assignment.isSessionBased();
         List<AssignmentQuestion> questions = links.findAllByAssignment_IdOrderByPositionAscIdAsc(assignmentId);
-        BigDecimal maxScore = questions.stream().map(AssignmentQuestion::getPoints).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal maxScore = sessionBased ? papers.maxScore(assignment)
+                : questions.stream().map(AssignmentQuestion::getPoints).reduce(BigDecimal.ZERO, BigDecimal::add);
+        if (sessionBased) questions = questions.stream().filter(link -> link.isFixed() && link.getVariantNo() == null).toList();
         Map<Long, List<Submission>> byStudent = submissions.findAllByAssignment_IdOrderBySubmittedAtDesc(assignmentId).stream()
                 .collect(Collectors.groupingBy(Submission::getStudentId));
-        boolean quiz = assignment.getCategory() == AssignmentCategory.QUIZ;
+        boolean quiz = sessionBased || assignment.getCategory() == AssignmentCategory.QUIZ;
         Map<Long, List<AssignmentAttempt>> attemptsByStudent = !quiz ? Map.of()
                 : attempts.findAllByAssignment_IdOrderByAttemptNoAsc(assignmentId).stream()
                 .collect(Collectors.groupingBy(AssignmentAttempt::getStudentId));
@@ -41,10 +47,12 @@ public class AssignmentResultService {
         enrollments.findAllByLmsClass_IdAndStatusOrderByStudent_Id(assignment.getClassId(), EnrollmentStatus.active)
                 .forEach(enrollment -> students.put(enrollment.getStudent().getId(), enrollment.getStudent()));
         byStudent.values().forEach(rows -> students.putIfAbsent(rows.getFirst().getStudentId(), rows.getFirst().getStudent()));
+        attemptsByStudent.values().forEach(rows -> students.putIfAbsent(rows.getFirst().getStudentId(), rows.getFirst().getStudent()));
+        List<AssignmentQuestion> shown = questions;
         List<StudentResult> items = students.values().stream().map(student -> {
             List<Submission> rows = byStudent.getOrDefault(student.getId(), List.of());
-            return quiz ? quizRow(assignment, student, questions, maxScore, rows, attemptsByStudent.getOrDefault(student.getId(), List.of()))
-                    : questionRow(assignment, student, questions, maxScore, rows);
+            return quiz ? quizRow(assignment, student, shown, maxScore, rows, attemptsByStudent.getOrDefault(student.getId(), List.of()))
+                    : questionRow(assignment, student, shown, maxScore, rows);
         }).toList();
         return new ResultsTable(items);
     }
