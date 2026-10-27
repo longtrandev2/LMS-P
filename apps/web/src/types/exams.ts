@@ -69,7 +69,7 @@ export interface PreviewPaper {
   code: string | null;
   total_points: number;
   question_count: number;
-  sections: { title: string; questions: PreviewQuestion[] }[];
+  sections: { title: string | null; questions: PreviewQuestion[] }[];
 }
 export interface PapersPreview {
   paper_mode: PaperMode;

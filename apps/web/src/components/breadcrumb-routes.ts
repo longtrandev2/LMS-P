@@ -33,7 +33,7 @@ const ROUTES: RouteCrumbs[] = [
   { pattern: "/questions/new", build: () => [questions, { label: "Câu hỏi mới" }] },
   { pattern: "/questions/:questionId/edit", build: (p) => [questions, { label: `Câu hỏi #${p.questionId}` }] },
   { pattern: "/classes/:id", build: (_, c) => [teachRoot(c), { label: c.names.className ?? "Lớp học" }] },
-  { pattern: "/classes/:classId/assignments/new", build: (p, c) => [teachRoot(c), teachClass(p.classId, c), { label: "Bài tập mới" }] },
+  { pattern: "/classes/:classId/assignments/new", build: (p, c) => [teachRoot(c), teachClass(p.classId, c), { label: "Tạo mới" }] },
   { pattern: "/classes/:classId/assignments/:assignmentId/edit",
     build: (p, c) => [teachRoot(c), teachClass(p.classId, c), { label: assignmentLabel(c, "Sửa bài tập") }] },
   { pattern: "/classes/:classId/assignments/:assignmentId/papers",
@@ -84,6 +84,8 @@ const WIDE_PATTERNS = [
   "/classes/:classId/assignments/new",
   "/classes/:classId/assignments/:assignmentId/edit",
   "/classes/:classId/assignments/:assignmentId/results",
+  "/classes/:classId/assignments/:assignmentId/papers",
+  "/classes/:classId/assignments/:assignmentId/monitor",
   "/me/classes/:classId/assignments/:assignmentId/attempt",
   "/me/classes/:classId/assignments/:assignmentId/problems/:questionId",
 ];
