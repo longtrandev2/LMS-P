@@ -69,7 +69,7 @@
 |---|---|---|---|
 | GET/POST | /classes/{id}/materials | mem / lec | List (`q` search tiêu đề, sort `title`,`created_at`,`size_bytes` + phân trang) / upload (multipart, ≤ max_upload_mb) hoặc link |
 | GET | /materials/{id}/download | mem | Tải (stream, check enrollment) |
-| PATCH/DELETE | /materials/{id} | lec | Sửa metadata / xóa |
+| PATCH/DELETE | /materials/{id} | lec | Sửa metadata (gồm `session_id`: có khóa với `null` = gỡ khỏi buổi, không có khóa = giữ nguyên) / xóa |
 
 ## 5. Question Bank (M4)
 
@@ -186,15 +186,15 @@ Quy tắc ở `class-schedule-grades-spec.md` §2–4. `Session`: `{id, class_id
 
 | Method | Path | Role | Mô tả |
 |---|---|---|---|
-| GET | /classes/{id}/sessions | mem | Danh sách buổi theo thời gian (`mode`, `q` theo ngày/phòng/tiêu đề) — không phân trang (≤ 200) |
+| GET | /classes/{id}/sessions | mem | `{items: [Session]}` theo thời gian (`mode`, `q` theo ngày/phòng/tiêu đề) — không phân trang (≤ 200) |
 | POST | /classes/{id}/sessions | lec | Tạo một buổi `{date, start_period, end_period, room, mode, title?, note?}` |
 | POST | /classes/{id}/sessions/generate | lec | `{from, to, patterns: [{weekday 1–7, start_period, end_period, room, mode}], replace_unmarked}` → `{created, removed}` |
-| PATCH/DELETE | /sessions/{id} | lec | Sửa buổi / xóa buổi chưa điểm danh (đã điểm danh → 409, dùng `is_cancelled`) |
+| PATCH/DELETE | /sessions/{id} | lec | Sửa buổi / xóa buổi chưa điểm danh và chưa có đơn xin nghỉ (ngược lại → 409, dùng `is_cancelled`); buổi đã hủy không điểm danh được |
 | GET | /sessions/{id}/attendance | lec | `{session, items: [{student_id, student_code, full_name, status|null, note, leave_request|null}], summary}` |
 | PUT | /sessions/{id}/attendance | lec | `{records: [{student_id, status, note?}]}` upsert; lần đầu đặt `attendance_taken_at` |
 | GET | /classes/{id}/attendance/summary | mem | Giảng viên: `{total_sessions, taken_sessions, items: [{student_id, …counts}]}`; sinh viên: `{total, present, late, excused, absent, unmarked, max_absences, eligible}` của mình |
 | POST | /sessions/{id}/leave-requests | student | multipart `reason`, `evidence` (1 tệp ≤ 5 MB) → `LeaveRequest` |
-| GET | /classes/{id}/leave-requests | mem | Giảng viên: mọi đơn (lọc `status`); sinh viên: đơn của mình |
+| GET | /classes/{id}/leave-requests | mem | Page `{items, total, page, limit}` (mặc định limit 50). Giảng viên: mọi đơn (lọc `status`); sinh viên: đơn của mình. Đơn trùng buổi → 409 `CONFLICT`; buổi đã qua quá 7 ngày → 409 `DEADLINE_PASSED` |
 | PATCH | /leave-requests/{id} | lec / owner | Giảng viên `{status: approved|rejected, review_note?}`; sinh viên `{status: cancelled}` khi còn `pending` |
 | GET | /leave-requests/{id}/evidence | lec / owner | Tải tệp minh chứng |
 
