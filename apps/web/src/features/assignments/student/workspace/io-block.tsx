@@ -48,9 +48,9 @@ export function IoBlock({ label, value, copy = false, tone }: {
       <span className="text-xs font-medium text-muted-foreground">{label}</span>
       {copy && value ? <CopyButton value={value} label={label.toLowerCase()} /> : null}
     </div>
-    <pre className={cn("max-h-56 overflow-auto rounded-md border bg-muted/40 px-3 py-2 font-mono text-xs leading-5 whitespace-pre",
-      tone === "danger" && "border-destructive/40", tone === "success" && "border-success/40")}>
-      {value ? value : <span className="font-sans text-muted-foreground italic">(trống)</span>}
+    <pre className={cn("max-h-56 overflow-auto rounded-lg bg-secondary px-3.5 py-2.5 font-mono text-[13px] leading-5 whitespace-pre",
+      tone === "danger" && "bg-destructive/8", tone === "success" && "bg-success/8")}>
+      {value ? value : <span className="font-sans text-muted-foreground">(trống)</span>}
     </pre>
   </div>;
 }

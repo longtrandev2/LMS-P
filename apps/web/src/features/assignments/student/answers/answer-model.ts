@@ -22,9 +22,11 @@ export function blankCount(question: AssignmentQuestion): number {
   return found ? new Set(found).size : 0;
 }
 
-/** Thay `[[n]]` bằng nhãn "(n)" để hiển thị nội dung câu điền chỗ trống. */
+/** Thay `[[n]]` bằng nhãn "(n)" để hiển thị nội dung câu điền chỗ trống (trong `code` không in đậm được nên để nguyên "(n)"). */
 export function renderBlankLabels(content: string): string {
-  return content.replace(BLANK_PATTERN, (_, n: string) => `**(${n})**`);
+  return content.split(/(`[^`]*`)/g).map((part) => part.startsWith("`")
+    ? part.replace(BLANK_PATTERN, (_, n: string) => `(${n})`)
+    : part.replace(BLANK_PATTERN, (_, n: string) => `**(${n})**`)).join("");
 }
 
 /** Đọc số kiểu Việt Nam/quốc tế: "3,5" hoặc "3.5", cho phép dấu và số mũ. */

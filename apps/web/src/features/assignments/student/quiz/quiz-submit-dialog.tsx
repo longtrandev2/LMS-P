@@ -12,7 +12,7 @@ function QuestionGroup({ label, indexes, onJump, tone }: { label: string; indexe
     <p className={`text-xs font-medium ${tone ?? "text-muted-foreground"}`}>{label} ({indexes.length})</p>
     <div className="mt-1.5 flex flex-wrap gap-1.5">
       {indexes.map((index) => <button key={index} type="button" onClick={() => onJump(index)}
-        className="rounded-md border px-2 py-0.5 text-xs tabular-nums transition-colors duration-150 hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none">
+        className="rounded-md bg-secondary px-2 py-1 text-xs tabular-nums transition-colors duration-150 hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none">
         Câu {index + 1}
       </button>)}
     </div>
@@ -48,7 +48,7 @@ export function QuizSubmitDialog({ open, onOpenChange, questions, answers, flagg
         {remainingAfter != null ? <p className="text-xs text-muted-foreground">
           {remainingAfter === 0 ? "Đây là lượt cuối cùng của bạn." : `Sau lượt này bạn còn ${remainingAfter} lượt.`}
         </p> : null}
-        {error ? <p role="alert" className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs text-destructive">
+        {error ? <p role="alert" className="rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">
           {errorText(error)} Bài làm vẫn được giữ — bạn có thể thử nộp lại.
         </p> : null}
       </div>

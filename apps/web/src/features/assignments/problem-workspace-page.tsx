@@ -1,7 +1,10 @@
 import { useParams } from "react-router-dom";
+import { Award, Cpu, Equal, Timer } from "lucide-react";
 import { useAuthStore } from "@/stores/auth";
 import { assignmentWindow } from "@/features/assignments/submission-window";
-import { sortLatestFirst } from "@/features/assignments/submission-result";
+import { formatScore, sortLatestFirst } from "@/features/assignments/submission-result";
+import { CHECKER_SHORT } from "@/features/assignments/student/labels";
+import { MetaRow } from "@/features/assignments/student/meta-row";
 import { WindowBadge } from "@/features/assignments/student/overview/assignment-info";
 import { problemTitle } from "@/features/assignments/student/overview/programming-question-card";
 import { BackLink, PageError, PageNotice, PageSkeleton } from "@/features/assignments/student/page-states";
@@ -34,14 +37,21 @@ export function ProblemWorkspacePage() {
   }
   const item = details.data.assignment;
   const rows = sortLatestFirst(history.data.filter((row) => row.question_id === qid));
+  const programming = question.programming;
 
-  return <div className="space-y-4">
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-      {back}
-      <span className="text-muted-foreground" aria-hidden>/</span>
-      <h1 className="min-w-0 truncate text-base font-semibold">Câu {index + 1}<span className="font-normal text-muted-foreground"> · {problemTitle(question.content) || "Bài lập trình"}</span></h1>
-      <span className="ml-auto"><WindowBadge window={assignmentWindow(item)} /></span>
+  const header = <div className="space-y-2">
+    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+      <span>Câu {index + 1}/{details.data.questions.length}</span>
+      <WindowBadge window={assignmentWindow(item)} />
     </div>
-    <ProblemWorkspace key={qid} item={item} question={question} history={rows} userId={userId} />
+    <h1 className="text-lg leading-snug font-semibold tracking-tight text-balance">{problemTitle(question.content) || "Bài lập trình"}</h1>
+    <MetaRow className="text-[13px]" items={[
+      programming ? { icon: Timer, text: `${programming.time_limit_ms} ms` } : null,
+      programming ? { icon: Cpu, text: `${programming.memory_limit_mb} MB` } : null,
+      { icon: Award, text: `${formatScore(question.points)} điểm` },
+      programming ? { icon: Equal, text: CHECKER_SHORT[programming.checker_mode] } : null,
+    ]} />
   </div>;
+
+  return <ProblemWorkspace key={qid} item={item} question={question} history={rows} userId={userId} header={header} />;
 }

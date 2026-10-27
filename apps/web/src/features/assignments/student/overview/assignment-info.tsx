@@ -1,42 +1,47 @@
 import type { ReactNode } from "react";
-import { formatUtcDateTime } from "@/lib/date-time";
+import { CalendarClock, CalendarPlus, Eye, EyeOff, Hourglass, Trophy } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { AssignmentSummary } from "@/types/api";
-import { assignmentWindow, WINDOW_LABEL, type AssignmentWindow } from "../../submission-window";
-import { reviewPolicyText } from "../labels";
+import { WINDOW_LABEL, type AssignmentWindow } from "../../submission-window";
+import { reviewPolicyText, shortDateTime } from "../labels";
+import { FactList, type MetaItem } from "../meta-row";
 
 const windowVariant = { upcoming: "secondary", open: "success", late: "warning", closed: "secondary" } as const satisfies Record<AssignmentWindow, string>;
 
 export function WindowBadge({ window }: { window: AssignmentWindow }) {
-  return <Badge variant={windowVariant[window]}>
-    <span className="size-1.5 rounded-full bg-current" aria-hidden />{WINDOW_LABEL[window]}
-  </Badge>;
+  return <Badge variant={windowVariant[window]}>{WINDOW_LABEL[window]}</Badge>;
 }
 
-function Row({ label, children }: { label: string; children: ReactNode }) {
-  return <div className="grid gap-0.5 py-2.5 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-4">
-    <dt className="text-xs font-medium text-muted-foreground sm:text-sm">{label}</dt>
-    <dd className="text-sm">{children}</dd>
-  </div>;
+/** Các dòng chính sách chung (hạn, nộp muộn, cách tính điểm, xem lại) cho panel phụ. */
+export function policyFacts(item: AssignmentSummary): MetaItem[] {
+  const isQuiz = item.category === "quiz";
+  const facts: (MetaItem | null)[] = [
+    item.available_from ? { icon: CalendarPlus, text: `Mở lúc ${shortDateTime(item.available_from)}` } : null,
+    { icon: CalendarClock, text: `Hạn nộp ${shortDateTime(item.due_at)}` },
+    item.allow_late && item.late_due_at
+      ? { icon: Hourglass, text: <>Nộp muộn đến {shortDateTime(item.late_due_at)}, <span className="text-warning">trừ {item.late_penalty_percent}%</span></> }
+      : { icon: Hourglass, text: "Không nhận nộp muộn" },
+    { icon: Trophy, text: item.score_policy === "best" ? (isQuiz ? "Lấy điểm lượt cao nhất" : "Lấy lượt cao nhất mỗi câu") : (isQuiz ? "Lấy điểm lượt cuối" : "Lấy lượt cuối mỗi câu") },
+    { icon: item.review_mode === "never" ? EyeOff : Eye, text: reviewPolicyText(item) },
+  ];
+  return facts.filter((fact): fact is MetaItem => fact != null);
 }
 
-/** Lịch, lượt, cách tính điểm, chính sách xem lại. */
-export function AssignmentInfo({ item, attempts }: { item: AssignmentSummary; attempts: ReactNode }) {
-  const window = assignmentWindow(item);
-  return <section aria-labelledby="assignment-info-title" className="rounded-xl border bg-card px-5 py-3">
-    <div className="flex items-center justify-between gap-3 border-b pb-3">
-      <h2 id="assignment-info-title" className="text-sm font-semibold">Thông tin bài</h2>
-      <WindowBadge window={window} />
-    </div>
-    <dl className="divide-y">
-      <Row label="Mở lúc"><span className="tabular-nums">{item.available_from ? formatUtcDateTime(item.available_from) : "Ngay khi xuất bản"}</span></Row>
-      <Row label="Hạn nộp"><span className="font-medium tabular-nums">{formatUtcDateTime(item.due_at)}</span></Row>
-      {item.allow_late && item.late_due_at ? <Row label="Hạn nộp muộn">
-        <span className="tabular-nums">{formatUtcDateTime(item.late_due_at)}</span> · <span className="text-warning">trừ {item.late_penalty_percent}% điểm</span>
-      </Row> : <Row label="Nộp muộn">Không nhận</Row>}
-      <Row label="Lượt làm">{attempts}</Row>
-      <Row label="Tính điểm">{item.question_count} câu · {item.total_points} điểm · {item.score_policy === "best" ? "lấy lượt cao nhất" : "lấy lượt cuối"}</Row>
-      <Row label="Xem lại">{reviewPolicyText(item)}</Row>
-    </dl>
+/**
+ * Panel phụ bên phải (kiểu thẻ "Manage Batch" của Frappe): con số chính + nhãn, danh sách `icon + chữ`,
+ * nút đen full-width + nút xám full-width, ghi chú ngắn.
+ */
+export function AssignmentPanel({ label, value, max, facts, primary, secondary, note }: {
+  label: string; value: ReactNode; max?: ReactNode; facts: MetaItem[]; primary?: ReactNode; secondary?: ReactNode; note?: ReactNode;
+}) {
+  return <section aria-label="Tóm tắt bài" className="rounded-xl border bg-card p-5">
+    <p className="text-sm text-muted-foreground">{label}</p>
+    {value == null ? <p className="mt-1 text-base text-muted-foreground">Chưa có điểm · tối đa {max}</p>
+      : <p className="mt-1 text-2xl font-semibold tracking-tight tabular-nums">
+        {value}{max != null ? <span className="text-base font-normal text-muted-foreground">/{max}</span> : null}
+      </p>}
+    <div className="mt-4"><FactList items={facts} /></div>
+    {primary || secondary ? <div className="mt-5 grid gap-2">{primary}{secondary}</div> : null}
+    {note ? <p className="mt-3 text-xs text-muted-foreground">{note}</p> : null}
   </section>;
 }
