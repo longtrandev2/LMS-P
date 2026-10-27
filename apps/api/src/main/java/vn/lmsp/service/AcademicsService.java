@@ -43,8 +43,8 @@ public class AcademicsService {
     @Transactional
     public CourseView createCourse(CourseInput input, Long actorId) {
         requireText(input.code(), "code"); requireText(input.name(), "name");
-        Course item = courses.save(new Course(input.code().trim(), input.name().trim(), input.description(), user(actorId)));
-        audit.record(actorId, "course.create", "course", item.getId(), null, Map.of("code", item.getCode(), "name", item.getName()));
+        Course item = courses.save(new Course(input.code().trim(), input.name().trim(), input.description(), input.credits(), user(actorId)));
+        audit.record(actorId, "course.create", "course", item.getId(), null, mapper.toCourseAuditValue(item));
         return mapper.toCourseView(item);
     }
 
@@ -58,7 +58,7 @@ public class AcademicsService {
     @Transactional
     public CourseView updateCourse(Long id, CourseInput input, Long actorId) {
         Course item = courseEntity(id); Map<String, Object> old = mapper.toCourseAuditValue(item);
-        item.update(input.code(), input.name(), input.description());
+        item.update(input.code(), input.name(), input.description(), input.credits());
         audit.record(actorId, "course.update", "course", id, old, mapper.toCourseAuditValue(item));
         return mapper.toCourseView(item);
     }

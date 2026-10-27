@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Phiên bản | 1.5 — 2026-10-27 (câu hỏi đa loại, xem lại, run jobs, chấm lại — chi tiết `assessment-spec.md`) |
+| Phiên bản | 1.6 — 2026-10-27 (thêm lịch học/điểm danh/đơn xin nghỉ, sổ điểm 4 thành phần — `class-schedule-grades-spec.md`; câu hỏi đa loại — `assessment-spec.md`) |
 | Base URL | `/api/v1` (Swagger UI `/swagger-ui/index.html`, OpenAPI `/v3/api-docs`) |
 | Nguồn FR | `srs.md` |
 
@@ -16,7 +16,7 @@
 ```json
 { "error": { "code": "ENROLLMENT_REQUIRED", "message": "Bạn không thuộc lớp này", "details": {} } }
 ```
-- **Mã lỗi nghiệp vụ** (tập trung ở core/exceptions): `UNAUTHENTICATED`, `FORBIDDEN`, `ENROLLMENT_REQUIRED`, `ATTEMPT_EXCEEDED`, `DEADLINE_PASSED`, `EXAM_NOT_OPEN`, `SESSION_ENDED`, `IDEMPOTENCY_CONFLICT`, `VALIDATION_ERROR`, `NOT_FOUND`, `RATE_LIMITED`, `INTERNAL`, `CLASS_FULL` (hết chỗ), `ENROLL_CLOSED` (ngoài khung giờ ghi danh), `ALREADY_ENROLLED` (đã ghi danh lớp), `ENROLLMENT_INVALID` (mã SV/email không hợp lệ khi thêm tay), `PROBLEM_CHECK_FAILED` (lời giải mẫu không AC trên phiên bản sắp ghim), `PROBLEM_UNVERIFIED` (câu lập trình chưa được kiểm tra đề; gửi lại với `confirm_unverified=true` để xác nhận).
+- **Mã lỗi nghiệp vụ** (tập trung ở core/exceptions): `UNAUTHENTICATED`, `FORBIDDEN`, `ENROLLMENT_REQUIRED`, `ATTEMPT_EXCEEDED`, `DEADLINE_PASSED`, `EXAM_NOT_OPEN`, `SESSION_ENDED`, `IDEMPOTENCY_CONFLICT`, `CONFLICT` (xung đột trạng thái chung: đơn xin nghỉ trùng buổi, chấm lại khi đang chấm, bài chưa mở…), `VALIDATION_ERROR`, `NOT_FOUND`, `RATE_LIMITED`, `INTERNAL`, `CLASS_FULL` (hết chỗ), `ENROLL_CLOSED` (ngoài khung giờ ghi danh), `ALREADY_ENROLLED` (đã ghi danh lớp), `ENROLLMENT_INVALID` (mã SV/email không hợp lệ khi thêm tay), `PROBLEM_CHECK_FAILED` (lời giải mẫu không AC trên phiên bản sắp ghim), `PROBLEM_UNVERIFIED` (câu lập trình chưa được kiểm tra đề; gửi lại với `confirm_unverified=true` để xác nhận).
 - **HTTP语义:** 200/201 thành công; 202 nộp bài bất đồng bộ; 400 validate; 401/403 auth; 404; 409 xung đột nghiệp vụ; 423 khóa (đang chấm); 429 rate limit.
 - **Idempotency:** POST nộp bài kèm header `Idempotency-Key: <uuid>`; trùng key → trả submission hoặc lượt quiz gốc (200), không tăng số lượt.
 
@@ -46,7 +46,7 @@
 | Method | Path | Role | Mô tả |
 |---|---|---|---|
 | GET | /courses | lec/adm | Admin xem mọi học phần; lecturer chỉ xem học phần có lớp được phân công (`q` search mã/tên, sort `code`,`name`,`created_at`) |
-| POST | /courses | adm | Tạo học phần |
+| POST | /courses | adm | Tạo học phần `{code, name, description?, credits (1–10, mặc định 3)}`; `CourseView` có `credits` |
 | GET | /courses/{id} | lec/adm | Admin xem mọi học phần; lecturer chỉ xem học phần có lớp được phân công |
 | PATCH/DELETE | /courses/{id} | adm | Sửa / xóa học phần |
 | GET | /classes | lec/adm | Admin xem mọi lớp; lecturer chỉ xem lớp được phân công (`q`, filter `course_id`, `semester`, sort `code`,`name`,`created_at`) |
@@ -61,7 +61,7 @@
 | POST | /classes/{id}/enrollments/import | lec/adm | Xác nhận cùng payload preview; backend kiểm tra lại quyền, tài khoản, trùng và sĩ số rồi thêm các dòng hợp lệ. Trả `{added, errors: [{row, code, reason}]}`; dòng lỗi không làm mất các dòng hợp lệ |
 | DELETE | /classes/{id}/enrollments/{studentId} | lec/adm | Hủy ghi danh (enrollment → `dropped`, giữ lịch sử); lecturer chỉ trong lớp mình phụ trách |
 | GET | /classes/{id}/students | lec/adm | Danh sách SV lớp: `q` (tên/email/mã SV), sort (`full_name`, `student_code`, `enrolled_at`) + phân trang; lecturer chỉ xem lớp mình phụ trách |
-| GET | /me/classes | student | Lớp đã ghi danh (`q`, sort) (Page envelope) + tiến độ |
+| GET | /me/classes | student | Lớp đã ghi danh (`q`, sort) (Page envelope); mỗi lớp thêm `credits`, `total_sessions`, `held_sessions`, `attended_sessions`, `next_session_at`, `materials_count`, `open_assignments_count`, `lecturer_avatar_url` (`class-schedule-grades-spec.md` §6) |
 
 ## 4. Materials (M3)
 
@@ -69,7 +69,7 @@
 |---|---|---|---|
 | GET/POST | /classes/{id}/materials | mem / lec | List (`q` search tiêu đề, sort `title`,`created_at`,`size_bytes` + phân trang) / upload (multipart, ≤ max_upload_mb) hoặc link |
 | GET | /materials/{id}/download | mem | Tải (stream, check enrollment) |
-| PATCH/DELETE | /materials/{id} | lec | Sửa metadata / xóa |
+| PATCH/DELETE | /materials/{id} | lec | Sửa metadata (gồm `session_id`: có khóa với `null` = gỡ khỏi buổi, không có khóa = giữ nguyên) / xóa |
 
 ## 5. Question Bank (M4)
 
@@ -155,13 +155,19 @@
 
 ## 8. Gradebook (M8)
 
+Quy tắc tính ở `class-schedule-grades-spec.md` §5. Thành phần: `attendance`, `assignment`, `midterm`, `final`; điểm thang 10.
+
 | Method | Path | Role | Mô tả |
 |---|---|---|---|
-| GET/PUT | /classes/{id}/grade-policy | lec | Xem / đặt trọng số hạng mục (validate Σ=100%) |
-| GET | /classes/{id}/gradebook | lec | Bảng điểm (student × assessment gồm assignment + exam + trạng thái từng điểm/tổng + adjustments); tổng chỉ chốt theo FR-GB-02 khi mọi assessment đã publish hết cửa sổ nộp và chấm xong |
-| GET | /classes/{id}/gradebook/export | lec | CSV |
-| GET | /me/classes/{id}/grades | student | Điểm cá nhân lớp, điểm từng assessment và trạng thái tổng (`pending`/đã chốt) |
-| POST | /classes/{id}/grade-adjustments | lec | Điều chỉnh (points, reason) → audit |
+| GET/PUT | /classes/{id}/grade-policy | mem(GET) / lec | `{weights: {attendance, assignment, midterm, final}, attendance: {max_absences, absent_penalty, late_penalty, excused_penalty}}`; PUT kiểm tra tổng trọng số = 100 → 400 `VALIDATION_ERROR`; ghi audit |
+| GET | /classes/{id}/gradebook | lec | `{policy, items: [GradeRow]}` cho mọi sinh viên đang học |
+| PUT | /classes/{id}/grades/{studentId}/{component} | lec | Ghi đè điểm thành phần `{score (0–10, bước 0,1) \| null, reason}`; `null` xóa ghi đè; ghi audit |
+| POST | /classes/{id}/grades/import/preview | lec | `{rows: [{row, student_code, midterm?, final?}]}` (≤ 500 dòng, điểm 0–10 tối đa 2 chữ số lẻ) → `{valid_rows, rows: [{row, student_code, full_name, midterm, final, valid, reason}]}`; mã SV không thuộc lớp, trùng mã, điểm sai → dòng lỗi; không ghi DB |
+| POST | /classes/{id}/grades/import | lec | Cùng payload; ghi các dòng hợp lệ làm điểm nhập (`source=csv`); `{imported, errors}` |
+| GET | /classes/{id}/gradebook/export | lec | CSV UTF-8 có BOM: mã SV, họ tên, 4 thành phần, hệ 10, hệ 4, chữ, điều kiện dự thi |
+| GET | /me/classes/{id}/grades | student | Các trường của `GradeRow` của chính mình (phẳng) kèm `policy` |
+
+**GradeRow**: `{student_id, student_code, full_name, components: {attendance|assignment|midterm|final: {score, system_score, override: {score, reason, updated_at}|null, status: "final"|"provisional"|"missing"}}, attendance: {total, present, late, excused, absent, unmarked, max_absences}, eligible, total10, total4, letter, passed, status: "final"|"provisional"}`. `total10/total4/letter` là `null` khi chưa đủ 4 thành phần.
 
 ## 9. Notifications / Admin (M9/M10)
 
@@ -173,6 +179,26 @@
 | GET | /admin/audit-logs | adm | Lọc actor/action/entity/time, phân trang |
 | GET | /admin/stats | adm | users/classes/submissions theo ngày, queue depth, avg grading latency |
 | GET | /health · /health/queue | pub | Health check DB+AMQP · queue depth |
+
+## 11. Lịch học, điểm danh, đơn xin nghỉ (M11)
+
+Quy tắc ở `class-schedule-grades-spec.md` §2–4. `Session`: `{id, class_id, session_no, date, start_period, end_period, starts_at, ends_at, room, mode: "in_person"|"online", title, note, is_cancelled, attendance_taken_at, lecturer_name, materials: [{id, title, type}], my_status?, my_leave_request?}` (`my_*` chỉ khi người gọi là sinh viên).
+
+| Method | Path | Role | Mô tả |
+|---|---|---|---|
+| GET | /classes/{id}/sessions | mem | `{items: [Session]}` theo thời gian (`mode`, `q` theo ngày/phòng/tiêu đề) — không phân trang (≤ 200) |
+| POST | /classes/{id}/sessions | lec | Tạo một buổi `{date, start_period, end_period, room, mode, title?, note?}` |
+| POST | /classes/{id}/sessions/generate | lec | `{from, to, patterns: [{weekday 1–7, start_period, end_period, room, mode}], replace_unmarked}` → `{created, removed}` |
+| PATCH/DELETE | /sessions/{id} | lec | Sửa buổi / xóa buổi chưa điểm danh và chưa có đơn xin nghỉ (ngược lại → 409, dùng `is_cancelled`); buổi đã hủy không điểm danh được |
+| GET | /sessions/{id}/attendance | lec | `{session, items: [{student_id, student_code, full_name, status|null, note, leave_request|null}], summary}` |
+| PUT | /sessions/{id}/attendance | lec | `{records: [{student_id, status, note?}]}` upsert; lần đầu đặt `attendance_taken_at` |
+| GET | /classes/{id}/attendance/summary | mem | Giảng viên: `{total_sessions, taken_sessions, items: [{student_id, …counts}]}`; sinh viên: `{total, present, late, excused, absent, unmarked, max_absences, eligible}` của mình |
+| POST | /sessions/{id}/leave-requests | student | multipart `reason`, `evidence` (1 tệp ≤ 5 MB) → `LeaveRequest` |
+| GET | /classes/{id}/leave-requests | mem | Page `{items, total, page, limit}` (mặc định limit 50). Giảng viên: mọi đơn (lọc `status`); sinh viên: đơn của mình. Đơn trùng buổi → 409 `CONFLICT`; buổi đã qua quá 7 ngày → 409 `DEADLINE_PASSED` |
+| PATCH | /leave-requests/{id} | lec / owner | Giảng viên `{status: approved|rejected, review_note?}`; sinh viên `{status: cancelled}` khi còn `pending` |
+| GET | /leave-requests/{id}/evidence | lec / owner | Tải tệp minh chứng |
+
+**LeaveRequest**: `{id, class_id, session_id, session_date, start_period, end_period, student_id, student_code, full_name, reason, evidence_name, evidence_size, status, review_note, reviewed_by_name, reviewed_at, created_at}`.
 
 ## 10. WebSocket
 

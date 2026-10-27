@@ -1,5 +1,7 @@
 package vn.lmsp.mapper;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.springframework.stereotype.Component;
@@ -14,7 +16,7 @@ import vn.lmsp.model.User;
 public class AcademicsMapper {
     public CourseView toCourseView(Course course) {
         return new CourseView(course.getId(), course.getCode(), course.getName(), course.getDescription(),
-                course.getCreatedBy(), course.getCreatedAt());
+                course.getCredits(), course.getCreatedBy(), course.getCreatedAt());
     }
 
     public ClassView toClassView(LmsClass clazz, long enrolledCount) {
@@ -24,7 +26,7 @@ public class AcademicsMapper {
                 clazz.getSemester(), clazz.getLecturerId(), clazz.getGradePolicy(), clazz.getCreatedAt(),
                 clazz.getCourse().getCode(), clazz.getCourse().getName(), clazz.getLecturer().getFullName(),
                 clazz.getMaxStudents(), clazz.getEnrollFrom(), clazz.getEnrollUntil(), clazz.getRoom(),
-                clazz.getSchedule(), clazz.getStatus(), enrolledCount, seatsLeft);
+                clazz.getSchedule(), clazz.getStatus(), enrolledCount, seatsLeft, clazz.getCourse().getCredits());
     }
 
     public StudentView toStudentView(Enrollment enrollment) {
@@ -38,11 +40,22 @@ public class AcademicsMapper {
                 student.getFullName(), student.getStudentCode());
     }
 
-    public MyClassView toMyClassView(Enrollment enrollment) {
+    public MyClassView toMyClassView(Enrollment enrollment) { return toMyClassView(enrollment, ClassCardStats.EMPTY); }
+
+    public MyClassView toMyClassView(Enrollment enrollment, ClassCardStats stats) {
         LmsClass clazz = enrollment.getLmsClass();
+        User lecturer = clazz.getLecturer();
         return new MyClassView(clazz.getId(), clazz.getCourseId(), clazz.getCode(), clazz.getName(),
                 clazz.getSemester(), clazz.getLecturerId(), enrollment.getStatus().name(),
-                clazz.getCourse().getCode(), clazz.getCourse().getName(), clazz.getLecturer().getFullName());
+                clazz.getCourse().getCode(), clazz.getCourse().getName(), lecturer.getFullName(),
+                clazz.getCourse().getCredits(), stats.totalSessions(), stats.heldSessions(), stats.attendedSessions(),
+                stats.nextSessionAt(), stats.materialsCount(), stats.openAssignmentsCount(), avatarUrl(lecturer));
+    }
+
+    /** Cùng định dạng với UserMapper (`/users/{id}/avatar?v=...`). */
+    private static String avatarUrl(User user) {
+        return user.getAvatarPath() == null ? null : "/users/" + user.getId() + "/avatar?v="
+                + URLEncoder.encode(user.getAvatarPath(), StandardCharsets.UTF_8);
     }
 
     public ClassReference toClassReference(LmsClass clazz) {
@@ -55,6 +68,7 @@ public class AcademicsMapper {
         value.put("code", course.getCode());
         value.put("name", course.getName());
         value.put("description", course.getDescription());
+        value.put("credits", course.getCredits());
         return value;
     }
 

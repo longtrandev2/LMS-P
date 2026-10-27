@@ -13,6 +13,7 @@ const MESSAGES: Record<string, string> = {
   VALIDATION_ERROR: "Dữ liệu nhập chưa hợp lệ, vui lòng kiểm tra lại.",
   NOT_FOUND: "Không tìm thấy dữ liệu yêu cầu.",
   RATE_LIMITED: "Bạn thao tác quá nhanh. Vui lòng thử lại sau ít phút.",
+  CONFLICT: "Thao tác xung đột với dữ liệu hiện có. Vui lòng tải lại và thử lại.",
   PROBLEM_CHECK_FAILED: "Lời giải mẫu chưa đúng trên bộ test hiện tại. Sửa đề rồi kiểm tra lại trước khi xuất bản.",
   PROBLEM_UNVERIFIED: "Có câu lập trình chưa được kiểm tra đề bằng lời giải mẫu.",
   INTERNAL: "Hệ thống gặp lỗi không mong muốn. Vui lòng thử lại.",

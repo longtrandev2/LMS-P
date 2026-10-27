@@ -11,10 +11,11 @@
 Trạng thái bản Java ngày 2026-10-27 (branch `feat/grading-quiz-standard`):
 
 - P0/P1: Docker Compose, auth/user/profile, học phần/lớp/xếp sinh viên, học liệu, thông báo và audit.
-- P2: ngân hàng câu hỏi 9 loại (`docs/assessment-spec.md`), soạn câu trên trang riêng, CSV nhiều loại, bốc đề ngẫu nhiên, quiz có trộn đề và chính sách xem lại, chấm từng phần. **Sổ điểm M8 chưa triển khai.**
+- P2: ngân hàng câu hỏi 9 loại (`docs/assessment-spec.md`), soạn câu trên trang riêng, CSV nhiều loại, bốc đề ngẫu nhiên, quiz có trộn đề và chính sách xem lại, chấm từng phần. Sổ điểm M8 bốn thành phần (chuyên cần/bài tập/giữa kỳ/cuối kỳ, trọng số theo lớp, hệ 10/4/chữ, điều kiện dự thi, ghi đè, CSV).
+- M11 (mới): lịch học từng buổi, điểm danh 4 trạng thái, đơn xin nghỉ có minh chứng, tín chỉ học phần, thẻ lớp (`docs/class-schedule-grades-spec.md`). QR điểm danh để sau.
 - P3: chấm code chuẩn CP — checker token/line/float, kết quả từng test, OLE/SYSTEM_ERROR, điểm AC = điểm câu, kiểm tra đề bằng lời giải mẫu (chặn xuất bản khi sai), sinh expected từ lời giải, nhập test zip, chạy thử, chấm lại, workspace code kiểu Codeforces.
 - P4: kỳ thi M7 chưa triển khai; quiz giới hạn thời gian và đề riêng từng sinh viên sẽ làm chung cơ chế phiên thi.
-- P5: 111 test API + 44 test worker; seed demo qua REST (`scripts/seed-demo.mjs`) dùng làm kiểm thử end-to-end. Giao diện theo `apps/web/DESIGN.md`.
+- P5: 211 test API + 44 test worker; seed demo qua REST (`scripts/seed-demo.mjs`) dùng làm kiểm thử end-to-end. Giao diện theo `apps/web/DESIGN.md`.
 
 Các wave dùng Python/Next.js bên dưới là lịch sử dự án; kết quả pytest cũ không xác nhận trạng thái bản Java hiện tại. Yêu cầu xếp sinh viên hiện hành lấy từ SRS: sinh viên không tự ghi danh/rời lớp.
 

@@ -1,7 +1,7 @@
 /*
- * Design tokens — xem apps/web/DESIGN.md. Thang xám trung tính và đổ bóng lấy theo frappe-ui
- * (Frappe LMS, MIT): nền trắng, sidebar xám rất nhạt, nút chính đen, nút phụ xám đặc.
- * Màu chỉ dùng cho trạng thái: xanh lá đạt, đỏ lỗi/xóa, cam cảnh báo, xanh dương thông tin.
+ * Design tokens — xem apps/web/DESIGN.md. Khung trung tính + đổ bóng theo frappe-ui (Frappe LMS, MIT);
+ * màu nhấn theo S-Link: đỏ thương hiệu cho hành động chính, mục/tab đang chọn, link; ô thống kê và
+ * khung thông tin tô nhạt theo trạng thái.
  */
 :root {
   color-scheme: light;
@@ -11,7 +11,7 @@
   --card-foreground: oklch(0.205 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.205 0 0);
-  --primary: oklch(0.205 0 0);
+  --primary: oklch(0.55 0.2 27);
   --primary-foreground: oklch(1 0 0);
   --secondary: oklch(0.964 0 0);
   --secondary-foreground: oklch(0.341 0 0);
@@ -22,16 +22,17 @@
   --border: oklch(0.946 0 0);
   --input: oklch(0.913 0 0);
   --ring: oklch(0.83 0 0);
-  /* `cta` giữ tên để tương thích: hành động chính = đen như nút thường */
-  --cta: oklch(0.205 0 0);
+  --cta: oklch(0.55 0.2 27);
   --cta-foreground: oklch(1 0 0);
+  /* Nền đỏ rất nhạt cho khung thông tin lớp, mục sidebar đang chọn (kiểu S-Link) */
+  --brand-soft: oklch(0.965 0.018 20);
   --destructive: oklch(0.556 0.198 26.552);
   --success: oklch(0.53 0.122 156.15);
   --warning: oklch(0.612 0.136 63.758);
   --gold: oklch(0.612 0.136 63.758);
   --info: oklch(0.561 0.168 252.355);
-  --mark-ink: oklch(0.205 0 0);
-  --chart-1: oklch(0.205 0 0);
+  --mark-ink: oklch(0.55 0.2 27);
+  --chart-1: oklch(0.55 0.2 27);
   --chart-2: oklch(0.586 0 0);
   --chart-3: oklch(0.83 0 0);
   --chart-4: oklch(0.53 0.122 156.15);
@@ -41,9 +42,9 @@
   --sidebar-foreground: oklch(0.341 0 0);
   --sidebar-primary: oklch(0.205 0 0);
   --sidebar-primary-foreground: oklch(1 0 0);
-  /* Mục đang chọn = ô trắng nổi nhẹ (shadow-sm) trên nền sidebar */
-  --sidebar-accent: oklch(1 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
+  /* Mục đang chọn = nền đỏ nhạt + chữ đỏ (kiểu S-Link) */
+  --sidebar-accent: oklch(0.955 0.025 20);
+  --sidebar-accent-foreground: oklch(0.5 0.19 27);
   --sidebar-border: oklch(0.946 0 0);
   --sidebar-ring: oklch(0.83 0 0);
   --elevation-sm: inset 0px 0.25px 1.5px 0px #ffffff29, 0px 0px 1px 0px #00000033, 0px 1px 3px 0px #00000024;
@@ -61,8 +62,8 @@
   --card-foreground: oklch(0.979 0 0);
   --popover: oklch(0.26 0 0);
   --popover-foreground: oklch(0.979 0 0);
-  --primary: oklch(0.979 0 0);
-  --primary-foreground: oklch(0.205 0 0);
+  --primary: oklch(0.64 0.2 25);
+  --primary-foreground: oklch(1 0 0);
   --secondary: oklch(0.281 0 0);
   --secondary-foreground: oklch(0.885 0 0);
   --muted: oklch(0.281 0 0);
@@ -72,15 +73,16 @@
   --border: oklch(0.281 0 0);
   --input: oklch(0.341 0 0);
   --ring: oklch(0.457 0 0);
-  --cta: oklch(0.979 0 0);
-  --cta-foreground: oklch(0.205 0 0);
+  --cta: oklch(0.64 0.2 25);
+  --cta-foreground: oklch(1 0 0);
+  --brand-soft: oklch(0.27 0.04 20);
   --destructive: oklch(0.704 0.191 22.216);
   --success: oklch(0.723 0.15 155);
   --warning: oklch(0.8 0.14 75);
   --gold: oklch(0.8 0.14 75);
   --info: oklch(0.73 0.121 245.297);
-  --mark-ink: oklch(0.979 0 0);
-  --chart-1: oklch(0.979 0 0);
+  --mark-ink: oklch(0.64 0.2 25);
+  --chart-1: oklch(0.64 0.2 25);
   --chart-2: oklch(0.683 0 0);
   --chart-3: oklch(0.457 0 0);
   --chart-4: oklch(0.723 0.15 155);
@@ -89,8 +91,8 @@
   --sidebar-foreground: oklch(0.885 0 0);
   --sidebar-primary: oklch(0.979 0 0);
   --sidebar-primary-foreground: oklch(0.205 0 0);
-  --sidebar-accent: oklch(0.281 0 0);
-  --sidebar-accent-foreground: oklch(0.979 0 0);
+  --sidebar-accent: oklch(0.29 0.045 20);
+  --sidebar-accent-foreground: oklch(0.8 0.12 22);
   --sidebar-border: oklch(0.26 0 0);
   --sidebar-ring: oklch(0.457 0 0);
   --elevation-sm: inset 0px 0.5px 0.5px 0.5px #ffffff08, 0px 0px 14px 0px #0000002e, 0px 1px 3px 0px #000000b2;

@@ -1,6 +1,6 @@
 # LMS-P — Hệ thống quản lý học tập
 
-Monorepo LMS dùng **React + TypeScript + Vite**, **Java 21 + Spring Boot**, MySQL 8.4 và RabbitMQ. Đã có: người dùng/lớp/học liệu, ngân hàng câu hỏi 9 loại (một/nhiều đáp án, đúng-sai, trả lời ngắn, đáp số, điền chỗ trống, ghép cặp, sắp xếp, lập trình), bài tập và quiz (trộn đề, chính sách xem lại, bốc đề ngẫu nhiên), chấm code trong Docker sandbox (checker, kết quả từng test, kiểm tra đề bằng lời giải mẫu, chạy thử, chấm lại), thông báo realtime và audit. Chưa có: kỳ thi (M7), sổ điểm (M8). Đặc tả câu hỏi/đề/chấm: [`docs/assessment-spec.md`](docs/assessment-spec.md). Mã Python cũ được giữ để đối chiếu.
+Monorepo LMS dùng **React + TypeScript + Vite**, **Java 21 + Spring Boot**, MySQL 8.4 và RabbitMQ. Đã có: người dùng/lớp/học liệu, ngân hàng câu hỏi 9 loại (một/nhiều đáp án, đúng-sai, trả lời ngắn, đáp số, điền chỗ trống, ghép cặp, sắp xếp, lập trình), bài tập và quiz (trộn đề, chính sách xem lại, bốc đề ngẫu nhiên), chấm code trong Docker sandbox (checker, kết quả từng test, kiểm tra đề bằng lời giải mẫu, chạy thử, chấm lại), thông báo realtime và audit, lịch học/điểm danh/đơn xin nghỉ, sổ điểm 4 thành phần. Chưa có: kỳ thi (M7), cấu hình/thống kê quản trị (M10). Đặc tả câu hỏi/đề/chấm: [`docs/assessment-spec.md`](docs/assessment-spec.md). Mã Python cũ được giữ để đối chiếu.
 
 ## Cấu trúc
 

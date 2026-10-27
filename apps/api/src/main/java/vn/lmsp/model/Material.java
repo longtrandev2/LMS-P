@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 public class Material {
     @Id @GeneratedValue(strategy=GenerationType.IDENTITY) private Long id;
     @ManyToOne(fetch=FetchType.LAZY) @JoinColumn(name="class_id", nullable=false) private LmsClass lmsClass;
+    @Column(name="session_id") private Long sessionId;
     @Column(nullable=false, length=200) private String title;
     @Column(columnDefinition="TEXT") private String description;
     @Enumerated(EnumType.STRING) @Column(nullable=false) private MaterialType type;
@@ -26,5 +27,6 @@ public class Material {
     public Long getClassId() { return lmsClass.getId(); }
     public String getType() { return type.name(); }
     public Long getUploadedBy() { return uploader.getId(); }
+    public void assignSession(Long sessionId) { this.sessionId=sessionId; }
     public void update(String title, String description) { if(title!=null) this.title=title; if(description!=null) this.description=description; }
 }

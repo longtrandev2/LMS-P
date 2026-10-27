@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Hash, Plus, School } from "lucide-react";
+import { Award, Hash, Plus, School } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -81,6 +81,7 @@ export function CourseClassesPage({ courseId }: { courseId: string }) {
         title={course ? course.name : "Học phần"}
         meta={course ? <MetaRow items={[
           { key: "code", icon: Hash, label: "Mã học phần", content: <span className="font-mono">{course.code}</span> },
+          ...(course.credits ? [{ key: "credits", icon: Award, label: "Số tín chỉ", content: <span className="tabular-nums">{course.credits} tín chỉ</span> }] : []),
           { key: "count", icon: School, label: "Số lớp", content: `${classesQuery.data?.total ?? "—"} lớp` },
         ]} /> : null}
         description={course ? course.description || (isAdmin ? "Các lớp của học phần theo từng học kỳ." : "Các lớp của học phần được phân công cho bạn.") : "Đang tải thông tin học phần…"}

@@ -14,6 +14,7 @@
   --font-heading: var(--font-sans);
   --tracking-heading: -0.01em;
   --color-info: var(--info);
+  --color-brand-soft: var(--brand-soft);
   /* Đổ bóng theo frappe-ui elevation; card thường không có bóng */
   --shadow-xs: var(--elevation-sm);
   --shadow-sm: var(--elevation-sm);

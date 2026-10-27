@@ -8,6 +8,7 @@ import {
   DEMO_PASSWORD, REVIEW_DEFAULTS,
 } from "./seed-lib.mjs";
 import { seedAssessment } from "./seed-assessment.mjs";
+import { seedSchedule } from "./seed-schedule.mjs";
 
 const PDF = `%PDF-1.4
 1 0 obj <</Type/Catalog/Pages 2 0 R>> endobj
@@ -123,6 +124,7 @@ async function main() {
   }
 
   await seedAssessment({ lecturer, student, klass, bank, catOverview, catSocket });
+  await seedSchedule({ admin, lecturer, student, klass, course });
 
   console.log(`
 Hoàn tất. Đăng nhập http://localhost:3000 (mật khẩu chung: ${DEMO_PASSWORD})

@@ -39,6 +39,8 @@ const ROUTES: RouteCrumbs[] = [
   { pattern: "/classes/:classId/assignments/:assignmentId/results",
     build: (p, c) => [teachRoot(c), teachClass(p.classId, c), { label: assignmentLabel(c, "Kết quả bài tập") }] },
   { pattern: "/submissions/:submissionId", build: (p) => [{ label: `Bài nộp #${p.submissionId}` }] },
+  { pattern: "/classes/:classId/sessions/:sessionId",
+    build: (p, c) => [teachRoot(c), { label: c.names.className ?? "Lớp học", href: `/classes/${p.classId}?tab=schedule` }, { label: "Điểm danh" }] },
   { pattern: "/me/classes", build: () => [{ label: "Lớp của tôi" }] },
   { pattern: "/me/classes/:id", build: (_, c) => [myClasses, { label: c.names.className ?? "Lớp học" }] },
   { pattern: "/me/classes/:classId/assignments/:assignmentId",

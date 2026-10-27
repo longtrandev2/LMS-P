@@ -81,13 +81,13 @@ erDiagram
 
 ### 2.2 Khóa học & lớp (M2)
 
-**courses** — id, code VARCHAR(20) UNIQUE, name NVARCHAR(200), description TEXT, created_by FK users, created_at.
-**classes** — id, course_id FK, code VARCHAR(30), name NVARCHAR(200), semester VARCHAR(20) (vd '2026.1'), lecturer_id FK users, max_students INT UNSIGNED NULL (NULL = không giới hạn; BR12: không được < sĩ số hiện tại), enroll_from DATETIME NULL, enroll_until DATETIME NULL (NULL/NULL = luôn mở; enroll_until > enroll_from), room VARCHAR(50) NULL, schedule VARCHAR(100) NULL, status ENUM('active','locked') default 'active', grade_policy JSON NULL (`{"quiz":0.2,"assignment":0.3,"midterm":0.2,"final":0.3}`), created_at. UNIQUE(course_id, code); index (semester), (enroll_until).
+**courses** — id, code VARCHAR(20) UNIQUE, name NVARCHAR(200), description TEXT, credits TINYINT UNSIGNED default 3 (1–10), created_by FK users, created_at.
+**classes** — id, course_id FK, code VARCHAR(30), name NVARCHAR(200), semester VARCHAR(20) (vd '2026.1'), lecturer_id FK users, max_students INT UNSIGNED NULL (NULL = không giới hạn; BR12: không được < sĩ số hiện tại), enroll_from DATETIME NULL, enroll_until DATETIME NULL (NULL/NULL = luôn mở; enroll_until > enroll_from), room VARCHAR(50) NULL, schedule VARCHAR(100) NULL, status ENUM('active','locked') default 'active', grade_policy JSON NULL (`{"weights":{"attendance":10,"assignment":20,"midterm":20,"final":50},"attendance":{"max_absences":null,"absent_penalty":2,"late_penalty":0.5,"excused_penalty":0}}` — NULL = mặc định, `class-schedule-grades-spec.md` §5), created_at. UNIQUE(course_id, code); index (semester), (enroll_until).
 **enrollments** — id, class_id FK, student_id FK, status ENUM('active','dropped') default active, enrolled_at, enrolled_via ENUM('lecturer','self') default 'lecturer'. UNIQUE(class_id, student_id); index (student_id).
 
 ### 2.3 Học liệu (M3)
 
-**materials** — id, class_id FK, title NVARCHAR(200), description TEXT NULL, type ENUM('pdf','doc','slide','link','video','archive','other'), file_path VARCHAR(500) NULL (link → URL), size_bytes BIGINT default 0, uploaded_by FK, created_at. Index (class_id, created_at).
+**materials** — id, class_id FK, session_id FK class_sessions NULL (học liệu của buổi), title NVARCHAR(200), description TEXT NULL, type ENUM('pdf','doc','slide','link','video','archive','other'), file_path VARCHAR(500) NULL (link → URL), size_bytes BIGINT default 0, uploaded_by FK, created_at. Index (class_id, created_at).
 
 ### 2.4 Ngân hàng câu hỏi (M4)
 
@@ -163,19 +163,23 @@ M6 API (Flyway V14) lưu outbox và snapshot đã ghim. `grading_results` là l�
 
 ### 2.8 Điểm (M8)
 
-**grade_adjustments** — id, class_id FK, student_id FK, points DECIMAL(5,2) (thang 10, âm được), reason VARCHAR(500), created_by FK, created_at. Index (class_id, student_id).
+Điểm thành phần tính từ dữ liệu sẵn có (điểm danh, bài nộp) theo `class-schedule-grades-spec.md` §5 — **không** lưu bảng tổng; chỉ lưu điểm nhập tay/CSV/kỳ thi và ghi đè:
 
-Công thức (FR-GB-02), tính từ submissions + grade_policy, KHÔNG lưu bảng riêng:
-- Điểm quiz = tổng điểm câu MCQ trong từng `assignment_attempts` (câu bỏ trống = 0), rồi chọn **lượt toàn bài** theo `score_policy` best/last.
-- Điểm bài không phải quiz = chọn submission best/last **riêng từng câu**, rồi cộng các điểm câu; mỗi câu có tối đa `max_attempts` lần nộp chính thức.
-- Điểm kỳ thi = tổng điểm câu trong phiên thi, gán vào `exams.grade_category` (`midterm`/`final`).
-- Assessment chưa publish không tính. Khi cửa sổ nộp đóng (`due_at`, hoặc `late_due_at` nếu cho nộp muộn), assessment không có bài nộp được tính 0; kỳ thi không có session/submission sau `closes_at` tính 0. Assessment có bài code đang pending/grading làm tổng lớp chưa chốt, không được coi là 0.
-- Avg hạng mục = avg(điểm assessment / max điểm assessment) × 100; gồm bài tập và kỳ thi thuộc hạng mục tương ứng.
-- Khi mọi assessment đã publish đóng nhận bài và mọi submission đã có kết quả, tổng % = Σ avg × trọng số → thang 10 = round(pct/10, 1), cộng adjustment.
+**grade_entries** — id, class_id FK, student_id FK users, component ENUM('attendance','assignment','midterm','final'), score DECIMAL(4,2) (0–10), source ENUM('manual','csv','exam'), reason VARCHAR(500) NULL, updated_by FK users, updated_at. UNIQUE(class_id, student_id, component). Mỗi sinh viên có tối đa một bản ghi cho mỗi thành phần: nếu có thì nó thay điểm hệ thống; `source` cho biết nguồn (`manual` = giảng viên ghi đè, `csv` = nhập CSV, `exam` = kỳ thi M7). Ghi đè tay thay luôn điểm CSV; xóa bản ghi để quay về điểm hệ thống. Mọi thay đổi ghi `audit_logs` (`grade.override`, `grade.import`).
+
+Bảng `grade_adjustments` của thiết kế cũ không dùng (thay bằng ghi đè theo thành phần).
+
+### 2.10 Lịch học, điểm danh, đơn xin nghỉ (M11)
+
+**class_sessions** — id, class_id FK, session_no INT, session_date DATE (lịch VN), start_period TINYINT (1–14), end_period TINYINT, starts_at DATETIME (UTC), ends_at DATETIME (UTC), room VARCHAR(50) NULL, mode ENUM('in_person','online'), title VARCHAR(200) NULL, note TEXT NULL, is_cancelled BOOL default 0, attendance_taken_at DATETIME NULL, created_by FK, created_at, updated_at. UNIQUE(class_id, session_no); index (class_id, starts_at), (starts_at) cho thông báo sắp diễn ra. Cột `upcoming_notified_at` DATETIME NULL đánh dấu đã gửi thông báo 30 phút trước.
+
+**attendance_records** — id, session_id FK, student_id FK users, status ENUM('present','late','excused','absent'), note VARCHAR(255) NULL, marked_by FK users, marked_at. UNIQUE(session_id, student_id); index (student_id).
+
+**leave_requests** — id, class_id FK, session_id FK, student_id FK users, reason TEXT, evidence_path VARCHAR(500), evidence_name VARCHAR(255), evidence_size INT, evidence_type VARCHAR(100), status ENUM('pending','approved','rejected','cancelled'), review_note VARCHAR(500) NULL, reviewed_by FK users NULL, reviewed_at NULL, created_at. Index (class_id, status), (session_id, student_id). Tệp lưu dưới `storage/leave-requests/{class_id}/`.
 
 ### 2.9 Thông báo / Audit / Cấu hình (M9/M10)
 
-**notifications** — id, user_id FK, type VARCHAR(40) ('assignment.published','submission.graded','exam.published','grade.released','material.created','enrollment.created'), title VARCHAR(200), body TEXT NULL, data JSON NULL (vd submission_id), is_read BOOL default 0, created_at. Index (user_id, is_read, created_at).
+**notifications** — id, user_id FK, type VARCHAR(40) ('assignment.published','submission.graded','exam.published','grade.released','material.created','enrollment.created','session.upcoming','leave_request.created','leave_request.reviewed','grade.updated'), title VARCHAR(200), body TEXT NULL, data JSON NULL (vd submission_id), is_read BOOL default 0, created_at. Index (user_id, is_read, created_at).
 
 **audit_logs** — id, actor_id FK NULL (NULL = system), action VARCHAR(60) ('user.update','role.assign','grade.adjust','exam.publish','settings.update','submission.regrade'...), entity_type VARCHAR(40), entity_id BIGINT, old_value JSON, new_value JSON, ip VARCHAR(45), created_at. Index (entity_type, entity_id), (actor_id, created_at), (created_at). **Append-only.**
 
