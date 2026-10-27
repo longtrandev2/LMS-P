@@ -47,6 +47,12 @@ public class GradingWebSocketHandler extends TextWebSocketHandler {
         });
     }
 
+    /** Chỉ đọc cho dashboard admin (admin-spec.md §3): số kết nối đang mở. */
+    public long connectionCount() { return sessions.values().stream().mapToLong(Map::size).sum(); }
+
+    /** Số user có ít nhất một kết nối. */
+    public long userCount() { return sessions.size(); }
+
     public void sendToUser(String userId, String payload) {
         var userSessions = sessions.get(userId);
         if (userSessions != null) userSessions.values().forEach(session -> send(session, payload));

@@ -12,7 +12,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import vn.lmsp.security.ActivityTrackingFilter;
 import vn.lmsp.security.JwtAuthenticationFilter;
+import vn.lmsp.service.ActivityTracker;
 import java.util.Arrays;
 import java.util.List;
 
@@ -20,11 +22,12 @@ import java.util.List;
 @EnableMethodSecurity
 public class SecurityConfig {
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwt) throws Exception {
+    SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwt, ActivityTracker activity)
+            throws Exception {
         return http.csrf(csrf -> csrf.disable()).cors(cors -> { })
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/health", "/v3/api-docs/**", "/swagger-ui/**", "/ws", "/api/v1/auth/login", "/api/v1/auth/refresh").permitAll()
+                        .requestMatchers("/health", "/health/queue", "/api/v1/health/queue", "/v3/api-docs/**", "/swagger-ui/**", "/ws", "/api/v1/auth/login", "/api/v1/auth/refresh").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(errors -> errors.authenticationEntryPoint((request, response, error) -> {
@@ -33,6 +36,7 @@ public class SecurityConfig {
                     response.getWriter().write("{\"error\":{\"code\":\"UNAUTHENTICATED\",\"message\":\"Phiên đăng nhập không hợp lệ.\"}}");
                 }))
                 .addFilterBefore(jwt, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(new ActivityTrackingFilter(activity), UsernamePasswordAuthenticationFilter.class)
                 .httpBasic(basic -> basic.disable()).formLogin(form -> form.disable()).build();
     }
 
