@@ -17,6 +17,8 @@ export function ResultsSubmissionsTab({ query, questions, positionOf }: {
 }) {
   const navigate = useNavigate();
   const [filters, setFilters] = useState(EMPTY_FILTERS);
+  // Bài thi bốc ngẫu nhiên: số thứ tự là trong danh sách gộp mọi mã đề, nên kèm trích nội dung câu để dễ nhận ra.
+  const snippetOf = new Map(questions.map((q) => [q.question_id, q.content.replace(/[`*_#>[\]()]/g, "").replace(/\s+/g, " ").trim().slice(0, 80)]));
   const rows = useMemo(() => {
     const term = filters.search.trim().toLowerCase();
     return (query.data ?? []).filter((row) =>
@@ -55,7 +57,10 @@ export function ResultsSubmissionsTab({ query, questions, positionOf }: {
               </Link>
               <p className="font-mono text-xs text-muted-foreground">{row.student_code ?? `ID ${row.student_id}`}</p>
             </TableCell>
-            <TableCell className="text-muted-foreground tabular-nums">Câu {positionOf.get(row.question_id) ?? `#${row.question_id}`}</TableCell>
+            <TableCell className="max-w-56 text-muted-foreground">
+              <span className="tabular-nums">Câu {positionOf.get(row.question_id) ?? `#${row.question_id}`}</span>
+              <p className="truncate text-xs" title={snippetOf.get(row.question_id)}>{snippetOf.get(row.question_id)}</p>
+            </TableCell>
             <TableCell className="text-right tabular-nums">{row.attempt_no}</TableCell>
             <TableCell className="text-sm">{row.type === "code" ? languageLabel(row.language) : <span className="text-muted-foreground">Khách quan</span>}</TableCell>
             <TableCell><SubmissionStatusBadge status={row.status} verdict={row.verdict} compact /></TableCell>

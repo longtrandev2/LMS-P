@@ -26,7 +26,7 @@ export function StatTiles({ tiles, loading, className }: { tiles: StatTile[]; lo
         <li key={tile.key} className={cn("flex min-w-0 items-center justify-between gap-2 rounded-xl px-3 py-2.5 sm:flex-col sm:items-stretch sm:p-3.5", TONE[tile.tone])}>
           <span className="flex min-w-0 items-center gap-1.5">
             <tile.icon className="size-4 shrink-0" strokeWidth={1.9} aria-hidden />
-            <span className="truncate text-[13px] text-foreground/80">{tile.label}</span>
+            <span className="min-w-0 text-[13px] leading-tight text-foreground/80 [overflow-wrap:anywhere]">{tile.label}</span>
           </span>
           {loading ? <Skeleton className="ml-auto h-7 w-10 bg-background/60" />
             : <span className="text-right text-xl leading-7 font-semibold tabular-nums sm:text-2xl">{tile.value}</span>}
