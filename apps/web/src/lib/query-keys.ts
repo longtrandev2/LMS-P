@@ -39,6 +39,17 @@ export const queryKeys = {
   submissions: {
     detail: (id: number) => ["submission", id] as const,
   },
+  schedule: {
+    sessions: (classId: string) => ["classes", classId, "sessions"] as const,
+    attendance: (sessionId: number) => ["sessions", sessionId, "attendance"] as const,
+    summary: (classId: string) => ["classes", classId, "attendance-summary"] as const,
+    leaveRequests: (classId: string, status?: string) => ["classes", classId, "leave-requests", status] as const,
+  },
+  grades: {
+    policy: (classId: string) => ["classes", classId, "grade-policy"] as const,
+    gradebook: (classId: string) => ["classes", classId, "gradebook"] as const,
+    mine: (classId: string) => ["me", "classes", classId, "grades"] as const,
+  },
   classes: {
     all: ["classes"] as const,
     list: (filters: { course_id?: string; semester?: string; page?: number; limit?: number; q?: string; sort?: string }) =>

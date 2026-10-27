@@ -2,7 +2,7 @@
 
 | Thuộc tính | Giá trị |
 |---|---|
-| Phiên bản | 1.8 — 2026-10-27 (câu hỏi đa loại, xem lại, chấm code chuẩn CP — `assessment-spec.md`) |
+| Phiên bản | 1.9 — 2026-10-27 (lịch học/điểm danh/đơn xin nghỉ, sổ điểm 4 thành phần — `class-schedule-grades-spec.md`; câu hỏi/đề/chấm — `assessment-spec.md`) |
 | Trạng thái | Baseline (spec-first, chuẩn đối chiếu cho DB/API/kiến trúc/plan) |
 | Nguồn требования | Subject gốc của giảng viên (English, bản gốc trong repo docs) |
 | Tham khảo mở rộng | `LMS – Phân tích nghiệp vụ và kiến trúc công nghệ.md` — CHỈ tham khảo, phạm vi lấy theo Subject + tài liệu này |
@@ -18,12 +18,12 @@
 
 **Trong phạm vi (v1):**
 - Quản lý tài khoản, xác thực JWT, phân quyền RBAC (student / lecturer / admin).
-- Khóa học, lớp học, ghi danh, học liệu (upload/download).
+- Khóa học (có số tín chỉ), lớp học, ghi danh, học liệu (upload/download), lịch học từng buổi, điểm danh và đơn xin nghỉ.
 - Ngân hàng câu hỏi: 8 loại câu khách quan chấm tự động (một/nhiều đáp án, đúng-sai, trả lời ngắn, đáp số, điền chỗ trống, ghép cặp, sắp xếp) + lập trình (test mẫu/ẩn, checker, kiểm tra đề bằng lời giải mẫu).
 - Bài tập & quiz: hạn nộp, số lần nộp, nộp muộn, chính sách chấm.
 - Bài tập lập trình: nộp code → hàng đợi RabbitMQ → worker chấm trong sandbox Docker cô lập → kết quả realtime qua WebSocket.
 - Kỳ thi: lịch thi, phiên thi, đồng hồ server, tự lưu bài, tự động nộp, giám sát của giảng viên.
-- Sổ điểm: trọng số theo hạng mục, điều chỉnh thủ công, xuất CSV.
+- Sổ điểm 4 thành phần (chuyên cần, bài tập, giữa kỳ, cuối kỳ) với trọng số theo lớp, điểm hệ 10/4/chữ, ghi đè có audit, nhập/xuất CSV.
 - Thông báo in-app; nhật ký kiểm toán; cấu hình hệ thống; thống kê quản trị.
 
 **Ngoài phạm vi (v1) — ghi rõ để không bị "scope creep":**
@@ -158,19 +158,28 @@ M6: API lưu bài nộp và job outbox trong cùng transaction; publisher dùng 
 ### M8 — Sổ điểm
 | ID | Ưu tiên | Yêu cầu |
 |---|---|---|
-| FR-GB-01 | M | Chính sách điểm theo lớp: trọng số hạng mục (quiz/assignment/midterm/final), validate tổng 100% |
-| FR-GB-02 | M | Mỗi bài tập và kỳ thi đã xuất bản thuộc một hạng mục điểm; kỳ thi được gán `midterm` hoặc `final`. Điểm hạng mục là trung bình các assessment đã đóng sau khi chuẩn hóa theo điểm tối đa; bài không nộp sau khi hết hạn/cửa sổ nộp tính 0. Tổng chỉ được chốt khi mọi assessment đã xuất bản đóng nhận bài và mọi submission đã chấm xong; trong lúc còn bài chưa chấm, trạng thái tổng là `pending`, không coi submission đang chấm là 0 |
-| FR-GB-03 | M | Lecturer: bảng điểm lớp (sinh viên × bài + tổng), xuất CSV |
-| FR-GB-04 | M | Student: điểm cá nhân theo lớp |
-| FR-GB-05 | M | Điều chỉnh thủ công (cộng/trừ + lý do) → ghi audit (BR7) |
-| FR-GB-06 | S | Tiến độ học tập: % bài tập đã nộp theo lớp |
-| FR-GB-07 | M | Điểm từng assessment hiển thị khi đã chấm; trạng thái và tổng điểm cho biết đang chờ chấm hay đã chốt. Khi tất cả assessment trong lớp đã đóng và chấm xong, hệ thống tính và hiển thị tổng điểm cuối theo FR-GB-02 |
+| FR-GB-01 | M | Bốn thành phần điểm: Chuyên cần, Bài tập, Giữa kỳ, Cuối kỳ (thang 10). Giảng viên đặt trọng số theo lớp, tổng đúng 100% (mặc định 10/20/20/50) |
+| FR-GB-02 | M | Chuyên cần tính từ điểm danh: 10 trừ điểm theo số buổi vắng không phép / muộn / vắng có phép với mức trừ cấu hình theo lớp; vượt số buổi nghỉ cho phép (cấu hình, mặc định 20% số buổi) → không đủ điều kiện dự thi. Bài tập = trung bình điểm chuẩn hóa các quiz/bài tập đã đóng (không nộp = 0). Giữa kỳ/Cuối kỳ nhập tay hoặc CSV (sau này lấy từ kỳ thi M7) (`class-schedule-grades-spec.md` §5) |
+| FR-GB-03 | M | Tổng kết hệ 10 = Σ trọng số × thành phần, quy đổi hệ 4 và điểm chữ theo thang A+…F; trạng thái tạm tính/đã chốt; không đủ điều kiện dự thi → Cuối kỳ tính 0 |
+| FR-GB-04 | M | Giảng viên: bảng điểm lớp (sinh viên × 4 thành phần + tổng + điều kiện dự thi), ghi đè điểm thành phần kèm lý do (audit), nhập CSV điểm Giữa kỳ/Cuối kỳ có xem trước, xuất CSV |
+| FR-GB-05 | M | Sinh viên: tab Kết quả học tập của lớp — điểm thành phần kèm trọng số, điều kiện dự thi, tổng kết hệ 10/hệ 4/chữ, Đạt/Chưa đạt |
+| FR-GB-06 | S | Tiến độ học tập trên thẻ lớp: buổi đã diễn ra/tổng buổi, bài đang mở |
 
 ### M9 — Thông báo
 | ID | Ưu tiên | Yêu cầu |
 |---|---|---|
 | FR-NTF-01 | M | Thông báo in-app: bài mới, kết quả chấm, kỳ thi mở và điểm công bố |
 | FR-NTF-02 | M | Danh sách thông báo, lọc trạng thái, đánh dấu một hoặc tất cả đã đọc qua REST |
+
+### M11 — Lịch học, điểm danh, đơn xin nghỉ
+| ID | Ưu tiên | Yêu cầu |
+|---|---|---|
+| FR-ATT-01 | M | Giảng viên tạo buổi học cho lớp: sinh hàng loạt theo khoảng ngày + mẫu tuần (thứ, tiết, phòng, hình thức trực tiếp/online), thêm/sửa/xóa/hủy từng buổi; gắn học liệu vào buổi |
+| FR-ATT-02 | M | Giảng viên điểm danh thủ công từng buổi: có mặt / muộn–về sớm / vắng có phép / vắng không phép; thống kê tổng buổi, từng trạng thái và chưa điểm danh theo buổi và theo lớp; sửa lại có audit |
+| FR-ATT-03 | M | Sinh viên xem tab Lịch học: thống kê điểm danh của mình, buổi gần nhất, danh sách buổi (ngày, tiết, phòng, hình thức, trạng thái điểm danh, giảng viên, tiêu đề, học liệu) |
+| FR-ATT-04 | M | Sinh viên gửi đơn xin nghỉ cho một buổi (lý do + một tệp minh chứng ≤ 5 MB), xem lịch sử đơn, hủy đơn đang chờ; giảng viên duyệt/từ chối kèm ghi chú; duyệt → buổi đó thành vắng có phép |
+| FR-ATT-05 | S | Thông báo buổi học sắp diễn ra (30 phút trước), đơn mới, kết quả duyệt đơn |
+| FR-ATT-06 | C | Điểm danh bằng mã QR (đợt sau) |
 
 ### M10 — Quản trị & giám sát
 | ID | Ưu tiên | Yêu cầu |

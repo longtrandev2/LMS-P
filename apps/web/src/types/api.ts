@@ -1,5 +1,7 @@
 export type { QuestionType, QuestionDifficulty, ScoringMode, ProgrammingLanguage, CheckerMode, QuestionOption, BlankSpec, PairSpec, ChoiceItem, AnswerSpec, QuestionProgramming, QuestionTestCase, QuestionSummary, Question, QuestionInput, DrawRule, DrawResult, QuestionBank, QuestionCategory, QuestionCsvRow, QuestionCsvPreview, QuestionImportResult } from "./questions";
 export type { AssignmentCategory, ScorePolicy, ReviewMode, GradingVerdict, SubmissionStatus, AssignmentSummary, AssignmentInput, ProgrammingSample, AssignmentProgramming, AssignmentQuestion, AssignmentDetails, Answer, AnswerResponse, QuizQuestionScore, QuizAttempt, CorrectAnswer, ReviewQuestion, AttemptReview, AssignmentSubmission, TestResultView, GradingResultView, SubmissionDetails, StudentResultRow } from "./assignments";
+export type { SessionMode, AttendanceStatus, LeaveRequestStatus, ClassSession, SessionPattern, GenerateSessionsInput, AttendanceRow, SessionAttendance, AttendanceSummary, ClassAttendanceSummary, LeaveRequest } from "./schedule";
+export type { GradeComponent, GradePolicy, ComponentGrade, GradeRow, Gradebook, GradeImportRow, GradeImportPreview } from "./grades";
 export type { RunJobKind, RunJobStatus, RunTestResult, RunJob, RunAccepted, DraftCheckInput, PracticeRunInput } from "./runs";
 
 /** Kiểu dữ liệu dùng chung theo DTO của Spring API. */
@@ -43,6 +45,8 @@ export interface Course {
   code: string;
   name: string;
   description?: string | null;
+  /** Số tín chỉ 1–10 (class-schedule-grades-spec §1). */
+  credits?: number;
   created_by: number;
   created_at: string;
 }
@@ -66,6 +70,15 @@ export interface ClassSummary {
   status?: "active" | "locked";
   enrolled_count?: number;
   seats_left?: number | null;
+  /** Chỉ có ở `GET /me/classes` — thẻ lớp của sinh viên (class-schedule-grades-spec §6). */
+  credits?: number;
+  total_sessions?: number;
+  held_sessions?: number;
+  attended_sessions?: number;
+  next_session_at?: string | null;
+  materials_count?: number;
+  open_assignments_count?: number;
+  lecturer_avatar_url?: string | null;
 }
 
 export interface ClassStudent {
