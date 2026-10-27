@@ -36,7 +36,7 @@ function parseTable(source: string, delimiter: string): string[][] {
 
 /** Đọc CSV ở trình duyệt: bỏ BOM, tự nhận `,`/`;`, cột `type`, `explanation`, `option_a…option_h`, `correct_option`. */
 export function parseQuestionCsv(raw: string): QuestionCsvRow[] {
-  const source = raw.replace(/^﻿/, "");
+  const source = raw.replace(/^\uFEFF/, "");
   const table = parseTable(source, detectDelimiter(source));
   if (table.length < 2) throw new Error("CSV cần có dòng tiêu đề và ít nhất một câu hỏi.");
   const headers = table[0].map((value) => value.trim().toLowerCase());
