@@ -6,6 +6,8 @@ import static org.mockito.Mockito.*;
 import static vn.lmsp.support.DomainFixtures.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -74,5 +76,29 @@ class RegradeServiceTest {
                 java.math.BigDecimal.ZERO, false, "key2", LocalDateTime.now()), 91);
         when(submissions.findLockedById(91L)).thenReturn(Optional.of(objective));
         assertThatThrownBy(() -> service.regrade(91L, 7L, false, "Thử")).hasMessageContaining("bài nộp code");
+    }
+    @Test void bulkRegradeQueuesOnlyFailedCodeSubmissionsWithOneAudit() {
+        submission.finish(SubmissionStatus.failed, GradingVerdict.SYSTEM_ERROR);
+        var assignment = assignment(AssignmentCategory.ASSIGNMENT);
+        var link = link(assignment, question(100, QuestionType.programming), "10", 1);
+        var completed = identified(Submission.programming(user(43, "student"), assignment, link, 1,
+                "python", "print(1)", false, 0, "key3", LocalDateTime.now()), 92);
+        completed.finish(SubmissionStatus.completed, GradingVerdict.AC);
+        when(submissions.findLockedById(92L)).thenReturn(Optional.of(completed));
+        when(submissions.findLockedById(93L)).thenReturn(Optional.empty());
+        when(jobs.findTopBySubmission_IdOrderByAttemptNoDesc(90L)).thenReturn(Optional.of(new GradingJob(submission, 5, LocalDateTime.now())));
+
+        var result = service.regradeFailed(List.of(90L, 92L, 93L), 1L, " Worker lỗi ");
+
+        assertThat(result.queued()).isEqualTo(1);
+        assertThat(result.skipped()).isEqualTo(2);
+        assertThat(submission.getStatus()).isEqualTo(SubmissionStatus.pending);
+        assertThat(completed.getStatus()).isEqualTo(SubmissionStatus.completed);
+        verify(jobs, times(1)).save(argThat(job -> job.getAttemptNo() == 2 && job.getSubmission() == submission));
+        verify(notifier).afterCommit(submission, null, false);
+        verify(audit).record(1L, "grading.bulk_regrade", "grading", 0L, null,
+                Map.of("count", 1, "ids", List.of(90L), "reason", "Worker lỗi"));
+        verify(audit, never()).record(any(), eq("submission.regrade"), any(), any(), any(), any());
+        verifyNoInteractions(access);
     }
 }
