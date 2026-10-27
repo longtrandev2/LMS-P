@@ -55,6 +55,15 @@ export async function seedSchedule({ admin, lecturer, student, klass, course }) 
   }
 
   console.log("Sổ điểm:");
+  // Đóng quiz đầu tiên để thành phần Bài tập có điểm (điều chỉnh lịch bài đã xuất bản, có lý do — FR-ASG-07)
+  const quiz = items(await api(`/classes/${klass.id}/assignments`, { token: lecturer })).find((a) => a.title === "Kiểm tra nhanh — Mạng cơ bản");
+  if (quiz && new Date(`${quiz.due_at}Z`) > new Date()) {
+    await api(`/assignments/${quiz.id}/published-settings`, { method: "PATCH", token: lecturer, body: {
+      title: quiz.title, description: quiz.description, available_from: quiz.available_from,
+      due_at: new Date(Date.now() - 3_600_000).toISOString().slice(0, 19), allow_late: false, late_due_at: null,
+      late_penalty_percent: 0, reason: "Demo: đóng quiz tuần 1 để tính điểm thành phần Bài tập" } });
+    log("Đã đóng quiz \"Kiểm tra nhanh\" để tính điểm Bài tập");
+  }
   await api(`/classes/${klass.id}/grade-policy`, { method: "PUT", token: lecturer, body: {
     weights: { attendance: 10, assignment: 20, midterm: 20, final: 50 },
     attendance: { max_absences: 6, absent_penalty: 2, late_penalty: 0.5, excused_penalty: 0 } } });
