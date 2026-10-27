@@ -69,8 +69,7 @@ export function MyClassesPage() {
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {classes?.map((clazz) => (
                   <ClassCard key={clazz.id} clazz={clazz} href={`/me/classes/${clazz.id}`}
-                    openCount={deadlines.openCount.get(clazz.id)}
-                    meta={clazz.lecturer_name ? `GV ${clazz.lecturer_name}` : null} />
+                    openCount={deadlines.openCount.get(clazz.id)} />
                 ))}
               </div>
               {query.data && query.data.total > query.data.limit ? (
