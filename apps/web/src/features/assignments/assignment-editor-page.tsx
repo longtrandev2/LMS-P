@@ -7,16 +7,17 @@ import { useAuthGuard } from "@/hooks/use-auth-guard";
 import { api } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
 import { AssignmentEditorForm } from "@/features/assignments/lecturer/assignment-editor-form";
-import { categoryLabel } from "@/features/assignments/lecturer/labels";
 import type { AssignmentDetails, ClassSummary } from "@/types/api";
 
 function EditorSkeleton() {
-  return <div aria-busy="true" aria-label="Đang tải" className="space-y-8">
-    <Skeleton className="h-12 w-72" />
-    {[0, 1, 2].map((key) => <div key={key} className="grid gap-x-8 gap-y-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
-      <div className="space-y-2"><Skeleton className="h-4 w-32" /><Skeleton className="h-3 w-48" /></div>
-      <Skeleton className="h-48 rounded-xl" />
-    </div>)}
+  return <div aria-busy="true" aria-label="Đang tải" className="mx-auto max-w-6xl space-y-8">
+    <Skeleton className="h-8 w-72" />
+    <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_18rem]">
+      <div className="space-y-10">{[0, 1, 2].map((key) => <div key={key} className="space-y-3">
+        <Skeleton className="h-4 w-32" /><Skeleton className="h-3 w-64" /><Skeleton className="h-8 w-full" /><Skeleton className="h-24 w-full" />
+      </div>)}</div>
+      <Skeleton className="h-72 rounded-xl" />
+    </div>
   </div>;
 }
 
@@ -43,10 +44,8 @@ export function AssignmentEditorPage() {
   const assignment = details.data?.assignment;
   const fallback = id == null ? "Bài tập / quiz mới" : assignment?.is_published ? "Điều chỉnh bài đã xuất bản" : "Sửa bản nháp";
   const classLabel = clazz.data ? `${clazz.data.code} · ${clazz.data.name}` : "Lớp học";
-  const badges = assignment ? <>
-    <Badge variant="outline">{categoryLabel(assignment.category)}</Badge>
-    <Badge variant={assignment.is_published ? "success" : "secondary"}>{assignment.is_published ? "Đã xuất bản" : "Bản nháp"}</Badge>
-  </> : undefined;
+  const badges = assignment ? <Badge variant={assignment.is_published ? "success" : "default"}>{assignment.is_published ? "Đã xuất bản" : "Nháp"}</Badge>
+    : <Badge>Bài mới</Badge>;
   return <AssignmentEditorForm key={id ?? "new"} classId={Number(classId)} details={details.data ?? null}
     title={assignment?.title || fallback} classLabel={classLabel} badges={badges} />;
 }

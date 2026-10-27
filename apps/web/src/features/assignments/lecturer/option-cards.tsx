@@ -2,14 +2,15 @@ import { useId } from "react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+import { CHOICE_BAR } from "./editor-layout";
 
 export interface RadioCardOption<T extends string> { id: T; label: string; description?: string; disabled?: boolean }
 
 const GRID = { 2: "sm:grid-cols-2", 3: "sm:grid-cols-3", 4: "sm:grid-cols-2 xl:grid-cols-4" } as const;
 
 /**
- * Nhóm radio dạng thẻ (DESIGN.md §6: lựa chọn ≤ 4 dùng radio) dựng trên `ui/radio-group`:
- * phím mũi tên đổi lựa chọn, cả thẻ là `<label>` của radio.
+ * Nhóm radio dạng thanh xám (kiểu lựa chọn quiz Frappe, DESIGN.md §4) dựng trên `ui/radio-group`:
+ * phím mũi tên đổi lựa chọn, cả thanh là `<label>` của radio.
  */
 export function RadioCards<T extends string>({ value, onChange, options, label, columns = 2, disabled }: {
   value: T; onChange: (value: T) => void; options: RadioCardOption<T>[]; label: string; columns?: 2 | 3 | 4; disabled?: boolean;
@@ -20,10 +21,8 @@ export function RadioCards<T extends string>({ value, onChange, options, label, 
     {options.map((option) => {
       const id = `${base}-${option.id}`;
       const off = disabled || option.disabled;
-      return <label key={option.id} htmlFor={id} className={cn(
-        "flex h-full items-start gap-3 rounded-lg border p-3 transition-colors duration-150",
-        "has-[[data-state=checked]]:border-foreground/40 has-[[data-state=checked]]:bg-accent",
-        off ? "cursor-not-allowed opacity-60" : "cursor-pointer hover:bg-muted/40")}>
+      return <label key={option.id} htmlFor={id} className={cn(CHOICE_BAR, "h-full",
+        off ? "cursor-not-allowed opacity-60" : "cursor-pointer hover:bg-accent")}>
         <RadioGroupItem id={id} value={option.id} disabled={option.disabled} className="mt-0.5" />
         <span className="min-w-0 space-y-0.5">
           <span className="block text-sm font-medium">{option.label}</span>

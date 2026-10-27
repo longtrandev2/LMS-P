@@ -2,19 +2,18 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
 /**
- * Một mục của trang soạn đề (DESIGN.md §5 "Trang soạn"): tiêu đề + mô tả bên trái trên desktop (1/3),
- * panel nội dung bên phải (2/3); xếp dọc trên màn hẹp.
+ * Một mục của trang soạn đề (DESIGN.md §4 "Trang soạn"): tiêu đề 16/600 + mô tả xám, nội dung ngay dưới,
+ * không bọc khung. Các mục ngăn nhau bằng `divide-y` của cột chính.
  */
 export function EditorSection({ id, title, description, children, className }: {
   id: string; title: string; description?: string; children: React.ReactNode; className?: string;
 }) {
-  return <section id={id} aria-labelledby={`${id}-title`}
-    className={cn("grid scroll-mt-32 gap-x-8 gap-y-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]", className)}>
-    <header className="space-y-1 lg:pt-1">
-      <h2 id={`${id}-title`} className="text-base font-semibold tracking-tight">{title}</h2>
+  return <section id={id} aria-labelledby={`${id}-title`} className={cn("scroll-mt-32 space-y-5 py-8", className)}>
+    <header className="space-y-1">
+      <h2 id={`${id}-title`} className="text-base font-semibold">{title}</h2>
       {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
     </header>
-    <div className="min-w-0 space-y-5 rounded-xl border bg-card p-4 sm:p-5">{children}</div>
+    {children}
   </section>;
 }
 
@@ -38,3 +37,9 @@ export function fieldAria(id: string, error?: string, hint?: boolean) {
     "aria-describedby": error ? `${id}-error` : hint ? `${id}-hint` : undefined,
   } as const;
 }
+
+/** Thanh lựa chọn kiểu quiz Frappe: nền xám, chọn = `bg-accent` + viền 1px foreground. */
+export const CHOICE_BAR = cn(
+  "flex items-start gap-3 rounded-lg border border-transparent bg-secondary px-3.5 py-3 transition-colors duration-150",
+  "has-[[data-state=checked]]:border-foreground has-[[data-state=checked]]:bg-accent",
+);

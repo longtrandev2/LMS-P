@@ -3,10 +3,9 @@ import { Link } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
-import { formatUtcDateTime } from "@/lib/date-time";
 import { cn } from "@/lib/utils";
 import { SubmissionStatusBadge } from "@/features/assignments/submission/submission-status";
-import { formatPoints } from "./labels";
+import { formatPoints, shortDateTime } from "./labels";
 import type { AssignmentQuestion, StudentResultRow as Row } from "@/types/api";
 
 /** Hàng sinh viên × câu; quiz có thể mở rộng xem các lượt và liên kết xem lại từng lượt. */
@@ -19,7 +18,7 @@ export function StudentResultRow({ row, questions, quiz, expanded, onToggle, att
   const detailId = `attempts-${row.student_id}`;
   return <Fragment>
     <TableRow data-state={expanded ? "selected" : undefined}>
-      <TableCell className="sticky left-0 z-[1] bg-card">
+      <TableCell className="sticky left-0 z-[1] bg-background">
         <div className="flex items-center gap-2">
           {quiz ? <Button type="button" variant="ghost" size="icon-xs" disabled={!canExpand} aria-expanded={expanded} aria-controls={detailId}
             aria-label={expanded ? `Ẩn các lượt của ${row.student_full_name}` : `Xem các lượt của ${row.student_full_name}`} onClick={onToggle}>
@@ -47,14 +46,14 @@ export function StudentResultRow({ row, questions, quiz, expanded, onToggle, att
         </TableCell>;
       })}
     </TableRow>
-    {expanded && row.attempts?.length ? <TableRow id={detailId} className="bg-muted/40 hover:bg-muted/40">
+    {expanded && row.attempts?.length ? <TableRow id={detailId} className="bg-secondary/60 hover:bg-secondary/60">
       <TableCell colSpan={3 + questions.length} className="py-3">
         <ul className="flex flex-wrap gap-2">
           {row.attempts.map((attempt) => <li key={attempt.attempt_id}>
-            <Link to={attemptHref(attempt.attempt_id)} className="flex items-center gap-3 rounded-lg border bg-card px-3 py-2 text-sm transition-colors duration-150 outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring">
+            <Link to={attemptHref(attempt.attempt_id)} className="flex items-center gap-3 rounded-md bg-background px-3 py-1.5 text-sm shadow-xs transition-colors duration-150 outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring">
               <span className="font-medium">Lượt {attempt.attempt_no}</span>
               <span className="tabular-nums">{formatPoints(attempt.score)} điểm</span>
-              <span className="text-xs text-muted-foreground tabular-nums">{formatUtcDateTime(attempt.submitted_at)}{attempt.is_late ? <span className="text-warning"> · muộn</span> : null}</span>
+              <span className="text-xs text-muted-foreground tabular-nums">{shortDateTime(attempt.submitted_at)}{attempt.is_late ? <span className="text-warning"> · muộn</span> : null}</span>
               <ChevronRight className="size-3.5 text-muted-foreground" aria-hidden />
             </Link>
           </li>)}
