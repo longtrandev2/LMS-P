@@ -29,6 +29,7 @@ export function CourseFormDialog({ onOpenChange, course, onSaved }: CourseFormDi
   const [code, setCode] = useState(course?.code ?? "");
   const [name, setName] = useState(course?.name ?? "");
   const [description, setDescription] = useState(course?.description ?? "");
+  const [credits, setCredits] = useState(String(course?.credits ?? 3));
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -36,6 +37,7 @@ export function CourseFormDialog({ onOpenChange, course, onSaved }: CourseFormDi
     const next: Record<string, string> = {};
     if (!code.trim()) next.code = "Vui lòng nhập mã học phần.";
     if (name.trim().length < 3) next.name = "Tên học phần tối thiểu 3 ký tự.";
+    if (!/^d+$/.test(credits) || Number(credits) < 1 || Number(credits) > 10) next.credits = "Số tín chỉ là số nguyên 1–10.";
     setErrors(next);
     return Object.keys(next).length === 0;
   }
@@ -44,7 +46,7 @@ export function CourseFormDialog({ onOpenChange, course, onSaved }: CourseFormDi
     e.preventDefault();
     if (!validate()) return;
     setSubmitting(true);
-    const payload = { code: code.trim(), name: name.trim(), description: description.trim() || null };
+    const payload = { code: code.trim(), name: name.trim(), description: description.trim() || null, credits: Number(credits) };
     try {
       if (isEdit) {
         await api.patch(`/courses/${course.id}`, payload);
@@ -84,6 +86,7 @@ export function CourseFormDialog({ onOpenChange, course, onSaved }: CourseFormDi
             />
             {errors.code ? <FieldError text={errors.code} /> : null}
           </div>
+          <div className="grid grid-cols-[minmax(0,1fr)_7rem] gap-3">
           <div className="space-y-2">
             <Label htmlFor="course-name">Tên học phần</Label>
             <Input
@@ -94,6 +97,13 @@ export function CourseFormDialog({ onOpenChange, course, onSaved }: CourseFormDi
               aria-invalid={!!errors.name}
             />
             {errors.name ? <FieldError text={errors.name} /> : null}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="course-credits">Số tín chỉ</Label>
+            <Input id="course-credits" type="number" min={1} max={10} step={1} inputMode="numeric" className="tabular-nums"
+              value={credits} onChange={(e) => setCredits(e.target.value)} aria-invalid={!!errors.credits} />
+            {errors.credits ? <FieldError text={errors.credits} /> : null}
+          </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="course-desc">

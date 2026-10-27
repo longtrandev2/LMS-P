@@ -1,53 +1,84 @@
-import { BookOpen, CalendarDays, Clock, Hash, MapPin, UserRound, Users } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { ClassSummary } from "@/types/api";
-import { MetaRow, type MetaItem } from "./meta-row";
+
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  return ((parts.at(-2)?.[0] ?? "") + (parts.at(-1)?.[0] ?? "")).toUpperCase();
+}
+
+function InfoCell({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="min-w-0 space-y-1">
+      <dt className="text-xs text-muted-foreground">{label}</dt>
+      <dd className="flex min-w-0 items-center gap-2 text-sm font-semibold">{children}</dd>
+    </div>
+  );
+}
 
 /**
- * Đầu trang lớp (DESIGN.md §4): tên lớp 24/600, dưới là hàng meta icon·chữ
- * (mã mono · học phần · học kỳ · giảng viên · sĩ số · phòng · lịch), hành động bên phải. Không khung.
+ * Đầu trang lớp (DESIGN.md §4 — "Khung thông tin lớp" kiểu S-Link): tên lớp đỏ 24/600 + "• n tín chỉ" + badge trạng thái,
+ * hành động bên phải; dưới là khối `bg-brand-soft` 4 cột nhãn xám + giá trị đậm.
  */
-export function ClassWorkspaceHeader({ clazz, loading, showCapacity = true, showLecturer = false, actions }: {
+export function ClassWorkspaceHeader({ clazz, loading, showCapacity = true, actions }: {
   clazz?: ClassSummary;
   loading?: boolean;
+  /** Ô cuối: sĩ số/phòng (giảng viên) — tắt thì hiện số tín chỉ (sinh viên). */
   showCapacity?: boolean;
+  /** Giữ để tương thích; khung thông tin luôn có ô Giảng viên. */
   showLecturer?: boolean;
   actions?: React.ReactNode;
 }) {
   if (!clazz) {
     return loading ? (
-      <div className="space-y-3" aria-busy="true" aria-label="Đang tải thông tin lớp">
+      <div className="space-y-4" aria-busy="true" aria-label="Đang tải thông tin lớp">
         <Skeleton className="h-7 w-72 max-w-full" />
-        <Skeleton className="h-4 w-[28rem] max-w-full" />
+        <Skeleton className="h-[4.5rem] w-full rounded-xl" />
       </div>
     ) : (
       <h1 className="text-2xl font-semibold tracking-tight">Lớp học</h1>
     );
   }
 
-  const items: (MetaItem | null)[] = [
-    { key: "code", icon: Hash, label: "Mã lớp", content: <span className="font-mono">{clazz.code}</span> },
-    { key: "course", icon: BookOpen, label: "Học phần", content: clazz.course_name },
-    { key: "semester", icon: CalendarDays, label: "Học kỳ", content: <span className="tabular-nums">HK {clazz.semester}</span> },
-    showLecturer && clazz.lecturer_name ? { key: "lecturer", icon: UserRound, label: "Giảng viên", content: clazz.lecturer_name } : null,
-    showCapacity ? {
-      key: "size", icon: Users, label: "Sĩ số",
-      content: <span className="tabular-nums">{clazz.enrolled_count ?? 0}{clazz.max_students ? `/${clazz.max_students}` : ""} sinh viên</span>,
-    } : null,
-    clazz.room ? { key: "room", icon: MapPin, label: "Phòng", content: clazz.room } : null,
-    clazz.schedule ? { key: "schedule", icon: Clock, label: "Lịch", content: clazz.schedule } : null,
-  ];
+  const size = `${clazz.enrolled_count ?? 0}${clazz.max_students ? `/${clazz.max_students}` : ""}`;
 
   return (
-    // Màn rộng: tiêu đề + hành động cùng hàng, meta trải cả chiều ngang; màn hẹp: tiêu đề → meta → hành động.
-    <div className="grid grid-cols-1 gap-y-2.5 sm:grid-cols-[minmax(0,1fr)_auto] sm:gap-x-6">
-      <h1 className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-2xl font-semibold tracking-tight text-balance sm:col-start-1 sm:row-start-1">
-        {clazz.name}
-        {clazz.status === "locked" ? <Badge variant="destructive">Đã khóa</Badge> : null}
-      </h1>
-      <MetaRow className="sm:col-span-2 sm:row-start-2" items={items.filter((item): item is MetaItem => item != null)} />
-      {actions ? <div className="flex flex-wrap items-center gap-2 pt-1 sm:col-start-2 sm:row-start-1 sm:justify-end sm:pt-0">{actions}</div> : null}
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
+        <div className="min-w-0 space-y-1">
+          <h1 className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1 text-2xl font-semibold tracking-tight text-balance">
+            <span className="text-primary">{clazz.name}</span>
+            {clazz.credits ? <span className="text-base font-normal text-muted-foreground tabular-nums">• {clazz.credits} tín chỉ</span> : null}
+            {clazz.status === "locked"
+              ? <Badge variant="destructive">Đã khóa</Badge>
+              : <Badge variant="success">Đang học</Badge>}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            <span className="font-mono text-[13px]">{clazz.course_code}</span> · {clazz.course_name}
+            {clazz.schedule ? <> · Lịch {clazz.schedule}</> : null}
+          </p>
+        </div>
+        {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
+      </div>
+      <dl className="grid grid-cols-2 gap-x-6 gap-y-4 rounded-xl bg-brand-soft px-5 py-4 md:grid-cols-4">
+        <InfoCell label="Nhóm lớp"><span className="truncate font-mono text-[13px]">{clazz.code}</span></InfoCell>
+        <InfoCell label="Kỳ học"><span className="tabular-nums">HK {clazz.semester}</span></InfoCell>
+        <InfoCell label="Giảng viên">
+          <Avatar size="sm" className="size-5">
+            {clazz.lecturer_avatar_url ? <AvatarImage src={clazz.lecturer_avatar_url} alt="" /> : null}
+            <AvatarFallback className="bg-background text-[10px]">{initials(clazz.lecturer_name)}</AvatarFallback>
+          </Avatar>
+          <span className="truncate">{clazz.lecturer_name}</span>
+        </InfoCell>
+        {showCapacity ? (
+          <InfoCell label="Sĩ số / Phòng">
+            <span className="truncate tabular-nums">{size} SV{clazz.room ? ` · ${clazz.room}` : ""}</span>
+          </InfoCell>
+        ) : (
+          <InfoCell label="Số tín chỉ"><span className="tabular-nums">{clazz.credits ?? "—"}</span></InfoCell>
+        )}
+      </dl>
     </div>
   );
 }
