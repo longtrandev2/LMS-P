@@ -1,6 +1,6 @@
 # LMS-P — Hệ thống quản lý học tập
 
-Monorepo LMS dùng **React + TypeScript + Vite**, **Java 21 + Spring Boot**, MySQL 8.4 và RabbitMQ. Đã có: người dùng/lớp/học liệu, ngân hàng câu hỏi 9 loại (một/nhiều đáp án, đúng-sai, trả lời ngắn, đáp số, điền chỗ trống, ghép cặp, sắp xếp, lập trình), bài tập và quiz (trộn đề, chính sách xem lại, bốc đề ngẫu nhiên), chấm code trong Docker sandbox (checker, kết quả từng test, kiểm tra đề bằng lời giải mẫu, chạy thử, chấm lại), thông báo realtime và audit, lịch học/điểm danh/đơn xin nghỉ, sổ điểm 4 thành phần, kỳ thi (nhiều mã đề / đề riêng từng sinh viên, phòng thi có đồng hồ server, tự lưu, tự nộp, giám sát — [`docs/exam-spec.md`](docs/exam-spec.md)). quản trị & vận hành (cấu hình, bảo trì, dashboard thống kê, hàng đợi, thông báo hệ thống, phiên đăng nhập — [`docs/admin-spec.md`](docs/admin-spec.md)). Đủ 11 module theo SRS. Đặc tả câu hỏi/đề/chấm: [`docs/assessment-spec.md`](docs/assessment-spec.md). Mã Python cũ được giữ để đối chiếu.
+Monorepo LMS dùng **React + TypeScript + Vite**, **Java 21 + Spring Boot**, MySQL 8.4 và RabbitMQ. Đã có: người dùng/lớp/học liệu, ngân hàng câu hỏi 9 loại (một/nhiều đáp án, đúng-sai, trả lời ngắn, đáp số, điền chỗ trống, ghép cặp, sắp xếp, lập trình), bài tập và quiz (trộn đề, chính sách xem lại, bốc đề ngẫu nhiên), chấm code trong Docker sandbox (checker, kết quả từng test, kiểm tra đề bằng lời giải mẫu, chạy thử, chấm lại), thông báo realtime và audit, lịch học/điểm danh/đơn xin nghỉ, sổ điểm 4 thành phần, kỳ thi (nhiều mã đề / đề riêng từng sinh viên, phòng thi có đồng hồ server, tự lưu, tự nộp, giám sát — [`docs/exam-spec.md`](docs/exam-spec.md)). quản trị & vận hành (cấu hình, bảo trì, dashboard thống kê, hàng đợi, thông báo hệ thống, phiên đăng nhập — [`docs/admin-spec.md`](docs/admin-spec.md)). Đủ 11 module theo SRS. Đặc tả câu hỏi/đề/chấm: [`docs/assessment-spec.md`](docs/assessment-spec.md).
 
 ## Cấu trúc
 
@@ -9,7 +9,7 @@ apps/api      Spring Boot — REST /api/v1, WebSocket grading
 apps/web      React SPA — src/features/<feature>
 apps/worker   Spring Boot consumer RabbitMQ
 infra/        docker-compose.yml, nginx/
-scripts/      seed và tiện ích dev (legacy Python seed sẽ được thay)
+scripts/      seed demo, reset DB, smoke test
 storage/      volume học liệu (gitignored)
 ```
 
@@ -30,11 +30,37 @@ Web: http://localhost:3000 · API: http://localhost:8000 · Swagger: http://loca
 
 Tài khoản demo local: `lecturer@lms.local`, `student@lms.local`, `admin@lms.local` đều dùng mật khẩu `Demo@12345`. Đổi hoặc tắt tài khoản demo trước khi triển khai thật.
 
-Dữ liệu demo (lớp, 3 sinh viên, ngân hàng 9 loại câu, quiz, bài code chuẩn CP kèm lượt nộp mẫu) — chạy khi stack đang lên, chạy lại không nhân bản:
+Dữ liệu demo: lớp, 3 sinh viên, ngân hàng 9 loại câu, quiz, bài code chuẩn CP, lịch học/điểm danh, sổ điểm, kỳ thi giữa kỳ (2 mã đề) và cuối kỳ (đề riêng), quiz 15 phút. Chạy khi stack đang lên; chạy lại không nhân bản:
 
 ```powershell
-node scripts/seed-demo.mjs
+node scripts/seed-demo.mjs        # seed thêm vào DB hiện tại
+node scripts/reset-demo.mjs --yes # XÓA volume local, dựng lại stack và seed từ đầu
+node scripts/smoke-e2e.mjs        # kiểm tra nhanh kỳ thi + quản trị trên stack đang chạy
 ```
+
+## Kịch bản demo
+
+Nên chạy `reset-demo.mjs --yes` trước buổi demo để có trạng thái sạch. Mật khẩu chung `Demo@12345`.
+
+1. **Giảng viên** (`lecturer@lms.local`) → lớp *Lập trình mạng — Lớp 1*:
+   - Tab **Lịch học**: mở một buổi để điểm danh, xem thống kê.
+   - Tab **Đơn xin nghỉ**: duyệt đơn đang chờ.
+   - Tab **Kết quả học tập**: chỉnh trọng số, xem điểm hệ 10/4/chữ, xuất CSV.
+2. Tab **Kỳ thi**:
+   - Mở *Đề thi thử — ma trận (nháp)* → **Cấu trúc đề**: ma trận đề, các mã đề.
+   - **Xem trước đề** → *Bốc lại*.
+   - Mở *Kiểm tra giữa kỳ* → **Giám sát**: trạng thái từng sinh viên, mã đề, số lần rời trang, gia hạn/thu bài.
+3. **Sinh viên** (`student@lms.local`) → tab **Kỳ thi** → *Kiểm tra giữa kỳ*:
+   - Đọc quy chế → **Bắt đầu làm bài**.
+   - Trong phòng thi: đồng hồ theo server, tự lưu (tắt mạng vẫn giữ bài), chuyển tab để thấy cảnh báo, chạy thử câu code, **Nộp bài**.
+   - Song song, giảng viên xem cập nhật ở màn Giám sát.
+4. **Bài code chuẩn CP** (tab **Bài tập**): nộp code sai/đúng để thấy verdict CE/WA/AC từng test qua WebSocket. Giảng viên xem bài nộp và **chấm lại**.
+5. **Quản trị** (`admin@lms.local`):
+   - **Tổng quan**: thống kê, độ trễ chấm, hàng đợi, người online.
+   - **Cấu hình**: bật **bảo trì** → đăng nhập sinh viên thấy banner, không bắt đầu bài mới được → tắt bảo trì.
+   - **Vận hành**: gửi thông báo hệ thống tới một lớp → sinh viên thấy ở chuông thông báo.
+   - **Người dùng** → *Phiên đăng nhập*.
+   - **Nhật ký kiểm toán**: mọi thao tác trên đều được ghi, có xuất CSV.
 
 Chạy riêng frontend từ `apps/web`: `npm ci`, đặt `VITE_API_URL=http://localhost:8000`, rồi `npm run dev`.
 
@@ -55,7 +81,7 @@ Hoặc dùng Docker để build và chạy kiểm thử trong Maven container:
 docker compose --env-file infra/.env -f infra/docker-compose.yml build api worker
 ```
 
-Các kiểm thử Java hiện bảo vệ trường dữ liệu trả về, dữ liệu nhạy cảm, phiên bản câu hỏi đã ghim, điểm quiz, phạt nộp muộn và idempotency. Kiểm thử tích hợp với MySQL/RabbitMQ và các tính năng chưa triển khai cần được bổ sung theo từng feature.
+Kiểm thử Java là unit test (API 367, worker 44). Luồng end-to-end trên MySQL/RabbitMQ thật được kiểm bằng `scripts/smoke-e2e.mjs` (sau khi seed) và `scripts/check-grading-api.mjs`. Web: `npm run lint` (tsc + ESLint) và `npm run build`.
 
 ## Chấm code
 

@@ -40,7 +40,7 @@ function parseScore(raw: string | undefined): number | null | "invalid" {
  * bỏ BOM, tự nhận dấu phân cách `,` hoặc `;`, số dòng tính theo tệp (dòng tiêu đề = 1).
  */
 export function parseGradeCsv(text: string): ParsedGradeCsv {
-  const lines = text.replace(/^﻿/, "").split(/\r?\n/);
+  const lines = text.replace(/^\uFEFF/, "").split(/\r?\n/);
   const headerIndex = lines.findIndex((l) => l.trim() !== "");
   if (headerIndex < 0) return { rows: [], errors: [{ row: 1, reason: "Tệp trống." }] };
   const headerLine = lines[headerIndex];

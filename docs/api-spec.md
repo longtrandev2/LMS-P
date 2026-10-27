@@ -75,7 +75,7 @@
 
 | Method | Path | Role | Mô tả |
 |---|---|---|---|
-| GET/POST | /question-banks | lec/adm | GET list ngân hàng được phép xem, lọc `course_id` (vẫn trả ngân hàng cá nhân cũ của chính người dùng); POST lecturer tạo ngân hàng mới trong học phần được phân công bằng `{course_id,name,description?,visibility?:private|shared}`. Một học phần có thể có nhiều ngân hàng. Response có `can_edit`, `can_manage` |
+| GET/POST | /question-banks | lec/adm | GET list ngân hàng được phép xem, lọc `course_id` (vẫn trả ngân hàng cá nhân cũ của chính người dùng); POST lecturer tạo ngân hàng mới trong học phần được phân công bằng `{course_id,name,description?,visibility?:private|shared}`. Một học phần có thể có nhiều ngân hàng. Response có `can_edit`, `can_manage`, `question_count` (số câu chưa xóa) |
 | PATCH | /question-banks/{id}/visibility | owner/adm | Đổi `private`/`shared`; admin chỉ xử lý đặc biệt |
 | GET/PUT/DELETE | /question-banks/{id}/permissions[/{lecturerId}] | owner/adm | Xem, cấp `{permission:view|edit}`, thu hồi quyền giảng viên cùng học phần |
 | GET | /question-banks/{id}/eligible-lecturers | owner/adm | Danh sách giảng viên đang được phân công vào học phần để cấp quyền |

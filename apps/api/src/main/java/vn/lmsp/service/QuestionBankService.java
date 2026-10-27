@@ -26,11 +26,13 @@ public class QuestionBankService {
     private final QuestionBankMapper mapper;
     private final QuestionBankAccessService access;
     private final QuestionBankPermissionRepository permissions;
+    private final vn.lmsp.repository.QuestionRepository questionRepository;
 
     @Transactional(readOnly = true)
     public List<QuestionBankView> list(Long actor, boolean admin, Long courseId) {
-        return banks.findAccessible(actor, admin, courseId).stream()
-                .map(bank -> view(bank, actor, admin)).toList();
+        List<QuestionBank> accessible = banks.findAccessible(actor, admin, courseId);
+        Map<Long, Long> counts = questionCounts(accessible.stream().map(QuestionBank::getId).toList());
+        return accessible.stream().map(bank -> view(bank, actor, admin, counts.getOrDefault(bank.getId(), 0L))).toList();
     }
 
     @Transactional
@@ -172,7 +174,18 @@ public class QuestionBankService {
     }
 
     private QuestionBankView view(QuestionBank bank, Long actor, boolean admin) {
-        return mapper.toView(bank, access.canEdit(bank, actor, admin), admin || bank.getOwnerId().equals(actor));
+        return view(bank, actor, admin, questionCounts(List.of(bank.getId())).getOrDefault(bank.getId(), 0L));
+    }
+
+    private QuestionBankView view(QuestionBank bank, Long actor, boolean admin, long questionCount) {
+        return mapper.toView(bank, access.canEdit(bank, actor, admin), admin || bank.getOwnerId().equals(actor), questionCount);
+    }
+
+    private Map<Long, Long> questionCounts(List<Long> bankIds) {
+        if (bankIds.isEmpty()) return Map.of();
+        Map<Long, Long> counts = new java.util.HashMap<>();
+        for (Object[] row : questionRepository.countByBank(bankIds)) counts.put((Long) row[0], (Long) row[1]);
+        return counts;
     }
 
     public void requireQuestionUsage(Question question, LmsClass clazz, Long actor, boolean admin) {

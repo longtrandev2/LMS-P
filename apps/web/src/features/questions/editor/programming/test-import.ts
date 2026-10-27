@@ -7,7 +7,7 @@ interface Entry { path: string; text: string }
 const MAX_FILES = 400;
 const MAX_ARCHIVE_BYTES = 20 * 1024 * 1024;
 const MAX_TEXT_BYTES = 16 * 1024 * 1024;
-const normalize = (text: string) => text.replace(/^﻿/, "").replace(/\r\n/g, "\n");
+const normalize = (text: string) => text.replace(/^\uFEFF/, "").replace(/\r\n/g, "\n");
 
 type Role = "input" | "output";
 const INPUT_WORD = /^(input|inputs|in)$/i;

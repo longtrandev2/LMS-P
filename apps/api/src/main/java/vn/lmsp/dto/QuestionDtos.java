@@ -18,7 +18,7 @@ public final class QuestionDtos {
                                     @NotNull Long course_id, @Pattern(regexp="private|shared") String visibility) { }
     public record QuestionBankView(Long id, Long course_id, String course_name, Long owner_id,
                                    String name, String description, String visibility, boolean can_edit, boolean can_manage,
-                                   LocalDateTime created_at) { }
+                                   LocalDateTime created_at, long question_count) { }
     public record BankPermissionInput(@NotNull BankPermission permission) { }
     public record QuestionBankVisibilityInput(@Pattern(regexp="private|shared") String visibility) { }
     public record BankPermissionView(Long lecturer_id, BankPermission permission) { }
