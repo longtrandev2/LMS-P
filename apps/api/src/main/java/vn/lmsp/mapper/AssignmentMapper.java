@@ -21,7 +21,9 @@ public class AssignmentMapper {
                 assignment.getLatePenaltyPercent(), assignment.getMaxAttempts(), assignment.getScorePolicy(),
                 assignment.getReviewMode(), assignment.isReviewShowsAnswers(), assignment.isShuffleQuestions(),
                 assignment.isShuffleOptions(), assignment.isPublished(), questions.size(), points,
-                assignment.getCreatedAt(), assignment.getUpdatedAt());
+                assignment.getCreatedAt(), assignment.getUpdatedAt(), assignment.getTimeLimitMinutes(),
+                assignment.getPaperMode(), assignment.getVariantCount(), assignment.getRulesText(),
+                assignment.isSessionBased() ? "session" : "standard");
     }
 
     public AssignmentDetails toDetails(AssignmentSummary summary, List<AssignmentQuestionView> questions) {

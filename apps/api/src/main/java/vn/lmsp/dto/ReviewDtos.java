@@ -9,6 +9,7 @@ import vn.lmsp.dto.PaperDtos.AssignmentQuestionView;
 import vn.lmsp.dto.QuestionContentDtos.AnswerResponse;
 import vn.lmsp.enums.GradingVerdict;
 import vn.lmsp.enums.SubmissionStatus;
+import vn.lmsp.enums.SubmitReason;
 
 /** Lượt quiz, xem lại và bảng kết quả — docs/api-spec.md §6, docs/assessment-spec.md §6. */
 public final class ReviewDtos {
@@ -19,7 +20,15 @@ public final class ReviewDtos {
     /** `question_scores` là `null` khi chưa được xem lại. */
     public record QuizAttemptView(Long attempt_id, int attempt_no, BigDecimal score, BigDecimal max_score,
             boolean is_late, int late_penalty_percent, LocalDateTime submitted_at, boolean review_available,
-            LocalDateTime review_available_at, List<QuestionScore> question_scores) { }
+            LocalDateTime review_available_at, List<QuestionScore> question_scores,
+            Long session_id, String paper_code, SubmitReason submit_reason) {
+        public QuizAttemptView(Long attempt_id, int attempt_no, BigDecimal score, BigDecimal max_score, boolean is_late,
+                int late_penalty_percent, LocalDateTime submitted_at, boolean review_available,
+                LocalDateTime review_available_at, List<QuestionScore> question_scores) {
+            this(attempt_id, attempt_no, score, max_score, is_late, late_penalty_percent, submitted_at, review_available,
+                    review_available_at, question_scores, null, null, null);
+        }
+    }
 
     /** Đáp án đúng theo loại; chỉ trường của loại câu khác null. */
     @JsonInclude(JsonInclude.Include.NON_NULL)
