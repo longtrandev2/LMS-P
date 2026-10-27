@@ -30,9 +30,13 @@ function compare(sort: string) {
   };
 }
 
-export function ResultsStudentsTab({ query, questions, quiz, attemptHref }: {
+/**
+ * Bảng kết quả theo sinh viên. `quiz` = tính theo lượt (mở rộng xem lượt); `session` = bài giao theo phiên:
+ * cột câu chỉ gồm câu cố định chung mọi đề (trang gọi đã lọc), mỗi lượt hiện mã đề + lý do nộp.
+ */
+export function ResultsStudentsTab({ query, questions, quiz, session, assignmentId, attemptHref }: {
   query: { data?: Row[]; isPending: boolean; isError: boolean; error: unknown; refetch: () => unknown };
-  questions: AssignmentQuestion[]; quiz: boolean; attemptHref: (attemptId: number) => string;
+  questions: AssignmentQuestion[]; quiz: boolean; session: boolean; assignmentId: number; attemptHref: (attemptId: number) => string;
 }) {
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("name");
@@ -70,7 +74,7 @@ export function ResultsStudentsTab({ query, questions, quiz, attemptHref }: {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {rows.map((row) => <StudentResultRow key={row.student_id} row={row} questions={questions} quiz={quiz}
+          {rows.map((row) => <StudentResultRow key={row.student_id} row={row} questions={questions} quiz={quiz} session={session} assignmentId={assignmentId}
             expanded={expanded.has(row.student_id)} onToggle={() => toggle(row.student_id)} attemptHref={attemptHref} />)}
         </TableBody>
       </Table> : null}
