@@ -2,7 +2,7 @@
 
 | Thuộc tính | Giá trị |
 |---|---|
-| Phiên bản | 2.0 — 2026-10-27 (kỳ thi, đề nhiều mã, phiên làm bài — `exam-spec.md`; lịch học/điểm danh/đơn xin nghỉ, sổ điểm 4 thành phần — `class-schedule-grades-spec.md`; câu hỏi/đề/chấm — `assessment-spec.md`) |
+| Phiên bản | 2.1 — 2026-10-27 (quản trị & vận hành — `admin-spec.md`; kỳ thi, đề nhiều mã, phiên làm bài — `exam-spec.md`; lịch học/điểm danh/đơn xin nghỉ, sổ điểm 4 thành phần — `class-schedule-grades-spec.md`; câu hỏi/đề/chấm — `assessment-spec.md`) |
 | Trạng thái | Baseline (spec-first, chuẩn đối chiếu cho DB/API/kiến trúc/plan) |
 | Nguồn требования | Subject gốc của giảng viên (English, bản gốc trong repo docs) |
 | Tham khảo mở rộng | `LMS – Phân tích nghiệp vụ và kiến trúc công nghệ.md` — CHỈ tham khảo, phạm vi lấy theo Subject + tài liệu này |
@@ -169,7 +169,7 @@ M6: API lưu bài nộp và job outbox trong cùng transaction; publisher dùng 
 ### M9 — Thông báo
 | ID | Ưu tiên | Yêu cầu |
 |---|---|---|
-| FR-NTF-01 | M | Thông báo in-app: bài mới, kết quả chấm, kỳ thi mở và điểm công bố |
+| FR-NTF-01 | M | Thông báo in-app: bài mới, kết quả chấm, kỳ thi xuất bản/sắp mở, kết quả công bố, thông báo hệ thống (`admin-spec.md` §8) |
 | FR-NTF-02 | M | Danh sách thông báo, lọc trạng thái, đánh dấu một hoặc tất cả đã đọc qua REST |
 
 ### M11 — Lịch học, điểm danh, đơn xin nghỉ
@@ -185,9 +185,13 @@ M6: API lưu bài nộp và job outbox trong cùng transaction; publisher dùng 
 ### M10 — Quản trị & giám sát
 | ID | Ưu tiên | Yêu cầu |
 |---|---|---|
-| FR-ADM-01 | M | Cấu hình hệ thống (key-value): ngôn ngữ cho phép, giới hạn mặc định, giới hạn upload |
+| FR-ADM-01 | M | Cấu hình hệ thống (key-value): ngôn ngữ cho phép, giới hạn chấm mặc định/trần, giới hạn chạy thử, giới hạn upload, chính sách điểm mặc định, chế độ bảo trì (`admin-spec.md` §1) |
 | FR-ADM-02 | M | Xem nhật ký kiểm toán (lọc actor/hành động/đối tượng/thời gian) |
-| FR-ADM-03 | M | Thống kê: số user/lớp/submission theo ngày, độ sâu hàng đợi, độ trễ chấm trung bình |
+| FR-ADM-03 | M | Thống kê: số user/lớp/submission theo ngày, độ sâu hàng đợi, độ trễ chấm trung bình + p95, phân bố verdict, xuất CSV (`admin-spec.md` §2–3) |
+| FR-ADM-04 | S | Realtime: số kết nối WebSocket chấm bài, người dùng online theo vai trò, số worker (`admin-spec.md` §3) |
+| FR-ADM-05 | S | Job chấm lỗi: danh sách bài `failed`, chấm lại từng bài/hàng loạt có lý do, dọn hàng đợi chết (`admin-spec.md` §4) |
+| FR-ADM-06 | S | Thông báo hệ thống theo đối tượng (tất cả/vai trò/lớp) và chế độ bảo trì chặn thao tác mới (`admin-spec.md` §5) |
+| FR-ADM-07 | S | Xem và thu hồi phiên đăng nhập của user; xuất CSV nhật ký kiểm toán (`admin-spec.md` §6–7) |
 
 ---
 

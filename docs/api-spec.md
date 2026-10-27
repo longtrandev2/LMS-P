@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Phiên bản | 1.7 — 2026-10-27 (kỳ thi, đề nhiều mã, phiên làm bài — `exam-spec.md`; thêm lịch học/điểm danh/đơn xin nghỉ, sổ điểm 4 thành phần — `class-schedule-grades-spec.md`; câu hỏi đa loại — `assessment-spec.md`) |
+| Phiên bản | 1.8 — 2026-10-27 (quản trị & vận hành — `admin-spec.md`; kỳ thi, đề nhiều mã, phiên làm bài — `exam-spec.md`; thêm lịch học/điểm danh/đơn xin nghỉ, sổ điểm 4 thành phần — `class-schedule-grades-spec.md`; câu hỏi đa loại — `assessment-spec.md`) |
 | Base URL | `/api/v1` (Swagger UI `/swagger-ui/index.html`, OpenAPI `/v3/api-docs`) |
 | Nguồn FR | `srs.md` |
 
@@ -16,7 +16,7 @@
 ```json
 { "error": { "code": "ENROLLMENT_REQUIRED", "message": "Bạn không thuộc lớp này", "details": {} } }
 ```
-- **Mã lỗi nghiệp vụ** (tập trung ở core/exceptions): `UNAUTHENTICATED`, `FORBIDDEN`, `ENROLLMENT_REQUIRED`, `ATTEMPT_EXCEEDED`, `DEADLINE_PASSED`, `EXAM_NOT_OPEN`, `SESSION_ENDED`, `IDEMPOTENCY_CONFLICT`, `CONFLICT` (xung đột trạng thái chung: đơn xin nghỉ trùng buổi, chấm lại khi đang chấm, bài chưa mở…), `VALIDATION_ERROR`, `NOT_FOUND`, `RATE_LIMITED`, `INTERNAL`, `CLASS_FULL` (hết chỗ), `ENROLL_CLOSED` (ngoài khung giờ ghi danh), `ALREADY_ENROLLED` (đã ghi danh lớp), `ENROLLMENT_INVALID` (mã SV/email không hợp lệ khi thêm tay), `PROBLEM_CHECK_FAILED` (lời giải mẫu không AC trên phiên bản sắp ghim), `PROBLEM_UNVERIFIED` (câu lập trình chưa được kiểm tra đề; gửi lại với `confirm_unverified=true` để xác nhận), `NOT_ELIGIBLE` (403 — không đủ điều kiện dự thi cuối kỳ).
+- **Mã lỗi nghiệp vụ** (tập trung ở core/exceptions): `UNAUTHENTICATED`, `FORBIDDEN`, `ENROLLMENT_REQUIRED`, `ATTEMPT_EXCEEDED`, `DEADLINE_PASSED`, `EXAM_NOT_OPEN`, `SESSION_ENDED`, `IDEMPOTENCY_CONFLICT`, `CONFLICT` (xung đột trạng thái chung: đơn xin nghỉ trùng buổi, chấm lại khi đang chấm, bài chưa mở…), `VALIDATION_ERROR`, `NOT_FOUND`, `RATE_LIMITED`, `INTERNAL`, `CLASS_FULL` (hết chỗ), `ENROLL_CLOSED` (ngoài khung giờ ghi danh), `ALREADY_ENROLLED` (đã ghi danh lớp), `ENROLLMENT_INVALID` (mã SV/email không hợp lệ khi thêm tay), `PROBLEM_CHECK_FAILED` (lời giải mẫu không AC trên phiên bản sắp ghim), `PROBLEM_UNVERIFIED` (câu lập trình chưa được kiểm tra đề; gửi lại với `confirm_unverified=true` để xác nhận), `NOT_ELIGIBLE` (403 — không đủ điều kiện dự thi cuối kỳ), `MAINTENANCE` (503 — hệ thống đang bảo trì, `admin-spec.md` §5.2).
 - **HTTP语义:** 200/201 thành công; 202 nộp bài bất đồng bộ; 400 validate; 401/403 auth; 404; 409 xung đột nghiệp vụ; 423 khóa (đang chấm); 429 rate limit.
 - **Idempotency:** POST nộp bài kèm header `Idempotency-Key: <uuid>`; trùng key → trả submission hoặc lượt quiz gốc (200), không tăng số lượt.
 
@@ -193,16 +193,26 @@ Quy tắc tính ở `class-schedule-grades-spec.md` §5. Thành phần: `attenda
 
 **GradeRow**: `{student_id, student_code, full_name, components: {attendance|assignment|midterm|final: {score, system_score, override: {score, reason, updated_at}|null, status: "final"|"provisional"|"missing"}}, attendance: {total, present, late, excused, absent, unmarked, max_absences}, eligible, total10, total4, letter, passed, status: "final"|"provisional"}`. `total10/total4/letter` là `null` khi chưa đủ 4 thành phần.
 
-## 9. Notifications / Admin (M9/M10)
+## 9. Notifications / Admin (M9/M10) — `admin-spec.md`
 
 | Method | Path | Role | Mô tả |
 |---|---|---|---|
 | GET | /notifications | auth | List (filter unread) |
 | PATCH | /notifications/{id}/read · /notifications/read-all | auth | Đánh dấu đã đọc |
-| GET/PUT | /admin/settings | adm | Cấu hình hệ thống (audit) |
+| GET/PUT | /admin/settings | adm | Cấu hình hệ thống; PUT `{values, reason?}` kiểm tra toàn bộ rồi ghi, audit `settings.update` |
+| GET | /settings/public | auth | Giới hạn cho form + trạng thái bảo trì |
 | GET | /admin/audit-logs | adm | Lọc actor/action/entity/time, phân trang |
-| GET | /admin/stats | adm | users/classes/submissions theo ngày, queue depth, avg grading latency |
-| GET | /health · /health/queue | pub | Health check DB+AMQP · queue depth |
+| GET | /admin/audit-logs/export | adm | CSV theo bộ lọc (≤ 50 000 dòng) |
+| GET | /admin/stats?days=7\|30 | adm | Tổng quan, theo ngày, verdict, top lớp (`admin-spec.md` §2) |
+| GET | /admin/stats/export?days= | adm | CSV số liệu theo ngày |
+| GET | /admin/realtime | adm | Kết nối WebSocket, online theo vai trò, worker |
+| GET | /admin/grading/failed | adm | Bài code `failed`, phân trang |
+| POST | /admin/grading/regrade | adm | `{submission_ids?, all_failed?, reason}` → `{queued, skipped}` |
+| POST | /admin/queues/{name}/purge | adm | Chỉ hàng `.dead`; `{reason}` → `{purged}` |
+| GET/POST | /admin/announcements | adm | Lịch sử / gửi thông báo hệ thống `{title, body, audience, role?, class_id?}` → `{id, recipient_count}` |
+| GET | /admin/users/{id}/sessions | adm | Phiên đăng nhập còn hiệu lực |
+| DELETE | /admin/users/{id}/sessions[/{family}] | adm | Thu hồi tất cả / một phiên |
+| GET | /health · /health/queue | pub | Health check DB+AMQP · độ sâu + consumer từng hàng |
 
 ## 11. Lịch học, điểm danh, đơn xin nghỉ (M11)
 
