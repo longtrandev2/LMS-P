@@ -159,7 +159,7 @@ Chi tiết nghiệp vụ: `exam-spec.md`. Kỳ thi là bài tập `category=midt
 | GET | /assignments/{id}/sessions | lec | Giám sát `{summary, items}` (`exam-spec.md` §7) |
 | GET | /me/attempt-sessions?assignment_id= | student | Mảng `AttemptSessionSummary` của tôi, mới nhất trước |
 | GET | /attempt-sessions/{id} | owner | `AttemptSessionView`; phiên đã nộp: `sections`, `answers` rỗng |
-| PUT | /attempt-sessions/{id}/answers | owner | Tự lưu `{answers: [{question_id, answer?, code?: {language, source_code}}]}` (≤ 50) → `SessionClock`; hết giờ → 409 `SESSION_ENDED` |
+| PUT | /attempt-sessions/{id}/answers | owner | Tự lưu `{answers: [{question_id, answer?, code?: {language, source_code}}]}` (≤ 50; `answer` là `Answer` §6 đầy đủ, gồm cả `question_id`; không gửi cả `answer` lẫn `code`) → `SessionClock`; hết giờ → 409 `SESSION_ENDED` |
 | POST | /attempt-sessions/{id}/events | owner | `{type: heartbeat, focus_lost, focus_back, offline, online; detail?}` → `SessionClock` kèm `focus_lost_count`; 60/phút |
 | POST | /attempt-sessions/{id}/finish | owner | `{answers?}` → `AttemptSessionSummary` (kèm `attempt`); idempotent; quá ân hạn → 409 `SESSION_ENDED` |
 | POST | /attempt-sessions/{id}/questions/{qid}/run | owner | Chạy thử code trong phiên như §6 `.../run`, chỉ khi `in_progress` |

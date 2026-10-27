@@ -152,7 +152,7 @@ Trạng thái chấm suy ra từ các submission của lượt (`assignment_atte
 `GET /attempt-sessions/{id}` (chủ phiên):
 
 - Trả `AttemptSessionView`: `{session, sections: [{title, questions: [...]}], answers: [...]}`. Câu hỏi theo "đề cho sinh viên" (`api-spec.md` §6), đúng thứ tự `question_order`, có trộn lựa chọn.
-- Đề **chỉ** đọc được qua phiên. `GET /assignments/{id}` của bài giao theo phiên chỉ trả metadata cho sinh viên: số câu, tổng điểm, thời lượng, quy chế, và các phiên của tôi (BR9).
+- Đề **chỉ** đọc được qua phiên. `GET /assignments/{id}` của bài giao theo phiên chỉ trả metadata cho sinh viên: số câu, tổng điểm, thời lượng, quy chế (BR9). Metadata đọc được cả trước `available_from`, để trang thông tin hiện "Sắp mở".
 - Sau khi nộp: phiên vẫn đọc được trạng thái; đề và câu trả lời chỉ xem qua trang xem lại theo `review_mode`.
 
 ### 5.4 Tự lưu
