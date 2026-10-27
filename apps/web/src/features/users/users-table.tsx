@@ -1,4 +1,4 @@
-import { Eye, MoreHorizontal, Pencil, KeyRound, Lock, LockOpen } from "lucide-react";
+import { Eye, MoreHorizontal, Pencil, KeyRound, Lock, LockOpen, MonitorSmartphone } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,6 +24,7 @@ import { formatRelativeTime } from "@/features/notifications/relative-time";
 import { UserIdentity } from "@/features/users/user-avatar";
 import { UserDetailsDialog } from "@/features/users/user-details-dialog";
 import { UserLockDialog } from "@/features/users/user-lock-dialog";
+import { UserSessionsSheet } from "@/features/users/user-sessions-sheet";
 
 interface UsersTableProps {
   users: User[];
@@ -40,6 +41,7 @@ function LastLogin({ value }: { value?: string | null }) {
 export function UsersTable({ users, onEdit, onResetPassword, onChanged }: UsersTableProps) {
   const [lockingUser, setLockingUser] = useState<User | null>(null);
   const [detailsUser, setDetailsUser] = useState<User | null>(null);
+  const [sessionsUser, setSessionsUser] = useState<User | null>(null);
 
   return (
     <>
@@ -94,6 +96,9 @@ export function UsersTable({ users, onEdit, onResetPassword, onChanged }: UsersT
                   <DropdownMenuItem onClick={() => onResetPassword(user)}>
                     <KeyRound aria-hidden /> Đặt lại mật khẩu
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setSessionsUser(user)}>
+                    <MonitorSmartphone aria-hidden /> Phiên đăng nhập
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={() => setLockingUser(user)}
@@ -118,6 +123,7 @@ export function UsersTable({ users, onEdit, onResetPassword, onChanged }: UsersT
     </Table>
     <UserLockDialog user={lockingUser} onOpenChange={(open) => !open && setLockingUser(null)} onDone={onChanged} />
     <UserDetailsDialog user={detailsUser} onOpenChange={(open) => !open && setDetailsUser(null)} />
+    <UserSessionsSheet user={sessionsUser} onOpenChange={(open) => !open && setSessionsUser(null)} />
     </>
   );
 }

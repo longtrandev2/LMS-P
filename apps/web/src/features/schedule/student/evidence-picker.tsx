@@ -2,23 +2,26 @@ import { useRef } from "react";
 import { FileText, Paperclip, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatBytes } from "@/features/materials/format";
+import { mbToBytes } from "@/lib/use-public-settings";
 
 export const EVIDENCE_ACCEPT = ".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx";
 const EXTENSIONS = ["pdf", "jpg", "jpeg", "png", "webp", "doc", "docx"];
-export const EVIDENCE_MAX_BYTES = 5 * 1024 * 1024;
+/** Mặc định khi chưa tải được cấu hình — `leave_evidence_max_mb` (admin-spec §1). */
+export const EVIDENCE_DEFAULT_MAX_MB = 5;
 
-/** Kiểm tra tệp minh chứng ở client (spec §4): đúng định dạng, ≤ 5 MB. Trả lỗi tiếng Việt hoặc null. */
-export function validateEvidence(file: File): string | null {
+/** Kiểm tra tệp minh chứng ở client (spec §4): đúng định dạng, ≤ `maxMb` theo cấu hình. Trả lỗi tiếng Việt hoặc null. */
+export function validateEvidence(file: File, maxMb: number): string | null {
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
   if (!EXTENSIONS.includes(ext)) return "Chỉ nhận tệp PDF, JPG, PNG, WEBP, DOC hoặc DOCX.";
-  if (file.size > EVIDENCE_MAX_BYTES) return `Tệp ${formatBytes(file.size)} vượt quá giới hạn 5 MB.`;
+  if (file.size > mbToBytes(maxMb)) return `Tệp ${formatBytes(file.size)} vượt quá giới hạn ${maxMb} MB.`;
   if (file.size === 0) return "Tệp rỗng, vui lòng chọn tệp khác.";
   return null;
 }
 
 /** Chọn đúng một tệp minh chứng; hiện tên + dung lượng, cho bỏ chọn. */
-export function EvidencePicker({ id, file, error, onChange, disabled }: {
+export function EvidencePicker({ id, file, error, onChange, disabled, maxMb }: {
   id: string;
+  maxMb: number;
   file: File | null;
   error?: string | null;
   onChange: (file: File | null) => void;
@@ -47,7 +50,7 @@ export function EvidencePicker({ id, file, error, onChange, disabled }: {
         </Button>
       )}
       <p id={`${id}-hint`} className={error ? "text-xs text-destructive" : "text-xs text-muted-foreground"}>
-        {error ?? "Một tệp PDF, ảnh (JPG, PNG, WEBP) hoặc Word, tối đa 5 MB."}
+        {error ?? `Một tệp PDF, ảnh (JPG, PNG, WEBP) hoặc Word, tối đa ${maxMb} MB.`}
       </p>
     </div>
   );

@@ -1,11 +1,11 @@
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { LANGUAGES } from "@/lib/languages";
-import type { CheckerMode, ProgrammingLanguage } from "@/types/api";
+import type { CheckerMode } from "@/types/api";
 import { EditorSection, FieldMessage, useEditor } from "../editor-context";
-import { MEMORY_CHOICES, type ProgrammingDraft } from "../question-draft";
+import type { ProgrammingDraft } from "../question-draft";
+import { LanguageChecklist } from "./language-checklist";
+import { formatMs, memoryChoices } from "./programming-rules";
 
 export const CHECKERS: { id: CheckerMode; label: string; description: string }[] = [
   { id: "token", label: "Theo token", description: "So từng từ/số, bỏ qua khác biệt khoảng trắng và xuống dòng." },
@@ -15,42 +15,30 @@ export const CHECKERS: { id: CheckerMode; label: string; description: string }[]
 
 /** Ngôn ngữ, giới hạn thời gian/bộ nhớ, checker — docs/assessment-spec.md §4. */
 export function ProgrammingSettings() {
-  const { draft, update, errors } = useEditor();
+  const { draft, update, errors, rules } = useEditor();
   const p = draft.programming;
   const set = (patch: Partial<ProgrammingDraft>) => update((d) => ({ ...d, programming: { ...d.programming, ...patch } }));
-  function toggleLanguage(lang: ProgrammingLanguage, on: boolean) {
-    const allowed = LANGUAGES.map((item) => item.id).filter((id) => id === lang ? on : p.allowed_languages.includes(id));
-    set({ allowed_languages: allowed });
-  }
   const checker = CHECKERS.find((item) => item.id === p.checker_mode);
   return <EditorSection field="languages" title="Cấu hình chấm" description="Chương trình đọc stdin, ghi stdout. Java dùng class Main.">
-    <fieldset className="space-y-2">
-      <legend className="mb-2 text-sm font-medium">Ngôn ngữ cho phép</legend>
-      <div className="grid gap-2 sm:grid-cols-2">
-        {LANGUAGES.map((lang) => <label key={lang.id} htmlFor={`lang-${lang.id}`} className="flex h-10 cursor-pointer items-center gap-3 rounded-lg bg-secondary px-3 text-sm transition-colors duration-150 hover:bg-accent">
-          <Checkbox id={`lang-${lang.id}`} checked={p.allowed_languages.includes(lang.id)} onCheckedChange={(checked) => toggleLanguage(lang.id, checked === true)} />
-          <span className="font-medium">{lang.short}</span>
-          <span className="ml-auto truncate text-xs text-muted-foreground">{lang.label}</span>
-        </label>)}
-      </div>
-      <FieldMessage id="languages-message" error={errors.languages} />
-    </fieldset>
+    <LanguageChecklist />
     <div className="grid gap-x-6 gap-y-5 sm:grid-cols-2">
       <div className="space-y-2" data-field="time_limit">
         <Label htmlFor="time-limit">Giới hạn thời gian (ms)</Label>
         <Input id="time-limit" inputMode="numeric" value={p.time_limit_ms} aria-invalid={!!errors.time_limit} aria-describedby="time-limit-message"
           onChange={(event) => /^\d{0,5}$/.test(event.target.value) && set({ time_limit_ms: event.target.value })} className="font-mono" />
-        <FieldMessage id="time-limit-message" error={errors.time_limit} hint="100–10.000 ms. Java và Python được nhân hệ số ×2." />
+        <FieldMessage id="time-limit-message" error={errors.time_limit} hint={`100–${formatMs(rules.maxTimeMs)} ms (tối đa theo cấu hình). Java và Python được nhân hệ số ×2.`} />
       </div>
-      <div className="space-y-2">
+      <div className="space-y-2" data-field="memory_limit">
         <Label htmlFor="memory-limit">Giới hạn bộ nhớ</Label>
         <Select value={String(p.memory_limit_mb)} onValueChange={(value) => set({ memory_limit_mb: Number(value) })}>
-          <SelectTrigger id="memory-limit" className="w-full"><SelectValue /></SelectTrigger>
+          <SelectTrigger id="memory-limit" className="w-full" aria-invalid={!!errors.memory_limit} aria-describedby="memory-limit-message"><SelectValue /></SelectTrigger>
           <SelectContent>
-            {[...new Set([...MEMORY_CHOICES, p.memory_limit_mb])].sort((a, b) => a - b)
-              .map((mb) => <SelectItem key={mb} value={String(mb)}>{mb} MB</SelectItem>)}
+            {memoryChoices(rules, p.memory_limit_mb).map((mb) => <SelectItem key={mb} value={String(mb)} disabled={mb > rules.maxMemoryMb}>
+              {mb} MB{mb === rules.defaultMemoryMb ? " (mặc định)" : ""}
+            </SelectItem>)}
           </SelectContent>
         </Select>
+        <FieldMessage id="memory-limit-message" error={errors.memory_limit} hint={`Tối đa ${formatMs(rules.maxMemoryMb)} MB theo cấu hình hệ thống.`} />
       </div>
       <div className="space-y-2">
         <Label htmlFor="checker-mode">Cách so output</Label>
