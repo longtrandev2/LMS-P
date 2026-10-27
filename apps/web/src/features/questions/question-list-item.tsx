@@ -1,51 +1,43 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Eye, FolderOpen, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Eye, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { questionTypeLabel } from "@/lib/question-types";
-import type { QuestionDifficulty, QuestionSummary } from "@/types/api";
-import { TYPE_ICON } from "./editor/question-type-picker";
-import { DIFFICULTY_LABEL } from "./question-list-filters";
+import type { QuestionSummary } from "@/types/api";
+import { DIFFICULTY_LABEL, DIFFICULTY_VARIANT, plainExcerpt, TYPE_ICON } from "./question-labels";
 
-const difficultyVariant: Record<QuestionDifficulty, "success" | "warning" | "destructive"> = {
-  easy: "success",
-  medium: "warning",
-  hard: "destructive",
-};
-
-/** Bỏ ký hiệu Markdown phổ biến để hiện đoạn trích gọn. */
-const excerpt = (content: string) => content
-  .replace(/```[\s\S]*?```/g, " ").replace(/[#>*_`~]|\[\[(\d+)\]\]/g, (match, n?: string) => n ? `[${n}]` : "")
-  .replace(/\s+/g, " ").trim();
-
-/** Một hàng câu hỏi: trích nội dung + meta; hành động phụ trong menu `…`. */
-export function QuestionListItem({ item, position, canEdit, canDelete, onDelete }: {
-  item: QuestionSummary; position: number; canEdit: boolean; canDelete: boolean; onDelete: () => void;
+/**
+ * Một hàng câu hỏi (DESIGN.md §4 Danh sách): icon loại · nội dung rút gọn + meta xám · badge độ khó · menu `…`.
+ * Cả hàng bấm được (link phủ), menu nằm trên lớp phủ.
+ */
+export function QuestionListItem({ item, canEdit, canDelete, onDelete }: {
+  item: QuestionSummary; canEdit: boolean; canDelete: boolean; onDelete: () => void;
 }) {
   const navigate = useNavigate();
   const Icon = TYPE_ICON[item.type] ?? Pencil;
   const href = `/questions/${item.id}/edit`;
-  return <article className="flex items-start gap-3 border-b px-4 py-3 transition-colors duration-150 last:border-b-0 hover:bg-muted/40">
-    <span className="w-6 shrink-0 pt-0.5 text-right font-mono text-xs text-muted-foreground tabular-nums">{position}</span>
-    <div className="min-w-0 flex-1 space-y-1.5">
-      <h3 className="line-clamp-2 text-sm leading-6 font-medium break-words">
-        <Link to={href} className="rounded-sm outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring">
-          {excerpt(item.content) || "(Không có nội dung)"}
-        </Link>
-      </h3>
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-        <span className="inline-flex items-center gap-1.5 text-foreground"><Icon className="size-3.5 text-muted-foreground" aria-hidden />{questionTypeLabel(item.type)}</span>
-        <Badge variant={difficultyVariant[item.difficulty]}>{DIFFICULTY_LABEL[item.difficulty]}</Badge>
-        <span className="inline-flex min-w-0 items-center gap-1.5"><FolderOpen className="size-3.5 shrink-0" aria-hidden /><span className="truncate">{item.category_name}</span></span>
-        <span className="tabular-nums">Phiên bản {item.version_no}</span>
-      </div>
+  return <li className="group relative flex items-start gap-3 border-b px-3 py-3 transition-colors duration-150 hover:bg-secondary/60">
+    <Icon className="mt-0.5 size-4 shrink-0 text-muted-foreground group-hover:text-foreground" strokeWidth={1.75} aria-hidden />
+    <div className="min-w-0 flex-1 space-y-1">
+      <Link to={href} className="line-clamp-2 text-sm leading-5 font-medium break-words outline-none after:absolute after:inset-0 after:rounded-sm focus-visible:after:ring-2 focus-visible:after:ring-ring">
+        {plainExcerpt(item.content) || "(Không có nội dung)"}
+      </Link>
+      <p className="flex min-w-0 flex-wrap items-center gap-x-1.5 text-xs text-muted-foreground">
+        <span className="font-mono tabular-nums">#{item.id}</span><span aria-hidden>·</span>
+        <span>{questionTypeLabel(item.type)}</span><span aria-hidden>·</span>
+        <span className="max-w-56 truncate">{item.category_name}</span><span aria-hidden>·</span>
+        <span className="tabular-nums" title={`Phiên bản ${item.version_no}`}>v{item.version_no}</span>
+      </p>
     </div>
+    <Badge variant={DIFFICULTY_VARIANT[item.difficulty]} className="mt-0.5">{DIFFICULTY_LABEL[item.difficulty]}</Badge>
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon-sm" aria-label={`Thao tác với câu hỏi ${item.id}`}><MoreHorizontal aria-hidden /></Button>
+        <Button variant="ghost" size="icon-sm" className="relative z-10 -my-0.5 text-muted-foreground" aria-label={`Thao tác với câu hỏi #${item.id}`}>
+          <MoreHorizontal aria-hidden />
+        </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem onClick={() => navigate(href)}>
@@ -57,5 +49,5 @@ export function QuestionListItem({ item, position, canEdit, canDelete, onDelete 
         </> : null}
       </DropdownMenuContent>
     </DropdownMenu>
-  </article>;
+  </li>;
 }

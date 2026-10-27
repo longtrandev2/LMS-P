@@ -14,7 +14,7 @@ import { importFromFiles, importFromZip, type ImportResult } from "./test-import
 import { TestImportDialog } from "./test-import-dialog";
 
 /** Bộ test: bảng + thêm/sửa/xóa/đổi thứ tự + nhập file/zip. Test mới mặc định Ẩn. */
-export function TestsSection({ toolbar }: { toolbar?: React.ReactNode }) {
+export function TestsSection() {
   const { draft, update, errors } = useEditor();
   const filesRef = useRef<HTMLInputElement>(null);
   const zipRef = useRef<HTMLInputElement>(null);
@@ -49,13 +49,12 @@ export function TestsSection({ toolbar }: { toolbar?: React.ReactNode }) {
       onEdit={(index) => setEditing({ index, test: tests[index] })}
       onMove={(index, delta) => setTests((rows) => moveItem(rows, index, delta))}
       onDelete={(index) => setTests((rows) => rows.filter((_, i) => i !== index))} />
-      : <EmptyState compact icon={FlaskConical} title="Chưa có test" className="rounded-lg border border-dashed"
+      : <EmptyState compact icon={FlaskConical} title="Chưa có test" className="rounded-lg bg-secondary/50"
         description="Thêm từng test, hoặc tải file .in/.out (hay một file zip) để nhập hàng loạt." />}
-    <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground tabular-nums">
+    <div className="flex flex-wrap items-center justify-between gap-2 px-1 text-xs text-muted-foreground tabular-nums">
       <span>{tests.length}/{LIMITS.tests.max} test · {tests.filter((t) => t.is_public).length} mẫu</span>
       <span className={cn(total > LIMITS.totalTestBytes && "font-medium text-destructive")}>{formatBytes(total)} / {formatBytes(LIMITS.totalTestBytes)}</span>
     </div>
-    {toolbar}
     <FieldMessage id="tests-message" error={errors.tests} />
     {editing ? <TestCaseDialog test={editing.test} index={editing.index} onClose={() => setEditing(null)} onSave={(test) => {
       const index = editing.index;

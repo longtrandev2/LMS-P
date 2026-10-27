@@ -1,9 +1,8 @@
-import { useState } from "react";
-import { Download } from "lucide-react";
+import { useRef, useState } from "react";
+import { Download, FileSpreadsheet, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { api } from "@/lib/api";
@@ -19,6 +18,8 @@ function downloadTemplate() {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+const code = "rounded bg-background px-1 font-mono text-[11px] text-foreground";
+
 /** Nhập câu hỏi từ CSV vào danh mục chọn trong dialog (mặc định “Chưa phân loại”). */
 export function QuestionCsvImportDialog({ bankId, categories, defaultCategoryId, onOpenChange, onImported }: {
   bankId: number; categories: QuestionCategory[]; defaultCategoryId: number | null;
@@ -30,11 +31,13 @@ export function QuestionCsvImportDialog({ bankId, categories, defaultCategoryId,
   const [preview, setPreview] = useState<QuestionCsvPreview | null>(null);
   const [importErrors, setImportErrors] = useState(new Map<number, string>());
   const [busy, setBusy] = useState(false);
+  const [fileName, setFileName] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
   const url = `/question-banks/${bankId}/categories/${categoryId}/questions/import`;
 
   async function read(file?: File) {
     if (!file || categoryId == null) return;
-    setBusy(true); setPreview(null); setImportErrors(new Map());
+    setBusy(true); setPreview(null); setImportErrors(new Map()); setFileName(file.name);
     try {
       const parsed = parseQuestionCsv(await file.text());
       const checked = await api.post<QuestionCsvPreview>(`${url}/preview`, { rows: parsed });
@@ -56,10 +59,10 @@ export function QuestionCsvImportDialog({ bankId, categories, defaultCategoryId,
   }
 
   return <Dialog open onOpenChange={onOpenChange}>
-    <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-3xl">
+    <DialogContent className="max-h-[90dvh] gap-5 overflow-y-auto sm:max-w-2xl">
       <DialogHeader>
         <DialogTitle>Nhập câu hỏi từ CSV</DialogTitle>
-        <DialogDescription>Hỗ trợ Một đáp án, Nhiều đáp án, Đúng/Sai và Trả lời ngắn. Bản xem trước kiểm tra lỗi và câu trùng trước khi lưu.</DialogDescription>
+        <DialogDescription>Hỗ trợ Một đáp án, Nhiều đáp án, Đúng/Sai và Trả lời ngắn. Hệ thống kiểm tra lỗi và câu trùng trước khi lưu.</DialogDescription>
       </DialogHeader>
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
@@ -67,26 +70,33 @@ export function QuestionCsvImportDialog({ bankId, categories, defaultCategoryId,
           <Select value={categoryId != null ? String(categoryId) : ""} disabled={busy || !categories.length}
             onValueChange={(value) => { setCategoryId(Number(value)); setPreview(null); }}>
             <SelectTrigger id="csv-category" className="w-full"><SelectValue placeholder="Chọn danh mục" /></SelectTrigger>
-            <SelectContent position="popper">{categories.map((item) => <SelectItem key={item.id} value={String(item.id)}>{item.name}</SelectItem>)}</SelectContent>
+            <SelectContent>{categories.map((item) => <SelectItem key={item.id} value={String(item.id)}>{item.name}</SelectItem>)}</SelectContent>
           </Select>
         </div>
         <div className="space-y-2">
-          <div className="flex items-center justify-between gap-2"><Label htmlFor="question-csv">File CSV</Label>
-            <Button type="button" variant="link" size="xs" className="h-auto px-0" onClick={downloadTemplate}><Download aria-hidden /> Tải file mẫu</Button></div>
-          <Input id="question-csv" type="file" accept=".csv,text/csv" disabled={busy || categoryId == null}
+          <p className="text-sm leading-none font-medium">File CSV</p>
+          <input ref={fileRef} type="file" accept=".csv,text/csv" className="sr-only" tabIndex={-1} aria-hidden disabled={busy || categoryId == null}
             onChange={(event) => { void read(event.currentTarget.files?.[0]); event.currentTarget.value = ""; }} />
+          <div className="flex items-center gap-2">
+            <Button type="button" variant="outline" disabled={busy || categoryId == null} onClick={() => fileRef.current?.click()}>
+              {busy ? <Loader2 className="animate-spin" aria-hidden /> : <FileSpreadsheet aria-hidden />} Chọn file CSV</Button>
+            <span className="min-w-0 truncate text-sm text-muted-foreground">{fileName ?? "Chưa chọn file"}</span>
+          </div>
         </div>
       </div>
-      <ul className="list-disc space-y-1 pl-5 text-xs leading-5 text-muted-foreground">
-        <li>Cột bắt buộc: <code className="font-mono">content</code>, <code className="font-mono">correct_option</code>. Tùy chọn: <code className="font-mono">type</code> (mặc định mcq), <code className="font-mono">difficulty</code>, <code className="font-mono">option_a…option_h</code>, <code className="font-mono">explanation</code>.</li>
-        <li><code className="font-mono">correct_option</code>: <code className="font-mono">B</code> (một đáp án, đúng/sai), <code className="font-mono">A;C</code> (nhiều đáp án), hoặc <code className="font-mono">TCP|Transmission Control Protocol</code> (trả lời ngắn).</li>
-        <li>Phân cách bằng dấu phẩy hoặc chấm phẩy đều được; nên lưu UTF-8.</li>
-      </ul>
-      {preview ? <QuestionCsvPreviewTable preview={preview} rows={rows} importErrors={importErrors} /> : busy ? <p role="status" className="text-sm text-muted-foreground">Đang đọc file…</p> : null}
+      <div className="space-y-2 rounded-lg bg-secondary px-4 py-3 text-xs leading-5 text-muted-foreground">
+        <div className="flex items-center justify-between gap-2">
+          <p className="font-medium text-foreground">Định dạng file</p>
+          <Button type="button" variant="link" size="xs" className="h-auto px-0" onClick={downloadTemplate}><Download aria-hidden /> Tải file mẫu</Button>
+        </div>
+        <p>Cột bắt buộc <code className={code}>content</code>, <code className={code}>correct_option</code>. Tùy chọn <code className={code}>type</code> (mặc định mcq), <code className={code}>difficulty</code>, <code className={code}>option_a…option_h</code>, <code className={code}>explanation</code>.</p>
+        <p><code className={code}>correct_option</code>: <code className={code}>B</code> (một đáp án, đúng/sai), <code className={code}>A;C</code> (nhiều đáp án) hoặc <code className={code}>TCP|Transmission Control Protocol</code> (trả lời ngắn). Phân cách bằng dấu phẩy hoặc chấm phẩy; nên lưu UTF-8.</p>
+      </div>
+      {preview ? <QuestionCsvPreviewTable preview={preview} rows={rows} importErrors={importErrors} /> : null}
       {importErrors.size ? <p className="text-sm text-destructive">Có {importErrors.size} dòng lỗi khi lưu; các dòng hợp lệ đã được thêm.</p> : null}
       <DialogFooter>
-        <Button variant="ghost" onClick={() => onOpenChange(false)}>Đóng</Button>
-        <Button onClick={() => void importRows()} disabled={busy || !preview?.valid_rows || importErrors.size > 0}>{busy ? "Đang xử lý…" : `Nhập ${preview?.valid_rows ?? 0} câu hỏi`}</Button>
+        <Button variant="outline" onClick={() => onOpenChange(false)}>Đóng</Button>
+        <Button onClick={() => void importRows()} disabled={busy || !preview?.valid_rows || importErrors.size > 0}>{busy && preview ? "Đang xử lý…" : `Nhập ${preview?.valid_rows ?? 0} câu hỏi`}</Button>
       </DialogFooter>
     </DialogContent>
   </Dialog>;

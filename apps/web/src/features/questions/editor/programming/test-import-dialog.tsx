@@ -36,7 +36,7 @@ export function TestImportDialog({ result, existing, onApply, onClose }: {
           <AlertTriangle aria-hidden />
           <AlertDescription><ul className="space-y-1 text-xs">{result.problems.map((problem) => <li key={problem}>{problem}</li>)}</ul></AlertDescription>
         </Alert> : null}
-        {result.pairs.length ? <div className="overflow-hidden rounded-lg border">
+        {result.pairs.length ? <div>
           <Table>
             <TableHeader><TableRow><TableHead className="w-10">#</TableHead><TableHead>Tên</TableHead><TableHead className="text-right">Input</TableHead><TableHead className="text-right">Output</TableHead><TableHead>Trạng thái</TableHead></TableRow></TableHeader>
             <TableBody>

@@ -43,7 +43,7 @@ export function SolutionEditor() {
         <Label htmlFor="solution-language">Ngôn ngữ lời giải</Label>
         <Select value={p.solution_language ?? (p.solution_code.trim() ? "" : language)} onValueChange={(value) => set({ solution_language: value as ProgrammingLanguage })}>
           <SelectTrigger id="solution-language" className="w-full" aria-invalid={!!errors.solution_language}><SelectValue placeholder="Chọn ngôn ngữ" /></SelectTrigger>
-          <SelectContent position="popper">
+          <SelectContent>
             {LANGUAGES.map((lang) => <SelectItem key={lang.id} value={lang.id} disabled={!p.allowed_languages.includes(lang.id)}>{lang.label}</SelectItem>)}
           </SelectContent>
         </Select>

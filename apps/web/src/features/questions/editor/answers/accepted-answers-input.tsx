@@ -26,9 +26,9 @@ export function AcceptedAnswersInput({ id, label, values, onChange, caseSensitiv
         Phân biệt hoa thường
       </label>
     </div>
-    <div className={cn("flex min-h-9 flex-wrap items-center gap-1.5 rounded-md border bg-card px-2 py-1 transition-[border-color,box-shadow] duration-150 focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/40 dark:bg-input/20",
-      error ? "border-destructive" : "border-input")}>
-      {values.map((value) => <span key={value} className="inline-flex max-w-full items-center gap-1 rounded-md border bg-muted px-2 py-0.5 font-mono text-xs">
+    <div className={cn("flex min-h-9 flex-wrap items-center gap-1.5 rounded-md border bg-secondary px-1.5 py-1 transition-[background-color,border-color,box-shadow] duration-150 hover:bg-accent focus-within:border-input focus-within:bg-background focus-within:ring-2 focus-within:ring-ring/50 focus-within:hover:bg-background",
+      error ? "border-destructive" : "border-transparent")}>
+      {values.map((value) => <span key={value} className="inline-flex h-6 max-w-full items-center gap-1 rounded-md bg-background px-2 font-mono text-xs shadow-sm dark:bg-accent">
         <span className="truncate">{value}</span>
         <button type="button" className="rounded-sm text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
           aria-label={`Bỏ đáp án ${value}`} onClick={() => onChange(values.filter((item) => item !== value))}><X className="size-3" aria-hidden /></button>

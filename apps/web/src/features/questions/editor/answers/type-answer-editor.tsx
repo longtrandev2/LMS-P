@@ -26,7 +26,8 @@ export function TypeAnswerEditor({ suggestVerify }: { suggestVerify: boolean }) 
       <ProgrammingSettings />
       <StarterCodesEditor />
       <SolutionEditor />
-      <TestsSection toolbar={<SolutionRunsPanel suggestVerify={suggestVerify} />} />
+      <TestsSection />
+      <SolutionRunsPanel suggestVerify={suggestVerify} />
     </>;
   }
 }

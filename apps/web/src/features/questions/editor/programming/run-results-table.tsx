@@ -1,5 +1,4 @@
 import { VerdictBadge } from "@/components/verdict-badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { GradingVerdict } from "@/types/api";
 
 export interface RunRow {
@@ -9,41 +8,36 @@ export interface RunRow {
 
 function Block({ label, text }: { label: string; text?: string | null }) {
   return <div className="min-w-0 space-y-1">
-    <p className="text-[11px] font-medium text-muted-foreground">{label}</p>
-    <pre className="max-h-48 overflow-auto rounded-md border bg-muted/40 p-2 font-mono text-xs leading-4 whitespace-pre-wrap break-all">
+    <p className="text-[11px] text-muted-foreground">{label}</p>
+    <pre className="max-h-48 overflow-auto rounded-md bg-secondary px-2.5 py-2 font-mono text-xs leading-4 whitespace-pre-wrap break-all">
       {text == null ? <span className="text-muted-foreground italic">không có</span> : text || <span className="text-muted-foreground italic">(rỗng)</span>}
     </pre>
   </div>;
 }
 
-/** Kết quả chạy từng test: verdict, thời gian; test sai mở xem expected và output cạnh nhau. */
+/** Kết quả chạy từng test dạng danh sách hàng: Test #n · verdict · thời gian; test sai mở so sánh output. */
 export function RunResultsTable({ rows }: { rows: RunRow[] }) {
-  return <div className="overflow-hidden rounded-lg border">
-    <Table>
-      <TableHeader><TableRow>
-        <TableHead className="w-12">Test</TableHead><TableHead className="w-44">Kết quả</TableHead>
-        <TableHead className="w-24 text-right">Thời gian</TableHead><TableHead>Chi tiết</TableHead>
-      </TableRow></TableHeader>
-      <TableBody>
-        {rows.map((row) => {
-          const ok = row.verdict === "AC" || row.verdict === "OK";
-          return <TableRow key={row.position} className="align-top">
-            <TableCell className="font-mono text-xs tabular-nums">#{row.position}</TableCell>
-            <TableCell><VerdictBadge verdict={row.verdict} /></TableCell>
-            <TableCell className="text-right font-mono text-xs tabular-nums">{row.time_ms != null ? `${row.time_ms} ms` : "—"}</TableCell>
-            <TableCell className="whitespace-normal">
-              {ok ? <span className="text-xs text-muted-foreground">—</span> : <details className="group">
-                <summary className="cursor-pointer rounded text-xs font-medium outline-none select-none focus-visible:ring-2 focus-visible:ring-ring">So sánh output</summary>
-                <div className="mt-2 grid gap-2 md:grid-cols-2">
-                  {row.input != null ? <div className="md:col-span-2"><Block label="Input" text={row.input} /></div> : null}
-                  <Block label="Output mong đợi" text={row.expected} />
-                  <Block label="Output của lời giải" text={row.output} />
-                </div>
-              </details>}
-            </TableCell>
-          </TableRow>;
-        })}
-      </TableBody>
-    </Table>
-  </div>;
+  return <ol aria-label="Kết quả từng test" className="border-t">
+    {rows.map((row) => {
+      const ok = row.verdict === "AC" || row.verdict === "OK";
+      const head = <>
+        <span className="w-16 shrink-0 text-sm">Test {row.position}</span>
+        <VerdictBadge verdict={row.verdict} />
+        <span className="ml-auto font-mono text-xs text-muted-foreground tabular-nums">{row.time_ms != null ? `${row.time_ms} ms` : "—"}</span>
+      </>;
+      return <li key={row.position} className="border-b">
+        {ok ? <div className="flex items-center gap-3 px-1 py-2.5">{head}<span className="w-28" aria-hidden /></div> : <details className="group">
+          <summary className="flex cursor-pointer list-none items-center gap-3 rounded-md px-1 py-2.5 outline-none select-none hover:bg-secondary/60 focus-visible:ring-2 focus-visible:ring-ring">
+            {head}
+            <span className="w-28 text-right text-xs font-medium text-muted-foreground group-open:text-foreground">So sánh output</span>
+          </summary>
+          <div className="grid gap-3 px-1 pb-3 md:grid-cols-2">
+            {row.input != null ? <div className="md:col-span-2"><Block label="Input" text={row.input} /></div> : null}
+            <Block label="Output mong đợi" text={row.expected} />
+            <Block label="Output của lời giải" text={row.output} />
+          </div>
+        </details>}
+      </li>;
+    })}
+  </ol>;
 }
