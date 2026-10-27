@@ -132,6 +132,12 @@ Web hiện banner vàng trên mọi trang khi bảo trì đang bật. Trạng th
 
 Bấm thông báo dẫn tới trang của bài tương ứng. Thông báo hệ thống không có liên kết.
 
+Chi tiết vận hành:
+- Scheduler chạy theo cron `lms.notifications.exam-cron` (mặc định mỗi phút).
+- `grade.released` chỉ gửi khi bài đã đóng ít nhất 1 phút. Khoảng này để scheduler kịp tự nộp các phiên còn dở, nhờ đó những sinh viên đó cũng được tính là đã nộp.
+- Kỳ thi xuất bản khi đã vào khung 30 phút trước giờ mở thì gửi cả `exam.published` lẫn `exam.upcoming`.
+- Đánh dấu "đã gửi" bằng câu lệnh cập nhật có điều kiện, nên mỗi thông báo chỉ gửi một lần.
+
 ## 9. Màn hình (web)
 
 | Route | Nội dung |
