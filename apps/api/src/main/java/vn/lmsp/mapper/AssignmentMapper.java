@@ -12,15 +12,21 @@ import vn.lmsp.model.AssignmentQuestion;
 
 @Component
 public class AssignmentMapper {
+    /** Số câu/tổng điểm tính từ danh sách link (bài thường: mọi câu của bài). */
     public AssignmentSummary toSummary(Assignment assignment, List<AssignmentQuestion> questions) {
         BigDecimal points = questions.stream().map(AssignmentQuestion::getPoints)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+        return toSummary(assignment, questions.size(), points);
+    }
+
+    /** `questionCount`/`points` mô tả MỘT đề (exam-spec.md §3.4: mọi đề cùng tổng điểm). */
+    public AssignmentSummary toSummary(Assignment assignment, int questionCount, BigDecimal points) {
         return new AssignmentSummary(assignment.getId(), assignment.getClassId(), assignment.getTitle(),
                 assignment.getDescription(), assignment.getCategory(), assignment.getAvailableFrom(),
                 assignment.getDueAt(), assignment.isAllowLate(), assignment.getLateDueAt(),
                 assignment.getLatePenaltyPercent(), assignment.getMaxAttempts(), assignment.getScorePolicy(),
                 assignment.getReviewMode(), assignment.isReviewShowsAnswers(), assignment.isShuffleQuestions(),
-                assignment.isShuffleOptions(), assignment.isPublished(), questions.size(), points,
+                assignment.isShuffleOptions(), assignment.isPublished(), questionCount, points,
                 assignment.getCreatedAt(), assignment.getUpdatedAt(), assignment.getTimeLimitMinutes(),
                 assignment.getPaperMode(), assignment.getVariantCount(), assignment.getRulesText(),
                 assignment.isSessionBased() ? "session" : "standard");
@@ -28,6 +34,11 @@ public class AssignmentMapper {
 
     public AssignmentDetails toDetails(AssignmentSummary summary, List<AssignmentQuestionView> questions) {
         return new AssignmentDetails(summary, questions);
+    }
+
+    public AssignmentDetails toDetails(AssignmentSummary summary, List<AssignmentQuestionView> questions,
+            List<SectionView> sections, List<DrawRuleView> rules, List<PlacementView> placements) {
+        return new AssignmentDetails(summary, questions, sections, rules, placements);
     }
 
     public Map<String, Object> toAuditValue(Assignment assignment) {
@@ -44,6 +55,12 @@ public class AssignmentMapper {
         value.put("review_shows_answers", assignment.isReviewShowsAnswers());
         value.put("shuffle_questions", assignment.isShuffleQuestions());
         value.put("shuffle_options", assignment.isShuffleOptions());
+        value.put("max_attempts", assignment.getMaxAttempts());
+        value.put("score_policy", assignment.getScorePolicy());
+        value.put("time_limit_minutes", assignment.getTimeLimitMinutes());
+        value.put("paper_mode", assignment.getPaperMode());
+        value.put("variant_count", assignment.getVariantCount());
+        value.put("rules_text", assignment.getRulesText());
         value.put("is_published", assignment.isPublished());
         return value;
     }

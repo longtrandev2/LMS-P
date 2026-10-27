@@ -33,7 +33,7 @@ class AssignmentPublishServiceTest {
     @BeforeEach void setup() {
         var snapshots = new QuestionVersionService(versions, mock(QuestionReadService.class), new ObjectMapper());
         service = new AssignmentPublishService(access, links, questions, versions, mock(QuestionBankService.class), snapshots,
-                new ProgrammingProblemValidator(), checks, mock(AssignmentReadService.class), audit);
+                new ProgrammingProblemValidator(), checks, mock(AssignmentReadService.class), audit, mock(PaperPublisher.class));
         when(access.lecturerAssignment(50L, 7L, false, true)).thenReturn(assignment);
         when(links.findAllByAssignment_IdOrderByPositionAscIdAsc(50L)).thenReturn(List.of(link));
         when(questions.findByIdAndDeletedFalse(100L)).thenReturn(Optional.of(question));
