@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.util.*;
 import org.junit.jupiter.api.Test;
+import org.springframework.context.ApplicationEventPublisher;
 import org.mockito.ArgumentCaptor;
 import vn.lmsp.common.LmsException;
 import vn.lmsp.enums.PaperMode;
@@ -37,7 +38,8 @@ class ExamPublishTest {
         var planner = new PaperPlanner(new BlueprintLoader(sections, links, rules), new PoolResolver(questions));
         var publisher = new PaperPublisher(planner, links, questions, new PaperStore(papers, items));
         service = new AssignmentPublishService(access, links, questions, versions, mock(QuestionBankService.class), snapshots,
-                new ProgrammingProblemValidator(), checks, mock(AssignmentReadService.class), mock(AuditService.class), publisher);
+                new ProgrammingProblemValidator(), checks, mock(AssignmentReadService.class), mock(AuditService.class), publisher,
+                mock(ApplicationEventPublisher.class));
         when(questions.findAllById(any())).thenAnswer(call -> {
             Collection<Long> ids = call.getArgument(0);
             return ids.stream().map(id -> question(id, types.getOrDefault(id, QuestionType.mcq))).toList();

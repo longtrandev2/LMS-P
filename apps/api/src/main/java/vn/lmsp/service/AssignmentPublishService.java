@@ -2,6 +2,7 @@ package vn.lmsp.service;
 
 import java.util.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +31,7 @@ public class AssignmentPublishService {
     private final AssignmentReadService reader;
     private final AuditService audit;
     private final PaperPublisher paperPublisher;
+    private final ApplicationEventPublisher events;
 
     @Transactional
     public AssignmentDetails publish(Long id, Long actorId, boolean admin, boolean confirmUnverified) {
@@ -72,6 +74,7 @@ public class AssignmentPublishService {
                 Map.of("question_ids", unverified));
         audit.record(actorId, "assignment.publish", "assignment", id, Map.of("is_published", false),
                 Map.of("is_published", true, "question_count", rows.size(), "paper_mode", item.getPaperMode().name()));
+        events.publishEvent(new AssignmentPublishedEvent(id)); // PublishNotifier gửi thông báo sau commit — admin-spec.md §8
         return reader.details(item);
     }
 
