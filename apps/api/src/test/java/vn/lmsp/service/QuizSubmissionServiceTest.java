@@ -7,17 +7,17 @@ import static vn.lmsp.support.DomainFixtures.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import vn.lmsp.common.LmsException;
+import vn.lmsp.common.UtcTime;
 import vn.lmsp.dto.AssignmentDtos.*;
-import vn.lmsp.enums.AssignmentCategory;
-import vn.lmsp.enums.QuestionType;
-import vn.lmsp.enums.ScorePolicy;
+import vn.lmsp.dto.QuestionContentDtos.AnswerInput;
+import vn.lmsp.dto.QuestionContentDtos.AnswerResponse;
+import vn.lmsp.enums.*;
 import vn.lmsp.mapper.SubmissionMapper;
 import vn.lmsp.model.*;
 import vn.lmsp.repository.*;
@@ -33,14 +33,15 @@ class QuizSubmissionServiceTest {
     private final User student = user(42, "student");
     private final Assignment assignment = assignment(AssignmentCategory.QUIZ);
     private final List<AssignmentQuestion> questions = new ArrayList<>();
-    private AssignmentSubmissionService service;
+    private QuizAttemptService service;
 
     @BeforeEach
     void prepareQuizWithPinnedQuestions() {
         var snapshots = new QuestionVersionService(mock(QuestionVersionRepository.class),
                 mock(QuestionReadService.class), new ObjectMapper());
-        service = new AssignmentSubmissionService(access, links, attempts, submissions, users,
-                snapshots, new SubmissionMapper(), mock(AuditService.class), new SubmissionPolicy());
+        service = new QuizAttemptService(access, links, attempts, submissions, users, snapshots, new SubmissionMapper(),
+                mock(AuditService.class), new SubmissionPolicy(), new AnswerNormalizer(), new ObjectiveGrader(), new ReviewPolicy());
+        assignment.configureReview(ReviewMode.after_submit, true, false, false);
         for (int i = 0; i < 2; i++) {
             var question = question(100 + i, QuestionType.mcq);
             var link = link(assignment, question, i == 0 ? "2.50" : "4.00", i + 1);
@@ -64,23 +65,38 @@ class QuizSubmissionServiceTest {
         var result = service.submitQuiz(50L, 42L, KEY, answer(11L));
 
         assertThat(result.score()).isEqualByComparingTo("2.50");
+        assertThat(result.max_score()).isEqualByComparingTo("6.50");
+        assertThat(result.review_available()).isTrue();
         assertThat(result.question_scores()).hasSize(2);
         assertThat(result.question_scores().get(0).score()).isEqualByComparingTo("2.50");
         assertThat(result.question_scores().get(1).score()).isEqualByComparingTo("0");
-        assertThat(result.question_scores().get(1).selected_option_ids()).isNull();
         assertThat(savedAnswers).hasSize(2);
+        assertThat(savedAnswers.get(0).getResponse().selected_option_ids()).containsExactly(11L);
+        assertThat(savedAnswers.get(1).getResponse()).isNull();
     }
 
     @Test
     void latePenaltyRemainsAppliedToEveryAnswerAndTheQuizTotal() {
-        assignment.update("Quiz", null, AssignmentCategory.QUIZ, LocalDateTime.now().minusDays(1),
-                LocalDateTime.now().minusHours(1), true, LocalDateTime.now().plusHours(1), 20, 3, ScorePolicy.best);
+        assignment.update("Quiz", null, AssignmentCategory.QUIZ, UtcTime.now().minusDays(1),
+                UtcTime.now().minusHours(1), true, UtcTime.now().plusHours(1), 20, 3, ScorePolicy.best);
 
         var result = service.submitQuiz(50L, 42L, KEY, answer(11L));
 
         assertThat(result.score()).isEqualByComparingTo("2.00");
         assertThat(result.is_late()).isTrue();
         assertThat(result.late_penalty_percent()).isEqualTo(20);
+    }
+
+    @Test
+    void scoresAreHiddenUntilTheReviewWindowOpens() {
+        assignment.configureReview(ReviewMode.after_close, true, false, false);
+
+        var result = service.submitQuiz(50L, 42L, KEY, answer(11L));
+
+        assertThat(result.score()).isEqualByComparingTo("2.50");
+        assertThat(result.review_available()).isFalse();
+        assertThat(result.review_available_at()).isEqualTo(assignment.getDueAt());
+        assertThat(result.question_scores()).isNull();
     }
 
     @Test
@@ -91,7 +107,9 @@ class QuizSubmissionServiceTest {
     @Test
     void duplicateRequestReturnsTheStoredAttemptWithoutCreatingAnother() {
         var old = identified(new AssignmentAttempt(assignment, student, 1, false, 0, BigDecimal.ZERO,
-                KEY, LocalDateTime.now()), 77);
+                KEY, UtcTime.now()), 77);
+        savedAnswers.add(new Submission(student, assignment, old, questions.get(0),
+                new AnswerResponse(List.of(11L), null, null, null, null, null), 1, new BigDecimal("2.50"), false, null, UtcTime.now()));
         when(attempts.findByIdempotencyKey(KEY)).thenReturn(Optional.of(old));
 
         var result = service.submitQuiz(50L, 42L, KEY, answer(11L));
@@ -99,6 +117,8 @@ class QuizSubmissionServiceTest {
         assertThat(result.attempt_id()).isEqualTo(77L);
         verify(attempts, never()).saveAndFlush(any());
         verify(submissions, never()).save(any());
+        assertThatThrownBy(() -> service.submitQuiz(50L, 42L, KEY, answer(12L)))
+                .isInstanceOfSatisfying(LmsException.class, error -> assertThat(error.getCode()).isEqualTo("IDEMPOTENCY_CONFLICT"));
     }
 
     @Test
@@ -106,8 +126,18 @@ class QuizSubmissionServiceTest {
         when(attempts.countByAssignment_IdAndStudent_Id(50L, 42L)).thenReturn(3L);
 
         assertThatThrownBy(() -> service.submitQuiz(50L, 42L, KEY, answer(11L)))
-                .isInstanceOf(LmsException.class).hasMessageContaining("hết số lượt");
+                .isInstanceOfSatisfying(LmsException.class, error -> assertThat(error.getCode()).isEqualTo("ATTEMPT_EXCEEDED"))
+                .hasMessageContaining("hết số lượt");
         verify(attempts, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void submissionAfterTheDeadlineIsRejectedWithDeadlinePassed() {
+        assignment.update("Quiz", null, AssignmentCategory.QUIZ, UtcTime.now().minusDays(2),
+                UtcTime.now().minusHours(1), false, null, 0, 3, ScorePolicy.best);
+
+        assertThatThrownBy(() -> service.submitQuiz(50L, 42L, KEY, answer(11L)))
+                .isInstanceOfSatisfying(LmsException.class, error -> assertThat(error.getCode()).isEqualTo("DEADLINE_PASSED"));
     }
 
     @Test
@@ -118,6 +148,6 @@ class QuizSubmissionServiceTest {
     }
 
     private QuizSubmitInput answer(Long optionId) {
-        return new QuizSubmitInput(List.of(new QuizAnswerInput(100L, List.of(optionId))));
+        return new QuizSubmitInput(List.of(new AnswerInput(100L, List.of(optionId), null, null, null, null, null)));
     }
 }

@@ -4,6 +4,7 @@ import lombok.Getter;
 import jakarta.persistence.*;
 import vn.lmsp.common.UtcTime;
 import vn.lmsp.enums.AssignmentCategory;
+import vn.lmsp.enums.ReviewMode;
 import vn.lmsp.enums.ScorePolicy;
 import java.time.LocalDateTime;
 
@@ -23,6 +24,10 @@ public class Assignment {
     @Column(name = "late_penalty_percent", nullable = false) private int latePenaltyPercent;
     @Column(name = "max_attempts") private Integer maxAttempts;
     @Enumerated(EnumType.STRING) @Column(name = "score_policy", nullable = false) private ScorePolicy scorePolicy;
+    @Enumerated(EnumType.STRING) @Column(name = "review_mode", nullable = false, length = 20) private ReviewMode reviewMode = ReviewMode.after_close;
+    @Column(name = "review_shows_answers", nullable = false) private boolean reviewShowsAnswers = true;
+    @Column(name = "shuffle_questions", nullable = false) private boolean shuffleQuestions;
+    @Column(name = "shuffle_options", nullable = false) private boolean shuffleOptions;
     @Column(name = "is_published", nullable = false) private boolean published;
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "created_by", nullable = false) private User creator;
     @Column(name = "created_at", nullable = false) private LocalDateTime createdAt;
@@ -46,11 +51,21 @@ public class Assignment {
         this.dueAt = dueAt; this.allowLate = allowLate; this.lateDueAt = lateDueAt; this.latePenaltyPercent = penalty;
         this.maxAttempts = maxAttempts; this.scorePolicy = policy;
     }
+    /** Chính sách xem lại và trộn đề — docs/assessment-spec.md §6. Chỉ gọi khi còn nháp. */
+    public void configureReview(ReviewMode mode, boolean showsAnswers, boolean shuffleQuestions, boolean shuffleOptions) {
+        if (published) throw new IllegalStateException("Assignment is already published");
+        this.reviewMode = mode; this.reviewShowsAnswers = showsAnswers;
+        this.shuffleQuestions = shuffleQuestions; this.shuffleOptions = shuffleOptions;
+    }
     public void updatePublishedSettings(String title, String description, LocalDateTime availableFrom,
-            LocalDateTime dueAt, boolean allowLate, LocalDateTime lateDueAt, int penalty) {
+            LocalDateTime dueAt, boolean allowLate, LocalDateTime lateDueAt, int penalty,
+            ReviewMode reviewMode, boolean reviewShowsAnswers) {
         if (!published) throw new IllegalStateException("Assignment must be published");
         this.title = title; this.description = description; this.availableFrom = availableFrom; this.dueAt = dueAt;
         this.allowLate = allowLate; this.lateDueAt = lateDueAt; this.latePenaltyPercent = penalty;
+        this.reviewMode = reviewMode; this.reviewShowsAnswers = reviewShowsAnswers;
     }
+    /** "Đóng" = hạn nộp muộn nếu cho nộp muộn, ngược lại hạn chính thức. */
+    public LocalDateTime getClosesAt() { return allowLate && lateDueAt != null ? lateDueAt : dueAt; }
     public void publish() { published = true; }
 }

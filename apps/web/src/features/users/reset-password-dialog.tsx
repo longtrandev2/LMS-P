@@ -48,11 +48,11 @@ export function ResetPasswordDialog({ user, onOpenChange, onDone }: ResetPasswor
     <Dialog open={open} onOpenChange={(o) => { onOpenChange(o); if (!o) setTempPassword(null); }}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="font-heading">Đặt lại mật khẩu</DialogTitle>
+          <DialogTitle>Đặt lại mật khẩu</DialogTitle>
           <DialogDescription>
             {tempPassword
               ? "Mật khẩu tạm chỉ hiển thị một lần — hãy giao cho người dùng ngay."
-              : `Đặt lại mật khẩu cho ${user?.full_name} (${user?.email}).`}
+              : `Đặt lại mật khẩu cho ${user?.full_name} · ${user?.email}`}
           </DialogDescription>
         </DialogHeader>
 
@@ -64,9 +64,9 @@ export function ResetPasswordDialog({ user, onOpenChange, onDone }: ResetPasswor
             </p>
           </div>
         ) : (
-          <p className="flex items-start gap-2 rounded-lg bg-muted px-4 py-3 text-sm text-muted-foreground">
+          <p className="flex items-start gap-2.5 text-sm text-muted-foreground">
             <KeyRound className="mt-0.5 size-4 shrink-0" aria-hidden />
-            Hệ thống sẽ sinh mật khẩu tạm và hiển thị đúng một lần duy nhất.
+            Hệ thống sinh mật khẩu tạm mới, hiển thị đúng một lần và đăng xuất người dùng khỏi mọi phiên.
           </p>
         )}
 
@@ -77,10 +77,10 @@ export function ResetPasswordDialog({ user, onOpenChange, onDone }: ResetPasswor
             </Button>
           ) : (
             <>
-              <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Hủy
               </Button>
-              <Button type="button" variant="destructive" onClick={handleReset} disabled={submitting}>
+              <Button type="button" onClick={handleReset} disabled={submitting}>
                 {submitting ? "Đang đặt lại…" : "Đặt lại mật khẩu"}
               </Button>
             </>

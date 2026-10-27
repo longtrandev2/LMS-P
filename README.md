@@ -1,6 +1,6 @@
 # LMS-P — Hệ thống quản lý học tập
 
-Monorepo LMS dùng **React + TypeScript + Vite**, **Java 21 + Spring Boot**, MySQL 8.4 và RabbitMQ. Backend có quản lý người dùng/lớp/học liệu/ngân hàng câu hỏi, quiz MCQ, thông báo, audit và phần API chấm code (nhận bài → outbox → nhận kết quả → WS). Worker mẫu tắt listener; sandbox, Run/regrade, kỳ thi và sổ điểm là các bước tiếp theo. Mã Python cũ được giữ để đối chiếu, bộ test Python không thay thế kiểm thử Java.
+Monorepo LMS dùng **React + TypeScript + Vite**, **Java 21 + Spring Boot**, MySQL 8.4 và RabbitMQ. Đã có: người dùng/lớp/học liệu, ngân hàng câu hỏi 9 loại (một/nhiều đáp án, đúng-sai, trả lời ngắn, đáp số, điền chỗ trống, ghép cặp, sắp xếp, lập trình), bài tập và quiz (trộn đề, chính sách xem lại, bốc đề ngẫu nhiên), chấm code trong Docker sandbox (checker, kết quả từng test, kiểm tra đề bằng lời giải mẫu, chạy thử, chấm lại), thông báo realtime và audit. Chưa có: kỳ thi (M7), sổ điểm (M8). Đặc tả câu hỏi/đề/chấm: [`docs/assessment-spec.md`](docs/assessment-spec.md). Mã Python cũ được giữ để đối chiếu.
 
 ## Cấu trúc
 
@@ -30,7 +30,13 @@ Web: http://localhost:3000 · API: http://localhost:8000 · Swagger: http://loca
 
 Tài khoản demo local: `lecturer@lms.local`, `student@lms.local`, `admin@lms.local` đều dùng mật khẩu `Demo@12345`. Đổi hoặc tắt tài khoản demo trước khi triển khai thật.
 
-Chạy riêng frontend từ `apps/web`: `npm install`, đặt `VITE_API_URL=http://localhost:8000`, rồi `npm run dev`.
+Dữ liệu demo (lớp, 3 sinh viên, ngân hàng 9 loại câu, quiz, bài code chuẩn CP kèm lượt nộp mẫu) — chạy khi stack đang lên, chạy lại không nhân bản:
+
+```powershell
+node scripts/seed-demo.mjs
+```
+
+Chạy riêng frontend từ `apps/web`: `npm ci`, đặt `VITE_API_URL=http://localhost:8000`, rồi `npm run dev`.
 
 ## Backend và kiểm thử
 
@@ -51,9 +57,9 @@ docker compose --env-file infra/.env -f infra/docker-compose.yml build api worke
 
 Các kiểm thử Java hiện bảo vệ trường dữ liệu trả về, dữ liệu nhạy cảm, phiên bản câu hỏi đã ghim, điểm quiz, phạt nộp muộn và idempotency. Kiểm thử tích hợp với MySQL/RabbitMQ và các tính năng chưa triển khai cần được bổ sung theo từng feature.
 
-## Chấm code — phần 1
+## Chấm code
 
-Đọc [hợp đồng worker V2](docs/message-contracts.md) và [bàn giao phần API](docs/grading-api-handoff.md). Listener mẫu không xử lý job; bài code sẽ chờ pending cho đến khi phần 2 có sandbox.
+Luồng: nộp bài → outbox → RabbitMQ `q.grading` → worker biên dịch và chạy test trong container sandbox (không mạng, giới hạn CPU/RAM/PID/thời gian/output) → event kết quả → API lưu verdict, kết quả từng test, điểm → WebSocket. Kiểm tra đề và chạy thử dùng queue `q.runs`. Hợp đồng: [`docs/message-contracts.md`](docs/message-contracts.md).
 
 Kiểm tra API bằng DB/broker riêng và kết quả worker giả lập (Node.js 22+); chạy trong cùng một cửa sổ PowerShell, sau khi build image API:
 

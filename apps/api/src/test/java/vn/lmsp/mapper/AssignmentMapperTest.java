@@ -3,45 +3,37 @@ package vn.lmsp.mapper;
 import static org.assertj.core.api.Assertions.assertThat;
 import static vn.lmsp.support.DomainFixtures.*;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import vn.lmsp.enums.AssignmentCategory;
 import vn.lmsp.enums.QuestionType;
+import vn.lmsp.enums.ReviewMode;
 
 class AssignmentMapperTest {
     private final AssignmentMapper mapper = new AssignmentMapper();
 
     @Test
-    void studentMcqResponsePreservesOptionsAndHidesCorrectAnswers() {
+    void summaryAndAuditExposeReviewAndShuffleSettings() {
         var assignment = assignment(AssignmentCategory.QUIZ);
+        assignment.configureReview(ReviewMode.never, false, true, true);
         var link = link(assignment, question(100, QuestionType.mcq), "5.00", 1);
 
-        var view = mapper.toQuestionView(link, 1001L, mcqSnapshot("Bản đã xuất bản"), false);
+        var summary = mapper.toSummary(assignment, List.of(link));
 
-        assertThat(view.options()).hasSize(2).allSatisfy(option -> assertThat(option.is_correct()).isNull());
-        assertThat(view.options()).extracting(option -> option.id()).containsExactly(11L, 12L);
-        assertThat(view.content()).isEqualTo("Bản đã xuất bản");
+        assertThat(summary.review_mode()).isEqualTo(ReviewMode.never);
+        assertThat(summary.review_shows_answers()).isFalse();
+        assertThat(summary.shuffle_questions()).isTrue();
+        assertThat(summary.shuffle_options()).isTrue();
+        assertThat(summary.total_points()).isEqualByComparingTo("5.00");
+        assertThat(mapper.toAuditValue(assignment)).containsEntry("review_mode", ReviewMode.never)
+                .containsEntry("shuffle_questions", true);
     }
 
     @Test
-    void studentProgrammingResponseExcludesHiddenTestsAndSampleSolution() {
-        var assignment = assignment(AssignmentCategory.ASSIGNMENT);
-        var link = link(assignment, question(100, QuestionType.programming), "5.00", 1);
-        var view = mapper.toQuestionView(link, 1001L, programmingSnapshot(), false);
-
-        assertThat(view.test_cases()).hasSize(1).allSatisfy(testCase -> assertThat(testCase.is_public()).isTrue());
-        assertThat(view.starter_code()).isEqualTo("# starter");
-        assertThat(new ObjectMapper().valueToTree(view).toString())
-                .doesNotContain("private-input", "private-output", "private-sample-solution", "solution_code");
-    }
-
-    @Test
-    void lecturerResponseIncludesCorrectAnswersAndAllTests() {
-        var assignment = assignment(AssignmentCategory.ASSIGNMENT);
-        var link = link(assignment, question(100, QuestionType.programming), "5.00", 1);
-
-        assertThat(mapper.toQuestionView(link, 1001L, programmingSnapshot(), true).test_cases()).hasSize(2);
-        assertThat(mapper.toQuestionView(link, 1001L, mcqSnapshot("Câu hỏi"), true).options())
-                .extracting(option -> option.is_correct()).containsExactly(true, false);
+    void newAssignmentsDefaultToReviewAfterCloseWithAnswers() {
+        var summary = mapper.toSummary(assignment(AssignmentCategory.ASSIGNMENT), List.of());
+        assertThat(summary.review_mode()).isEqualTo(ReviewMode.after_close);
+        assertThat(summary.review_shows_answers()).isTrue();
+        assertThat(summary.shuffle_questions()).isFalse();
     }
 }

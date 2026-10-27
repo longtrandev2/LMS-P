@@ -21,4 +21,16 @@ public class RabbitTopology {
     @Bean Queue eventsDeadQueue() { return QueueBuilder.durable("q.grading.events.dead").build(); }
     @Bean Binding eventsBinding() { return BindingBuilder.bind(gradingEventsQueue()).to(lmsExchange()).with("grading.events"); }
     @Bean Binding eventsDeadBinding() { return BindingBuilder.bind(eventsDeadQueue()).to(eventsDeadExchange()); }
+
+    // Run jobs (message-contracts.md §1): mỗi queue chính có DLX fanout riêng. Worker khai báo lại q.runs cùng tham số.
+    @Bean FanoutExchange runsDeadExchange() { return new FanoutExchange("lms.runs.dlx", true, false); }
+    @Bean Queue runsQueue() { return QueueBuilder.durable("q.runs").deadLetterExchange("lms.runs.dlx").build(); }
+    @Bean Queue runsDeadQueue() { return QueueBuilder.durable("q.runs.dead").build(); }
+    @Bean Binding runsBinding() { return BindingBuilder.bind(runsQueue()).to(lmsExchange()).with("run.submit"); }
+    @Bean Binding runsDeadBinding() { return BindingBuilder.bind(runsDeadQueue()).to(runsDeadExchange()); }
+    @Bean FanoutExchange runEventsDeadExchange() { return new FanoutExchange("lms.run-events.dlx", true, false); }
+    @Bean Queue runEventsQueue() { return QueueBuilder.durable("q.run.events").deadLetterExchange("lms.run-events.dlx").build(); }
+    @Bean Queue runEventsDeadQueue() { return QueueBuilder.durable("q.run.events.dead").build(); }
+    @Bean Binding runEventsBinding() { return BindingBuilder.bind(runEventsQueue()).to(lmsExchange()).with("run.events"); }
+    @Bean Binding runEventsDeadBinding() { return BindingBuilder.bind(runEventsDeadQueue()).to(runEventsDeadExchange()); }
 }

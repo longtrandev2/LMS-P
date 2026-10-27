@@ -50,12 +50,9 @@ export function AdminAcademicsPage() {
   }
 
   const deletionLabel = deletingClass ? `lớp ${deletingClass.code}` : `học phần ${deletingCourse?.code}`;
-  return <div className="space-y-6">
-    <PageHeader title="Quản lý học phần" description="Tạo học phần, mở lớp theo học kỳ và phân công giảng viên phụ trách."
+  return <div className="space-y-8">
+    <PageHeader title="Học phần & lớp" description="Tạo học phần, mở lớp theo học kỳ và phân công giảng viên phụ trách."
       actions={<Button onClick={() => { setEditingCourse(null); setCourseFormOpen(true); }}><Plus aria-hidden /> Tạo học phần</Button>} />
-    <div className="rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-foreground">
-      <span className="font-semibold">Quy trình:</span> Tạo học phần → Mở lớp & gán GV → Thêm sinh viên bằng tìm kiếm hoặc CSV.
-    </div>
     <AdminCourseSection onCreate={() => { setEditingCourse(null); setCourseFormOpen(true); }}
       onOpenClass={(course) => { setClassCourseId(course.id); setEditingClass(null); }}
       onEdit={(course) => { setEditingCourse(course); setCourseFormOpen(true); }} onDelete={setDeletingCourse} />
@@ -74,7 +71,7 @@ export function AdminAcademicsPage() {
       <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Xóa {deletionLabel}?</AlertDialogTitle>
         <AlertDialogDescription>Dữ liệu liên quan đến {deletionLabel} cũng có thể bị ảnh hưởng. Hành động không thể hoàn tác.</AlertDialogDescription>
       </AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Hủy</AlertDialogCancel>
-        <AlertDialogAction className="bg-destructive text-white hover:bg-destructive/90" onClick={() => void confirmDelete()}>Xóa</AlertDialogAction>
+        <AlertDialogAction variant="destructive" onClick={() => void confirmDelete()}>Xóa</AlertDialogAction>
       </AlertDialogFooter></AlertDialogContent>
     </AlertDialog>
   </div>;

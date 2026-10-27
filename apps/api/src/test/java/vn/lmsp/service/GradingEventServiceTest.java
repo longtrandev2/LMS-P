@@ -5,9 +5,11 @@ import static org.mockito.Mockito.*;
 import static vn.lmsp.support.DomainFixtures.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import vn.lmsp.dto.GradingDtos.*;
 import vn.lmsp.enums.*;
 import vn.lmsp.model.*;
@@ -17,6 +19,7 @@ class GradingEventServiceTest {
     private final SubmissionRepository submissions = mock(SubmissionRepository.class);
     private final GradingJobRepository jobs = mock(GradingJobRepository.class);
     private final GradingResultRepository results = mock(GradingResultRepository.class);
+    private final TestResultRepository testResults = mock(TestResultRepository.class);
     private final GradingNotifier notifier = mock(GradingNotifier.class);
     private final NotificationService notifications = mock(NotificationService.class);
     private Submission submission;
@@ -27,19 +30,19 @@ class GradingEventServiceTest {
         var assignment = assignment(AssignmentCategory.ASSIGNMENT);
         var link = link(assignment, question(100, QuestionType.programming), "11", 1);
         submission = identified(Submission.programming(user(42, "student"), assignment, link, 1,
-                "python", "print(3)", false, 0, "key", LocalDateTime.now()), 90);
+                "python", "print(3)", true, 20, "key", LocalDateTime.now()), 90);
         job = new GradingJob(submission, 5, LocalDateTime.now());
         when(submissions.findLockedById(90L)).thenReturn(Optional.of(submission));
         when(jobs.findByJobId(job.getJobId())).thenReturn(Optional.of(job));
         when(results.saveAndFlush(any())).thenAnswer(call -> call.getArgument(0));
-        service = new GradingEventService(submissions, jobs, results, notifier, notifications, mock(AuditService.class));
+        service = new GradingEventService(submissions, jobs, results, testResults, notifier, notifications, mock(AuditService.class));
     }
 
     private WorkerPayload payload(SubmissionStatus status, GradingVerdict verdict) {
         return new WorkerPayload(job.getJobId(), 90L, status, verdict, false, null, null, 10);
     }
 
-    @Test void persistsOneVerdictAndIgnoresDuplicatesAndLateProgress() {
+    @Test void acceptedSubmissionScoresPointsAfterLatePenaltyAndIgnoresDuplicates() {
         var event = new WorkerEvent("submission.graded", payload(SubmissionStatus.completed, GradingVerdict.AC));
         service.apply(event);
         service.apply(event);
@@ -47,10 +50,37 @@ class GradingEventServiceTest {
 
         assertThat(submission.getStatus()).isEqualTo(SubmissionStatus.completed);
         assertThat(submission.getVerdict()).isEqualTo(GradingVerdict.AC);
-        assertThat(submission.getScore()).isNull();
+        assertThat(submission.getScore()).isEqualByComparingTo("8.80");
         verify(results).saveAndFlush(any());
-        verify(notifier).afterCommit(submission, event.payload());
+        verify(notifier).afterCommit(submission, GradingVerdict.AC, false);
         verify(notifications).create(eq(42L), any(), any(), any(), any());
+    }
+
+    @Test void wrongAnswerScoresZeroAndStoresPerTestResults() {
+        var tests = List.of(new WorkerTest(1, GradingVerdict.AC, 12, null, "3"),
+                new WorkerTest(2, GradingVerdict.OLE, 30, 2048, "x".repeat(5000)));
+        service.apply(new WorkerEvent("submission.graded", new WorkerPayload(job.getJobId(), 90L,
+                SubmissionStatus.completed, GradingVerdict.OLE, false, null, null, 40, 5, 1, 2, tests)));
+
+        assertThat(submission.getScore()).isEqualByComparingTo("0");
+        var result = ArgumentCaptor.forClass(GradingResult.class);
+        verify(results).saveAndFlush(result.capture());
+        assertThat(result.getValue().getTestsTotal()).isEqualTo(5);
+        assertThat(result.getValue().getFailedTest()).isEqualTo(2);
+        var saved = ArgumentCaptor.forClass(TestResult.class);
+        verify(testResults, times(2)).save(saved.capture());
+        assertThat(saved.getAllValues()).extracting(TestResult::getStatus).containsExactly(GradingVerdict.AC, GradingVerdict.OLE);
+        assertThat(saved.getAllValues().get(1).getOutput()).hasSize(4096);
+    }
+
+    @Test void eventsFromASupersededJobAreIgnored() {
+        var newer = new GradingJob(submission, 5, 2, LocalDateTime.now());
+        when(jobs.findTopBySubmission_IdOrderByAttemptNoDesc(90L)).thenReturn(Optional.of(newer));
+
+        service.apply(new WorkerEvent("submission.graded", payload(SubmissionStatus.completed, GradingVerdict.AC)));
+
+        assertThat(submission.getStatus()).isEqualTo(SubmissionStatus.pending);
+        verifyNoInteractions(results, notifier, notifications);
     }
 
     @Test void rejectsCompletedResultWithoutCodeVerdict() {
@@ -60,7 +90,7 @@ class GradingEventServiceTest {
         verifyNoInteractions(results, notifier, notifications);
     }
 
-    @Test void systemFailureHasNoVerdictScoreAndCreatesNotification() {
+    @Test void systemFailureHasNoScoreAndCreatesNotification() {
         service.apply(new WorkerEvent("submission.graded", payload(SubmissionStatus.failed, GradingVerdict.SYSTEM_ERROR)));
         assertThat(submission.getStatus()).isEqualTo(SubmissionStatus.failed);
         assertThat(submission.getVerdict()).isEqualTo(GradingVerdict.SYSTEM_ERROR);

@@ -1,22 +1,21 @@
 import { cn } from "@/lib/utils";
 
 /**
- * Logo LMS-P — badge monogram "bộ tầng tri thức tăng dần":
- * rounded square màu foreground chứa 3 thanh màu background cao dần
- * (sách/bậc thang tri thức). Đơn sắc, tự đảo theo dark mode, rõ ở 16px.
+ * Logo LMS-P — DESIGN.md §8: monogram "3 thanh cao dần" đơn sắc trong ô vuông bo góc màu
+ * `--foreground`, tự đảo theo theme; wordmark LMS-P 600, tracking chặt.
  */
 
 interface LogoProps {
-  /** Kích thước badge (px) — wordmark tự scale theo. */
+  /** Kích thước monogram (px) — wordmark tự co theo. */
   size?: number;
-  /** "full" = badge + wordmark "LMS-P", "mark" = chỉ badge. */
+  /** "full" = monogram + wordmark, "mark" = chỉ monogram. */
   variant?: "full" | "mark";
-  /** Dòng chú thích dưới wordmark (chỉ dùng khi variant="full"). */
+  /** Dòng phụ dưới wordmark (chỉ dùng khi variant="full"). */
   caption?: string;
   className?: string;
 }
 
-export function LogoMark({ size = 32, className }: { size?: number; className?: string }) {
+export function LogoMark({ size = 28, className }: { size?: number; className?: string }) {
   return (
     <svg
       width={size}
@@ -26,40 +25,27 @@ export function LogoMark({ size = 32, className }: { size?: number; className?: 
       aria-label="LMS-P"
       className={cn("shrink-0", className)}
     >
-      <rect x="2" y="2" width="44" height="44" rx="12" fill="var(--primary)" />
-      <rect x="13" y="28" width="6" height="8" rx="1.5" fill="var(--primary-foreground)" />
-      <rect x="21" y="21" width="6" height="15" rx="1.5" fill="var(--primary-foreground)" />
-      <rect x="29" y="14" width="6" height="22" rx="1.5" fill="var(--primary-foreground)" />
+      <rect x="0" y="0" width="48" height="48" rx="11" fill="var(--foreground)" />
+      <rect x="12.5" y="28" width="6" height="9" rx="1.5" fill="var(--background)" />
+      <rect x="21" y="20.5" width="6" height="16.5" rx="1.5" fill="var(--background)" />
+      <rect x="29.5" y="13" width="6" height="24" rx="1.5" fill="var(--background)" />
     </svg>
   );
 }
 
-export function Logo({
-  size = 32,
-  variant = "full",
-  caption,
-  className,
-}: LogoProps) {
-  if (variant === "mark") {
-    return <LogoMark size={size} className={className} />;
-  }
-
-  const textScale = Math.max(0.8, Math.min(1.15, size / 36));
+export function Logo({ size = 28, variant = "full", caption, className }: LogoProps) {
+  if (variant === "mark") return <LogoMark size={size} className={className} />;
+  const fontSize = Math.max(14, Math.min(20, Math.round(size * 0.55)));
 
   return (
-    <span className={cn("inline-flex items-center gap-2.5", className)}>
+    <span className={cn("inline-flex items-center gap-2", className)}>
       <LogoMark size={size} />
-      <span
-        className="leading-none"
-        style={{ fontSize: `${textScale}rem` }}
-      >
-        <span className="block font-heading font-semibold tracking-tight">
+      <span className="min-w-0 leading-none">
+        <span className="block font-semibold tracking-[-0.03em]" style={{ fontSize }}>
           LMS-P
         </span>
         {caption ? (
-          <span className="mt-1 block text-xs font-normal text-muted-foreground">
-            {caption}
-          </span>
+          <span className="mt-1 block truncate text-xs font-normal text-muted-foreground">{caption}</span>
         ) : null}
       </span>
     </span>

@@ -1,137 +1,72 @@
 import { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { ChevronDown, ChevronRight, LogOut, Menu, UserRound } from "lucide-react";
+import { useLocation } from "react-router-dom";
+import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Sidebar } from "@/components/nav-sidebar";
+import { AppBreadcrumb } from "@/components/app-breadcrumb";
+import { isWideRoute } from "@/components/breadcrumb-routes";
 import { NotificationsBell } from "@/features/notifications/notifications-bell";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useAvatarUrl } from "@/hooks/use-avatar-url";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { BrandMark, SidebarFooterRole, SidebarNav } from "@/components/nav-sidebar";
-import { api } from "@/lib/api";
-import { useAuthStore } from "@/stores/auth";
-import { ROLE_LABELS } from "@/components/role-status-badges";
+import { cn } from "@/lib/utils";
 
-function UserMenu() {
-  const navigate = useNavigate();
-  const { user, refreshToken, clearSession } = useAuthStore();
-  const avatarSrc = useAvatarUrl(user?.avatar_url);
+const COLLAPSE_KEY = "lmsp-sidebar-collapsed";
 
-  const handleLogout = async () => {
-    try {
-      // BE yêu cầu body {refresh_token} để revoke — không gửi sẽ 400
-      if (refreshToken) await api.post("/auth/logout", { refresh_token: refreshToken });
-    } catch {
-      /* logout là best-effort — session local vẫn phải clear */
-    }
-    clearSession();
-    navigate("/login", { replace: true });
-  };
-
-  const initials = (user?.full_name ?? "?")
-    .split(" ")
-    .filter(Boolean)
-    .slice(-2)
-    .map((w) => w[0])
-    .join("")
-    .toUpperCase();
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          className="h-11 gap-2.5 rounded-xl px-2 py-1.5 font-normal data-[state=open]:bg-accent"
-        >
-          <Avatar className="size-8">
-            {avatarSrc ? <AvatarImage src={avatarSrc} alt="Ảnh đại diện" /> : null}
-            <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
-              {initials}
-            </AvatarFallback>
-          </Avatar>
-          <span className="hidden max-w-40 text-left sm:block"><span className="block truncate text-sm font-semibold">{user?.full_name}</span><span className="block text-[11px] text-muted-foreground">{user?.roles.map((role) => ROLE_LABELS[role]).join(" · ")}</span></span>
-          <ChevronDown className="hidden size-3.5 text-muted-foreground sm:block" aria-hidden />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-60">
-        <DropdownMenuLabel>
-          <p className="truncate text-sm font-medium">{user?.full_name}</p>
-          <p className="truncate text-xs font-normal text-muted-foreground">{user?.email}</p>
-          <p className="mt-1 text-xs font-normal text-muted-foreground">
-            {user?.roles.map((r) => ROLE_LABELS[r]).join(" · ")}
-          </p>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => navigate("/me/profile")}><UserRound aria-hidden /> Hồ sơ của tôi</DropdownMenuItem>
-        <DropdownMenuItem onClick={handleLogout}>
-          <LogOut aria-hidden /> Đăng xuất
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
+function readCollapsed(): boolean {
+  try { return localStorage.getItem(COLLAPSE_KEY) === "1"; } catch { return false; }
 }
 
+/**
+ * Khung ứng dụng kiểu Frappe LMS — DESIGN.md §4: sidebar xám nhạt (thu gọn được) + topbar 48px chỉ có
+ * breadcrumb và chuông. Nội dung trắng, mặc định `max-w-5xl`; trang làm việc tràn rộng khi route nằm trong
+ * `isWideRoute()` hoặc trang đặt `data-layout="wide"` (giữ padding) / `data-layout="full"` (bỏ padding).
+ * Header dính bên trong trang dùng `sticky top-12`.
+ */
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(readCollapsed);
   const { pathname } = useLocation();
-  const section = pathname.startsWith("/questions") ? "Ngân hàng câu hỏi" : pathname.startsWith("/admin/academics") ? "Học phần & phân công" : pathname.startsWith("/admin/users") ? "Quản lý người dùng" : pathname.startsWith("/admin/audit") ? "Nhật ký kiểm toán" : pathname.startsWith("/me/profile") ? "Hồ sơ cá nhân" : pathname.startsWith("/me/classes") ? "Lớp của tôi" : pathname.startsWith("/courses") ? "Lớp được giao" : "Lớp học phần";
+  const wide = isWideRoute(pathname);
+  const toggle = () => setCollapsed((value) => {
+    try { localStorage.setItem(COLLAPSE_KEY, value ? "0" : "1"); } catch { /* bỏ qua */ }
+    return !value;
+  });
 
   return (
-    <div className="flex min-h-dvh">
-      <a href="#main-content" className="sr-only z-50 rounded-lg bg-primary p-3 text-primary-foreground focus:not-sr-only focus:fixed focus:left-4 focus:top-4">Đến nội dung chính</a>
-      <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r bg-sidebar text-sidebar-foreground lg:flex">
-        <BrandMark />
-        <SidebarNav />
-        <SidebarFooterRole />
+    <div className="flex min-h-dvh bg-background">
+      <a href="#main-content"
+        className="sr-only z-50 rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground focus:not-sr-only focus:fixed focus:top-3 focus:left-3">
+        Đến nội dung chính
+      </a>
+      <aside className={cn("sticky top-0 hidden h-dvh shrink-0 border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-[width] duration-200 lg:block",
+        collapsed ? "w-14" : "w-60")}>
+        <Sidebar collapsed={collapsed} onToggle={toggle} />
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-20 flex h-20 items-center justify-between gap-3 border-b bg-card/90 px-4 backdrop-blur sm:px-6 xl:px-10">
-          <div className="flex min-w-0 items-center gap-2">
-            {/* Sidebar mobile */}
-            <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon-sm" aria-label="Mở menu" className="lg:hidden">
-                  <Menu aria-hidden />
-                </Button>
-              </SheetTrigger>
-              <SheetContent
-                side="left"
-                className="w-64 bg-sidebar p-0 text-sidebar-foreground [&>button]:text-sidebar-foreground"
-              >
-                <SheetHeader className="p-0 text-left">
-                  <SheetTitle asChild>
-                    <div>
-                      <BrandMark />
-                    </div>
-                  </SheetTitle>
-                </SheetHeader>
-                <SidebarNav onNavigate={() => setMobileOpen(false)} />
-              </SheetContent>
-            </Sheet>
-            <div className="flex min-w-0 items-center gap-2 text-sm"><span className="hidden text-muted-foreground md:inline">Không gian làm việc</span><ChevronRight className="hidden size-3.5 text-muted-foreground/60 md:block" aria-hidden /><span className="truncate font-medium">{section}</span></div>
-          </div>
-          <div className="flex shrink-0 items-center gap-1.5">
-            <NotificationsBell />
-            <ThemeToggle />
-            <UserMenu />
-          </div>
+        <header className="sticky top-0 z-30 flex h-12 shrink-0 items-center gap-2 border-b bg-background/95 px-3 backdrop-blur-sm sm:px-5">
+          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon-sm" aria-label="Mở menu điều hướng" className="lg:hidden">
+                <Menu aria-hidden />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-64 gap-0 border-sidebar-border bg-sidebar p-0 text-sidebar-foreground">
+              <SheetTitle className="sr-only">Điều hướng</SheetTitle>
+              <SheetDescription className="sr-only">Các trang theo vai trò của bạn</SheetDescription>
+              <Sidebar onNavigate={() => setMobileOpen(false)} />
+            </SheetContent>
+          </Sheet>
+          <div className="min-w-0 flex-1"><AppBreadcrumb /></div>
+          <NotificationsBell />
         </header>
-        <main id="main-content" className="mx-auto w-full max-w-7xl flex-1 px-4 py-7 sm:px-6 sm:py-9 xl:px-10">{children}</main>
+        <main id="main-content" tabIndex={-1}
+          className={cn(
+            "mx-auto w-full flex-1 px-4 py-6 outline-none sm:px-8 sm:py-8",
+            "has-[[data-layout=wide]]:max-w-none has-[[data-layout=full]]:max-w-none has-[[data-layout=full]]:p-0",
+            wide ? "max-w-none" : "max-w-5xl"
+          )}>
+          {children}
+        </main>
       </div>
     </div>
   );

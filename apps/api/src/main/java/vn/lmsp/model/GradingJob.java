@@ -24,10 +24,14 @@ public class GradingJob {
 
     protected GradingJob() { }
     public GradingJob(Submission submission, int priority, LocalDateTime now) {
+        this(submission, priority, 1, now);
+    }
+    /** `attemptNo` > 1 khi chấm lại (grading_attempt trong message). */
+    public GradingJob(Submission submission, int priority, int attemptNo, LocalDateTime now) {
         this.jobId = UUID.randomUUID().toString();
         this.submission = submission;
         this.priority = priority;
-        this.attemptNo = 1;
+        this.attemptNo = attemptNo;
         this.createdAt = now;
         this.nextAttemptAt = now;
     }

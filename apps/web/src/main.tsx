@@ -3,6 +3,8 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { Providers } from "@/components/providers";
 import { AppRouter } from "@/app/router";
+import "@fontsource-variable/inter";
+import "@fontsource-variable/geist-mono";
 import "@/app/globals.css";
 
 createRoot(document.getElementById("root")!).render(

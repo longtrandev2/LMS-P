@@ -16,6 +16,10 @@ export const queryKeys = {
     all: ["questions"] as const,
     list: (filters: Record<string, string | number | undefined>) => ["questions", "list", filters] as const,
     detail: (id: number) => ["questions", "detail", id] as const,
+    draw: (rules: unknown) => ["questions", "draw", rules] as const,
+  },
+  runJobs: {
+    detail: (runId: string) => ["run-jobs", runId] as const,
   },
   questionBanks: {
     all: ["question-banks"] as const,
@@ -28,6 +32,12 @@ export const queryKeys = {
     details: (id: number) => ["assignments", "detail", id] as const,
     quizAttempts: (id: number) => ["assignments", id, "quiz-attempts"] as const,
     submissions: (id: number) => ["assignments", id, "submissions"] as const,
+    mySubmissions: (id: number) => ["assignments", id, "my-submissions"] as const,
+    attemptReview: (id: number, attemptId: number) => ["assignments", id, "quiz-attempts", attemptId] as const,
+    results: (id: number) => ["assignments", id, "results"] as const,
+  },
+  submissions: {
+    detail: (id: number) => ["submission", id] as const,
   },
   classes: {
     all: ["classes"] as const,

@@ -7,7 +7,7 @@ const STORAGE_KEY = "lmsp-theme";
 
 function storedTheme(): ThemeMode {
   const value = localStorage.getItem(STORAGE_KEY);
-  return value === "light" || value === "dark" ? value : "system";
+  return value === "dark" || value === "system" ? value : "light";
 }
 
 function applyTheme(theme: ThemeMode) {

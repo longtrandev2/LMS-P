@@ -1,26 +1,26 @@
 # Thiết kế giao diện LMS-P
 
-Giao diện dùng font hệ thống Segoe UI/Arial để hiển thị đầy đủ tiếng Việt mà không phụ thuộc tải font bên ngoài. Tiêu đề, nội dung và biểu mẫu dùng cùng họ sans-serif; code dùng monospace.
+Đặc tả chi tiết ở `apps/web/DESIGN.md` (nguồn chân lý về giao diện). Tóm tắt:
 
-## Màu sắc và thành phần
+## Hướng và màu sắc
 
-- Màu chính: xanh ngọc; dùng cho hành động chính, trạng thái điều hướng đang chọn và focus.
-- Chế độ sáng: nền slate nhạt, bề mặt trắng, chữ slate đậm.
-- Chế độ tối: nền slate đậm, bề mặt sáng hơn nền, chữ sáng và viền rõ.
-- Màu đỏ dành cho lỗi/xóa; màu xanh lá dành cho thành công.
-- Token nằm trong `apps/web/src/app/design-tokens.css`; thành phần dùng token semantic qua Tailwind.
-- Nhãn biểu mẫu và tiêu đề card viết kiểu câu bình thường; nút và input cao khoảng 40px, focus nhìn thấy bằng bàn phím.
+- Bám Frappe LMS / ClassroomIO (token frappe-ui): nền trắng, sidebar xám nhạt, nút chính đen, nút phụ xám đặc, ít viền.
+- Không còn nút đỏ; đỏ chỉ dùng cho lỗi/xóa.
+- Xanh lá cho đạt/thành công, đỏ cho lỗi/sai/xóa, cam cho cảnh báo (quá thời gian, nộp muộn, sắp hết hạn).
+- Font Inter (đóng gói cùng ứng dụng, đủ dấu tiếng Việt khi không có Internet); code và mã định danh dùng Geist Mono.
+- Có chế độ sáng và tối; token ở `apps/web/src/app/design-tokens.css`.
 
 ## Bố cục
 
-- Sidebar desktop rộng 256px; trên màn hình nhỏ chuyển thành menu trượt.
-- Nội dung có chiều rộng tối đa 1280px, khoảng đệm đáp ứng theo màn hình.
-- Ngân hàng câu hỏi: tiêu đề → chọn ngân hàng/danh mục và thao tác → tìm/lọc → danh sách câu hỏi dạng hàng → phân trang.
-- Hồ sơ: cột danh tính/ảnh đại diện và cột biểu mẫu; màn hình nhỏ xếp thành một cột. Các nhóm thông tin cá nhân và bảo mật có tiêu đề và mô tả riêng.
-- Không thêm số liệu minh họa vào giao diện thật; số lượng lấy từ dữ liệu API.
+- Sidebar desktop 240px (thu gọn được) có khối workspace ở đầu; màn hình nhỏ chuyển thành menu trượt. Topbar chỉ có breadcrumb tên thật và chuông.
+- Không có trang giới thiệu: `/` chuyển thẳng vào ứng dụng hoặc màn đăng nhập.
+- Trang danh sách: thanh công cụ → bảng có phân trang. Trang lớp: header lớp + tab ngang (Tổng quan, Học liệu, Bài tập, Sinh viên, Kết quả).
+- Trang chủ theo vai trò có khối "Sắp đến hạn" và các lớp.
+- Soạn câu hỏi, soạn bài, làm quiz, workspace code, chi tiết bài nộp là trang riêng (`docs/assessment-spec.md` §8), không dùng dialog.
+- Không thêm số liệu minh họa; mọi số lấy từ API.
 
 ## Khả năng truy cập
 
-- Duy trì nhãn cho mọi trường, tên truy cập cho nút chỉ có icon và trạng thái disabled.
-- Nội dung dài phải co giãn hoặc xuống dòng; các thao tác không được tràn khỏi viewport di động.
-- Giữ cả chế độ sáng và tối, tôn trọng lựa chọn theme đã lưu và reduced motion.
+- Nhãn cho mọi trường, tên truy cập cho nút chỉ có icon, focus nhìn thấy bằng bàn phím, tương phản chữ đạt 4.5:1.
+- Nội dung dài co giãn hoặc xuống dòng; thao tác không tràn khỏi viewport di động.
+- Tôn trọng theme đã lưu và `prefers-reduced-motion`.

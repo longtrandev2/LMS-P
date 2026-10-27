@@ -8,13 +8,13 @@
 
 ## Tổng quan phase
 
-Trạng thái bản Java ngày 2026-10-25:
+Trạng thái bản Java ngày 2026-10-27 (branch `feat/grading-quiz-standard`):
 
-- P0/P1: đã có Docker Compose, auth/user/profile, học phần/lớp/xếp sinh viên, học liệu, thông báo và audit. Các luồng cần tiếp tục có kiểm thử tích hợp theo từng nghiệp vụ.
-- P2: đã có ngân hàng câu hỏi theo học phần, danh mục tùy chọn, CSV MCQ, snapshot, bài tập và quiz MCQ. Sổ điểm M8 chưa triển khai.
-- P3: API nhận code/outbox, worker sandbox, verdict AC/WA/CE/TLE/MLE/RE, WebSocket và giao diện nộp code. V1 chỉ lưu verdict, chưa chấm điểm từng test; Run/regrade chưa có.
-- P4: kỳ thi M7 chưa triển khai.
-- P5: đã chuẩn hóa mapping DTO và có 34 kiểm thử Java cho response/snapshot/quiz/API chấm code; thêm kiểm tra tích hợp M6 với DB/broker riêng và worker giả lập. Cấu hình hệ thống, thống kê quản trị và kiểm thử các nghiệp vụ còn lại tiếp tục bổ sung.
+- P0/P1: Docker Compose, auth/user/profile, học phần/lớp/xếp sinh viên, học liệu, thông báo và audit.
+- P2: ngân hàng câu hỏi 9 loại (`docs/assessment-spec.md`), soạn câu trên trang riêng, CSV nhiều loại, bốc đề ngẫu nhiên, quiz có trộn đề và chính sách xem lại, chấm từng phần. **Sổ điểm M8 chưa triển khai.**
+- P3: chấm code chuẩn CP — checker token/line/float, kết quả từng test, OLE/SYSTEM_ERROR, điểm AC = điểm câu, kiểm tra đề bằng lời giải mẫu (chặn xuất bản khi sai), sinh expected từ lời giải, nhập test zip, chạy thử, chấm lại, workspace code kiểu Codeforces.
+- P4: kỳ thi M7 chưa triển khai; quiz giới hạn thời gian và đề riêng từng sinh viên sẽ làm chung cơ chế phiên thi.
+- P5: 111 test API + 44 test worker; seed demo qua REST (`scripts/seed-demo.mjs`) dùng làm kiểm thử end-to-end. Giao diện theo `apps/web/DESIGN.md`.
 
 Các wave dùng Python/Next.js bên dưới là lịch sử dự án; kết quả pytest cũ không xác nhận trạng thái bản Java hiện tại. Yêu cầu xếp sinh viên hiện hành lấy từ SRS: sinh viên không tự ghi danh/rời lớp.
 

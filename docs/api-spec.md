@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Phiên bản | 1.4 — 2026-10-25 |
+| Phiên bản | 1.5 — 2026-10-27 (câu hỏi đa loại, xem lại, run jobs, chấm lại — chi tiết `assessment-spec.md`) |
 | Base URL | `/api/v1` (Swagger UI `/swagger-ui/index.html`, OpenAPI `/v3/api-docs`) |
 | Nguồn FR | `srs.md` |
 
@@ -16,7 +16,7 @@
 ```json
 { "error": { "code": "ENROLLMENT_REQUIRED", "message": "Bạn không thuộc lớp này", "details": {} } }
 ```
-- **Mã lỗi nghiệp vụ** (tập trung ở core/exceptions): `UNAUTHENTICATED`, `FORBIDDEN`, `ENROLLMENT_REQUIRED`, `ATTEMPT_EXCEEDED`, `DEADLINE_PASSED`, `EXAM_NOT_OPEN`, `SESSION_ENDED`, `IDEMPOTENCY_CONFLICT`, `VALIDATION_ERROR`, `NOT_FOUND`, `RATE_LIMITED`, `INTERNAL`, `CLASS_FULL` (hết chỗ), `ENROLL_CLOSED` (ngoài khung giờ ghi danh), `ALREADY_ENROLLED` (đã ghi danh lớp), `ENROLLMENT_INVALID` (mã SV/email không hợp lệ khi thêm tay).
+- **Mã lỗi nghiệp vụ** (tập trung ở core/exceptions): `UNAUTHENTICATED`, `FORBIDDEN`, `ENROLLMENT_REQUIRED`, `ATTEMPT_EXCEEDED`, `DEADLINE_PASSED`, `EXAM_NOT_OPEN`, `SESSION_ENDED`, `IDEMPOTENCY_CONFLICT`, `VALIDATION_ERROR`, `NOT_FOUND`, `RATE_LIMITED`, `INTERNAL`, `CLASS_FULL` (hết chỗ), `ENROLL_CLOSED` (ngoài khung giờ ghi danh), `ALREADY_ENROLLED` (đã ghi danh lớp), `ENROLLMENT_INVALID` (mã SV/email không hợp lệ khi thêm tay), `PROBLEM_CHECK_FAILED` (lời giải mẫu không AC trên phiên bản sắp ghim), `PROBLEM_UNVERIFIED` (câu lập trình chưa được kiểm tra đề; gửi lại với `confirm_unverified=true` để xác nhận).
 - **HTTP语义:** 200/201 thành công; 202 nộp bài bất đồng bộ; 400 validate; 401/403 auth; 404; 409 xung đột nghiệp vụ; 423 khóa (đang chấm); 429 rate limit.
 - **Idempotency:** POST nộp bài kèm header `Idempotency-Key: <uuid>`; trùng key → trả submission hoặc lượt quiz gốc (200), không tăng số lượt.
 
@@ -81,38 +81,64 @@
 | GET | /question-banks/{id}/eligible-lecturers | owner/adm | Danh sách giảng viên đang được phân công vào học phần để cấp quyền |
 | GET/POST | /question-banks/{id}/categories | bank viewer/editor | Xem danh mục; chỉ lecturer có quyền sửa ngân hàng được tạo |
 | PATCH/DELETE | /question-categories/{id} | bank manager | Đổi tên / xóa danh mục rỗng |
-| GET/POST | /questions | bank viewer / editor | List theo `bank_id`, `category_id`, `q`, type/topic/difficulty; chỉ owner/người có quyền `edit` được tạo MCQ/code bằng `{bank_id, category_id?}`. Bỏ `category_id` thì backend tự gán “Chưa phân loại” |
-| GET/PATCH/DELETE | /questions/{id} | bank viewer/editor | Người có quyền xem đọc chi tiết; lecturer có quyền sửa được cập nhật; admin có thể soft-delete để xử lý đặc biệt. Bản đã publish giữ snapshot cũ |
-| PUT | /questions/{id}/test-cases | bank manager | Thay toàn bộ test cases (input, expected, is_public, weight), tạo revision cho lần publish kế tiếp |
-| POST | /questions/{id}/verify | bank manager | Chạy thử solution mẫu → kết quả từng test; hiện trả `501 RUNNER_UNAVAILABLE` đến khi worker có sandbox chạy code |
-| POST | /question-banks/{id}/categories/{categoryId}/questions/import/preview | bank manager | Preview CSV MCQ đã đọc ở trình duyệt: `{rows: [{row, content, difficulty, topic, options, correct_option}]}`; tối đa 500 dòng, báo trùng/lỗi; không ghi DB |
-| POST | /question-banks/{id}/categories/{categoryId}/questions/import | bank manager | Xác nhận payload preview; backend kiểm tra lại, tạo các dòng hợp lệ thành MCQ có version đầu tiên; trả `{created, errors: [{row, code, reason}]}`. UI mặc định truyền danh mục “Chưa phân loại” nếu người dùng không chọn danh mục khác |
+| GET/POST | /questions | bank viewer / editor | List theo `bank_id`, `category_id`, `q`, `type`, `difficulty`; chỉ owner/người có quyền `edit` được tạo câu bằng `{bank_id, category_id?}`. Bỏ `category_id` thì backend tự gán “Chưa phân loại”. Body tạo/sửa xem dưới bảng |
+| GET/PATCH/DELETE | /questions/{id} | bank viewer/editor | Người có quyền xem đọc chi tiết (kèm đáp án, test, lời giải); lecturer có quyền sửa được cập nhật; admin có thể soft-delete để xử lý đặc biệt. Bản đã publish giữ snapshot cũ |
+| PUT | /questions/{id}/test-cases | bank manager | Tương thích cũ: thay toàn bộ test cases. Form mới gửi test trong POST/PATCH |
+| POST | /questions/draw | lec | Bốc ngẫu nhiên: `{rules: [{bank_id, category_id?, difficulty?, type?, count}], exclude_question_ids?, exclude_types?}` (1–10 quy tắc, `count` 1–100) → `{items: QuestionSummary[], shortages: [{rule, requested, available}]}` (`rule` là chỉ số tính từ 0). Chỉ ngân hàng được xem, không lặp câu, bỏ câu đã xóa và loại trong `exclude_types` |
+| POST | /questions/{id}/verify | bank manager | Kiểm tra đề: chạy `solution_code` của phiên bản mới nhất trên mọi test → `202 {run_id}` (`problem_check`). 409 `VALIDATION_ERROR` nếu chưa có lời giải/ngôn ngữ lời giải |
+| POST | /questions/draft-check | lec (bank editor) | Chạy code trên test chưa lưu (sinh expected từ lời giải): `{bank_id, language, source_code, time_limit_ms, memory_limit_mb, checker_mode, checker_epsilon?, tests: [{input, expected_output?}]}` → `202 {run_id}` (`draft_check`) |
+| GET | /run-jobs/{id} | người tạo job | `{run_id, kind, status, verdict, compile_output, error_message, duration_ms, tests: [{position, verdict, time_ms, output, input?, expected_output?}], created_at, completed_at}`; `status`: `pending`/`running`/`completed`/`failed` |
+| POST | /question-banks/{id}/categories/{categoryId}/questions/import/preview | bank manager | Preview CSV đã đọc ở trình duyệt: `{rows: [{row, type?, content, difficulty, options, correct_option, explanation?}]}`; `type` ∈ `mcq`/`multiple_choice`/`true_false`/`short_answer` (mặc định `mcq`); `correct_option` là chữ cái (`A`, hoặc `A;C` cho nhiều đáp án, `A`/`B` cho đúng-sai) hoặc với `short_answer` là các đáp án chấp nhận phân cách `|`. Tối đa 500 dòng, báo trùng/lỗi; không ghi DB |
+| POST | /question-banks/{id}/categories/{categoryId}/questions/import | bank manager | Xác nhận payload preview; backend kiểm tra lại, tạo các dòng hợp lệ có version đầu tiên; trả `{created, errors: [{row, code, reason}]}`. Dialog có chọn danh mục đích, mặc định “Chưa phân loại” |
+
+**Body tạo/sửa câu hỏi** (`POST /questions`, `PATCH /questions/{id}` — một transaction, một version; chi tiết ở `assessment-spec.md` §1–4):
+
+```json
+{"bank_id": 1, "category_id": 3, "type": "matching", "content": "Markdown…", "difficulty": "medium",
+ "explanation": "Markdown…", "scoring_mode": "partial",
+ "options": [{"content": "…", "is_correct": true}],
+ "answer_spec": {"pairs": [{"left": "HTTP", "right": "80"}], "distractors": [{"text": "8080"}]},
+ "programming": {"allowed_languages": ["python","cpp"], "time_limit_ms": 1000, "memory_limit_mb": 256,
+                 "checker_mode": "token", "checker_epsilon": null,
+                 "starter_codes": {"python": "…"}, "solution_code": "…", "solution_language": "python"},
+ "test_cases": [{"input": "1 2", "expected_output": "3", "is_public": true}]}
+```
+
+`type` không đổi được sau khi tạo. Response `QuestionView` trả thêm `explanation`, `scoring_mode`, `answer_spec` (đã có ID), `programming.{checker_mode, checker_epsilon, starter_codes, solution_language}`.
 
 ## 6. Assignments & Submissions (M5/M6)
 
 | Method | Path | Role | Mô tả |
 |---|---|---|---|
-| GET/POST | /classes/{id}/assignments | mem / lec | List bài đã publish cho sinh viên / list của lớp cho giảng viên; POST lecturer tạo nháp với metadata và `questions: [{question_id, points, position}]` |
+| GET/POST | /classes/{id}/assignments | mem / lec | List bài đã publish cho sinh viên / list của lớp cho giảng viên; POST lecturer tạo nháp với metadata, `review_mode`, `review_shows_answers`, `shuffle_questions`, `shuffle_options` và `questions: [{question_id, points, position}]` |
 | POST | /assignments/bulk | lec | Tạo đề cho một hoặc nhiều `class_ids` thuộc cùng học phần và do giảng viên phụ trách: `{class_ids, assignment, publish}`. Tạo bản riêng từng lớp trong một giao dịch; `publish=true` ghim phiên bản và xuất bản ngay |
-| GET/PATCH/DELETE | /assignments/{id} | mem / lec | Chi tiết câu hỏi theo snapshot (sinh viên không nhận đáp án đúng/test ẩn; không đọc được đề trước `available_from`) / PATCH và DELETE thông thường chỉ áp dụng khi còn nháp |
-| PATCH | /assignments/{id}/published-settings | lec | Giảng viên phụ trách sửa tiêu đề, mô tả, lịch mở/hạn và chính sách nộp muộn, kèm `reason`; không nhận trường câu hỏi/điểm/cách chấm. Ghi audit before/after; submission đã có giữ điểm và chính sách đã ghim |
-| POST | /assignments/{id}/publish | lec | Kiểm tra câu hỏi, ghim version hiện hành cùng điểm/thứ tự; sau đó nội dung assessment bất biến, metadata/lịch có thể điều chỉnh qua endpoint riêng |
-| GET/POST | /assignments/{id}/quiz-attempts | student | Chỉ `category=quiz`: GET lịch sử lượt của tôi; POST nộp `{answers: [{question_id, selected_option_ids}]}` + Idempotency-Key → chấm MCQ đồng bộ, trả `{attempt_id, attempt_no, score, question_scores}`. Câu không có trong `answers` = bỏ trống, 0 điểm; câu lạ/trùng bị từ chối; một POST chỉ tính một lượt |
-| POST | /assignments/{id}/questions/{qid}/submissions | student | Chỉ bài **không phải quiz**: nộp từng câu (mcq: `{selected_option_ids}`; code: `{language, source_code}`) + Idempotency-Key. `max_attempts` và best/last tính riêng cho câu; MCQ chấm đồng bộ; code cần worker sandbox |
-| POST | /assignments/{id}/questions/{qid}/run | student | Run thử test công khai không tính lượt/điểm; hiện trả `501 RUNNER_UNAVAILABLE` |
-| GET | /submissions/{id} | owner/lec | Trạng thái + verdict AC/WA/CE/TLE/MLE/RE; không trả dữ liệu test |
-| GET | /me/submissions?assignment_id= | student | Lịch sử nộp từng câu; lịch sử quiz theo `/assignments/{id}/quiz-attempts` |
-| GET | /assignments/{id}/submissions | lec | Danh sách lượt nộp có tên/mã sinh viên, câu hỏi, trạng thái và điểm; giao diện giảng viên hỗ trợ lọc theo sinh viên/trạng thái |
-| POST | /submissions/{id}/regrade | lec | Chấm lại (BR8) → 202 |
+| GET/PATCH/DELETE | /assignments/{id} | mem / lec | Chi tiết theo snapshot (xem "Đề cho sinh viên" dưới bảng; không đọc được đề trước `available_from`) / PATCH và DELETE thông thường chỉ áp dụng khi còn nháp |
+| PATCH | /assignments/{id}/published-settings | lec | Giảng viên phụ trách sửa tiêu đề, mô tả, lịch mở/hạn, chính sách nộp muộn, `review_mode`, `review_shows_answers`, kèm `reason`; không nhận trường câu hỏi/điểm/cách chấm/trộn. Ghi audit before/after |
+| POST | /assignments/{id}/publish | lec | Body tùy chọn `{confirm_unverified}`. Kiểm tra đầy đủ câu hỏi (`assessment-spec.md` §4) và chặn theo kiểm tra đề (§7; lỗi 409 có `details: {question_ids: [...]}`), ghim version hiện hành cùng điểm/thứ tự. `POST /assignments/bulk` nhận cùng trường `confirm_unverified` |
+| GET/POST | /assignments/{id}/quiz-attempts | student | Chỉ `category=quiz`: GET mảng lịch sử lượt của tôi; POST nộp `{answers: [Answer]}` (`assessment-spec.md` §3.2) + Idempotency-Key → chấm đồng bộ, trả `QuizAttemptView`. Câu không có trong `answers` = bỏ trống, 0 điểm; câu lạ/trùng bị từ chối; key trùng khác nội dung → 409 `IDEMPOTENCY_CONFLICT` |
+| GET | /assignments/{id}/quiz-attempts/{attemptId} | owner / lec | Xem lại một lượt: sinh viên theo chính sách (`assessment-spec.md` §6); giảng viên phụ trách/admin luôn xem đầy đủ. Trả `AttemptReview` |
+| POST | /assignments/{id}/questions/{qid}/submissions | student | Chỉ bài **không phải quiz**: nộp từng câu bằng `Answer` (câu khách quan) hoặc `{language, source_code}` (code) + Idempotency-Key. `max_attempts` và best/last tính riêng cho câu; câu khách quan chấm đồng bộ; code qua worker |
+| POST | /assignments/{id}/questions/{qid}/run | student | Chạy thử (`practice_run`): `{language, source_code, custom_input?}` → `202 {run_id}`; không có `custom_input` thì chạy test công khai. Không tính lượt/điểm; 6 lần/phút |
+| GET | /submissions/{id} | owner/lec | `SubmissionDetails` (dưới bảng) |
+| GET | /me/submissions?assignment_id= | student | Mảng lịch sử nộp từng câu (điểm câu khách quan ẩn đến khi được xem lại); lịch sử quiz theo `/assignments/{id}/quiz-attempts` |
+| GET | /assignments/{id}/submissions | lec | Mảng lượt nộp (không phân trang) có tên/mã sinh viên, câu hỏi, trạng thái, verdict, ngôn ngữ và điểm; lọc `question_id`, `status`, `verdict`, `q` |
+| GET | /assignments/{id}/results | lec | Bảng kết quả theo sinh viên của lớp: `{items: [{student_id, student_full_name, student_code, final_score, max_score, attempt_count, attempts?: [{attempt_id, attempt_no, score, is_late, submitted_at}], questions: [{question_id, final_score, attempt_count, last_status, last_verdict}]}]}`; `final_score` theo `score_policy`, `null` nếu chưa nộp |
+| POST | /submissions/{id}/regrade | lec | `{reason}` → 202; chỉ bài code `completed`/`failed` (BR8, `assessment-spec.md` §5) |
+
+**Đề cho sinh viên** (`GET /assignments/{id}`, role student): câu theo thứ tự đã trộn; mỗi câu có `question_id`, `question_version_id`, `type`, `content`, `points`, `position`, và theo loại: `options [{id, content}]` (không `is_correct`), `blank_count`, `matching {lefts:[{id,text}], rights:[{id,text}]}`, `ordering_items [{id,text}]`, `programming {allowed_languages, time_limit_ms, memory_limit_mb, checker_mode, starter_codes, samples:[{position, input, expected_output}]}`. Không bao giờ có `answer_spec`, `explanation`, `solution_code`, test ẩn. Giảng viên nhận thêm `explanation`, `scoring_mode`, `answer_spec`, đáp án đúng và mọi test.
+
+**QuizAttemptView**: `{attempt_id, attempt_no, score, max_score, is_late, late_penalty_percent, submitted_at, review_available, review_available_at, question_scores: [{question_id, score, max_score}] | null}` — `question_scores` là `null` khi chưa được xem lại.
+
+**AttemptReview**: `{attempt: QuizAttemptView, review_available, shows_answers, questions: [{question (dạng đề cho sinh viên, đúng thứ tự lượt đó), response, score, max_score, correct_answer?, explanation?}]}`. `correct_answer` theo loại: `{option_ids}` · `{accepted, case_sensitive}` · `{value, tolerance}` · `{blanks: [[...accepted]], blanks_case_sensitive: [bool]}` · `{matches: {left_id: right_id}}` · `{order: [item_id]}`. Khi chưa được xem lại: `questions` rỗng.
+
+**SubmissionDetails**: `{id, assignment_id, question_id, question_version_id, student_id, attempt_no, type, status, verdict, score, max_score, language, source_code, response, correct_answer, explanation, is_late, submitted_at, result: ResultView|null, results: [ResultView] (lịch sử chấm, mới nhất trước), review_available}` — `correct_answer`/`explanation` chỉ có với câu khách quan khi được xem lại và bài cho hiện đáp án. `ResultView`: `{grading_attempt, status, verdict, compile_error, compile_output, error_message, graded_at, duration_ms, tests_total, tests_passed, failed_test (position của test sai đầu tiên), tests: [{position, is_public, verdict, time_ms, memory_kb, input?, expected_output?, output?}]}` — sinh viên chỉ nhận `input/expected_output/output` của test công khai.
 
 ### Chấm code (M6)
 
-- POST code ở đường dẫn submissions trên nhận `language` (`python/c/cpp/java`, phải nằm trong snapshot), `source_code` (UTF-8 tối đa 128KiB, không rỗng), không kèm đáp án MCQ. Trả `202 {submission_id, status:"pending"}` sau khi lưu bài nộp và outbox; key trùng cùng nội dung trả bản gốc `200`, key trùng khác nội dung/phạm vi trả `409 IDEMPOTENCY_CONFLICT`.
-- API khóa bài tập khi kiểm tra lượt/hạn; chỉ nhận bài của lớp đang học và assessment đã publish. Điểm tối đa và phần trăm phạt muộn được ghim vào submission. Code không được sửa sau khi nộp.
-- GET `/submissions/{id}` trả metadata, status, verdict và log lỗi đã cắt ngắn; không trả input/output của test hay solution. Chủ bài nộp, giảng viên phụ trách hoặc admin được đọc.
-- Verdict `AC` chỉ khi tất cả test trong snapshot đạt; kết quả khác là `WA`, `CE`, `TLE`, `MLE`, `RE`. V1 không tính score hay điểm từng test; `score` giữ null.
-- Lịch sử `/me/submissions` và `/assignments/{id}/submissions` bổ sung `status`, `type`, `language`, `verdict`.
-- WebSocket chỉ báo thay đổi sau khi kết quả đã commit, lấy người nhận từ submission trong DB. Client đọc lại GET khi reconnect. Run thử/regrade chưa triển khai.
+- POST code nhận `language` (thuộc snapshot), `source_code` (UTF-8, không rỗng, ≤ 128 KiB). Trả `202 {submission_id, status:"pending"}` sau khi lưu bài nộp và outbox; key trùng cùng nội dung trả `200` cùng hình dạng `{submission_id, status}`, khác nội dung → `409 IDEMPOTENCY_CONFLICT`. Khi nộp chỉ kiểm tra ngôn ngữ và kích thước code; kiểm tra đầy đủ đề chỉ chạy lúc xuất bản.
+- API khóa bài tập khi kiểm tra lượt/hạn; submission `failed` không tính lượt. Điểm tối đa và phần trăm phạt muộn được ghim vào submission.
+- Verdict và điểm theo `assessment-spec.md` §5: `AC` → điểm câu sau phạt muộn; verdict khác → 0; `failed` → `null`.
+- WebSocket chỉ báo thay đổi sau khi kết quả đã commit. Client đọc lại GET khi reconnect.
 
 ## 7. Exams (M7)
 

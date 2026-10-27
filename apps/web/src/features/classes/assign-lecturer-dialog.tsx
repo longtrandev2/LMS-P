@@ -27,7 +27,7 @@ export function AssignLecturerDialog({ clazz, onOpenChange, onSaved }: {
   return <Dialog open onOpenChange={onOpenChange}>
     <DialogContent className="sm:max-w-lg">
       <DialogHeader>
-        <DialogTitle className="font-heading">Phân công giảng viên</DialogTitle>
+        <DialogTitle>Phân công giảng viên</DialogTitle>
         <DialogDescription>{clazz.course_name} · lớp {clazz.code} · học kỳ {clazz.semester}</DialogDescription>
       </DialogHeader>
       <ClassLecturerField lecturerId={lecturerId} initialName={clazz.lecturer_name} onChange={setLecturerId} />

@@ -97,19 +97,19 @@ erDiagram
 
 **question_categories** — id, bank_id FK question_banks, name VARCHAR(100), created_by FK users, created_at. UNIQUE(bank_id, name). Mỗi ngân hàng có danh mục hệ thống “Chưa phân loại” (không đổi tên/xóa); danh mục phẳng khác là tùy chọn, dùng để nhóm theo chương/chủ đề. Không dùng chuỗi `topic` tự do để thay thế danh mục.
 
-**questions** — id, owner_id FK users (người tạo), category_id FK question_categories NOT NULL (backend tự gán danh mục “Chưa phân loại” nếu request không chọn), type ENUM('mcq','programming'), content TEXT, topic VARCHAR(100) NULL, difficulty ENUM('easy','medium','hard') default 'medium', is_deleted BOOL default 0, created_at, updated_at. Đây là bản hiện hành trong ngân hàng; chỉnh sửa tạo nội dung cho phiên bản mới, không sửa snapshot đã được assessment xuất bản sử dụng. Index (owner_id, type), (category_id, type, difficulty, is_deleted).
+**questions** — id, owner_id FK users (người tạo), category_id FK question_categories NOT NULL (backend tự gán danh mục “Chưa phân loại” nếu request không chọn), type ENUM('mcq','multiple_choice','true_false','short_answer','numeric','fill_blank','matching','ordering','programming'), content TEXT (Markdown), topic VARCHAR(100) NULL (không dùng trên UI), difficulty ENUM('easy','medium','hard') default 'medium', explanation TEXT NULL, scoring_mode VARCHAR(20) default 'all_or_nothing', answer_spec JSON NULL (đáp án loại `short_answer`/`numeric`/`fill_blank`/`matching`/`ordering`, `assessment-spec.md` §1.2), is_deleted BOOL default 0, created_at, updated_at. Đây là bản hiện hành trong ngân hàng; chỉnh sửa tạo nội dung cho phiên bản mới, không sửa snapshot đã được assessment xuất bản sử dụng. Index (owner_id, type), (category_id, type, difficulty, is_deleted).
 
-**question_versions** — id, question_id FK, version_no INT, snapshot JSON, created_by FK users, created_at. UNIQUE(question_id, version_no). `snapshot` giữ toàn bộ dữ liệu cần để hiển thị/chấm phiên bản đó: type, content, options kèm đáp án đúng, starter code, ngôn ngữ/giới hạn chạy, test case theo thứ tự kèm input/expected/public/weight. Bản ghi là append-only; không cập nhật/xóa sau khi tạo.
+**question_versions** — id, question_id FK, version_no INT, snapshot JSON, created_by FK users, created_at. UNIQUE(question_id, version_no). `snapshot` giữ toàn bộ dữ liệu cần để hiển thị/chấm phiên bản đó (`assessment-spec.md` §2): type, content, explanation, scoring_mode, options kèm đáp án đúng, answer_spec, phần lập trình (ngôn ngữ, giới hạn, checker, starter code theo ngôn ngữ, lời giải), test case theo thứ tự. Bản ghi là append-only; một lần lưu tạo tối đa một version, không tạo nếu snapshot giống bản mới nhất.
 
 **question_options** — id, question_id FK, content TEXT, is_correct BOOL, position INT UNSIGNED. Index (question_id).
 
-**question_programming** — question_id PK/FK; starter_code TEXT NULL, solution_code MEDIUMTEXT NULL (lecturer verify đề), allowed_languages JSON NULL (NULL = tất cả), time_limit_ms INT UNSIGNED default 5000, memory_limit_mb INT UNSIGNED default 256.
+**question_programming** — question_id PK/FK; starter_code TEXT NULL (cũ), starter_codes JSON NULL (map ngôn ngữ → code), solution_code MEDIUMTEXT NULL, solution_language VARCHAR(10) NULL, allowed_languages JSON NOT NULL về nghiệp vụ (≥ 1 ngôn ngữ; dòng cũ NULL được migration điền cả 4), time_limit_ms INT UNSIGNED default 1000, memory_limit_mb INT UNSIGNED default 256, checker_mode VARCHAR(10) default 'token', checker_epsilon DOUBLE NULL.
 
-**test_cases** — id, question_id FK, input MEDIUMTEXT, expected_output MEDIUMTEXT, is_public BOOL default 1, weight DECIMAL(5,2) default 1.0, position INT UNSIGNED. Index (question_id).
+**test_cases** — id, question_id FK, input MEDIUMTEXT, expected_output MEDIUMTEXT, is_public BOOL default 0 (test công khai = ví dụ mẫu), weight DECIMAL(5,2) default 1.0 (không dùng — chấm nhị phân), position INT UNSIGNED. Index (question_id).
 
 ### 2.5 Bài tập (M5)
 
-**assignments** — id, class_id FK, title NVARCHAR(200), description TEXT, category VARCHAR(20) CHECK IN ('quiz','assignment','midterm','final') default 'assignment', available_from DATETIME NULL, due_at DATETIME, allow_late BOOL default 0, late_due_at DATETIME NULL, late_penalty_percent INT UNSIGNED default 0, max_attempts INT NULL (NULL = không giới hạn), score_policy ENUM('best','last') default 'best', is_published BOOL default 0, created_by FK, created_at, updated_at. `available_from`, `due_at` và `late_due_at` lưu UTC; web đổi giờ địa phương sang UTC trước khi gọi API. Giảng viên có thể tạo cùng nội dung cho nhiều lớp thuộc một học phần trong một giao dịch; mỗi lớp nhận một dòng assignment độc lập để quản lý bài nộp/điểm. `category='quiz'` chỉ nhận câu MCQ trong v1; `max_attempts` tính theo toàn bài quiz, còn các hạng mục khác tính theo từng câu. Index (class_id, due_at).
+**assignments** — id, class_id FK, title NVARCHAR(200), description TEXT, category VARCHAR(20) CHECK IN ('quiz','assignment','midterm','final') default 'assignment', available_from DATETIME NULL, due_at DATETIME, allow_late BOOL default 0, late_due_at DATETIME NULL, late_penalty_percent INT UNSIGNED default 0, max_attempts INT NULL (NULL = không giới hạn), score_policy ENUM('best','last') default 'best', review_mode VARCHAR(20) default 'after_close' (`never`/`after_submit`/`after_close`), review_shows_answers BOOL default 1, shuffle_questions BOOL default 0, shuffle_options BOOL default 0, is_published BOOL default 0, created_by FK, created_at, updated_at. `available_from`, `due_at` và `late_due_at` lưu UTC; web đổi giờ địa phương sang UTC trước khi gọi API. Giảng viên có thể tạo cùng nội dung cho nhiều lớp thuộc một học phần trong một giao dịch; mỗi lớp nhận một dòng assignment độc lập để quản lý bài nộp/điểm. `category='quiz'` nhận mọi loại câu trừ `programming`; `max_attempts` tính theo toàn bài quiz, còn các hạng mục khác tính theo từng câu. Index (class_id, due_at).
 
 **assignment_questions** — id, assignment_id FK, question_id FK (nguồn trong bank), question_version_id FK NULL (được ghim khi publish), points DECIMAL(6,2), position INT UNSIGNED. UNIQUE(assignment_id, question_id). Sau publish, hạng mục, số lượt/cách tính điểm và các dòng câu hỏi/snapshot/điểm/thứ tự bất biến; muốn sửa phải tạo assignment nháp mới. Giảng viên phụ trách vẫn có thể điều chỉnh tiêu đề, mô tả và lịch theo FR-ASG-07; thay đổi có audit và không cập nhật submission đã lưu.
 
@@ -139,24 +139,27 @@ erDiagram
 | exam_session_id | FK NULL | bài thi — CHECK: ít nhất 1 trong 2 NOT NULL |
 | question_id | FK questions | nộp theo từng câu |
 | question_version_id | FK question_versions | phiên bản câu được giao; dùng khi đọc đề và regrade |
-| type | ENUM('mcq','code') | |
-| selected_option_ids | JSON NULL | MCQ |
+| type | ENUM('mcq','code') | `mcq` = mọi câu khách quan chấm đồng bộ |
+| selected_option_ids | JSON NULL | câu lựa chọn |
+| response | JSON NULL | câu trả lời đã chuẩn hóa của câu khách quan (`assessment-spec.md` §3.2) |
 | language | VARCHAR(20) NULL | code |
 | source_code | MEDIUMTEXT NULL | code (≤16MB đủ; đường mở rộng: object storage) |
 | attempt_no | INT | quiz: bằng `assignment_attempts.attempt_no`; bài khác: đếm theo (assignment, student, question); bài thi: 1 |
 | status | ENUM('pending','grading','completed','failed') | code; MCQ tạo xong là completed |
-| score | DECIMAL(8,2) NULL | điểm câu theo thang points |
+| score | DECIMAL(8,2) NULL | điểm câu theo thang points sau phạt muộn; code: AC = points, khác = 0, `failed` = NULL |
 | is_late | BOOL default 0 | |
 | idempotency_key | CHAR(36) UNIQUE NULL | bài nộp từng câu; quiz lưu key ở `assignment_attempts`, các dòng câu để NULL |
 | submitted_at | DATETIME | |
 
 Index: UNIQUE(assignment_id, student_id, question_id, attempt_no); UNIQUE(assignment_attempt_id, question_id); (student_id, submitted_at); (exam_session_id). Với quiz, mọi câu trong cùng lượt dùng chung `assignment_attempt_id` và `attempt_no`, kể cả câu bỏ trống (`selected_option_ids` NULL, điểm 0); bài khác để `assignment_attempt_id` NULL. Bài thi không thuộc `assignment_attempts`.
 
-**grading_results** — id, submission_id FK, grading_job_id FK unique, attempt_no INT, status VARCHAR(20) ('graded'/'failed'), verdict VARCHAR(16) NULL (`AC`/`WA`/`CE`/`TLE`/`MLE`/`RE`), total_score DECIMAL(8,2) NULL, compile_error BOOLEAN, compile_output MEDIUMTEXT NULL, error_message TEXT NULL, graded_at, duration_ms INT. Unique (submission_id, attempt_no). V1 không tính điểm theo test nên total_score luôn NULL.
+**grading_results** — id, submission_id FK, grading_job_id FK unique, attempt_no INT, status VARCHAR(20) ('graded'/'failed'), verdict VARCHAR(16) NULL (`AC`/`WA`/`CE`/`TLE`/`MLE`/`RE`/`OLE`/`SYSTEM_ERROR`), total_score DECIMAL(8,2) NULL (không dùng), compile_error BOOLEAN, compile_output MEDIUMTEXT NULL, error_message TEXT NULL, tests_total INT NULL, tests_passed INT NULL, failed_test INT NULL, graded_at, duration_ms INT. Unique (submission_id, attempt_no). Mỗi lần chấm/chấm lại là một dòng; dòng mới nhất quyết định verdict và điểm.
 
-M6 API (Flyway V14) lưu outbox và snapshot đã ghim. `grading_results` là lịch sử verdict; `submissions.verdict` là verdict mới nhất để list lịch sử nộp. API là tiến trình duy nhất ghi trạng thái/verdict; worker chỉ SELECT bài/snapshot và publish event. V1 không ghi `test_results` và không tính điểm theo test.
+M6 API (Flyway V14) lưu outbox và snapshot đã ghim. `grading_results` là lịch sử verdict; `submissions.verdict` là verdict mới nhất để list lịch sử nộp. API là tiến trình duy nhất ghi trạng thái/verdict; worker chỉ SELECT bài/snapshot/run job và publish event.
 
-`test_results` được giữ trong schema cho bước phát triển chi tiết kết quả sau này; luồng AC hiện tại không ghi bảng này để không lưu/chấm điểm từng test.
+**test_results** — id, grading_result_id FK, test_case_position INT, status VARCHAR(16) (verdict test `AC`/`WA`/`TLE`/`MLE`/`RE`/`OLE`), output MEDIUMTEXT NULL (cắt 4 KiB), time_ms INT, memory_kb INT NULL, score DECIMAL(8,2) default 0 (không dùng). UNIQUE(grading_result_id, test_case_position). Chỉ gồm test đã chạy.
+
+**run_jobs** — chạy thử/kiểm tra đề, không phải bài nộp: id, job_id CHAR(36) UNIQUE, kind VARCHAR(20) (`problem_check`/`draft_check`/`practice_run`), requested_by FK users, question_id FK NULL, question_version_id FK NULL (`problem_check`: phiên bản đã kiểm tra), assignment_id FK NULL, payload JSON (code, ngôn ngữ, giới hạn, checker, test), status VARCHAR(16) (`pending`/`running`/`completed`/`failed`), verdict VARCHAR(16) NULL, result JSON NULL, created_at, next_attempt_at, published_at NULL, publish_attempts INT, completed_at NULL. Index (question_version_id, kind, created_at), (requested_by, created_at), (published_at, next_attempt_at). Outbox giống `grading_jobs`.
 
 ### 2.8 Điểm (M8)
 

@@ -40,3 +40,6 @@ Claudekit Engineer v2.13.0/
 # Dist
 dist/
 build/
+
+# Claude Code worktree tạm của agent
+.claude/worktrees/

@@ -1,5 +1,6 @@
-export type { QuestionType, QuestionDifficulty, QuestionOption, QuestionProgramming, QuestionTestCase, QuestionSummary, Question, QuestionBank, QuestionCategory, QuestionCsvRow, QuestionCsvPreview, QuestionImportResult } from "./questions";
-export type { AssignmentCategory, ScorePolicy, GradingVerdict, SubmissionStatus, AssignmentSummary, AssignmentQuestion, AssignmentDetails, QuizQuestionScore, QuizAttempt, AssignmentSubmission, SubmissionDetails } from "./assignments";
+export type { QuestionType, QuestionDifficulty, ScoringMode, ProgrammingLanguage, CheckerMode, QuestionOption, BlankSpec, PairSpec, ChoiceItem, AnswerSpec, QuestionProgramming, QuestionTestCase, QuestionSummary, Question, QuestionInput, DrawRule, DrawResult, QuestionBank, QuestionCategory, QuestionCsvRow, QuestionCsvPreview, QuestionImportResult } from "./questions";
+export type { AssignmentCategory, ScorePolicy, ReviewMode, GradingVerdict, SubmissionStatus, AssignmentSummary, AssignmentInput, ProgrammingSample, AssignmentProgramming, AssignmentQuestion, AssignmentDetails, Answer, AnswerResponse, QuizQuestionScore, QuizAttempt, CorrectAnswer, ReviewQuestion, AttemptReview, AssignmentSubmission, TestResultView, GradingResultView, SubmissionDetails, StudentResultRow } from "./assignments";
+export type { RunJobKind, RunJobStatus, RunTestResult, RunJob, RunAccepted, DraftCheckInput, PracticeRunInput } from "./runs";
 
 /** Kiểu dữ liệu dùng chung theo DTO của Spring API. */
 

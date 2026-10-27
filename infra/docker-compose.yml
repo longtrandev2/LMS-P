@@ -68,7 +68,6 @@ services:
       RABBITMQ_PASSWORD: ${RABBITMQ_PASS:-lms}
       WORKER_PREFETCH: ${WORKER_PREFETCH:-2}
       GRADER_IMAGE: lmsp-grader:local
-      GRADING_JOB_TIMEOUT_SECONDS: ${GRADING_JOB_TIMEOUT_SECONDS:-120}
     read_only: true
     tmpfs:
       - /tmp:rw,noexec,nosuid,size=64m

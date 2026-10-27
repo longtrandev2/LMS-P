@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { Loader2, Upload } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -15,6 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FieldError } from "@/components/form-field-error";
 import { errorText } from "@/lib/error-messages";
 import type { MaterialType } from "./types";
+import { MaterialFilePicker } from "./material-file-picker";
 import { MaterialFormFields } from "./material-form-fields";
 import { useUploadMaterial } from "./use-materials";
 
@@ -102,64 +104,53 @@ export function UploadMaterialDialog({ onOpenChange, classId }: UploadMaterialDi
     errors,
   };
 
+  const footer = (label: string, busyLabel: string) => (
+    <DialogFooter className="pt-2">
+      <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Hủy</Button>
+      <Button type="submit" disabled={submitting}>
+        {submitting ? <Loader2 className="animate-spin" aria-hidden /> : null}
+        {submitting ? busyLabel : label}
+      </Button>
+    </DialogFooter>
+  );
+
   return (
     <Dialog open onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="font-heading">Tải lên học liệu</DialogTitle>
-          <DialogDescription>
-            Tải tệp (tối đa {MAX_UPLOAD_MB}MB) hoặc dán liên kết tài liệu cho lớp.
-          </DialogDescription>
+          <DialogTitle>Tải học liệu</DialogTitle>
+          <DialogDescription>Chia sẻ tệp hoặc liên kết cho sinh viên trong lớp.</DialogDescription>
         </DialogHeader>
 
-        <Tabs defaultValue="file">
+        <Tabs defaultValue="file" className="gap-4">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="file">Tệp</TabsTrigger>
             <TabsTrigger value="link">Liên kết</TabsTrigger>
           </TabsList>
 
           <TabsContent value="file">
-            <form onSubmit={(e) => handleSubmit("file", e)} className="space-y-4 pt-2" noValidate>
+            <form onSubmit={(e) => handleSubmit("file", e)} className="space-y-4" noValidate>
               <div className="space-y-2">
-                <Label htmlFor="material-file">Tệp</Label>
-                <Input
-                  id="material-file"
-                  type="file"
-                  accept={FILE_ACCEPT}
-                  onChange={(e) => handleFileChange(e.target.files?.[0] ?? null)}
-                  aria-invalid={!!errors.file}
-                  className="file:mr-3 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-1.5 file:text-sm file:font-medium"
-                />
+                <Label htmlFor="material-file" className="sr-only">Tệp</Label>
+                <MaterialFilePicker id="material-file" file={file} accept={FILE_ACCEPT} maxMb={MAX_UPLOAD_MB}
+                  invalid={!!errors.file} onChange={handleFileChange} />
                 {errors.file ? <FieldError text={errors.file} /> : null}
               </div>
               <MaterialFormFields {...sharedProps} />
-              <Button type="submit" disabled={submitting}>
-                {submitting ? <Loader2 className="animate-spin" aria-hidden /> : <Upload aria-hidden />}
-                {submitting ? "Đang tải lên…" : "Tải lên"}
-              </Button>
+              {footer("Tải lên", "Đang tải lên…")}
             </form>
           </TabsContent>
 
           <TabsContent value="link">
-            <form onSubmit={(e) => handleSubmit("link", e)} className="space-y-4 pt-2" noValidate>
+            <form onSubmit={(e) => handleSubmit("link", e)} className="space-y-4" noValidate>
               <div className="space-y-2">
                 <Label htmlFor="material-link">Liên kết</Label>
-                <Input
-                  id="material-link"
-                  type="url"
-                  inputMode="url"
-                  value={linkUrl}
-                  onChange={(e) => setLinkUrl(e.target.value)}
-                  placeholder="https://drive.example.com/tai-lieu"
-                  aria-invalid={!!errors.link}
-                />
+                <Input id="material-link" type="url" inputMode="url" value={linkUrl}
+                  onChange={(e) => setLinkUrl(e.target.value)} placeholder="https://drive.google.com/…" aria-invalid={!!errors.link} />
                 {errors.link ? <FieldError text={errors.link} /> : null}
               </div>
               <MaterialFormFields {...sharedProps} defaultType="link" />
-              <Button type="submit" disabled={submitting}>
-                {submitting ? <Loader2 className="animate-spin" aria-hidden /> : <Upload aria-hidden />}
-                {submitting ? "Đang lưu…" : "Lưu liên kết"}
-              </Button>
+              {footer("Lưu liên kết", "Đang lưu…")}
             </form>
           </TabsContent>
         </Tabs>
