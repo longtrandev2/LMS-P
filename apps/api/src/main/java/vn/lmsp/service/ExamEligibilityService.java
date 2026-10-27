@@ -17,10 +17,11 @@ import vn.lmsp.repository.GradeEntryRepository;
 public class ExamEligibilityService {
     private final AttendanceSummaryProvider attendance;
     private final GradeEntryRepository entries;
+    private final SettingsProvider settings;
 
     public boolean eligible(Assignment assignment, Long studentId) {
         var clazz = assignment.getLmsClass();
-        var policy = GradePolicyCodec.read(clazz.getGradePolicy());
+        var policy = GradePolicyCodec.read(clazz.getGradePolicy(), settings.defaultGradePolicy());
         var counts = attendance.countsByStudent(clazz.getId()).get(studentId);
         var override = entries.findByClassIdAndStudentIdAndComponent(clazz.getId(), studentId, GradeComponent.ATTENDANCE)
                 .orElse(null);

@@ -25,7 +25,7 @@ class QuestionCheckServiceTest {
     private final RunJobGateway runs = mock(RunJobGateway.class);
     private final QuestionCheckService service = new QuestionCheckService(questions, banks, versions,
             new QuestionVersionService(versions, mock(QuestionReadService.class), new ObjectMapper()),
-            new ProgrammingContentValidator(), runs);
+            new ProgrammingContentValidator(vn.lmsp.support.TestSettings.defaults()), runs);
     private final ArgumentCaptor<RunPayload> payload = ArgumentCaptor.forClass(RunPayload.class);
 
     @Test void verifyRunsSolutionOfLatestSavedVersionOnAllTests() {

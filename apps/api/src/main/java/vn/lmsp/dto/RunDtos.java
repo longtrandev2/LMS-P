@@ -23,8 +23,8 @@ public final class RunDtos {
     /** Body `POST /questions/draft-check`. */
     public record DraftCheckInput(@NotNull Long bank_id, @NotNull @Pattern(regexp = "python|c|cpp|java") String language,
                                   @NotBlank @Size(max = 131072) String source_code,
-                                  @NotNull @Min(100) @Max(10000) Integer time_limit_ms,
-                                  @NotNull @Min(32) @Max(1024) Integer memory_limit_mb,
+                                  @NotNull @Min(100) @Max(20000) Integer time_limit_ms,
+                                  @NotNull @Min(32) @Max(2048) Integer memory_limit_mb,
                                   @Pattern(regexp = "token|line|float") String checker_mode,
                                   @DecimalMin("1e-12") @DecimalMax("1") Double checker_epsilon,
                                   @NotEmpty @Size(max = 100) List<@Valid DraftTest> tests) { }

@@ -24,7 +24,8 @@ class GradebookServiceTest {
     private final GradeEntryRepository entries = mock(GradeEntryRepository.class);
     private final AttendanceSummaryProvider attendance = mock(AttendanceSummaryProvider.class);
     private final AssignmentScoreCollector collector = mock(AssignmentScoreCollector.class);
-    private final GradebookService service = new GradebookService(access, enrollments, users, entries, attendance, collector);
+    private final GradebookService service = new GradebookService(access, enrollments, users, entries, attendance, collector,
+            vn.lmsp.support.TestSettings.defaults());
     private final LmsClass clazz = clazz(null);
     private final User first = user(42, "student"), second = user(43, "student");
 

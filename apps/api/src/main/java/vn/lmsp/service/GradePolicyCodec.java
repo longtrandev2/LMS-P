@@ -16,15 +16,24 @@ public final class GradePolicyCodec {
 
     private GradePolicyCodec() { }
 
-    public static GradePolicy read(JsonNode node) {
-        if (node == null || node.isNull() || !node.isObject()) return DEFAULT;
+    public static GradePolicy read(JsonNode node) { return read(node, DEFAULT); }
+
+    /**
+     * Như {@link #read(JsonNode)} nhưng lớp chưa cấu hình (NULL) hoặc thiếu khóa thì lấy theo {@code defaults}
+     * (`default_grade_policy` của cấu hình hệ thống — admin-spec.md §1). `max_absences: null` tường minh giữ null.
+     */
+    public static GradePolicy read(JsonNode node, GradePolicy defaults) {
+        if (defaults == null) defaults = DEFAULT;
+        if (node == null || node.isNull() || !node.isObject()) return defaults;
         JsonNode weights = node.path("weights"), attendance = node.path("attendance");
-        Weights fallback = DEFAULT.weights();
-        AttendancePolicy base = DEFAULT.attendance();
+        Weights fallback = defaults.weights();
+        AttendancePolicy base = defaults.attendance();
+        JsonNode maxAbsences = attendance.path("max_absences");
         return new GradePolicy(
                 new Weights(integer(weights, "attendance", fallback.attendance()), integer(weights, "assignment", fallback.assignment()),
                         integer(weights, "midterm", fallback.midterm()), integer(weights, "final", fallback.finalExam())),
-                new AttendancePolicy(attendance.path("max_absences").isNumber() ? attendance.path("max_absences").intValue() : null,
+                new AttendancePolicy(maxAbsences.isNumber() ? Integer.valueOf(maxAbsences.intValue())
+                        : maxAbsences.isMissingNode() ? base.max_absences() : null,
                         decimal(attendance, "absent_penalty", base.absent_penalty()),
                         decimal(attendance, "late_penalty", base.late_penalty()),
                         decimal(attendance, "excused_penalty", base.excused_penalty())));

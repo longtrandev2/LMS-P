@@ -27,7 +27,7 @@ class LeaveRequestServiceTest {
     private final LeaveEvidenceStorage storage = mock(LeaveEvidenceStorage.class);
     private final NotificationService notifications = mock(NotificationService.class);
     private final LeaveRequestService service = new LeaveRequestService(leaves, sessions, users, access, storage,
-            notifications, new ScheduleMapper());
+            notifications, new ScheduleMapper(), vn.lmsp.support.TestSettings.defaults());
     private final LmsClass clazz = clazz(null);
     private final User an = user(42, "student");
     private final MockMultipartFile file = new MockMultipartFile("evidence", "giay.pdf", "application/pdf", "%PDF-1".getBytes());

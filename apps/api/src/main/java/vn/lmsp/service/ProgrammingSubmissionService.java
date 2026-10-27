@@ -37,9 +37,11 @@ public class ProgrammingSubmissionService {
     private final SubmissionPolicy policy;
     private final GradingMapper mapper;
     private final AuditService audit;
+    private final MaintenanceGuard maintenance;
 
     @Transactional
     public Receipt submit(Long assignmentId, Long questionId, Long studentId, String rawKey, QuestionSubmissionInput body) {
+        maintenance.check(false);
         Assignment assignment = access.studentAssignment(assignmentId, studentId, true);
         if (assignment.isSessionBased()) throw AssignmentSubmissionService.sessionOnly();
         String key = policy.key(rawKey);

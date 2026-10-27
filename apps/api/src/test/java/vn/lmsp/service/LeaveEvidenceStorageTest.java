@@ -11,7 +11,8 @@ import org.springframework.mock.web.MockMultipartFile;
 class LeaveEvidenceStorageTest {
     @TempDir Path root;
 
-    private LeaveEvidenceStorage storage() { return new LeaveEvidenceStorage(root.toString()); }
+    private static final int FIVE_MB = 5 * 1024 * 1024;
+    private LeaveEvidenceStorage storage() { return new LeaveEvidenceStorage(root.toString(), vn.lmsp.support.TestSettings.defaults()); }
     private static MockMultipartFile file(String name, byte[] content) {
         return new MockMultipartFile("evidence", name, "application/octet-stream", content);
     }
@@ -35,7 +36,7 @@ class LeaveEvidenceStorageTest {
     }
 
     @Test void rejectsLargeUnknownOrMismatchedFiles() {
-        byte[] big = new byte[(int) LeaveEvidenceStorage.MAX_BYTES + 1];
+        byte[] big = new byte[FIVE_MB + 1];
         big[0] = '%'; big[1] = 'P'; big[2] = 'D'; big[3] = 'F';
         assertThatThrownBy(() -> storage().store(3L, file("big.pdf", big))).hasMessageContaining("5 MB");
         assertThatThrownBy(() -> storage().store(3L, file("run.exe", "MZ".getBytes()))).hasMessageContaining("chỉ hỗ trợ");
@@ -45,7 +46,7 @@ class LeaveEvidenceStorageTest {
     }
 
     @Test void exactlyFiveMegabytesIsAllowed() {
-        byte[] max = new byte[(int) LeaveEvidenceStorage.MAX_BYTES];
+        byte[] max = new byte[FIVE_MB];
         max[0] = '%'; max[1] = 'P'; max[2] = 'D'; max[3] = 'F';
         assertThat(storage().store(3L, file("max.pdf", max)).size()).isEqualTo(max.length);
     }

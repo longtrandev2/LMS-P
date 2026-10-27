@@ -1,5 +1,7 @@
 package vn.lmsp.service;
 
+import static vn.lmsp.service.SettingDefinitions.*;
+
 import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Set;
@@ -7,7 +9,10 @@ import org.springframework.stereotype.Component;
 import vn.lmsp.dto.QuestionDtos.ProgrammingView;
 import vn.lmsp.dto.QuestionDtos.QuestionSnapshot;
 
-/** Kiểm tra đầy đủ đề lập trình khi xuất bản — docs/assessment-spec.md §4. Khi nộp bài không gọi lớp này. */
+/**
+ * Kiểm tra đầy đủ đề lập trình khi xuất bản — docs/assessment-spec.md §4. Khi nộp bài không gọi lớp này.
+ * Chỉ kiểm tra biên tuyệt đối (không theo cấu hình hiện tại): phiên bản đã lưu không bị ảnh hưởng khi admin đổi cấu hình.
+ */
 @Component
 public class ProgrammingProblemValidator {
     private static final Set<String> LANGUAGES = Set.of("python", "c", "cpp", "java");
@@ -38,10 +43,10 @@ public class ProgrammingProblemValidator {
         var languages = programming.allowed_languages();
         if (languages == null || languages.isEmpty() || !LANGUAGES.containsAll(languages))
             throw invalid("Đề lập trình cần ít nhất một ngôn ngữ hợp lệ (python, c, cpp, java)");
-        if (programming.time_limit_ms() < 100 || programming.time_limit_ms() > 10_000)
-            throw invalid("Giới hạn thời gian phải từ 100 đến 10000 ms");
-        if (programming.memory_limit_mb() < 32 || programming.memory_limit_mb() > 1024)
-            throw invalid("Giới hạn bộ nhớ phải từ 32 đến 1024 MB");
+        if (programming.time_limit_ms() < TIME_FLOOR || programming.time_limit_ms() > TIME_CEILING)
+            throw invalid("Giới hạn thời gian phải từ " + TIME_FLOOR + " đến " + TIME_CEILING + " ms");
+        if (programming.memory_limit_mb() < MEMORY_FLOOR || programming.memory_limit_mb() > MEMORY_CEILING)
+            throw invalid("Giới hạn bộ nhớ phải từ " + MEMORY_FLOOR + " đến " + MEMORY_CEILING + " MB");
         String checker = programming.checker_mode() == null ? "token" : programming.checker_mode();
         if (!CHECKERS.contains(checker)) throw invalid("Cách so output phải là token, line hoặc float");
         Double epsilon = programming.checker_epsilon();

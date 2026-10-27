@@ -43,7 +43,7 @@ class QuizSubmissionServiceTest {
                 mock(QuestionReadService.class), new ObjectMapper());
         service = new QuizAttemptService(access, links, attempts, submissions, users, snapshots, new SubmissionMapper(),
                 mock(AuditService.class), new SubmissionPolicy(), new AnswerNormalizer(), new ObjectiveGrader(), new ReviewPolicy(),
-                sessions, sessionPapers);
+                sessions, sessionPapers, vn.lmsp.support.TestSettings.defaults());
         assignment.configureReview(ReviewMode.after_submit, true, false, false);
         for (int i = 0; i < 2; i++) {
             var question = question(100 + i, QuestionType.mcq);

@@ -37,9 +37,11 @@ public class QuizAttemptService {
     private final ReviewPolicy reviews;
     private final AttemptSessionRepository sessions;
     private final SessionPaperReader sessionPapers;
+    private final MaintenanceGuard maintenance;
 
     @Transactional
     public QuizAttemptView submitQuiz(Long assignmentId, Long studentId, String rawKey, QuizSubmitInput body) {
+        maintenance.check(false);
         Assignment assignment = access.studentAssignment(assignmentId, studentId, true);
         if (assignment.isSessionBased()) throw new LmsException("CONFLICT",
                 "Bài này làm theo phiên — hãy bắt đầu phiên làm bài", HttpStatus.CONFLICT, null);

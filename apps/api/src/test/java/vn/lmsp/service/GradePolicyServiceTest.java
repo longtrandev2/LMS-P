@@ -16,7 +16,7 @@ class GradePolicyServiceTest {
     private final ObjectMapper json = new ObjectMapper();
     private final GradebookAccess access = mock(GradebookAccess.class);
     private final AuditService audit = mock(AuditService.class);
-    private final GradePolicyService service = new GradePolicyService(access, audit, json);
+    private final GradePolicyService service = new GradePolicyService(access, audit, json, vn.lmsp.support.TestSettings.defaults());
 
     private static GradePolicyInput input(String a, String b, String c, String d, Integer max, String penalty) {
         return new GradePolicyInput(new WeightsInput(new BigDecimal(a), new BigDecimal(b), new BigDecimal(c), new BigDecimal(d)),

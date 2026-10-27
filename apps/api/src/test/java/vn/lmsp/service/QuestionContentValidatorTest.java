@@ -14,7 +14,7 @@ import vn.lmsp.enums.ScoringMode;
 
 class QuestionContentValidatorTest {
     private final QuestionContentValidator validator = new QuestionContentValidator(
-            new AnswerSpecValidator(new AnswerIdGenerator()), new ProgrammingContentValidator());
+            new AnswerSpecValidator(new AnswerIdGenerator()), new ProgrammingContentValidator(vn.lmsp.support.TestSettings.defaults()));
 
     private QuestionContent choice(QuestionType type, ScoringMode mode, OptionInput... options) {
         return validator.validate(type, " Câu hỏi ", null, mode, List.of(options), null, null, null);
@@ -128,7 +128,7 @@ class QuestionContentValidatorTest {
     @Test void floatCheckerGetsDefaultEpsilonAndStarterCodesKeepOnlyAllowedLanguages() {
         var input = new ProgrammingInput(null, Map.of("python", "import sys", "java", "class Main {}"), null, null,
                 List.of("python"), 2000, 128, "float", null);
-        var result = new ProgrammingContentValidator().validate(input);
+        var result = new ProgrammingContentValidator(vn.lmsp.support.TestSettings.defaults()).validate(input);
         assertThat(result.checker_epsilon()).isEqualTo(1e-6);
         assertThat(result.starter_codes()).containsOnlyKeys("python");
     }
