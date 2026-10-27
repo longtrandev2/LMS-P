@@ -55,7 +55,7 @@ class SessionAnswerServiceTest {
         assertThat(captor.getAllValues().get(1).getSourceCode()).isEqualTo("print(1)");
         assertThat(clock.saved_at()).isNotNull();
         assertThat(clock.remaining_seconds()).isBetween(1700L, 1800L);
-        assertThat(session.getLastSeenAt()).isEqualTo(clock.server_now());
+        assertThat(session.getLastSeenAt().truncatedTo(java.time.temporal.ChronoUnit.MILLIS)).isEqualTo(clock.server_now());
     }
 
     @Test void emptyCodeIsAllowedAndMissingAnswerDeletesStoredRow() {
