@@ -4,8 +4,8 @@
 
 ## Hướng và màu sắc
 
-- Bám Frappe LMS / ClassroomIO (token frappe-ui): nền trắng, sidebar xám nhạt, nút chính đen, nút phụ xám đặc, ít viền.
-- Không còn nút đỏ; đỏ chỉ dùng cho lỗi/xóa.
+- Khung bám Frappe LMS / ClassroomIO (token frappe-ui): nền trắng, sidebar xám nhạt, nút phụ xám đặc, ít viền.
+- Màu nhấn bám S-Link: đỏ thương hiệu cho nút chính, mục/tab đang chọn; ô thống kê tô nhạt theo trạng thái; khung thông tin lớp nền đỏ nhạt.
 - Xanh lá cho đạt/thành công, đỏ cho lỗi/sai/xóa, cam cho cảnh báo (quá thời gian, nộp muộn, sắp hết hạn).
 - Font Inter (đóng gói cùng ứng dụng, đủ dấu tiếng Việt khi không có Internet); code và mã định danh dùng Geist Mono.
 - Có chế độ sáng và tối; token ở `apps/web/src/app/design-tokens.css`.

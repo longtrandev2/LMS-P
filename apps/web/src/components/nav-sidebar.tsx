@@ -80,11 +80,11 @@ export function Sidebar({ collapsed = false, onToggle, onNavigate }: {
                     "flex h-8 items-center gap-2.5 rounded-md px-2 text-sm transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring",
                     collapsed && "justify-center px-0",
                     active
-                      ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground shadow-sm"
+                      ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
                       : "text-sidebar-foreground hover:bg-accent"
                   )}
                 >
-                  <item.icon className={cn("size-4 shrink-0", active ? "text-foreground" : "text-muted-foreground")} aria-hidden />
+                  <item.icon className={cn("size-4 shrink-0", active ? "text-sidebar-accent-foreground" : "text-muted-foreground")} aria-hidden />
                   {collapsed ? <span className="sr-only">{item.label}</span> : <span className="truncate">{item.label}</span>}
                 </Link>
               );
