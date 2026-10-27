@@ -28,6 +28,9 @@ const StudentAssignmentPage = page(() => import("@/features/assignments/student-
 const QuizAttemptPage = page(() => import("@/features/assignments/quiz-attempt-page"), "QuizAttemptPage");
 const AttemptReviewPage = page(() => import("@/features/assignments/attempt-review-page"), "AttemptReviewPage");
 const ProblemWorkspacePage = page(() => import("@/features/assignments/problem-workspace-page"), "ProblemWorkspacePage");
+const PapersPreviewPage = page(() => import("@/features/exams/lecturer/papers-preview-page"), "PapersPreviewPage");
+const ExamMonitorPage = page(() => import("@/features/exams/monitor/exam-monitor-page"), "ExamMonitorPage");
+const ExamRoomPage = page(() => import("@/features/exams/student/exam-room-page"), "ExamRoomPage");
 const SessionAttendancePage = page(() => import("@/features/schedule/lecturer/session-attendance-page"), "SessionAttendancePage");
 const CourseClassesPage = lazy(async () => ({ default: (await import("@/features/classes/course-classes-page")).CourseClassesPage }));
 const ClassDetailPage = lazy(async () => ({ default: (await import("@/features/classes/class-detail-page")).ClassDetailPage }));
@@ -45,6 +48,14 @@ function ProtectedLayout() {
   return <AppShell>
     <Suspense fallback={<div role="status" aria-label="Đang tải trang" className="py-2"><ListSkeleton /></div>}><Outlet /></Suspense>
   </AppShell>;
+}
+/** Trang toàn màn hình (phòng thi): cần đăng nhập nhưng không có sidebar/topbar. */
+function FocusLayout() {
+  const { status } = useAuthGuard();
+  if (status !== "ok") return <div className="grid min-h-dvh place-items-center bg-background">
+    <p role="status" className="text-sm text-muted-foreground">{status === "denied" ? "Không có quyền truy cập." : "Đang kiểm tra phiên đăng nhập…"}</p>
+  </div>;
+  return <Suspense fallback={<div role="status" aria-label="Đang tải trang" className="p-6"><ListSkeleton /></div>}><Outlet /></Suspense>;
 }
 function CourseRoute() { const { id = "" } = useParams(); return <CourseClassesPage courseId={id} />; }
 function ClassRoute() { const { id = "" } = useParams(); return <ClassDetailPage classId={id} />; }
@@ -66,6 +77,8 @@ export function AppRouter() {
       <Route path="/classes/:classId/assignments/new" element={<AssignmentEditorPage />} />
       <Route path="/classes/:classId/assignments/:assignmentId/edit" element={<AssignmentEditorPage />} />
       <Route path="/classes/:classId/assignments/:assignmentId/results" element={<AssignmentResultsPage />} />
+      <Route path="/classes/:classId/assignments/:assignmentId/papers" element={<PapersPreviewPage />} />
+      <Route path="/classes/:classId/assignments/:assignmentId/monitor" element={<ExamMonitorPage />} />
       <Route path="/submissions/:submissionId" element={<SubmissionDetailPage />} />
       <Route path="/classes/:classId/sessions/:sessionId" element={<SessionAttendancePage />} />
       <Route path="/me/classes/:classId/assignments/:assignmentId" element={<StudentAssignmentPage />} />
@@ -76,6 +89,9 @@ export function AppRouter() {
       <Route path="/classes/:id" element={<ClassRoute />} />
       <Route path="/me/classes" element={<MyClassesPage />} />
       <Route path="/me/classes/:id" element={<MyClassRoute />} />
+    </Route>
+    <Route element={<FocusLayout />}>
+      <Route path="/attempt-sessions/:sessionId" element={<ExamRoomPage />} />
     </Route>
     <Route path="*" element={<Navigate to="/" replace />} />
   </Routes>;

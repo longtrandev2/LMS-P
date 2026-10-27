@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Phiên bản | 1.6 — 2026-10-27 (thêm lịch học/điểm danh/đơn xin nghỉ, sổ điểm 4 thành phần — `class-schedule-grades-spec.md`; câu hỏi đa loại — `assessment-spec.md`) |
+| Phiên bản | 1.7 — 2026-10-27 (kỳ thi, đề nhiều mã, phiên làm bài — `exam-spec.md`; thêm lịch học/điểm danh/đơn xin nghỉ, sổ điểm 4 thành phần — `class-schedule-grades-spec.md`; câu hỏi đa loại — `assessment-spec.md`) |
 | Base URL | `/api/v1` (Swagger UI `/swagger-ui/index.html`, OpenAPI `/v3/api-docs`) |
 | Nguồn FR | `srs.md` |
 
@@ -16,7 +16,7 @@
 ```json
 { "error": { "code": "ENROLLMENT_REQUIRED", "message": "Bạn không thuộc lớp này", "details": {} } }
 ```
-- **Mã lỗi nghiệp vụ** (tập trung ở core/exceptions): `UNAUTHENTICATED`, `FORBIDDEN`, `ENROLLMENT_REQUIRED`, `ATTEMPT_EXCEEDED`, `DEADLINE_PASSED`, `EXAM_NOT_OPEN`, `SESSION_ENDED`, `IDEMPOTENCY_CONFLICT`, `CONFLICT` (xung đột trạng thái chung: đơn xin nghỉ trùng buổi, chấm lại khi đang chấm, bài chưa mở…), `VALIDATION_ERROR`, `NOT_FOUND`, `RATE_LIMITED`, `INTERNAL`, `CLASS_FULL` (hết chỗ), `ENROLL_CLOSED` (ngoài khung giờ ghi danh), `ALREADY_ENROLLED` (đã ghi danh lớp), `ENROLLMENT_INVALID` (mã SV/email không hợp lệ khi thêm tay), `PROBLEM_CHECK_FAILED` (lời giải mẫu không AC trên phiên bản sắp ghim), `PROBLEM_UNVERIFIED` (câu lập trình chưa được kiểm tra đề; gửi lại với `confirm_unverified=true` để xác nhận).
+- **Mã lỗi nghiệp vụ** (tập trung ở core/exceptions): `UNAUTHENTICATED`, `FORBIDDEN`, `ENROLLMENT_REQUIRED`, `ATTEMPT_EXCEEDED`, `DEADLINE_PASSED`, `EXAM_NOT_OPEN`, `SESSION_ENDED`, `IDEMPOTENCY_CONFLICT`, `CONFLICT` (xung đột trạng thái chung: đơn xin nghỉ trùng buổi, chấm lại khi đang chấm, bài chưa mở…), `VALIDATION_ERROR`, `NOT_FOUND`, `RATE_LIMITED`, `INTERNAL`, `CLASS_FULL` (hết chỗ), `ENROLL_CLOSED` (ngoài khung giờ ghi danh), `ALREADY_ENROLLED` (đã ghi danh lớp), `ENROLLMENT_INVALID` (mã SV/email không hợp lệ khi thêm tay), `PROBLEM_CHECK_FAILED` (lời giải mẫu không AC trên phiên bản sắp ghim), `PROBLEM_UNVERIFIED` (câu lập trình chưa được kiểm tra đề; gửi lại với `confirm_unverified=true` để xác nhận), `NOT_ELIGIBLE` (403 — không đủ điều kiện dự thi cuối kỳ).
 - **HTTP语义:** 200/201 thành công; 202 nộp bài bất đồng bộ; 400 validate; 401/403 auth; 404; 409 xung đột nghiệp vụ; 423 khóa (đang chấm); 429 rate limit.
 - **Idempotency:** POST nộp bài kèm header `Idempotency-Key: <uuid>`; trùng key → trả submission hoặc lượt quiz gốc (200), không tăng số lượt.
 
@@ -122,7 +122,7 @@
 | GET | /submissions/{id} | owner/lec | `SubmissionDetails` (dưới bảng) |
 | GET | /me/submissions?assignment_id= | student | Mảng lịch sử nộp từng câu (điểm câu khách quan ẩn đến khi được xem lại); lịch sử quiz theo `/assignments/{id}/quiz-attempts` |
 | GET | /assignments/{id}/submissions | lec | Mảng lượt nộp (không phân trang) có tên/mã sinh viên, câu hỏi, trạng thái, verdict, ngôn ngữ và điểm; lọc `question_id`, `status`, `verdict`, `q` |
-| GET | /assignments/{id}/results | lec | Bảng kết quả theo sinh viên của lớp: `{items: [{student_id, student_full_name, student_code, final_score, max_score, attempt_count, attempts?: [{attempt_id, attempt_no, score, is_late, submitted_at}], questions: [{question_id, final_score, attempt_count, last_status, last_verdict}]}]}`; `final_score` theo `score_policy`, `null` nếu chưa nộp |
+| GET | /assignments/{id}/results | lec | Bảng kết quả theo sinh viên của lớp: `{items: [{student_id, student_full_name, student_code, final_score, max_score, attempt_count, attempts?: [{attempt_id, attempt_no, score, is_late, submitted_at}], questions: [{question_id, final_score, attempt_count, last_status, last_verdict}], grading_pending}]}`; `final_score` theo `score_policy`, `null` nếu chưa nộp; `grading_pending` = lượt được tính còn bài code đang chấm (sổ điểm dùng để đánh dấu tạm tính) |
 | POST | /submissions/{id}/regrade | lec | `{reason}` → 202; chỉ bài code `completed`/`failed` (BR8, `assessment-spec.md` §5) |
 
 **Đề cho sinh viên** (`GET /assignments/{id}`, role student): câu theo thứ tự đã trộn; mỗi câu có `question_id`, `question_version_id`, `type`, `content`, `points`, `position`, và theo loại: `options [{id, content}]` (không `is_correct`), `blank_count`, `matching {lefts:[{id,text}], rights:[{id,text}]}`, `ordering_items [{id,text}]`, `programming {allowed_languages, time_limit_ms, memory_limit_mb, checker_mode, starter_codes, samples:[{position, input, expected_output}]}`. Không bao giờ có `answer_spec`, `explanation`, `solution_code`, test ẩn. Giảng viên nhận thêm `explanation`, `scoring_mode`, `answer_spec`, đáp án đúng và mọi test.
@@ -140,18 +140,42 @@
 - Verdict và điểm theo `assessment-spec.md` §5: `AC` → điểm câu sau phạt muộn; verdict khác → 0; `failed` → `null`.
 - WebSocket chỉ báo thay đổi sau khi kết quả đã commit. Client đọc lại GET khi reconnect.
 
-## 7. Exams (M7)
+## 7. Kỳ thi, cấu trúc đề, phiên làm bài (M7)
+
+Chi tiết nghiệp vụ: `exam-spec.md`. Kỳ thi là bài tập `category=midterm|final`; tạo/sửa/xuất bản qua §6.
+
+**Trường thêm vào body tạo/sửa bài** (`POST /classes/{id}/assignments`, `PATCH /assignments/{id}`, `assignment` của bulk):
+`time_limit_minutes?`, `paper_mode` (`same|variants|per_student`), `variant_count?`, `rules_text?`,
+`sections: [{title}]` (thứ tự = vị trí; bỏ trống = một phần không tên),
+`questions: [{question_id, points, position, section_index?, variant_no?}]` (câu cố định),
+`draw_rules: [{section_index?, variant_no?, bank_id, category_id?, difficulty?, type?, count, points}]`.
+`section_index` là chỉ số (từ 0) trong `sections` của cùng request. Response chi tiết bài (giảng viên) trả cùng hình dạng, thêm `id` cho phần/quy tắc và `pool_size` hiện tại của mỗi quy tắc.
 
 | Method | Path | Role | Mô tả |
 |---|---|---|---|
-| GET/POST | /classes/{id}/exams | mem(list) / lec | List / tạo (đề, `grade_category=midterm\|final`, duration, opens/closes, rules, shuffle) |
-| GET/PATCH | /exams/{id} | mem / lec | Chi tiết (chưa publish: chỉ metadata) / sửa nháp / publish; publish ghim snapshot phiên bản câu hỏi/điểm/thứ tự; exam đã publish không sửa trực tiếp |
-| POST | /exams/{id}/sessions | student | Bắt đầu phiên: check khung giờ + xác nhận quy chế → session + đề theo snapshot đã publish (BR9) |
-| GET | /exam-sessions/{id} | owner | Trạng thái + `remaining_seconds` + đề + đáp án đã lưu |
-| PUT | /exam-sessions/{id}/answers | owner | Autosave upsert `{question_id, selected_option_ids?, code_text?}` |
-| POST | /exam-sessions/{id}/finish | owner | Nộp: MCQ chấm, code → queue priority 10; sau ends_at → 409 SESSION_ENDED |
-| GET | /exams/{id}/sessions | lec | Monitor: danh sách phiên + trạng thái + thời gian còn lại (poll 5s) |
-| GET | /exams/{id}/results | lec | Kết quả theo thí sinh |
+| GET | /assignments/{id}/papers | lec | Xem trước: nháp sinh tất định từ `paper_seed`; đã xuất bản đọc đề đã lưu. `PapersPreview` (dưới bảng). Kho thiếu không lỗi, báo trong `rules`/`warnings` |
+| POST | /assignments/{id}/papers/reseed | lec | Chỉ nháp: đổi `paper_seed`, trả như GET |
+| POST | /assignments/{id}/sessions | student | Bắt đầu hoặc tiếp tục phiên `{accept_rules}` → 201 mới / 200 đang làm: `AttemptSessionView`. Lỗi `EXAM_NOT_OPEN`, `ATTEMPT_EXCEEDED`, `NOT_ELIGIBLE` (403), `CONFLICT` (bài không làm theo phiên) |
+| GET | /assignments/{id}/sessions | lec | Giám sát `{summary, items}` (`exam-spec.md` §7) |
+| GET | /me/attempt-sessions?assignment_id= | student | Mảng `AttemptSessionSummary` của tôi, mới nhất trước |
+| GET | /attempt-sessions/{id} | owner | `AttemptSessionView`; phiên đã nộp: `sections`, `answers` rỗng |
+| PUT | /attempt-sessions/{id}/answers | owner | Tự lưu `{answers: [{question_id, answer?, code?: {language, source_code}}]}` (≤ 50; `answer` là `Answer` §6 đầy đủ, gồm cả `question_id`; không gửi cả `answer` lẫn `code`) → `SessionClock`; hết giờ → 409 `SESSION_ENDED` |
+| POST | /attempt-sessions/{id}/events | owner | `{type: heartbeat, focus_lost, focus_back, offline, online; detail?}` → `SessionClock` kèm `focus_lost_count`; 60/phút |
+| POST | /attempt-sessions/{id}/finish | owner | `{answers?}` → `AttemptSessionSummary` (kèm `attempt`); idempotent; quá ân hạn → 409 `SESSION_ENDED` |
+| POST | /attempt-sessions/{id}/questions/{qid}/run | owner | Chạy thử code trong phiên như §6 `.../run`, chỉ khi `in_progress` |
+| POST | /attempt-sessions/{id}/extend | lec | `{minutes: 1–120, reason}` → `AttemptSessionSummary`; audit |
+| POST | /attempt-sessions/{id}/force-submit | lec | `{reason}` → `AttemptSessionSummary`; audit |
+| GET | /attempt-sessions/{id}/events | lec | Mảng `{type, occurred_at, detail}` theo thời gian |
+
+**SessionClock**: `{saved_at?, server_now, ends_at, remaining_seconds, focus_lost_count?}`.
+
+**AttemptSessionSummary**: `{id, assignment_id, attempt_no, status: in_progress|submitted, paper_code, started_at, ends_at, server_now, remaining_seconds, submitted_at, submit_reason, focus_lost_count, attempt: QuizAttemptView|null}`.
+
+**AttemptSessionView**: `{session: AttemptSessionSummary, title, category, time_limit_minutes, rules_text, total_points, sections: [{title, questions: [câu dạng "đề cho sinh viên" §6]}], answers: [{question_id, response, language, source_code, updated_at}]}`.
+
+**PapersPreview**: `{paper_mode, seeded: bool (nháp), papers: [{code, total_points, question_count, sections: [{title, questions: [{question_id, type, difficulty, content, points, rule_id}]}]}], rules: [{rule_id, requested, pool_size}], variant_totals: {"1": 10}, warnings: [string]}`.
+
+**Metadata cho sinh viên** (`GET /assignments/{id}` của bài giao theo phiên): `questions` rỗng, thêm `delivery: "session"`, `question_count`, `total_points`, `time_limit_minutes`, `paper_mode`, `rules_text`. Bài khác có `delivery: "standard"`.
 
 ## 8. Gradebook (M8)
 

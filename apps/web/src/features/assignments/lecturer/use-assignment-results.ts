@@ -21,7 +21,7 @@ export function useAssignmentResults(assignmentId: number, enabled: boolean) {
     queryKey: queryKeys.assignments.results(assignmentId),
     queryFn: async ({ signal }) => itemsOf(await api.get<StudentResultRow[] | { items: StudentResultRow[] }>(`/assignments/${assignmentId}/results`, undefined, signal)),
     enabled,
-    refetchInterval: (query) => query.state.data?.some((row) => row.questions.some((q) => isGrading(q.last_status))) ? POLL_MS : false,
+    refetchInterval: (query) => query.state.data?.some((row) => row.grading_pending || row.questions.some((q) => isGrading(q.last_status))) ? POLL_MS : false,
   });
   const submissions = useQuery({
     queryKey: queryKeys.assignments.submissions(assignmentId),

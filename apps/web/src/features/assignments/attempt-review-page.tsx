@@ -35,16 +35,22 @@ export function AttemptReviewPage() {
   const count = (state: string) => states.filter((value) => value === state).length;
   const item = details.data?.assignment;
   const remaining = item && attempts.data ? remainingAttempts(attempts.data.length, item.max_attempts) : 0;
-  const canRetry = !isStaff && item != null && remaining !== 0 && acceptsSubmissions(assignmentWindow(item));
+  const isSession = item?.delivery === "session";
+  // Bài giao theo phiên chỉ có một lượt (kỳ thi) hoặc bắt đầu lượt mới từ trang thông tin (quiz có giờ).
+  const canRetry = !isStaff && item != null && item.category === "quiz" && remaining !== 0 && acceptsSubmissions(assignmentWindow(item));
 
   const actions = <>
     <Button asChild variant="secondary"><Link to={backTo}>{isStaff ? "Kết quả bài" : "Về trang bài"}</Link></Button>
-    {canRetry ? <Button asChild><Link to={studentPaths.attempt(classId, assignmentId ?? "")}>Làm lại</Link></Button> : null}
+    {canRetry ? <Button asChild><Link to={isSession ? studentPaths.overview(classId, assignmentId ?? "") : studentPaths.attempt(classId, assignmentId ?? "")}>Làm lại</Link></Button> : null}
   </>;
 
   return <div className="space-y-10">
-    <AttemptScoreCard attempt={attempt} title={item?.title} fallbackMax={item?.total_points} reviewAvailable={review.data.review_available}
-      counts={available ? { correct: count("correct"), partial: count("partial"), wrong: count("wrong") + count("blank") } : null} actions={actions} />
+    {/* Breadcrumb trên cùng đi theo route của sinh viên — giảng viên cần đường về trang kết quả bài. */}
+    <div className="space-y-4">
+      {isStaff ? back : null}
+      <AttemptScoreCard attempt={attempt} title={item?.title} fallbackMax={item?.total_points} reviewAvailable={review.data.review_available}
+      counts={available ? { correct: count("correct"), partial: count("partial"), wrong: count("wrong") + count("blank"), pending: count("pending") } : null} actions={actions} />
+    </div>
     {available ? <div className="grid items-start gap-x-10 gap-y-6 lg:grid-cols-[minmax(0,1fr)_14rem]">
       <aside className="lg:sticky lg:top-20 lg:order-2"><ReviewNavigator states={states} /></aside>
       <div className="min-w-0 space-y-6 lg:order-1">

@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { CalendarClock, Hourglass, ListOrdered, Pencil, Sigma, Users } from "lucide-react";
+import { CalendarClock, Hourglass, ListOrdered, MonitorDot, Pencil, Sigma, Timer, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -22,6 +22,13 @@ export function AssignmentResultsPage() {
   const id = Number(assignmentId);
   const [tab, setTab] = useState("students");
   const { details, results, submissions, questions, positionOf } = useAssignmentResults(id, status === "ok");
+  const session = details.data?.assignment.delivery === "session";
+  // Bài giao theo phiên: `results` chỉ liệt kê câu cố định có mặt ở mọi đề (exam-spec §6) — cột câu theo đúng tập đó.
+  const columns = useMemo(() => {
+    if (!session) return questions;
+    const common = new Set(results.data?.flatMap((row) => row.questions.map((q) => q.question_id)) ?? []);
+    return questions.filter((q) => common.has(q.question_id));
+  }, [session, questions, results.data]);
   if (status !== "ok") return null;
 
   const assignment = details.data?.assignment;
@@ -40,14 +47,20 @@ export function AssignmentResultsPage() {
           <MetaItem icon={CATEGORY_ICON[assignment.category]}>{categoryLabel(assignment.category)}</MetaItem>
           <MetaItem icon={ListOrdered}>{assignment.question_count} câu</MetaItem>
           <MetaItem icon={Sigma}>{formatPoints(assignment.total_points)} điểm</MetaItem>
-          <MetaItem icon={CalendarClock}>Hạn {shortDateTime(assignment.due_at)}</MetaItem>
+          {session && assignment.time_limit_minutes ? <MetaItem icon={Timer}>{assignment.time_limit_minutes} phút</MetaItem> : null}
+          <MetaItem icon={CalendarClock}>{session ? "Đóng" : "Hạn"} {shortDateTime(assignment.due_at)}</MetaItem>
           {assignment.allow_late && assignment.late_due_at ? <MetaItem icon={Hourglass}>Muộn đến {shortDateTime(assignment.late_due_at)}</MetaItem> : null}
           {results.data ? <MetaItem icon={Users}>{results.data.length} sinh viên</MetaItem> : null}
         </MetaRow>
       </div>
-      {hasRole(user, "lecturer") ? <Button variant="secondary" asChild>
-        <Link to={`/classes/${classId}/assignments/${id}/edit`}><Pencil aria-hidden />{assignment.is_published ? "Điều chỉnh" : "Sửa"}</Link>
-      </Button> : null}
+      <div className="flex flex-wrap items-center gap-2">
+        {session && assignment.is_published ? <Button variant="secondary" asChild>
+          <Link to={`/classes/${classId}/assignments/${id}/monitor`}><MonitorDot aria-hidden />Giám sát</Link>
+        </Button> : null}
+        {hasRole(user, "lecturer") ? <Button variant="secondary" asChild>
+          <Link to={`/classes/${classId}/assignments/${id}/edit`}><Pencil aria-hidden />{assignment.is_published ? "Điều chỉnh" : "Sửa"}</Link>
+        </Button> : null}
+      </div>
     </header> : null}
 
     <ResultsSummary rows={results.data} submissions={submissions.data} maxScore={assignment?.total_points ?? 0} />
@@ -58,7 +71,10 @@ export function AssignmentResultsPage() {
         <TabsTrigger value="submissions">Bài nộp{submissionCount != null ? <span className="text-muted-foreground tabular-nums">{submissionCount}</span> : null}</TabsTrigger>
       </TabsList>
       <TabsContent value="students">
-        <ResultsStudentsTab query={results} questions={questions} quiz={quiz}
+        {session && columns.length < questions.length ? <p className="pb-3 text-[13px] text-muted-foreground">
+          Câu hỏi khác nhau giữa các đề nên bảng chỉ có cột cho câu chung mọi đề. Điểm từng câu của một lượt xem ở trang xem lại lượt đó.
+        </p> : null}
+        <ResultsStudentsTab query={results} questions={columns} quiz={quiz || session} session={session} assignmentId={id}
           attemptHref={(attemptId) => `/me/classes/${classId}/assignments/${id}/attempts/${attemptId}`} />
       </TabsContent>
       <TabsContent value="submissions">

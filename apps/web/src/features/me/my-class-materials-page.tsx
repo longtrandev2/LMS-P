@@ -9,9 +9,10 @@ import { ClassProgressAside } from "./class-progress-aside";
 import { StudentClassHeader } from "./student-class-header";
 import { StudentOverviewTab } from "./student-overview-tab";
 import { useClassProgress } from "./use-class-progress";
+import { ExamsSection } from "@/features/exams/exams-section";
 import { useMyClasses } from "./use-my-classes";
 
-const TABS = ["overview", "schedule", "assignments", "grades"] as const;
+const TABS = ["overview", "schedule", "assignments", "exams", "grades"] as const;
 
 /**
  * Trang lớp của sinh viên (/me/classes/:id) — DESIGN.md v3.1 §4: tiêu đề lớp đỏ + khung thông tin lớp,
@@ -38,6 +39,7 @@ export function MyClassMaterialsPage({ classId }: { classId: string }) {
               <TabsTrigger value="overview">Thông tin chung</TabsTrigger>
               <TabsTrigger value="schedule">Lịch học</TabsTrigger>
               <TabsTrigger value="assignments">Bài tập</TabsTrigger>
+              <TabsTrigger value="exams">Kỳ thi</TabsTrigger>
               <TabsTrigger value="grades">Kết quả học tập</TabsTrigger>
             </TabsList>
             <TabsContent value="overview">
@@ -48,6 +50,9 @@ export function MyClassMaterialsPage({ classId }: { classId: string }) {
             </TabsContent>
             <TabsContent value="assignments">
               <AssignmentsSection classId={classId} canManage={false} canTake />
+            </TabsContent>
+            <TabsContent value="exams">
+              <ExamsSection classId={classId} canManage={false} canTake />
             </TabsContent>
             <TabsContent value="grades">
               <StudentGradesTab classId={classId} />

@@ -38,6 +38,7 @@ public class AssignmentSubmissionService {
     @Transactional
     public SubmissionView submitQuestion(Long assignmentId, Long questionId, Long studentId, String rawKey, QuestionSubmissionInput body) {
         Assignment assignment = access.studentAssignment(assignmentId, studentId, true);
+        if (assignment.isSessionBased()) throw sessionOnly();
         if (assignment.getCategory() == AssignmentCategory.QUIZ) throw bad("Quiz phải nộp toàn bộ đáp án trong một lượt");
         AssignmentQuestion link = links.findByAssignment_IdAndQuestion_Id(assignmentId, questionId).orElseThrow(() -> bad("Câu hỏi không thuộc bài này"));
         if (link.getQuestionVersion() == null) throw new LmsException("CONFLICT", "Bài chưa được xuất bản", HttpStatus.CONFLICT, null);
@@ -98,4 +99,8 @@ public class AssignmentSubmissionService {
     private boolean contains(String value, String q) { return value != null && value.toLowerCase(Locale.ROOT).contains(q); }
     private User user(Long id) { return users.findById(id).orElseThrow(() -> new LmsException("NOT_FOUND", "Không tìm thấy người dùng", HttpStatus.NOT_FOUND, null)); }
     private LmsException bad(String message) { return new LmsException("VALIDATION_ERROR", message, HttpStatus.BAD_REQUEST, null); }
+    /** Bài giao theo phiên chỉ nộp qua phiên làm bài — docs/exam-spec.md §1. */
+    static LmsException sessionOnly() {
+        return new LmsException("CONFLICT", "Bài này làm theo phiên — hãy bắt đầu phiên làm bài", HttpStatus.CONFLICT, null);
+    }
 }

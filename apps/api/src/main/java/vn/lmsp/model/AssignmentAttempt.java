@@ -28,4 +28,6 @@ public class AssignmentAttempt {
     }
     public Long getAssignmentId() { return assignment.getId(); }
     public Long getStudentId() { return student.getId(); }
+    /** Lượt giao theo phiên: tính lại khi bài code của lượt chấm xong — docs/exam-spec.md §5.6. */
+    public void updateScore(BigDecimal value) { score = value; }
 }

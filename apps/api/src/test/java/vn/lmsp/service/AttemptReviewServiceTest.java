@@ -29,6 +29,7 @@ class AttemptReviewServiceTest {
     private final AssignmentQuestionRepository links = mock(AssignmentQuestionRepository.class);
     private final SubmissionRepository submissions = mock(SubmissionRepository.class);
     private final QuizAttemptService quizzes = mock(QuizAttemptService.class);
+    private final AttemptSessionRepository sessions = mock(AttemptSessionRepository.class);
     private final Assignment assignment = assignment(AssignmentCategory.QUIZ);
     private final User student = user(42, "student");
     private AssignmentAttempt attempt;
@@ -38,7 +39,8 @@ class AttemptReviewServiceTest {
         var snapshots = new QuestionVersionService(mock(QuestionVersionRepository.class), mock(QuestionReadService.class), new ObjectMapper());
         var reader = new AssignmentReadService(links, mock(QuestionVersionRepository.class), snapshots,
                 new AssignmentMapper(), new QuestionPaperMapper());
-        service = new AttemptReviewService(access, attempts, links, submissions, reader, quizzes, new ReviewPolicy(), new ReviewMapper());
+        service = new AttemptReviewService(access, attempts, links, submissions, reader, quizzes, new ReviewPolicy(), new ReviewMapper(),
+                sessions, new SessionPaperReader(links, snapshots, new QuestionPaperMapper()));
         var mcq = question(100, QuestionType.mcq);
         var mcqLink = link(assignment, mcq, "2.00", 1);
         mcqLink.pin(version(mcq, 1, mcqSnapshot("Câu 1")));
@@ -101,5 +103,46 @@ class AttemptReviewServiceTest {
         when(access.studentAssignment(50L, 43L, false)).thenReturn(assignment);
         assertThatThrownBy(() -> service.review(50L, 77L, 43L, true, false))
                 .isInstanceOfSatisfying(LmsException.class, error -> assertThat(error.getCode()).isEqualTo("NOT_FOUND"));
+    }
+
+    @Test void sessionAttemptReviewFollowsQuestionOrderAndLinksCodeSubmissions() {
+        var exam = assignment(AssignmentCategory.MIDTERM);
+        exam.configureReview(ReviewMode.after_submit, true, true, true);
+        var mcq = question(110, QuestionType.mcq);
+        var mcqLink = identified(link(exam, mcq, "2.00", 1), 501);
+        mcqLink.pin(version(mcq, 1, mcqSnapshot("Câu trắc nghiệm")));
+        var code = question(111, QuestionType.programming);
+        var codeLink = identified(link(exam, code, "8.00", 2), 502);
+        codeLink.pin(version(code, 2, programmingSnapshot()));
+        var unused = identified(link(exam, question(112, QuestionType.mcq), "2.00", 3), 503);
+        var examAttempt = identified(new AssignmentAttempt(exam, student, 1, false, 0, new BigDecimal("8.00"),
+                "12345678-1234-1234-1234-123456789abd", UtcTime.now()), 78);
+        var paper = identified(new AssessmentPaper(exam, null, null, BigDecimal.TEN), 9);
+        var session = identified(new AttemptSession(exam, student, 1, paper, List.of(502L, 501L),
+                UtcTime.now().minusMinutes(30), UtcTime.now(), null), 5);
+        session.markSubmitted(SubmitReason.timeout, UtcTime.now(), examAttempt);
+        var codeAnswer = identified(Submission.programmingInAttempt(student, exam, examAttempt, codeLink, "python",
+                "print(3)", UtcTime.now()), 900);
+        codeAnswer.finish(SubmissionStatus.completed, GradingVerdict.AC);
+        when(access.lecturerAssignment(50L, 7L, false, false)).thenReturn(exam);
+        when(attempts.findByIdAndAssignment_Id(78L, 50L)).thenReturn(Optional.of(examAttempt));
+        when(sessions.findByAssignmentAttempt_Id(78L)).thenReturn(Optional.of(session));
+        when(links.findAllById(List.of(502L, 501L))).thenReturn(List.of(mcqLink, codeLink));
+        when(links.findAllByAssignment_IdOrderByPositionAscIdAsc(50L)).thenReturn(List.of(mcqLink, codeLink, unused));
+        when(submissions.findAllByAssignmentAttempt_IdOrderByQuestion_IdAsc(78L)).thenReturn(List.of(codeAnswer));
+
+        var review = service.review(50L, 78L, 7L, false, false);
+
+        assertThat(review.questions()).extracting(question -> question.question().question_id()).containsExactly(111L, 110L);
+        assertThat(review.questions()).extracting(question -> question.question().position()).containsExactly(1, 2);
+        var first = review.questions().getFirst();
+        assertThat(first.submission_id()).isEqualTo(900L);
+        assertThat(first.verdict()).isEqualTo(GradingVerdict.AC);
+        assertThat(first.status()).isEqualTo(SubmissionStatus.completed);
+        assertThat(first.score()).isEqualByComparingTo("8.00");
+        var expected = new PaperShuffler(PaperShuffler.seed(50L, 42L, 1)).permute(List.of(11L, 12L), 110L * 4 + 1);
+        assertThat(review.questions().get(1).question().options()).extracting(option -> option.id())
+                .containsExactlyElementsOf(expected);
+        assertThat(review.questions().get(1).submission_id()).isNull();
     }
 }

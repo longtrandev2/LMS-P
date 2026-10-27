@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static vn.lmsp.support.DomainFixtures.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -22,6 +23,7 @@ class GradingEventServiceTest {
     private final TestResultRepository testResults = mock(TestResultRepository.class);
     private final GradingNotifier notifier = mock(GradingNotifier.class);
     private final NotificationService notifications = mock(NotificationService.class);
+    private final AssignmentAttemptRepository attempts = mock(AssignmentAttemptRepository.class);
     private Submission submission;
     private GradingJob job;
     private GradingEventService service;
@@ -35,7 +37,8 @@ class GradingEventServiceTest {
         when(submissions.findLockedById(90L)).thenReturn(Optional.of(submission));
         when(jobs.findByJobId(job.getJobId())).thenReturn(Optional.of(job));
         when(results.saveAndFlush(any())).thenAnswer(call -> call.getArgument(0));
-        service = new GradingEventService(submissions, jobs, results, testResults, notifier, notifications, mock(AuditService.class));
+        service = new GradingEventService(submissions, jobs, results, testResults, notifier, notifications, mock(AuditService.class),
+                new AttemptScoreRefresher(submissions, attempts));
     }
 
     private WorkerPayload payload(SubmissionStatus status, GradingVerdict verdict) {
@@ -97,5 +100,38 @@ class GradingEventServiceTest {
         assertThat(submission.getScore()).isNull();
         verify(results).saveAndFlush(any());
         verify(notifications).create(eq(42L), any(), any(), any(), any());
+    }
+
+    @Test void gradedCodeOfASessionAttemptRecomputesTheAttemptScore() {
+        var exam = assignment(AssignmentCategory.MIDTERM);
+        var student = user(42, "student");
+        var attempt = identified(new AssignmentAttempt(exam, student, 1, false, 0, new BigDecimal("2.00"), "k", LocalDateTime.now()), 70);
+        var codeLink = link(exam, question(101, QuestionType.programming), "6", 2);
+        var code = identified(Submission.programmingInAttempt(student, exam, attempt, codeLink, "python", "x", LocalDateTime.now()), 91);
+        var objective = new Submission(student, exam, attempt, link(exam, question(100, QuestionType.mcq), "2", 1), null, 1,
+                new BigDecimal("2.00"), false, null, LocalDateTime.now());
+        var other = identified(Submission.programmingInAttempt(student, exam, attempt,
+                link(exam, question(102, QuestionType.programming), "4", 3), "python", "y", LocalDateTime.now()), 92);
+        var codeJob = new GradingJob(code, 10, LocalDateTime.now());
+        when(submissions.findLockedById(91L)).thenReturn(Optional.of(code));
+        when(jobs.findByJobId(codeJob.getJobId())).thenReturn(Optional.of(codeJob));
+        when(submissions.findAttemptIdById(91L)).thenReturn(70L);
+        when(attempts.findForUpdate(70L)).thenReturn(Optional.of(attempt));
+        when(submissions.findLockedByAttempt(70L)).thenReturn(List.of(objective, code, other));
+
+        service.apply(new WorkerEvent("submission.graded", new WorkerPayload(codeJob.getJobId(), 91L,
+                SubmissionStatus.completed, GradingVerdict.AC, false, null, null, 10)));
+
+        assertThat(code.getScore()).isEqualByComparingTo("6");
+        assertThat(attempt.getScore()).isEqualByComparingTo("8.00"); // 2 + 6, bài code còn chờ chấm không tính
+        var order = inOrder(attempts, submissions);
+        order.verify(attempts).findForUpdate(70L);
+        order.verify(submissions).findLockedById(91L);
+    }
+
+    @Test void standaloneCodeSubmissionsDoNotTouchAttempts() {
+        when(submissions.findAttemptIdById(90L)).thenReturn(null);
+        service.apply(new WorkerEvent("submission.graded", payload(SubmissionStatus.completed, GradingVerdict.AC)));
+        verifyNoInteractions(attempts);
     }
 }
