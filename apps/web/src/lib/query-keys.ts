@@ -39,6 +39,13 @@ export const queryKeys = {
   submissions: {
     detail: (id: number) => ["submission", id] as const,
   },
+  exams: {
+    papers: (assignmentId: number) => ["assignments", assignmentId, "papers"] as const,
+    monitor: (assignmentId: number) => ["assignments", assignmentId, "monitor"] as const,
+    mySessions: (assignmentId: number) => ["assignments", assignmentId, "my-sessions"] as const,
+    session: (sessionId: number) => ["attempt-sessions", sessionId] as const,
+    events: (sessionId: number) => ["attempt-sessions", sessionId, "events"] as const,
+  },
   schedule: {
     sessions: (classId: string) => ["classes", classId, "sessions"] as const,
     attendance: (sessionId: number) => ["sessions", sessionId, "attendance"] as const,
