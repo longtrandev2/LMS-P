@@ -1,17 +1,13 @@
 import { localInputToUtcDateTime, utcDateTimeToLocalInput } from "@/lib/date-time";
-import type {
-  AssignmentCategory, AssignmentDetails, AssignmentInput, QuestionDifficulty, QuestionType, ReviewMode, ScorePolicy,
-} from "@/types/api";
+import { hasBlueprint, isExamCategory } from "@/features/exams/shared/exam-labels";
+import {
+  initBlueprint, newKey, parseNumber, round2, toBlueprintInput, type RuleDraft, type SectionDraft, type SelectedQuestion,
+} from "@/features/exams/lecturer/blueprint/blueprint-model";
+import { validateBlueprint, validateDelivery } from "@/features/exams/lecturer/blueprint/blueprint-validate";
+import type { AssignmentCategory, AssignmentDetails, AssignmentInput, ReviewMode, ScorePolicy } from "@/types/api";
+import type { PaperMode } from "@/types/exams";
 
-/** Câu đã chọn vào đề (điểm giữ dạng chuỗi để người dùng gõ tự do). */
-export interface SelectedQuestion {
-  question_id: number;
-  type: QuestionType;
-  content: string;
-  difficulty: QuestionDifficulty;
-  bank_name?: string;
-  points: string;
-}
+export type { SelectedQuestion } from "@/features/exams/lecturer/blueprint/blueprint-model";
 
 export interface EditorForm {
   title: string;
@@ -30,7 +26,15 @@ export interface EditorForm {
   reviewShowsAnswers: boolean;
   shuffleQuestions: boolean;
   shuffleOptions: boolean;
+  /** Thời gian & cách giao đề — exam-spec.md §2 (không dùng cho bài tập thường). */
+  timeLimit: string;
+  paperMode: PaperMode;
+  variantCount: string;
+  rulesText: string;
+  /** Cấu trúc đề — exam-spec.md §3. Bài tập thường: một phần không tên, chỉ câu cố định. */
+  sections: SectionDraft[];
   questions: SelectedQuestion[];
+  rules: RuleDraft[];
   classIds: number[];
   reason: string;
 }
@@ -46,15 +50,16 @@ function localIn(days: number, hour = 23, minute = 59): string {
   return `${date.getFullYear()}-${part(date.getMonth() + 1)}-${part(date.getDate())}T${part(date.getHours())}:${part(date.getMinutes())}`;
 }
 
-export function initialForm(details: AssignmentDetails | null, classId: number): EditorForm {
+export function initialForm(details: AssignmentDetails | null, classId: number, category: AssignmentCategory = "assignment"): EditorForm {
   const a = details?.assignment;
+  const exam = isExamCategory(a?.category ?? category);
   return {
     title: a?.title ?? "",
     description: a?.description ?? "",
-    category: a?.category ?? "assignment",
-    useAvailableFrom: !!a?.available_from,
-    availableFrom: a?.available_from ? utcDateTimeToLocalInput(a.available_from) : localIn(0, new Date().getHours() + 1, 0),
-    dueAt: a ? utcDateTimeToLocalInput(a.due_at) : localIn(7),
+    category: a?.category ?? category,
+    useAvailableFrom: a ? !!a.available_from : exam,
+    availableFrom: a?.available_from ? utcDateTimeToLocalInput(a.available_from) : localIn(exam ? 7 : 0, exam ? 7 : new Date().getHours() + 1, 0),
+    dueAt: a ? utcDateTimeToLocalInput(a.due_at) : exam ? localIn(7, 9, 0) : localIn(7),
     allowLate: a?.allow_late ?? false,
     lateDueAt: a?.late_due_at ? utcDateTimeToLocalInput(a.late_due_at) : localIn(9),
     latePenalty: String(a?.late_penalty_percent ?? 0),
@@ -63,22 +68,16 @@ export function initialForm(details: AssignmentDetails | null, classId: number):
     scorePolicy: a?.score_policy ?? "best",
     reviewMode: a?.review_mode ?? "after_close",
     reviewShowsAnswers: a?.review_shows_answers ?? true,
-    shuffleQuestions: a?.shuffle_questions ?? false,
-    shuffleOptions: a?.shuffle_options ?? false,
-    questions: [...(details?.questions ?? [])].sort((x, y) => x.position - y.position).map((q) => ({
-      question_id: q.question_id, type: q.type, content: q.content, difficulty: q.difficulty, points: String(q.points),
-    })),
+    shuffleQuestions: a?.shuffle_questions ?? exam,
+    shuffleOptions: a?.shuffle_options ?? exam,
+    timeLimit: a?.time_limit_minutes ? String(a.time_limit_minutes) : exam ? "45" : "",
+    paperMode: a?.paper_mode ?? "same",
+    variantCount: String(a?.variant_count ?? 2),
+    rulesText: a?.rules_text ?? "",
+    ...initBlueprint(details),
     classIds: [classId],
     reason: "",
   };
-}
-
-const MAX_POINTS = 1000;
-
-function parseNumber(value: string): number | null {
-  if (!value.trim()) return null;
-  const number = Number(value.replace(",", "."));
-  return Number.isFinite(number) ? number : null;
 }
 
 export function pointsOf(question: SelectedQuestion): number {
@@ -86,7 +85,7 @@ export function pointsOf(question: SelectedQuestion): number {
 }
 
 export function totalPoints(questions: SelectedQuestion[]): number {
-  return Math.round(questions.reduce((sum, q) => sum + pointsOf(q), 0) * 100) / 100;
+  return round2(questions.reduce((sum, q) => sum + pointsOf(q), 0));
 }
 
 /** Chia đều tổng điểm (làm tròn 2 chữ số), phần dư dồn vào câu cuối. */
@@ -98,40 +97,45 @@ export function splitEvenly(total: number, count: number): string[] {
   return Array.from({ length: count }, (_, index) => String((index === count - 1 ? last : each) / 100));
 }
 
+/** Gộp mọi phần về một phần không tên và bỏ quy tắc (khi đổi sang bài tập thường). */
+export function flattenToLegacy(form: EditorForm): Partial<EditorForm> {
+  const key = newKey("s");
+  return { sections: [{ key, title: "" }], rules: [], questions: form.questions.map((q) => ({ ...q, sectionKey: key, variant: null })) };
+}
+
 export function validate(form: EditorForm, mode: EditorMode, publishing: boolean): FieldErrors {
   const errors: FieldErrors = {};
+  const exam = isExamCategory(form.category);
   if (!form.title.trim()) errors.title = "Nhập tên bài.";
   else if (form.title.trim().length > 200) errors.title = "Tên bài tối đa 200 ký tự.";
   const due = localInputToUtcDateTime(form.dueAt);
-  if (!due) errors.dueAt = "Chọn hạn nộp.";
+  if (!due) errors.dueAt = exam ? "Chọn giờ đóng." : "Chọn hạn nộp.";
   if (form.useAvailableFrom) {
     const from = localInputToUtcDateTime(form.availableFrom);
     if (!from) errors.availableFrom = "Chọn thời điểm mở bài.";
-    else if (due && from >= due) errors.availableFrom = "Thời điểm mở phải trước hạn nộp.";
+    else if (due && from >= due) errors.availableFrom = exam ? "Giờ mở phải trước giờ đóng." : "Thời điểm mở phải trước hạn nộp.";
   }
-  if (form.allowLate) {
+  if (form.allowLate && !exam) {
     const late = localInputToUtcDateTime(form.lateDueAt);
     if (!late) errors.lateDueAt = "Chọn hạn nộp muộn.";
     else if (due && late <= due) errors.lateDueAt = "Hạn nộp muộn phải sau hạn nộp.";
     const penalty = parseNumber(form.latePenalty);
     if (penalty == null || penalty < 0 || penalty > 100) errors.latePenalty = "Mức phạt từ 0 đến 100%.";
   }
+  if (hasBlueprint(form.category)) Object.assign(errors, validateDelivery(form, form.category));
   if (mode === "published") {
     if (!form.reason.trim()) errors.reason = "Nhập lý do điều chỉnh để lưu lịch sử.";
     return errors;
   }
-  if (form.attemptsLimited) {
+  if (form.attemptsLimited && !exam) {
     const attempts = parseNumber(form.maxAttempts);
     if (attempts == null || !Number.isInteger(attempts) || attempts < 1 || attempts > 100) errors.maxAttempts = "Số lượt là số nguyên từ 1 đến 100.";
   }
   if (mode === "create" && form.classIds.length === 0) errors.classIds = "Chọn ít nhất một lớp.";
-  form.questions.forEach((question) => {
-    const points = parseNumber(question.points);
-    if (points == null || points <= 0) errors[`points:${question.question_id}`] = "Điểm phải lớn hơn 0.";
-    else if (points > MAX_POINTS) errors[`points:${question.question_id}`] = `Tối đa ${MAX_POINTS} điểm.`;
-  });
-  if (form.category === "quiz" && form.questions.some((q) => q.type === "programming")) {
-    errors.questions = "Quiz không nhận câu lập trình. Bỏ các câu lập trình hoặc đổi hạng mục.";
+  if (hasBlueprint(form.category)) return Object.assign(errors, validateBlueprint(form, form.category, publishing));
+  Object.assign(errors, validateBlueprint({ ...form, paperMode: "same" }, form.category, false));
+  if (form.rules.length || form.sections.length > 1) {
+    errors.questions = "Bài tập thường chỉ có một phần và không dùng quy tắc ngẫu nhiên. Gộp lại hoặc đổi hạng mục.";
   } else if (publishing && form.questions.length === 0) {
     errors.questions = "Thêm ít nhất một câu hỏi trước khi xuất bản.";
   }
@@ -139,32 +143,40 @@ export function validate(form: EditorForm, mode: EditorMode, publishing: boolean
 }
 
 export function toAssignmentInput(form: EditorForm): AssignmentInput {
-  const limited = form.attemptsLimited;
+  const exam = isExamCategory(form.category);
+  const blueprint = hasBlueprint(form.category);
+  const allowLate = form.allowLate && !exam;
+  const limit = parseNumber(form.timeLimit);
   return {
     title: form.title.trim(),
     description: form.description.trim() || null,
     category: form.category,
     available_from: form.useAvailableFrom ? localInputToUtcDateTime(form.availableFrom) : null,
     due_at: localInputToUtcDateTime(form.dueAt) ?? "",
-    allow_late: form.allowLate,
-    late_due_at: form.allowLate ? localInputToUtcDateTime(form.lateDueAt) : null,
-    late_penalty_percent: form.allowLate ? parseNumber(form.latePenalty) ?? 0 : 0,
-    max_attempts: limited ? Number(form.maxAttempts) : null,
-    score_policy: form.scorePolicy,
+    allow_late: allowLate,
+    late_due_at: allowLate ? localInputToUtcDateTime(form.lateDueAt) : null,
+    late_penalty_percent: allowLate ? parseNumber(form.latePenalty) ?? 0 : 0,
+    max_attempts: exam ? 1 : form.attemptsLimited ? Number(form.maxAttempts) : null,
+    score_policy: exam ? "last" : form.scorePolicy,
     review_mode: form.reviewMode,
     review_shows_answers: form.reviewShowsAnswers,
     shuffle_questions: form.shuffleQuestions,
     shuffle_options: form.shuffleOptions,
-    questions: form.questions.map((q, index) => ({ question_id: q.question_id, points: pointsOf(q), position: index + 1 })),
+    time_limit_minutes: blueprint && limit != null ? limit : null,
+    paper_mode: blueprint ? form.paperMode : "same",
+    variant_count: blueprint && form.paperMode === "variants" ? Number(form.variantCount) : null,
+    rules_text: blueprint ? form.rulesText.trim() || null : null,
+    ...toBlueprintInput(blueprint ? form : { ...form, paperMode: "same", rules: [], sections: form.sections.slice(0, 1).map((s) => ({ ...s, title: "" })) }),
   };
 }
 
-/** Body `PATCH /assignments/{id}/published-settings` — không có trường câu hỏi/điểm/trộn. */
+/** Body `PATCH /assignments/{id}/published-settings` — không có trường câu hỏi/điểm/trộn/cấu trúc đề. */
 export function toPublishedSettings(form: EditorForm) {
   const input = toAssignmentInput(form);
   return {
     title: input.title, description: input.description, available_from: input.available_from, due_at: input.due_at,
     allow_late: input.allow_late, late_due_at: input.late_due_at, late_penalty_percent: input.late_penalty_percent,
     review_mode: input.review_mode, review_shows_answers: input.review_shows_answers, reason: form.reason.trim(),
+    ...(hasBlueprint(form.category) ? { rules_text: input.rules_text } : {}),
   };
 }

@@ -20,7 +20,7 @@ export function EditorReviewSection({ form, patch, published }: {
       checked={form.reviewShowsAnswers} onChange={(reviewShowsAnswers) => patch({ reviewShowsAnswers })}
       disabled={form.reviewMode === "never"} />
     <div className="space-y-4 border-t pt-5">
-      <SwitchRow id="shuffle-questions" label="Trộn thứ tự câu hỏi" description="Mỗi sinh viên thấy một thứ tự riêng, cố định theo lượt."
+      <SwitchRow id="shuffle-questions" label="Trộn thứ tự câu hỏi" description={form.category === "assignment" ? "Mỗi sinh viên thấy một thứ tự riêng, cố định theo lượt." : "Mỗi sinh viên thấy thứ tự riêng; chỉ trộn trong cùng một phần."}
         checked={form.shuffleQuestions} onChange={(shuffleQuestions) => patch({ shuffleQuestions })} disabled={published} />
       <SwitchRow id="shuffle-options" label="Trộn thứ tự lựa chọn" description="Chỉ áp dụng cho câu một đáp án và nhiều đáp án."
         checked={form.shuffleOptions} onChange={(shuffleOptions) => patch({ shuffleOptions })} disabled={published} />
