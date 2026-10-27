@@ -46,4 +46,9 @@ public interface QuestionRepository extends JpaRepository<Question, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select q from Question q where q.id=:id and q.deleted=false")
     Optional<Question> findLockedById(@Param("id") Long id);
+
+    /** Số câu chưa xóa theo ngân hàng; mỗi phần tử: [bank_id, count]. */
+    @org.springframework.data.jpa.repository.Query("select q.category.bank.id, count(q) from Question q "
+            + "where q.deleted = false and q.category.bank.id in :bankIds group by q.category.bank.id")
+    List<Object[]> countByBank(@org.springframework.data.repository.query.Param("bankIds") java.util.Collection<Long> bankIds);
 }

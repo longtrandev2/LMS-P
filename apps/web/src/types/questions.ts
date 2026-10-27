@@ -107,6 +107,8 @@ export interface QuestionBank {
   can_edit: boolean;
   can_manage: boolean;
   created_at: string;
+  /** Số câu chưa xóa trong ngân hàng. */
+  question_count?: number;
 }
 export interface QuestionBankPermission { lecturer_id: number; permission: "view" | "edit" }
 export interface QuestionCategory { id: number; bank_id: number; name: string }

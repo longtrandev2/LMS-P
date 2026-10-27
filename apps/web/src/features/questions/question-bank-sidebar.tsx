@@ -68,6 +68,7 @@ export function QuestionBankSidebar(props: {
                 <Library className={cn("size-4 shrink-0", active ? "text-foreground" : "text-muted-foreground")} strokeWidth={1.75} aria-hidden />
                 <span className="min-w-0 flex-1 truncate">{bank.name}</span>
                 {bank.visibility === "private" ? <Lock className="size-3 shrink-0 text-muted-foreground" aria-label="Riêng tư" /> : null}
+                {bank.question_count != null ? <span className="shrink-0 text-xs tabular-nums text-muted-foreground" aria-label={`${bank.question_count} câu hỏi`}>{bank.question_count}</span> : null}
                 {count != null ? <span className="shrink-0 text-xs text-muted-foreground tabular-nums">{count}</span> : null}
               </button>
             </li>;

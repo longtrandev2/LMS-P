@@ -1,17 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useBackBlocker } from "@/lib/use-back-blocker";
 
 /**
- * Cảnh báo rời trang khi còn thay đổi chưa lưu. App dùng `BrowserRouter` (không có `useBlocker`), nên:
+ * Cảnh báo rời trang khi còn thay đổi chưa lưu:
  * - đóng tab/tải lại: `beforeunload`;
- * - bấm liên kết nội bộ (sidebar, breadcrumb…): chặn ở pha capture rồi hỏi bằng AlertDialog.
- * Nút Back của trình duyệt không chặn được.
+ * - bấm liên kết nội bộ (sidebar, breadcrumb…): chặn ở pha capture rồi hỏi bằng AlertDialog;
+ * - nút Back/Forward của trình duyệt: `useBlocker` (data router).
  */
 export function useUnsavedGuard(dirty: boolean) {
   const navigate = useNavigate();
   const [pendingHref, setPendingHref] = useState<string | null>(null);
   const dirtyRef = useRef(dirty);
   useEffect(() => { dirtyRef.current = dirty; }, [dirty]);
+  const back = useBackBlocker(() => dirtyRef.current);
 
   useEffect(() => {
     if (!dirty) return;
@@ -37,10 +39,13 @@ export function useUnsavedGuard(dirty: boolean) {
   }, [dirty]);
 
   return {
-    pendingHref,
+    pendingHref: pendingHref ?? back.blockedHref,
     /** Điều hướng có hỏi lại nếu còn thay đổi chưa lưu. */
     requestLeave: (href: string) => { if (dirtyRef.current) setPendingHref(href); else navigate(href); },
-    confirmLeave: () => { const href = pendingHref; dirtyRef.current = false; setPendingHref(null); if (href) navigate(href); },
-    cancelLeave: () => setPendingHref(null),
+    confirmLeave: () => {
+      const href = pendingHref; dirtyRef.current = false; setPendingHref(null);
+      if (href) navigate(href); else back.proceed();
+    },
+    cancelLeave: () => { setPendingHref(null); back.reset(); },
   };
 }
