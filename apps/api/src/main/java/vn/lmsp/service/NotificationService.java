@@ -3,6 +3,7 @@ package vn.lmsp.service;
 import lombok.RequiredArgsConstructor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,7 +25,7 @@ public class NotificationService {
     private final NotificationMapper mapper;
 
     @Transactional(readOnly=true) public Page list(Long userId, Boolean read, int page, int limit) {
-        var request=PageRequest.of(page-1, limit);
+        var request=PageRequest.of(page-1, limit, Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id")));
         var result=read == null ? notifications.findByUser_Id(userId, request) : notifications.findByUser_IdAndRead(userId, read, request);
         return new Page(result.getContent().stream().map(mapper::toView).toList(), result.getTotalElements(), page, limit);
     }

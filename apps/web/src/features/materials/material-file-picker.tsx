@@ -41,7 +41,7 @@ export function MaterialFilePicker({ id, file, accept, maxMb, invalid, onChange 
     >
       <FileUp className="size-5 text-muted-foreground" strokeWidth={1.75} aria-hidden />
       <span className="text-sm font-medium">Chọn tệp hoặc kéo thả vào đây</span>
-      <span className="text-xs text-muted-foreground">PDF, Word, PowerPoint, ZIP, video · tối đa {maxMb}MB</span>
+      <span className="text-xs text-muted-foreground">PDF, Word, PowerPoint, ZIP, video · tối đa {maxMb} MB</span>
       <input id={id} type="file" accept={accept} className="sr-only" aria-invalid={invalid}
         onChange={(e) => onChange(e.target.files?.[0] ?? null)} />
     </label>

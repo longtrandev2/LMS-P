@@ -38,14 +38,16 @@ public class AttemptSessionStartService {
     private final SessionEventService events;
     private final AuditService audit;
     private final AttemptSessionAssembler assembler;
+    private final MaintenanceGuard maintenance;
 
     public AttemptSessionStartService(PlatformTransactionManager transactions, SessionAccess access,
             AttemptSessionRepository sessions, UserRepository users, PaperProvider papers,
             ExamEligibilityService eligibility, SessionEventService events, AuditService audit,
-            AttemptSessionAssembler assembler) {
+            AttemptSessionAssembler assembler, MaintenanceGuard maintenance) {
         this.tx = new TransactionTemplate(transactions);
         this.access = access; this.sessions = sessions; this.users = users; this.papers = papers;
         this.eligibility = eligibility; this.events = events; this.audit = audit; this.assembler = assembler;
+        this.maintenance = maintenance;
     }
 
     public Started start(Long assignmentId, Long studentId, StartSessionInput body) {
@@ -64,6 +66,7 @@ public class AttemptSessionStartService {
         var existing = sessions.findFirstByAssignment_IdAndStudent_IdAndStatus(assignmentId, studentId,
                 AttemptSessionStatus.in_progress);
         if (existing.isPresent()) return resume(existing.get());
+        maintenance.check(false); // bảo trì chỉ chặn phiên mới, phiên đang làm vẫn tiếp tục — admin-spec §5.2
         LocalDateTime now = now();
         requireOpen(assignment, now);
         long used = sessions.countByAssignment_IdAndStudent_Id(assignmentId, studentId);

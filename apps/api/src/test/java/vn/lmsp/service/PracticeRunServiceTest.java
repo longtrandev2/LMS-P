@@ -33,7 +33,8 @@ class PracticeRunServiceTest {
         link.pin(version(link.getQuestion(), 1, programmingSnapshot()));
         var snapshots = new QuestionVersionService(mock(QuestionVersionRepository.class), mock(QuestionReadService.class), new ObjectMapper());
         var clock = Clock.fixed(Instant.parse("2026-10-27T00:00:00Z"), ZoneOffset.UTC);
-        service = new PracticeRunService(access, links, snapshots, new SubmissionPolicy(), new PracticeRateLimiter(clock), runs);
+        service = new PracticeRunService(access, links, snapshots, new SubmissionPolicy(), new PracticeRateLimiter(vn.lmsp.support.TestSettings.defaults(), clock), runs,
+                vn.lmsp.support.TestSettings.defaults());
         when(access.studentAssignment(50L, 42L, false)).thenReturn(assignment);
         when(links.findByAssignment_IdAndQuestion_Id(50L, 100L)).thenReturn(Optional.of(link));
         when(runs.create(any(), any(), any(), any(), any(), any())).thenReturn("run-uuid");

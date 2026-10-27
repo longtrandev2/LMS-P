@@ -57,8 +57,8 @@ export function QuestionEditorForm({ question, bank, categories, categoriesLoadi
 
   const api = useMemo<EditorApi>(() => ({
     draft: form.draft, update: form.update, patch: form.patch, errors: form.errors,
-    bankId: bank.id, questionId: question?.id ?? null, dirty: form.dirty,
-  }), [form.draft, form.update, form.patch, form.errors, form.dirty, bank.id, question?.id]);
+    bankId: bank.id, questionId: question?.id ?? null, dirty: form.dirty, rules: form.rules,
+  }), [form.draft, form.update, form.patch, form.errors, form.dirty, form.rules, bank.id, question?.id]);
   const backHref = bankHref(bank.id, question?.category_id ?? initialCategory);
 
   return <EditorContext.Provider value={api}>

@@ -1,6 +1,9 @@
 package vn.lmsp.service;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -8,10 +11,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.lmsp.common.LmsException;
 import vn.lmsp.common.UtcTime;
+import vn.lmsp.dto.AdminDtos.BulkRegradeResult;
 import vn.lmsp.dto.GradingDtos.Accepted;
+import vn.lmsp.enums.SubmissionStatus;
 import vn.lmsp.enums.SubmissionType;
 import vn.lmsp.mapper.GradingMapper;
 import vn.lmsp.model.GradingJob;
+import vn.lmsp.model.Submission;
 import vn.lmsp.repository.GradingJobRepository;
 import vn.lmsp.repository.SubmissionRepository;
 
@@ -42,12 +48,41 @@ public class RegradeService {
         before.put("status", submission.getStatus().name());
         before.put("verdict", submission.getVerdict() == null ? null : submission.getVerdict().name());
         before.put("score", submission.getScore());
-        int next = jobs.findTopBySubmission_IdOrderByAttemptNoDesc(submissionId).map(GradingJob::getAttemptNo).orElse(0) + 1;
-        submission.resetForRegrade();
-        jobs.save(new GradingJob(submission, 5, next, UtcTime.now()));
+        int next = requeue(submission);
         audit.record(actorId, "submission.regrade", "submission", submissionId, before,
                 Map.of("status", submission.getStatus().name(), "grading_attempt", next, "reason", reason.strip()));
-        notifier.afterCommit(submission, null, false);
         return mapper.toAccepted(submission);
+    }
+
+    /**
+     * Chấm lại hàng loạt của admin (docs/admin-spec.md §4): cùng logic trên, chỉ bài code còn `failed`
+     * (bài khác hoặc không tồn tại bị bỏ qua), một bản ghi audit `grading.bulk_regrade`.
+     */
+    @Transactional
+    public BulkRegradeResult regradeFailed(Collection<Long> submissionIds, Long actorId, String reason) {
+        List<Long> queued = new ArrayList<>();
+        for (Long id : submissionIds) {
+            Submission submission = submissions.findLockedById(id).orElse(null);
+            if (submission == null || submission.getType() != SubmissionType.code
+                    || submission.getStatus() != SubmissionStatus.failed) continue;
+            requeue(submission);
+            queued.add(id);
+        }
+        Map<String, Object> value = new LinkedHashMap<>();
+        value.put("count", queued.size());
+        value.put("ids", queued);
+        value.put("reason", reason.strip());
+        audit.record(actorId, "grading.bulk_regrade", "grading", 0L, null, value);
+        return new BulkRegradeResult(queued.size(), submissionIds.size() - queued.size());
+    }
+
+    /** BR8: job mới `attempt_no + 1` qua outbox, submission về `pending`, báo WS sau commit. Trả số lần chấm mới. */
+    private int requeue(Submission submission) {
+        int next = jobs.findTopBySubmission_IdOrderByAttemptNoDesc(submission.getId())
+                .map(GradingJob::getAttemptNo).orElse(0) + 1;
+        submission.resetForRegrade();
+        jobs.save(new GradingJob(submission, 5, next, UtcTime.now()));
+        notifier.afterCommit(submission, null, false);
+        return next;
     }
 }

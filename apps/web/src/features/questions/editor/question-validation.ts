@@ -1,5 +1,7 @@
 import { blankCount, blankMarkers, parseDecimal, type QuestionDraft } from "./question-draft";
 import { byteSize, formatBytes, LIMITS, testsTotalBytes } from "./limits";
+import { languageLabel } from "@/lib/languages";
+import { FALLBACK_RULES, formatMs, type ProgrammingRules } from "./programming/programming-rules";
 
 export type FieldErrors = Record<string, string>;
 
@@ -57,11 +59,14 @@ function checkOrdering(errors: FieldErrors, draft: QuestionDraft) {
   });
 }
 
-function checkProgramming(errors: FieldErrors, draft: QuestionDraft) {
+function checkProgramming(errors: FieldErrors, draft: QuestionDraft, rules: ProgrammingRules) {
   const p = draft.programming;
+  const blocked = p.allowed_languages.filter((lang) => !rules.allowedLanguages.includes(lang));
   if (!p.allowed_languages.length) errors.languages = "Chọn ít nhất một ngôn ngữ.";
+  else if (blocked.length) errors.languages = `Bỏ chọn ngôn ngữ hệ thống không còn cho phép: ${blocked.map(languageLabel).join(", ")}.`;
   const time = Number(p.time_limit_ms);
-  if (!Number.isInteger(time) || time < LIMITS.timeMs.min || time > LIMITS.timeMs.max) errors.time_limit = "Từ 100 đến 10.000 ms.";
+  if (!Number.isInteger(time) || time < LIMITS.timeMs.min || time > rules.maxTimeMs) errors.time_limit = `Từ ${LIMITS.timeMs.min} đến ${formatMs(rules.maxTimeMs)} ms.`;
+  if (p.memory_limit_mb < LIMITS.memoryMb.min || p.memory_limit_mb > rules.maxMemoryMb) errors.memory_limit = `Từ ${LIMITS.memoryMb.min} đến ${formatMs(rules.maxMemoryMb)} MB.`;
   if (p.checker_mode === "float") {
     const eps = parseDecimal(p.checker_epsilon);
     if (eps == null || eps < LIMITS.epsilon.min || eps > LIMITS.epsilon.max) errors.epsilon = "Epsilon từ 1e-12 đến 1.";
@@ -88,7 +93,7 @@ function checkProgramming(errors: FieldErrors, draft: QuestionDraft) {
 }
 
 /** Kiểm tra phía client đúng ràng buộc §1–4 trước khi gửi. */
-export function validateDraft(draft: QuestionDraft): FieldErrors {
+export function validateDraft(draft: QuestionDraft, rules: ProgrammingRules = FALLBACK_RULES): FieldErrors {
   const errors: FieldErrors = {};
   if (!draft.content.trim()) errors.content = "Nhập nội dung câu hỏi.";
   else if (draft.content.length > LIMITS.content) errors.content = "Nội dung tối đa 60.000 ký tự.";
@@ -106,7 +111,7 @@ export function validateDraft(draft: QuestionDraft): FieldErrors {
     case "fill_blank": checkBlanks(errors, draft); break;
     case "matching": checkMatching(errors, draft); break;
     case "ordering": checkOrdering(errors, draft); break;
-    case "programming": checkProgramming(errors, draft); break;
+    case "programming": checkProgramming(errors, draft, rules); break;
   }
   return errors;
 }

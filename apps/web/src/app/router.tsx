@@ -13,6 +13,9 @@ function page<T extends Record<string, ComponentType<never>>>(load: () => Promis
   return lazy(async () => ({ default: (await load())[name] as ComponentType<Record<string, never>> }));
 }
 
+const AdminDashboardPage = page(() => import("@/features/admin/dashboard/admin-dashboard-page"), "AdminDashboardPage");
+const AdminSettingsPage = page(() => import("@/features/admin/settings/admin-settings-page"), "AdminSettingsPage");
+const AdminOperationsPage = page(() => import("@/features/admin/operations/admin-operations-page"), "AdminOperationsPage");
 const UsersPage = page(() => import("@/features/users/users-page"), "UsersPage");
 const CoursesPage = page(() => import("@/features/courses/courses-page"), "CoursesPage");
 const AdminAcademicsPage = page(() => import("@/features/courses/admin-academics-page"), "AdminAcademicsPage");
@@ -66,6 +69,9 @@ export function AppRouter() {
     <Route path="/" element={<RootPage />} />
     <Route path="/login" element={<LoginPage />} />
     <Route element={<ProtectedLayout />}>
+      <Route path="/admin" element={<AdminDashboardPage />} />
+      <Route path="/admin/settings" element={<AdminSettingsPage />} />
+      <Route path="/admin/operations" element={<AdminOperationsPage />} />
       <Route path="/admin/users" element={<UsersPage />} />
       <Route path="/admin/academics" element={<AdminAcademicsPage />} />
       <Route path="/admin/audit-logs" element={<AuditLogsPage />} />

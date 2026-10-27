@@ -40,7 +40,7 @@ public final class QuestionDtos {
     public record ProgrammingInput(String starter_code, Map<@Pattern(regexp="python|c|cpp|java") String, String> starter_codes,
                                    String solution_code, @Pattern(regexp="python|c|cpp|java") String solution_language,
                                    List<@Pattern(regexp="python|c|cpp|java") String> allowed_languages,
-                                   @Min(100) @Max(10000) Integer time_limit_ms, @Min(32) @Max(1024) Integer memory_limit_mb,
+                                   @Min(100) @Max(20000) Integer time_limit_ms, @Min(32) @Max(2048) Integer memory_limit_mb,
                                    @Pattern(regexp="token|line|float") String checker_mode,
                                    @DecimalMin("1e-12") @DecimalMax("1") Double checker_epsilon) { }
     /** `weight` không dùng (chấm nhị phân) — server bỏ qua và lưu 1. */

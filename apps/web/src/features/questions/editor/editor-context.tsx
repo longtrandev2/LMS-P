@@ -2,6 +2,7 @@ import { createContext, useContext } from "react";
 import { cn } from "@/lib/utils";
 import type { QuestionDraft } from "./question-draft";
 import type { FieldErrors } from "./question-validation";
+import type { ProgrammingRules } from "./programming/programming-rules";
 
 export interface EditorApi {
   draft: QuestionDraft;
@@ -12,6 +13,8 @@ export interface EditorApi {
   questionId: number | null;
   /** Bản đã lưu có khớp form hiện tại không (dùng cho kiểm tra đề). */
   dirty: boolean;
+  /** Ràng buộc câu lập trình theo cấu hình hệ thống. */
+  rules: ProgrammingRules;
 }
 
 export const EditorContext = createContext<EditorApi | null>(null);

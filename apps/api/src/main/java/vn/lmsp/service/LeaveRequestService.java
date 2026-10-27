@@ -40,11 +40,13 @@ public class LeaveRequestService {
     private final LeaveEvidenceStorage storage;
     private final NotificationService notifications;
     private final ScheduleMapper mapper;
+    private final MaintenanceGuard maintenance;
 
     public record EvidenceFile(Path path, String name, String contentType) { }
 
     @Transactional
     public LeaveRequestView create(Long sessionId, Long studentId, String reason, MultipartFile evidence) {
+        maintenance.check(false);
         String text = ScheduleErrors.blankToNull(reason);
         if (text == null) throw ScheduleErrors.invalid("Lý do xin nghỉ là bắt buộc");
         if (text.length() > MAX_REASON) throw ScheduleErrors.invalid("Lý do xin nghỉ tối đa " + MAX_REASON + " ký tự");

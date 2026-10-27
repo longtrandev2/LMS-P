@@ -22,4 +22,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query(value="select distinct u from User u join u.roles r where r.name='student' and u.status=vn.lmsp.enums.UserStatus.active and (:q is null or lower(u.email) like lower(concat('%',:q,'%')) or lower(u.fullName) like lower(concat('%',:q,'%')) or lower(coalesce(u.studentCode,'')) like lower(concat('%',:q,'%'))) and not exists (select e.id from Enrollment e where e.student=u and e.lmsClass.id=:classId and e.status=vn.lmsp.enums.EnrollmentStatus.active)",
            countQuery="select count(distinct u.id) from User u join u.roles r where r.name='student' and u.status=vn.lmsp.enums.UserStatus.active and (:q is null or lower(u.email) like lower(concat('%',:q,'%')) or lower(u.fullName) like lower(concat('%',:q,'%')) or lower(coalesce(u.studentCode,'')) like lower(concat('%',:q,'%'))) and not exists (select e.id from Enrollment e where e.student=u and e.lmsClass.id=:classId and e.status=vn.lmsp.enums.EnrollmentStatus.active)")
     Page<User> searchEnrollCandidates(@Param("classId") Long classId, @Param("q") String query, Pageable pageable);
+    /** Người nhận thông báo hệ thống (không bị khóa) — docs/admin-spec.md §5.1. */
+    @Query("select u.id from User u where u.status<>vn.lmsp.enums.UserStatus.locked")
+    java.util.List<Long> findUnlockedIds();
+    @Query("select distinct u.id from User u join u.roles r where r.name=:role and u.status<>vn.lmsp.enums.UserStatus.locked")
+    java.util.List<Long> findUnlockedIdsByRole(@Param("role") String role);
 }

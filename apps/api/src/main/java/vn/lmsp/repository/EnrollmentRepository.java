@@ -35,4 +35,11 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
     interface ClassEnrollmentCount { Long getClassId(); Long getEnrollmentCount(); }
     @Query("select e.lmsClass.id as classId, count(e.id) as enrollmentCount from Enrollment e where e.lmsClass.id in :ids and e.status=:status group by e.lmsClass.id")
     List<ClassEnrollmentCount> countByClassIds(@Param("ids") List<Long> classIds, @Param("status") EnrollmentStatus status);
+    /** Sinh viên theo lớp (một truy vấn cho nhiều lớp) — thông báo M9, docs/admin-spec.md §8. */
+    interface ClassStudent { Long getClassId(); Long getStudentId(); }
+    @Query("select e.lmsClass.id as classId, e.student.id as studentId from Enrollment e where e.lmsClass.id in :ids and e.status=:status")
+    List<ClassStudent> findStudentIdsByClassIds(@Param("ids") java.util.Collection<Long> classIds, @Param("status") EnrollmentStatus status);
+    /** Sinh viên active, tài khoản không bị khóa — thông báo hệ thống §5.1. */
+    @Query("select e.student.id from Enrollment e where e.lmsClass.id=:classId and e.status=vn.lmsp.enums.EnrollmentStatus.active and e.student.status<>vn.lmsp.enums.UserStatus.locked")
+    List<Long> findUnlockedActiveStudentIds(@Param("classId") Long classId);
 }

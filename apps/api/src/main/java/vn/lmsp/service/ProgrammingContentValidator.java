@@ -3,28 +3,33 @@ package vn.lmsp.service;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import vn.lmsp.common.LmsException;
 import vn.lmsp.dto.QuestionDtos.ProgrammingInput;
 import vn.lmsp.dto.QuestionDtos.TestCaseInput;
 
-/** Kiểm tra phần lập trình và test khi soạn câu hỏi — assessment-spec.md §4. */
+/**
+ * Kiểm tra phần lập trình và test khi soạn câu hỏi — assessment-spec.md §4. Ngôn ngữ, mặc định và trần giới hạn theo
+ * cấu hình hệ thống (admin-spec.md §1); chỉ áp khi lưu nội dung câu, không áp lại cho phiên bản đã ghim.
+ */
 @Component
+@RequiredArgsConstructor
 public class ProgrammingContentValidator {
     public static final List<String> LANGUAGES = List.of("python", "c", "cpp", "java");
     public static final double DEFAULT_EPSILON = 1e-6;
     private static final int KIB = 1024;
     private static final int MAX_STARTER = 64 * KIB, MAX_SOLUTION = 128 * KIB;
     private static final int MAX_INPUT = 128 * KIB, MAX_EXPECTED = 64 * KIB, MAX_TOTAL = 2 * KIB * KIB;
+    private final SettingsProvider settings;
 
     public ProgrammingInput validate(ProgrammingInput input) {
         if (input == null) throw bad("Thiếu cấu hình câu hỏi lập trình");
         List<String> languages = languages(input.allowed_languages());
-        int time = input.time_limit_ms() == null ? 1000 : input.time_limit_ms();
-        int memory = input.memory_limit_mb() == null ? 256 : input.memory_limit_mb();
-        if (time < 100 || time > 10_000) throw bad("Giới hạn thời gian phải từ 100 đến 10.000 ms");
-        if (memory < 32 || memory > 1024) throw bad("Giới hạn bộ nhớ phải từ 32 đến 1024 MB");
+        int time = input.time_limit_ms() == null ? settings.defaultTimeLimitMs() : input.time_limit_ms();
+        int memory = input.memory_limit_mb() == null ? settings.defaultMemoryLimitMb() : input.memory_limit_mb();
+        requireLimits(time, memory);
         String checker = input.checker_mode() == null || input.checker_mode().isBlank() ? "token" : input.checker_mode();
         if (!Set.of("token", "line", "float").contains(checker)) throw bad("Cách so output chỉ nhận token, line hoặc float");
         Double epsilon = null;
@@ -78,11 +83,23 @@ public class ProgrammingContentValidator {
         if (total > MAX_TOTAL) throw bad("Tổng dữ liệu test tối đa 2 MiB");
     }
 
+    /** Giới hạn chạy nằm trong [100 ms, trần cấu hình] và [32 MB, trần cấu hình]. */
+    public void requireLimits(int time, int memory) {
+        int maxTime = settings.maxTimeLimitMs(), maxMemory = settings.maxMemoryLimitMb();
+        if (time < SettingDefinitions.TIME_FLOOR || time > maxTime)
+            throw bad("Giới hạn thời gian phải từ " + SettingDefinitions.TIME_FLOOR + " đến " + maxTime + " ms");
+        if (memory < SettingDefinitions.MEMORY_FLOOR || memory > maxMemory)
+            throw bad("Giới hạn bộ nhớ phải từ " + SettingDefinitions.MEMORY_FLOOR + " đến " + maxMemory + " MB");
+    }
+
     private List<String> languages(List<String> values) {
         if (values == null || values.isEmpty()) throw bad("Cần chọn ít nhất một ngôn ngữ lập trình");
+        List<String> allowed = settings.allowedLanguages();
         Set<String> chosen = new HashSet<>();
         for (String value : values) {
             if (!LANGUAGES.contains(value)) throw bad("Ngôn ngữ không hợp lệ: " + value);
+            if (!allowed.contains(value))
+                throw bad("Ngôn ngữ " + value + " hiện không được phép; chỉ chọn: " + String.join(", ", allowed));
             chosen.add(value);
         }
         return LANGUAGES.stream().filter(chosen::contains).toList();

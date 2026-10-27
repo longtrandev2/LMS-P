@@ -28,7 +28,8 @@ class AttendanceStatsServiceTest {
     private final AttendanceRecordRepository records = mock(AttendanceRecordRepository.class);
     private final EnrollmentRepository enrollments = mock(EnrollmentRepository.class);
     private final ClassAccess access = mock(ClassAccess.class);
-    private final AttendanceStatsService service = new AttendanceStatsService(sessions, records, enrollments, access);
+    private final AttendanceStatsService service = new AttendanceStatsService(sessions, records, enrollments, access,
+            vn.lmsp.support.TestSettings.defaults());
     private final LmsClass clazz = clazz(null);
     private final User an = user(42, "student"), binh = user(43, "student");
 

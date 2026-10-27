@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Phiên bản | 1.5 — 2026-10-27 (V20 kỳ thi, đề, phiên làm bài) |
+| Phiên bản | 1.6 — 2026-10-27 (V21 cấu hình, thông báo hệ thống, phiên đăng nhập) |
 | Nguồn yêu cầu | `srs.md` (M1–M10, BR1–BR15) |
 | Công nghệ | MySQL 8.4, InnoDB, utf8mb4, Spring Data JPA + Flyway migration |
 
@@ -185,13 +185,19 @@ Bảng `grade_adjustments` của thiết kế cũ không dùng (thay bằng ghi 
 
 **leave_requests** — id, class_id FK, session_id FK, student_id FK users, reason TEXT, evidence_path VARCHAR(500), evidence_name VARCHAR(255), evidence_size INT, evidence_type VARCHAR(100), status ENUM('pending','approved','rejected','cancelled'), review_note VARCHAR(500) NULL, reviewed_by FK users NULL, reviewed_at NULL, created_at. Index (class_id, status), (session_id, student_id). Tệp lưu dưới `storage/leave-requests/{class_id}/`.
 
-### 2.9 Thông báo / Audit / Cấu hình (M9/M10)
+### 2.9 Thông báo / Audit / Cấu hình / Vận hành (M9/M10) — `admin-spec.md`
 
-**notifications** — id, user_id FK, type VARCHAR(40) ('assignment.published','submission.graded','exam.published','grade.released','material.created','enrollment.created','session.upcoming','leave_request.created','leave_request.reviewed','grade.updated'), title VARCHAR(200), body TEXT NULL, data JSON NULL (vd submission_id), is_read BOOL default 0, created_at. Index (user_id, is_read, created_at).
+**notifications** — id, user_id FK, type VARCHAR(40) ('assignment.published','exam.published','exam.upcoming','grade.released','system.announcement','submission.graded','material.created','enrollment.created','session.upcoming','leave_request.created','leave_request.reviewed','grade.updated'), title VARCHAR(200), body TEXT NULL, data JSON NULL (vd submission_id), is_read BOOL default 0, created_at. Index (user_id, is_read, created_at).
 
-**audit_logs** — id, actor_id FK NULL (NULL = system), action VARCHAR(60) ('user.update','role.assign','grade.adjust','exam.publish','settings.update','submission.regrade'...), entity_type VARCHAR(40), entity_id BIGINT, old_value JSON, new_value JSON, ip VARCHAR(45), created_at. Index (entity_type, entity_id), (actor_id, created_at), (created_at). **Append-only.**
+**audit_logs** — id, actor_id FK NULL (NULL = system), action VARCHAR(60) ('user.update','role.assign','grade.adjust','exam.publish','settings.update','submission.regrade','grading.bulk_regrade','queue.purge','announcement.create','user.sessions_revoke'...), entity_type VARCHAR(40), entity_id BIGINT, old_value JSON, new_value JSON, ip VARCHAR(45), created_at. Index (entity_type, entity_id), (actor_id, created_at), (created_at). **Append-only.**
 
-**system_settings** — setting_key VARCHAR(60) PK, setting_value JSON, description VARCHAR(255), updated_by FK, updated_at. Keys: `allowed_languages`, `default_time_limit_ms`, `default_memory_limit_mb`, `max_upload_mb`.
+**system_settings** (V21) — setting_key VARCHAR(60) PK, setting_value JSON, updated_by FK NULL, updated_at. Khóa và mặc định: `admin-spec.md` §1 (thiếu khóa = mặc định).
+
+**announcements** (V21) — id, title VARCHAR(200), body TEXT, audience VARCHAR(10) ('all','role','class'), role VARCHAR(20) NULL, class_id FK NULL, recipient_count INT, created_by FK, created_at. Index (created_at).
+
+**refresh_tokens** (thêm V21) — session_family CHAR(36) (giữ qua các lần refresh), ip VARCHAR(45) NULL, user_agent VARCHAR(255) NULL, last_used_at DATETIME NULL. Index (user_id, session_family).
+
+**assignments** (thêm V21) — upcoming_notified_at, results_notified_at DATETIME NULL (đánh dấu đã gửi `exam.upcoming` / `grade.released`).
 
 ## 3. Máy trạng thái
 

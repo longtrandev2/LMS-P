@@ -22,16 +22,19 @@ import java.util.*;
 public class MaterialService {
     private static final Map<String,String> TYPES=Map.of(".pdf","pdf",".doc","doc",".docx","doc",".ppt","slide",".pptx","slide",".zip","archive");
     private final MaterialRepository materials; private final ClassRepository classes; private final EnrollmentRepository enrollments;
-    private final UserRepository users; private final NotificationService notifications; private final Path root; private final long maxBytes;
+    private final UserRepository users; private final NotificationService notifications; private final Path root;
+    private final SettingsProvider settings; private final MaintenanceGuard maintenance;
     private final AuditService audit;
     private final MaterialMapper mapper;
     private final ClassSessionRepository sessions;
     public MaterialService(MaterialRepository materials, ClassRepository classes, EnrollmentRepository enrollments,
                           UserRepository users, NotificationService notifications,AuditService audit, MaterialMapper mapper,
                           ClassSessionRepository sessions,
-                          @Value("${lms.storage-dir:./storage}") String root, @Value("${lms.upload.max-mb:20}") int maxMb) {
+                          SettingsProvider settings, MaintenanceGuard maintenance,
+                          @Value("${lms.storage-dir:./storage}") String root) {
         this.materials=materials; this.classes=classes; this.enrollments=enrollments; this.users=users; this.sessions=sessions;
-        this.notifications=notifications; this.audit=audit; this.mapper=mapper; this.root=Path.of(root).toAbsolutePath().normalize(); this.maxBytes=maxMb*1024L*1024L;
+        this.notifications=notifications; this.audit=audit; this.mapper=mapper; this.root=Path.of(root).toAbsolutePath().normalize();
+        this.settings=settings; this.maintenance=maintenance;
     }
     @Transactional(readOnly=true) public Page list(Long classId, Long userId, boolean privileged, int page, int limit) {
         LmsClass clazz=clazz(classId); checkAccess(clazz, userId, privileged);
@@ -48,10 +51,12 @@ public class MaterialService {
         notifyStudents(clazz,item); return mapper.toView(item);
     }
     @Transactional public Item upload(Long classId, Long actorId, String title, String description, MultipartFile file, Long sessionId) {
+        maintenance.check(false);
         LmsClass clazz=clazz(classId); checkOwner(clazz,actorId);
         if(title==null || title.isBlank() || file==null || file.isEmpty()) throw invalid("Cần tiêu đề và tệp học liệu");
         checkSession(classId, sessionId);
-        if(file.getSize()>maxBytes) throw invalid("Tệp vượt quá giới hạn " + (maxBytes/1024/1024) + "MB");
+        int maxMb=settings.maxUploadMb();
+        if(file.getSize()>maxMb*1024L*1024L) throw invalid("Tệp vượt quá giới hạn " + maxMb + "MB");
         String original=Objects.requireNonNullElse(file.getOriginalFilename(), "");
         String ext=original.lastIndexOf('.')<0 ? "" : original.substring(original.lastIndexOf('.')).toLowerCase(Locale.ROOT);
         if(!TYPES.containsKey(ext)) throw invalid("Định dạng chỉ hỗ trợ PDF, DOC/DOCX, PPT/PPTX hoặc ZIP");
