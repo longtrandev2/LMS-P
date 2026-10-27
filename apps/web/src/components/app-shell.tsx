@@ -7,6 +7,7 @@ import { Sidebar } from "@/components/nav-sidebar";
 import { AppBreadcrumb } from "@/components/app-breadcrumb";
 import { isWideRoute } from "@/components/breadcrumb-routes";
 import { NotificationsBell } from "@/features/notifications/notifications-bell";
+import { MaintenanceBanner } from "@/features/admin/shared/maintenance-banner";
 import { cn } from "@/lib/utils";
 
 const COLLAPSE_KEY = "lmsp-sidebar-collapsed";
@@ -59,6 +60,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="min-w-0 flex-1"><AppBreadcrumb /></div>
           <NotificationsBell />
         </header>
+        <MaintenanceBanner />
         <main id="main-content" tabIndex={-1}
           className={cn(
             "mx-auto w-full flex-1 px-4 py-6 outline-none sm:px-8 sm:py-8",
