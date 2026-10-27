@@ -36,6 +36,8 @@ public class Assignment {
     @Column(name = "rules_text", columnDefinition = "TEXT") private String rulesText;
     @Column(name = "paper_seed", nullable = false) private long paperSeed = new SecureRandom().nextLong();
     @Column(name = "is_published", nullable = false) private boolean published;
+    @Column(name = "upcoming_notified_at") private LocalDateTime upcomingNotifiedAt;
+    @Column(name = "results_notified_at") private LocalDateTime resultsNotifiedAt;
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "created_by", nullable = false) private User creator;
     @Column(name = "created_at", nullable = false) private LocalDateTime createdAt;
     @Column(name = "updated_at", nullable = false) private LocalDateTime updatedAt;
@@ -90,6 +92,9 @@ public class Assignment {
     }
     /** Quy chế được sửa cả sau xuất bản (published-settings). */
     public void updateRulesText(String rulesText) { this.rulesText = rulesText; }
+    /** Đánh dấu đã gửi `exam.upcoming` / `grade.released` — docs/admin-spec.md §8. */
+    public void markUpcomingNotified(LocalDateTime now) { upcomingNotifiedAt = now; }
+    public void markResultsNotified(LocalDateTime now) { resultsNotifiedAt = now; }
     /** "Bốc lại" đề nháp — exam-spec.md §3.5. */
     public void reseed(long seed) {
         if (published) throw new IllegalStateException("Assignment is already published");
