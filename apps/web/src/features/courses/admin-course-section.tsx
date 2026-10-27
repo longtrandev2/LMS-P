@@ -49,18 +49,19 @@ export function AdminCourseSection({ onCreate, onOpenClass, onEdit, onDelete }: 
         <ListToolbar className={FLUSH_TOOLBAR} search={<SearchField value={search} onChange={setSearch} placeholder="Tìm mã hoặc tên học phần" />}>
           <SortSelect value={sort} onChange={(value) => { setSort(value); setPage(1); }} options={SORTS} />
         </ListToolbar>
-        {query.isPending ? <TableSkeleton cols={4} rows={4} /> : query.isError ? <ErrorState error={query.error} onRetry={() => query.refetch()} />
+        {query.isPending ? <TableSkeleton cols={5} rows={4} /> : query.isError ? <ErrorState error={query.error} onRetry={() => query.refetch()} />
           : query.data?.items.length === 0 ? <EmptyState compact icon={BookOpen} title={search ? "Không tìm thấy học phần" : "Chưa có học phần"}
               description={search ? "Thử mã hoặc tên khác." : "Tạo học phần để bắt đầu mở lớp."}
               action={!search ? <Button size="sm" onClick={onCreate}><Plus aria-hidden /> Tạo học phần</Button> : undefined} />
           : <Table className={FLUSH_TABLE}>
             <TableHeader><TableRow>
-              <TableHead className="w-32">Mã</TableHead><TableHead>Tên học phần</TableHead>
+              <TableHead className="w-32">Mã</TableHead><TableHead>Tên học phần</TableHead><TableHead className="w-20 text-right">Tín chỉ</TableHead>
               <TableHead className="hidden md:table-cell">Mô tả</TableHead><TableHead className="w-px"><span className="sr-only">Thao tác</span></TableHead>
             </TableRow></TableHeader>
             <TableBody>{query.data?.items.map((course) => <TableRow key={course.id}>
               <TableCell className="font-mono text-xs font-medium">{course.code}</TableCell>
               <TableCell className="font-medium">{course.name}</TableCell>
+              <TableCell className="text-right tabular-nums">{course.credits ?? "—"}</TableCell>
               <TableCell className="hidden max-w-72 truncate text-muted-foreground md:table-cell">{course.description || "—"}</TableCell>
               <TableCell><div className="flex justify-end">
                 <DropdownMenu>
