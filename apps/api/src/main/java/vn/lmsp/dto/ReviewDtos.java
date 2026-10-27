@@ -36,9 +36,19 @@ public final class ReviewDtos {
                                 BigDecimal tolerance, List<List<String>> blanks, List<Boolean> blanks_case_sensitive,
                                 Map<String, String> matches, List<String> order) { }
 
+    /**
+     * Câu lập trình có bài nộp: thêm `submission_id` (link `/submissions/{id}`), `status`, `verdict`; `score` null khi
+     * còn đang chấm hoặc chấm lỗi (docs/exam-spec.md §6).
+     */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record ReviewQuestion(AssignmentQuestionView question, AnswerResponse response, BigDecimal score,
-                                 BigDecimal max_score, CorrectAnswer correct_answer, String explanation) { }
+                                 BigDecimal max_score, CorrectAnswer correct_answer, String explanation,
+                                 Long submission_id, SubmissionStatus status, GradingVerdict verdict) {
+        public ReviewQuestion(AssignmentQuestionView question, AnswerResponse response, BigDecimal score,
+                              BigDecimal max_score, CorrectAnswer correct_answer, String explanation) {
+            this(question, response, score, max_score, correct_answer, explanation, null, null, null);
+        }
+    }
 
     /** Khi chưa được xem lại: `questions` rỗng. */
     public record AttemptReview(QuizAttemptView attempt, boolean review_available, boolean shows_answers,

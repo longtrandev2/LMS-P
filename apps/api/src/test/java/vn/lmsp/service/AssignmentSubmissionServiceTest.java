@@ -72,4 +72,13 @@ class AssignmentSubmissionServiceTest {
                 .isInstanceOfSatisfying(LmsException.class, error -> assertThat(error.getCode()).isEqualTo("IDEMPOTENCY_CONFLICT"));
         verify(submissions, never()).save(any());
     }
+
+    @Test void sessionBasedQuizRejectsPerQuestionSubmissions() {
+        var timed = assignment(AssignmentCategory.QUIZ);
+        timed.configureDelivery(30, PaperMode.same, null, null);
+        when(access.studentAssignment(51L, 42L, true)).thenReturn(timed);
+        assertThatThrownBy(() -> service.submitQuestion(51L, 100L, 42L, KEY, text("tcp")))
+                .isInstanceOfSatisfying(LmsException.class, error -> assertThat(error.getCode()).isEqualTo("CONFLICT"));
+        verify(submissions, never()).save(any());
+    }
 }

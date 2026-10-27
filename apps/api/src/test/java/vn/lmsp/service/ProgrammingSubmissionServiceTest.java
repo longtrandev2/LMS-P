@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import vn.lmsp.common.LmsException;
 import org.mockito.ArgumentCaptor;
 import vn.lmsp.dto.AssignmentDtos.QuestionSubmissionInput;
 import vn.lmsp.enums.*;
@@ -106,5 +107,12 @@ class ProgrammingSubmissionServiceTest {
         link.pin(version(link.getQuestion(), 2, broken));
         assertThat(service.submit(50L, 100L, 42L, KEY, input).replayed()).isFalse();
         verify(jobs).save(any());
+    }
+
+    @Test void examsOnlyAcceptCodeThroughTheirSession() {
+        when(access.studentAssignment(51L, 42L, true)).thenReturn(assignment(AssignmentCategory.FINAL));
+        assertThatThrownBy(() -> service.submit(51L, 100L, 42L, KEY, input))
+                .isInstanceOfSatisfying(LmsException.class, error -> assertThat(error.getCode()).isEqualTo("CONFLICT"));
+        verifyNoInteractions(jobs);
     }
 }

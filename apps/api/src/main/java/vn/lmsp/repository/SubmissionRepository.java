@@ -3,6 +3,7 @@ package vn.lmsp.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import vn.lmsp.enums.SubmissionStatus;
 import vn.lmsp.model.Submission;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import jakarta.persistence.LockModeType;
@@ -27,4 +28,19 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
             + "and s.student.id=:studentId and s.question.id=:questionId")
     int maxAttemptNo(@Param("assignmentId") Long assignmentId, @Param("studentId") Long studentId,
                      @Param("questionId") Long questionId);
+
+    /** Lượt (`assignment_attempts`) của một submission, null với bài nộp từng câu. */
+    @Query("select s.assignmentAttempt.id from Submission s where s.id=:id")
+    Long findAttemptIdById(@Param("id") Long id);
+
+    /** Mọi submission của một lượt, khóa để tính lại `attempt.score` theo dữ liệu mới nhất — exam-spec.md §5.6. */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select s from Submission s where s.assignmentAttempt.id=:attemptId")
+    List<Submission> findLockedByAttempt(@Param("attemptId") Long attemptId);
+
+    /** Các lượt của bài còn submission ở trạng thái cho trước (đang chấm) — màn giám sát. */
+    @Query("select distinct s.assignmentAttempt.id from Submission s where s.assignment.id=:assignmentId "
+            + "and s.assignmentAttempt is not null and s.status in :statuses")
+    List<Long> findAttemptIdsWithStatus(@Param("assignmentId") Long assignmentId,
+                                        @Param("statuses") Collection<SubmissionStatus> statuses);
 }
