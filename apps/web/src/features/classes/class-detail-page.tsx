@@ -21,9 +21,10 @@ import { api } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
 import { hasRole } from "@/stores/auth";
+import { ExamsSection } from "@/features/exams/exams-section";
 import type { ClassSummary } from "@/types/api";
 
-const TABS = ["overview", "schedule", "materials", "assignments", "students", "leave", "grades"] as const;
+const TABS = ["overview", "schedule", "materials", "assignments", "exams", "students", "leave", "grades"] as const;
 
 /** Trang lớp của giảng viên/quản trị (DESIGN.md §4): đầu trang + hành động phải, tab gạch chân lưu ở `?tab=`. */
 export function ClassDetailPage({ classId }: { classId: string }) {
@@ -64,6 +65,7 @@ export function ClassDetailPage({ classId }: { classId: string }) {
           <TabsTrigger value="schedule">Lịch học</TabsTrigger>
           <TabsTrigger value="materials">Học liệu</TabsTrigger>
           <TabsTrigger value="assignments">Bài tập</TabsTrigger>
+          <TabsTrigger value="exams">Kỳ thi</TabsTrigger>
           <TabsTrigger value="students">Sinh viên</TabsTrigger>
           <TabsTrigger value="leave">
             Đơn xin nghỉ
@@ -89,6 +91,9 @@ export function ClassDetailPage({ classId }: { classId: string }) {
         </TabsContent>
         <TabsContent value="assignments">
           <AssignmentsSection classId={classId} canManage={canManage} />
+        </TabsContent>
+        <TabsContent value="exams">
+          <ExamsSection classId={classId} canManage={canManage} />
         </TabsContent>
         <TabsContent value="students">
           <ClassStudentsTab classId={classId} />
