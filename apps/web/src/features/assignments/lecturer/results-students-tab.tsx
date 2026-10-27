@@ -49,23 +49,23 @@ export function ResultsStudentsTab({ query, questions, quiz, attemptHref }: {
     return next;
   });
 
-  return <section className="overflow-hidden rounded-xl border bg-card" aria-label="Kết quả theo sinh viên">
-    <ListToolbar search={<SearchField value={search} onChange={setSearch} placeholder="Tìm tên hoặc mã sinh viên" label="Tìm sinh viên" />}>
+  return <section aria-label="Kết quả theo sinh viên">
+    <ListToolbar className="border-b-0 px-0 pt-0 pb-3 sm:px-0" search={<SearchField value={search} onChange={setSearch} placeholder="Tìm tên hoặc mã sinh viên" label="Tìm sinh viên" />}>
       <SortSelect value={sort} onChange={setSort} options={SORTS} />
     </ListToolbar>
-    <div>
+    <div className="[&_tr>*:first-child]:pl-2 [&_tr>*:last-child]:pr-2">
       {query.isPending ? <TableSkeleton rows={5} cols={4} /> : null}
       {query.isError ? <ErrorState error={query.error} onRetry={() => void query.refetch()} /> : null}
       {query.data && rows.length === 0 ? <EmptyState compact icon={search ? SearchX : Users} title={search ? "Không tìm thấy sinh viên" : "Lớp chưa có sinh viên"} /> : null}
       {rows.length ? <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="sticky left-0 z-[1] min-w-52 bg-card">Sinh viên</TableHead>
+            <TableHead className="sticky left-0 z-[1] min-w-52 bg-background">Sinh viên</TableHead>
             <TableHead className="text-right">Điểm</TableHead>
             <TableHead className="text-right">Lượt</TableHead>
             {questions.map((question, index) => <TableHead key={question.question_id} className="min-w-20 text-center"
               title={`${questionTypeLabel(question.type)} · ${formatPoints(question.points)} điểm`}>
-              C{index + 1}<span className="block text-[11px] font-normal text-muted-foreground tabular-nums">{formatPoints(question.points)}đ</span>
+              C{index + 1}<span className="block text-[11px] font-normal text-muted-foreground/80 tabular-nums">{formatPoints(question.points)}đ</span>
             </TableHead>)}
           </TableRow>
         </TableHeader>

@@ -4,7 +4,8 @@ import { api } from "@/lib/api";
 import { errorText } from "@/lib/error-messages";
 import { queryKeys } from "@/lib/query-keys";
 import { Checkbox } from "@/components/ui/checkbox";
-import { EditorSection } from "./editor-layout";
+import { cn } from "@/lib/utils";
+import { CHOICE_BAR, EditorSection } from "./editor-layout";
 import type { ClassSummary, Paginated } from "@/types/api";
 
 /** Chọn các lớp cùng học phần do giảng viên phụ trách — mỗi lớp nhận một bản riêng (`POST /assignments/bulk`). */
@@ -36,7 +37,7 @@ export function EditorClassesSection({ classId, value, onChange, error }: {
       <legend className="sr-only">Lớp nhận bài</legend>
       {items.map((item) => {
         const id = `target-class-${item.id}`;
-        return <label key={item.id} htmlFor={id} className="flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-colors duration-150 hover:bg-muted/40 has-[[data-state=checked]]:border-foreground/40 has-[[data-state=checked]]:bg-accent">
+        return <label key={item.id} htmlFor={id} className={cn(CHOICE_BAR, "cursor-pointer items-center hover:bg-accent")}>
           <Checkbox id={id} checked={value.includes(item.id)} onCheckedChange={(checked) => toggle(item.id, checked === true)} />
           <span className="min-w-0">
             <span className="block truncate text-sm font-medium">{item.name}</span>

@@ -14,7 +14,7 @@ export function SubmissionFilters({ value, onChange, questions }: {
   value: SubmissionFilterState; onChange: (next: SubmissionFilterState) => void; questions: AssignmentQuestion[];
 }) {
   const set = (patch: Partial<SubmissionFilterState>) => onChange({ ...value, ...patch });
-  return <ListToolbar search={<SearchField value={value.search} onChange={(search) => set({ search })} placeholder="Tìm tên hoặc mã sinh viên" label="Tìm sinh viên" />}>
+  return <ListToolbar className="border-b-0 px-0 pt-0 pb-3 sm:px-0" search={<SearchField value={value.search} onChange={(search) => set({ search })} placeholder="Tìm tên hoặc mã sinh viên" label="Tìm sinh viên" />}>
     <Select value={value.question} onValueChange={(question) => set({ question })}>
       <SelectTrigger className="w-full sm:w-32" aria-label="Lọc theo câu"><SelectValue /></SelectTrigger>
       <SelectContent position="popper">

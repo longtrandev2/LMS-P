@@ -1,10 +1,7 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { Loader2 } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CodeEditor } from "@/components/code-editor";
-import { PageHeader } from "@/components/page-header";
 import { ErrorState } from "@/components/state-blocks";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
 import { hasRole } from "@/stores/auth";
@@ -12,16 +9,17 @@ import { GradingHistory } from "@/features/assignments/submission/grading-histor
 import { MonoBlock } from "@/features/assignments/submission/mono-block";
 import { ObjectiveResponse } from "@/features/assignments/submission/objective-response";
 import { RegradeButton } from "@/features/assignments/submission/regrade-dialog";
-import { SubmissionSummaryCard } from "@/features/assignments/submission/submission-summary-card";
-import { TestResultsTable } from "@/features/assignments/submission/test-results-table";
+import { SubmissionHeader } from "@/features/assignments/submission/submission-header";
+import { TestResultsList } from "@/features/assignments/submission/test-results-list";
 import { useSubmissionLive } from "@/features/assignments/submission/use-submission-live";
 import { BackLink } from "@/features/assignments/student/page-states";
 
 const EDITOR_LANGUAGES = ["python", "c", "cpp", "java"] as const;
 
-function Panel({ title, aside, children }: { title: string; aside?: React.ReactNode; children: React.ReactNode }) {
-  return <section aria-label={title} className="overflow-hidden rounded-xl border bg-card">
-    <header className="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-3 sm:px-5">
+/** Khối nội dung không khung: tiêu đề 14/600 + nội dung (DESIGN.md §4 "Chi tiết bài nộp"). */
+function Block({ title, aside, children }: { title: string; aside?: React.ReactNode; children: React.ReactNode }) {
+  return <section aria-label={title} className="space-y-3">
+    <header className="flex flex-wrap items-center justify-between gap-2">
       <h2 className="text-sm font-semibold">{title}</h2>{aside}
     </header>
     {children}
@@ -55,38 +53,36 @@ export function SubmissionDetailPage() {
   const language = EDITOR_LANGUAGES.find((item) => item === data?.language) ?? "text";
   const canRegrade = staff && code && (data?.status === "completed" || data?.status === "failed");
 
-  return <div className="space-y-6">
-    {back ? <BackLink to={back.to}>{back.label}{details ? ` · ${details.assignment.title}` : ""}</BackLink> : <span className="block h-5" />}
+  return <div className="space-y-8">
+    {back ? <BackLink to={back.to}>{back.label}</BackLink> : <span className="block h-5" />}
     {submission.isError ? <ErrorState error={submission.error} onRetry={() => submission.refetch()} /> : null}
-    {submission.isPending ? <div aria-busy="true" aria-label="Đang tải" className="space-y-4"><Skeleton className="h-10 w-1/3" /><Skeleton className="h-36 rounded-xl" /><Skeleton className="h-72 rounded-xl" /></div> : null}
+    {submission.isPending ? <div aria-busy="true" aria-label="Đang tải" className="space-y-4"><Skeleton className="h-4 w-1/4" /><Skeleton className="h-8 w-1/3" /><Skeleton className="h-4 w-1/2" /><Skeleton className="h-72 rounded-lg" /></div> : null}
     {data ? <>
-      <PageHeader title={`Bài nộp #${data.id}`} description={details ? `${details.assignment.title}${position ? ` · Câu ${position}` : ""} · Lượt ${data.attempt_no}` : undefined}
-        actions={staff && code ? <RegradeButton submissionId={data.id} assignmentId={data.assignment_id} disabled={!canRegrade} /> : undefined} />
-      {grading ? <Alert role="status">
-        <Loader2 className="animate-spin motion-reduce:animate-none" aria-hidden />
-        <AlertDescription className="text-foreground">{data.status === "pending" ? "Bài đang chờ chấm." : "Đang chấm bài."} Trang tự cập nhật khi có kết quả.</AlertDescription>
-      </Alert> : null}
-      <SubmissionSummaryCard submission={data} result={shown} question={question} position={position}
-        showScore={staff || code || data.review_available === true} />
+      <SubmissionHeader submission={data} result={shown} question={question} position={position} assignmentTitle={details?.assignment.title}
+        showScore={staff || code || data.review_available === true}
+        action={staff && code ? <RegradeButton submissionId={data.id} assignmentId={data.assignment_id} disabled={!canRegrade} /> : undefined} />
+      {grading ? <p role="status" className="rounded-lg bg-info/8 px-4 py-3 text-sm text-info">
+        {data.status === "pending" ? "Bài đang chờ chấm." : "Đang chấm bài."} Trang tự cập nhật khi có kết quả.
+      </p> : null}
 
-      {code ? <Panel title="Mã nguồn">
-        <CodeEditor value={data.source_code ?? ""} language={language} readOnly maxHeight="32rem" minHeight="8rem" className="rounded-none border-0" ariaLabel="Mã nguồn đã nộp" />
-      </Panel> : null}
-      {shown?.compile_output || shown?.error_message ? <div className="grid gap-3 lg:grid-cols-2">
-        {shown.compile_output ? <MonoBlock title={shown.compile_error ? "Log biên dịch (lỗi)" : "Log biên dịch"} value={shown.compile_output} tone={shown.compile_error ? "danger" : "default"} maxHeight="max-h-80" className="lg:col-span-2" /> : null}
-        {shown.error_message ? <MonoBlock title="Lỗi hệ thống chấm" value={shown.error_message} tone="danger" className="lg:col-span-2" /> : null}
-      </div> : null}
-      {code ? <Panel title="Kết quả test" aside={shown && data.result && shown.grading_attempt !== data.result.grading_attempt
-        ? <span className="text-xs text-muted-foreground">Đang xem lần chấm {shown.grading_attempt} (cũ)</span> : null}>
-        {shown ? <TestResultsTable key={shown.grading_attempt} result={shown} />
-          : <p className="px-5 py-6 text-sm text-muted-foreground">{grading ? "Đang chờ kết quả chấm…" : "Chưa có kết quả chấm."}</p>}
-      </Panel> : null}
-      {code && history.length > 1 ? <Panel title={`Lịch sử chấm (${history.length})`}>
+      {code ? <Block title="Mã nguồn" aside={<span className="text-xs text-muted-foreground">Chỉ đọc</span>}>
+        <CodeEditor value={data.source_code ?? ""} language={language} readOnly maxHeight="32rem" minHeight="8rem" ariaLabel="Mã nguồn đã nộp" />
+      </Block> : null}
+      {shown?.compile_output || shown?.error_message ? <Block title="Log">
+        {shown.compile_output ? <MonoBlock title={shown.compile_error ? "Log biên dịch (lỗi)" : "Log biên dịch"} value={shown.compile_output} tone={shown.compile_error ? "danger" : "default"} maxHeight="max-h-80" /> : null}
+        {shown.error_message ? <MonoBlock title="Lỗi hệ thống chấm" value={shown.error_message} tone="danger" /> : null}
+      </Block> : null}
+      {code ? <Block title="Kết quả test" aside={shown && data.result && shown.grading_attempt !== data.result.grading_attempt
+        ? <span className="text-xs text-warning">Đang xem lần chấm {shown.grading_attempt} (cũ)</span> : null}>
+        {shown ? <TestResultsList key={shown.grading_attempt} result={shown} />
+          : <p className="text-sm text-muted-foreground">{grading ? "Đang chờ kết quả chấm…" : "Chưa có kết quả chấm."}</p>}
+      </Block> : null}
+      {code && history.length > 1 ? <Block title={`Lịch sử chấm · ${history.length} lần`}>
         <GradingHistory results={history} selected={shown?.grading_attempt ?? null} onSelect={setSelected} />
-      </Panel> : null}
+      </Block> : null}
 
-      {!code && data.response && (staff || data.review_available) ? <Panel title="Câu trả lời"><ObjectiveResponse question={question} response={data.response} /></Panel> : null}
-      {!code && !staff && !data.review_available ? <p className="rounded-xl border bg-card px-4 py-3 text-sm text-muted-foreground">
+      {!code && data.response && (staff || data.review_available) ? <Block title="Bài làm"><ObjectiveResponse question={question} response={data.response} /></Block> : null}
+      {!code && !staff && !data.review_available ? <p className="text-sm text-muted-foreground">
         Đã nộp. Điểm và câu trả lời hiện khi bài cho phép xem lại.
       </p> : null}
     </> : null}

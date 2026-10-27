@@ -47,29 +47,27 @@ export function EditorQuestionsSection({ classId, form, patch, errors, locked }:
 
   return <EditorSection id="questions" title="Câu hỏi"
     description={locked ? "Câu hỏi, điểm và thứ tự đã được ghim khi xuất bản." : "Chọn tay từ ngân hàng hoặc bốc ngẫu nhiên theo quy tắc; sắp thứ tự và đặt điểm từng câu."}>
-    {locked ? null : <div className="flex flex-wrap items-end justify-between gap-3">
+    {locked ? null : <div className="flex flex-wrap items-center justify-between gap-3">
       <div className="flex flex-wrap gap-2">
-        <Button type="button" variant="outline" onClick={() => setPickerOpen(true)}><Library aria-hidden />Chọn từ ngân hàng</Button>
-        <Button type="button" variant="outline" onClick={() => setDrawOpen(true)}><Shuffle aria-hidden />Bốc ngẫu nhiên</Button>
+        <Button type="button" variant="secondary" onClick={() => setPickerOpen(true)}><Library aria-hidden />Chọn từ ngân hàng</Button>
+        <Button type="button" variant="secondary" onClick={() => setDrawOpen(true)}><Shuffle aria-hidden />Bốc ngẫu nhiên</Button>
       </div>
-      <div className="flex items-end gap-2">
-        <div className="space-y-1.5">
-          <label htmlFor="target-total" className="block text-xs font-medium text-muted-foreground">Tổng điểm mong muốn</label>
-          <Input id="target-total" type="number" inputMode="decimal" min={0.01} step={0.5} className="h-9 w-28 tabular-nums"
-            value={target} onChange={(event) => setTarget(event.target.value)} />
-        </div>
-        <Button type="button" variant="outline" disabled={questions.length === 0} onClick={distribute}><Divide aria-hidden />Chia đều</Button>
+      <div className="flex items-center gap-2">
+        <label htmlFor="target-total" className="text-sm text-muted-foreground">Tổng điểm</label>
+        <Input id="target-total" type="number" inputMode="decimal" min={0.01} step={0.5} className="w-20 text-right tabular-nums"
+          value={target} onChange={(event) => setTarget(event.target.value)} />
+        <Button type="button" variant="secondary" disabled={questions.length === 0} onClick={distribute}><Divide aria-hidden />Chia đều</Button>
       </div>
     </div>}
 
-    {questions.length === 0 ? <div className="rounded-lg border border-dashed">
+    {questions.length === 0 ? <div className="rounded-lg bg-secondary/50">
       <EmptyState compact icon={ListPlus} title="Đề chưa có câu nào" description={quiz ? "Quiz nhận mọi loại câu trừ lập trình." : "Bài tập nhận mọi loại câu, kể cả lập trình."} />
-    </div> : <div className="rounded-lg border">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-2.5 text-sm text-muted-foreground" aria-live="polite">
-        <span><span className="font-medium text-foreground tabular-nums">{questions.length}</span> câu</span>
-        <span>Tổng hiện tại: <span className="font-semibold text-foreground tabular-nums">{formatPoints(total)}</span> điểm</span>
-      </div>
-      <ol className="divide-y">
+    </div> : <div className="space-y-2">
+      <p className="flex items-center justify-between gap-2 px-1 text-xs text-muted-foreground tabular-nums" aria-live="polite">
+        <span>{questions.length} câu trong đề</span>
+        <span>Tổng <span className="font-semibold text-foreground">{formatPoints(total)}</span> điểm</span>
+      </p>
+      <ol className="space-y-1.5">
         {questions.map((question, index) => <SelectedQuestionRow key={question.question_id} index={index} count={questions.length}
           question={question} error={errors[`points:${question.question_id}`]} invalidType={quiz && question.type === "programming"} locked={locked}
           onPoints={(points) => setQuestions(questions.map((q) => q.question_id === question.question_id ? { ...q, points } : q))}

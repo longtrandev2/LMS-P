@@ -4,10 +4,9 @@ import { Inbox, SearchX } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { EmptyState, ErrorState, TableSkeleton } from "@/components/state-blocks";
-import { formatUtcDateTime } from "@/lib/date-time";
 import { languageLabel } from "@/lib/languages";
 import { SubmissionStatusBadge } from "@/features/assignments/submission/submission-status";
-import { formatPoints } from "./labels";
+import { formatPoints, shortDateTime } from "./labels";
 import { ALL, EMPTY_FILTERS, SubmissionFilters } from "./submission-filters";
 import type { AssignmentQuestion, AssignmentSubmission } from "@/types/api";
 
@@ -29,9 +28,9 @@ export function ResultsSubmissionsTab({ query, questions, positionOf }: {
   }, [query.data, filters]);
   const filtered = JSON.stringify(filters) !== JSON.stringify(EMPTY_FILTERS);
 
-  return <section className="overflow-hidden rounded-xl border bg-card" aria-label="Danh sách bài nộp">
+  return <section aria-label="Danh sách bài nộp">
     <SubmissionFilters value={filters} onChange={setFilters} questions={questions} />
-    <div>
+    <div className="[&_tr>*:first-child]:pl-2 [&_tr>*:last-child]:pr-2">
       {query.isPending ? <TableSkeleton rows={6} cols={6} /> : null}
       {query.isError ? <ErrorState error={query.error} onRetry={() => void query.refetch()} /> : null}
       {query.data && rows.length === 0 ? <EmptyState compact icon={filtered ? SearchX : Inbox} title={filtered ? "Không có bài nộp phù hợp bộ lọc" : "Chưa có bài nộp"}
@@ -51,18 +50,18 @@ export function ResultsSubmissionsTab({ query, questions, positionOf }: {
         <TableBody>
           {rows.map((row) => <TableRow key={row.id} className="cursor-pointer" onClick={() => navigate(`/submissions/${row.id}`)}>
             <TableCell>
-              <Link to={`/submissions/${row.id}`} className="rounded-sm font-medium underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring" onClick={(event) => event.stopPropagation()}>
+              <Link to={`/submissions/${row.id}`} className="rounded-sm font-medium outline-none hover:underline hover:underline-offset-4 focus-visible:ring-2 focus-visible:ring-ring" onClick={(event) => event.stopPropagation()}>
                 {row.student_full_name || `Sinh viên #${row.student_id}`}
               </Link>
               <p className="font-mono text-xs text-muted-foreground">{row.student_code ?? `ID ${row.student_id}`}</p>
             </TableCell>
-            <TableCell className="tabular-nums">Câu {positionOf.get(row.question_id) ?? `#${row.question_id}`}</TableCell>
+            <TableCell className="text-muted-foreground tabular-nums">Câu {positionOf.get(row.question_id) ?? `#${row.question_id}`}</TableCell>
             <TableCell className="text-right tabular-nums">{row.attempt_no}</TableCell>
             <TableCell className="text-sm">{row.type === "code" ? languageLabel(row.language) : <span className="text-muted-foreground">Khách quan</span>}</TableCell>
             <TableCell><SubmissionStatusBadge status={row.status} verdict={row.verdict} compact /></TableCell>
-            <TableCell className="text-right tabular-nums">{formatPoints(row.score)}</TableCell>
-            <TableCell className="text-sm whitespace-nowrap tabular-nums">
-              {formatUtcDateTime(row.submitted_at)}
+            <TableCell className="text-right font-medium tabular-nums">{formatPoints(row.score)}</TableCell>
+            <TableCell className="text-sm whitespace-nowrap text-muted-foreground tabular-nums">
+              {shortDateTime(row.submitted_at)}
               {row.is_late ? <Badge variant="warning" className="ml-2">Muộn</Badge> : null}
             </TableCell>
           </TableRow>)}

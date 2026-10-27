@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Info } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { AssignmentEditorHeader } from "./assignment-editor-header";
 import { EditorClassesSection } from "./editor-classes-section";
@@ -10,6 +9,7 @@ import { EditorInfoSection } from "./editor-info-section";
 import { EditorQuestionsSection } from "./editor-questions-section";
 import { EditorReviewSection, PublishedReasonSection } from "./editor-review-section";
 import { EditorScheduleSection } from "./editor-schedule-section";
+import { EditorSummaryPanel } from "./editor-summary-panel";
 import { initialForm, validate, type EditorForm, type EditorMode } from "./editor-model";
 import { LeaveConfirmDialog } from "./leave-confirm-dialog";
 import { plainExcerpt } from "./labels";
@@ -74,31 +74,41 @@ export function AssignmentEditorForm({ classId, details, title, classLabel, badg
     return question ? `Câu ${form.questions.indexOf(question) + 1}: ${plainExcerpt(question.content, 80)}` : `Câu hỏi #${id}`;
   };
 
-  return <form className="space-y-8 pb-8" noValidate onSubmit={(event) => event.preventDefault()}>
+  const busy = saver.saving != null;
+  const saveButtons = (block: boolean) => published
+    ? <Button type="button" className={block ? "w-full" : undefined} disabled={busy} onClick={() => submit("draft")}>{saver.saving ? "Đang lưu…" : "Lưu điều chỉnh"}</Button>
+    : block ? <>
+      <Button type="button" className="w-full" disabled={busy} onClick={() => submit("publish")}>{saver.saving === "publish" ? "Đang xuất bản…" : "Lưu & xuất bản"}</Button>
+      <Button type="button" variant="secondary" className="w-full" disabled={busy} onClick={() => submit("draft")}>{saver.saving === "draft" ? "Đang lưu…" : "Lưu nháp"}</Button>
+    </> : <>
+      <Button type="button" variant="secondary" disabled={busy} onClick={() => submit("draft")}>{saver.saving === "draft" ? "Đang lưu…" : "Lưu nháp"}</Button>
+      <Button type="button" disabled={busy} onClick={() => submit("publish")}>{saver.saving === "publish" ? "Đang xuất bản…" : "Lưu & xuất bản"}</Button>
+    </>;
+
+  return <form className="pb-16" noValidate onSubmit={(event) => event.preventDefault()}>
     <AssignmentEditorHeader backHref={classPath} backLabel={classLabel} title={title} badges={badges} dirty={dirty} isNew={mode === "create"}>
-      <Button type="button" variant="ghost" onClick={() => guard.requestLeave(classPath)}>Hủy</Button>
-      {published ? <Button type="button" variant="cta" disabled={saver.saving != null} onClick={() => submit("draft")}>{saver.saving ? "Đang lưu…" : "Lưu điều chỉnh"}</Button> : <>
-        <Button type="button" variant="outline" disabled={saver.saving != null} onClick={() => submit("draft")}>
-          {saver.saving === "draft" ? "Đang lưu…" : "Lưu nháp"}
-        </Button>
-        <Button type="button" variant="cta" disabled={saver.saving != null} onClick={() => submit("publish")}>
-          {saver.saving === "publish" ? "Đang xuất bản…" : "Lưu & xuất bản"}
-        </Button>
-      </>}
+      {saveButtons(false)}
     </AssignmentEditorHeader>
-    {published ? <Alert>
-      <Info aria-hidden />
-      <AlertDescription>Bài đã xuất bản: chỉ sửa được thông tin, lịch, nộp muộn và chính sách xem lại. Câu hỏi, điểm, số lượt và trộn đề đã khóa.</AlertDescription>
-    </Alert> : null}
-    <EditorInfoSection form={form} patch={patch} errors={errors} published={published} />
-    <EditorScheduleSection form={form} patch={patch} errors={errors} published={published} />
-    <EditorReviewSection form={form} patch={patch} published={published} />
-    {mode === "create" ? <EditorClassesSection classId={classId} value={form.classIds} error={errors.classIds}
-      onChange={(classIds) => patch({ classIds })} /> : null}
-    <div data-editor-error={errors.questions ? true : undefined} tabIndex={-1} className="outline-none">
-      <EditorQuestionsSection classId={classId} form={form} patch={patch} errors={errors} locked={published} />
+    <div className="mx-auto grid max-w-6xl gap-x-12 gap-y-8 pt-8 lg:grid-cols-[minmax(0,1fr)_18rem]">
+      <div className="min-w-0">
+        {published ? <p className="mb-8 flex gap-2.5 rounded-lg bg-info/8 px-4 py-3 text-sm text-info">
+          <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
+          Bài đã xuất bản: chỉ sửa được thông tin, lịch, nộp muộn và chính sách xem lại. Câu hỏi, điểm, số lượt và trộn đề đã khóa.
+        </p> : null}
+        <div className="divide-y [&>section:first-child]:pt-0">
+          <EditorInfoSection form={form} patch={patch} errors={errors} published={published} />
+          <div data-editor-error={errors.questions ? true : undefined} tabIndex={-1} className="outline-none">
+            <EditorQuestionsSection classId={classId} form={form} patch={patch} errors={errors} locked={published} />
+          </div>
+          <EditorScheduleSection form={form} patch={patch} errors={errors} published={published} />
+          <EditorReviewSection form={form} patch={patch} published={published} />
+          {mode === "create" ? <EditorClassesSection classId={classId} value={form.classIds} error={errors.classIds}
+            onChange={(classIds) => patch({ classIds })} /> : null}
+          {published ? <PublishedReasonSection form={form} patch={patch} errors={errors} /> : null}
+        </div>
+      </div>
+      <EditorSummaryPanel form={form} mode={mode} actions={saveButtons(true)} />
     </div>
-    {published ? <PublishedReasonSection form={form} patch={patch} errors={errors} /> : null}
 
     <PublishConflictDialog conflict={saver.conflict} busy={saver.saving != null} questionLabel={contentOf}
       onCancel={saver.dismissConflict} onConfirm={saver.confirmUnverified} />

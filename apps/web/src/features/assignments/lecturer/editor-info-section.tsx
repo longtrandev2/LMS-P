@@ -22,10 +22,10 @@ export function EditorInfoSection({ form, patch, errors, published }: {
     <div className="space-y-1.5">
       <Tabs defaultValue="write">
         <div className="flex items-center justify-between gap-2">
-          <label htmlFor="assignment-description" className="text-sm font-medium">Mô tả <span className="font-normal text-muted-foreground">(Markdown, tùy chọn)</span></label>
-          <TabsList variant="line" className="h-8">
-            <TabsTrigger value="write">Soạn</TabsTrigger>
-            <TabsTrigger value="preview">Xem trước</TabsTrigger>
+          <label htmlFor="assignment-description" className="text-sm font-medium">Mô tả <span className="font-normal text-muted-foreground">· Markdown, tùy chọn</span></label>
+          <TabsList className="h-7">
+            <TabsTrigger value="write" className="px-2.5 text-xs">Soạn</TabsTrigger>
+            <TabsTrigger value="preview" className="px-2.5 text-xs">Xem trước</TabsTrigger>
           </TabsList>
         </div>
         <TabsContent value="write" className="mt-2">
@@ -33,7 +33,7 @@ export function EditorInfoSection({ form, patch, errors, published }: {
             placeholder="Yêu cầu, tài liệu được dùng, cách nộp…" onChange={(event) => patch({ description: event.target.value })} />
         </TabsContent>
         <TabsContent value="preview" className="mt-2">
-          <div className="min-h-32 rounded-md border px-3 py-2">
+          <div className="min-h-32 rounded-md bg-secondary/50 px-3 py-2">
             {form.description.trim() ? <MarkdownView source={form.description} />
               : <p className="text-sm text-muted-foreground">Chưa có mô tả.</p>}
           </div>
@@ -43,7 +43,7 @@ export function EditorInfoSection({ form, patch, errors, published }: {
     <div className="space-y-2">
       <p className="text-sm font-medium">Hạng mục</p>
       <RadioCards label="Hạng mục" value={form.category} onChange={(category) => patch({ category })}
-        options={options} columns={4} disabled={published} />
+        options={options} columns={2} disabled={published} />
       {published ? <p className="text-xs text-muted-foreground">Hạng mục đã khóa sau khi xuất bản.</p> : null}
     </div>
   </EditorSection>;

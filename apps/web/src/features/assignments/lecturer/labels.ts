@@ -1,3 +1,5 @@
+import { CircleHelp, FileCode2, GraduationCap, NotebookPen, type LucideIcon } from "lucide-react";
+import { utcDateTimeMillis } from "@/lib/date-time";
 import type { AssignmentCategory, QuestionDifficulty, ReviewMode, ScorePolicy, SubmissionStatus } from "@/types/api";
 
 /** Nhãn dùng chung cho các trang bài tập phía giảng viên — docs/assessment-spec.md §6. */
@@ -7,6 +9,11 @@ export const CATEGORY_OPTIONS: { id: AssignmentCategory; label: string; descript
   { id: "midterm", label: "Giữa kỳ", description: "Tính vào hạng mục giữa kỳ của bảng điểm." },
   { id: "final", label: "Cuối kỳ", description: "Tính vào hạng mục cuối kỳ của bảng điểm." },
 ];
+
+/** Icon loại bài cho danh sách (DESIGN.md §4). */
+export const CATEGORY_ICON: Record<AssignmentCategory, LucideIcon> = {
+  quiz: CircleHelp, assignment: FileCode2, midterm: NotebookPen, final: GraduationCap,
+};
 
 export function categoryLabel(category: AssignmentCategory): string {
   return CATEGORY_OPTIONS.find((item) => item.id === category)?.label ?? category;
@@ -47,4 +54,14 @@ export function plainExcerpt(markdown: string, max = 160): string {
 export function formatPoints(value: number | null | undefined): string {
   if (value == null || Number.isNaN(value)) return "—";
   return Number.isInteger(value) ? String(value) : value.toFixed(2).replace(/0$/, "");
+}
+
+/** Ngày giờ gọn cho hàng meta: "06/11 23:59" (cùng năm) hoặc "06/11/2027 23:59". */
+export function shortDateTime(value: string | null | undefined): string {
+  if (!value) return "—";
+  const date = new Date(utcDateTimeMillis(value));
+  if (Number.isNaN(date.getTime())) return "—";
+  const two = (n: number) => String(n).padStart(2, "0");
+  const year = date.getFullYear() === new Date().getFullYear() ? "" : `/${date.getFullYear()}`;
+  return `${two(date.getDate())}/${two(date.getMonth() + 1)}${year} ${two(date.getHours())}:${two(date.getMinutes())}`;
 }

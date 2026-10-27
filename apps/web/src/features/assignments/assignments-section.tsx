@@ -52,19 +52,25 @@ export function AssignmentsSection({ classId, canManage, canTake = false }: {
   }
 
   const items = list.data?.items ?? [];
-  return <section className="space-y-4" aria-label="Bài tập và quiz">
-    {canManage ? <div className="flex flex-wrap items-center justify-between gap-3">
-      <p className="text-sm text-muted-foreground">Bản nháp chỉ giảng viên thấy. Xuất bản sẽ ghim phiên bản câu hỏi, điểm và thứ tự.</p>
-      <Button variant="cta" asChild><Link to={`/classes/${classId}/assignments/new`}><Plus aria-hidden />Tạo bài tập / quiz</Link></Button>
-    </div> : null}
-    <div className="overflow-hidden rounded-xl border bg-card">
+  const drafts = canManage ? items.filter((item) => !item.is_published).length : 0;
+  return <section className="space-y-3" aria-label="Bài tập và quiz">
+    <div className="flex flex-wrap items-end justify-between gap-3">
+      <div className="min-w-0">
+        <h2 className="text-base font-semibold">Bài tập & quiz</h2>
+        <p className="text-sm text-muted-foreground tabular-nums">
+          {list.data ? `${items.length} bài${drafts ? ` · ${drafts} bản nháp chỉ giảng viên thấy` : ""}` : "Đang tải…"}
+        </p>
+      </div>
+      {canManage ? <Button asChild><Link to={`/classes/${classId}/assignments/new`}><Plus aria-hidden />Tạo bài tập</Link></Button> : null}
+    </div>
+    <div className="border-t">
       {list.isPending ? <ListSkeleton rows={3} /> : null}
       {list.isError ? <ErrorState error={list.error} onRetry={() => list.refetch()} /> : null}
       {list.data && items.length === 0 ? <EmptyState icon={ClipboardList} title="Chưa có bài tập hoặc quiz"
         description={canManage ? "Tạo bản nháp, chọn câu hỏi rồi xuất bản để sinh viên làm." : "Giảng viên chưa đăng bài nào cho lớp."} /> : null}
-      {items.length ? <div className="divide-y">{items.map((item) => <AssignmentListItem key={item.id} item={item} classId={classId}
+      {items.length ? <ul>{items.map((item) => <AssignmentListItem key={item.id} item={item} classId={classId}
         canManage={canManage} canTake={canTake} busy={busyId === item.id}
-        onPublish={() => void publish(item)} onDelete={() => setDeleting(item)} />)}</div> : null}
+        onPublish={() => void publish(item)} onDelete={() => setDeleting(item)} />)}</ul> : null}
     </div>
 
     <AlertDialog open={deleting != null} onOpenChange={(open) => !open && setDeleting(null)}>
