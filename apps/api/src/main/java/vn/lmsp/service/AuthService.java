@@ -19,10 +19,15 @@ import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.Base64;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class AuthService {
+    /** IP (ưu tiên giá trị đầu của X-Forwarded-For) và User-Agent của client — lưu theo phiên, admin-spec.md §6. */
+    public record Client(String ip, String userAgent) {
+        public static final Client UNKNOWN = new Client(null, null);
+    }
     private record Attempt(int failures, LocalDateTime blockedUntil) { }
     private final ConcurrentHashMap<String, Attempt> attempts = new ConcurrentHashMap<>();
     private final UserRepository users;
@@ -40,7 +45,7 @@ public class AuthService {
     }
 
     @Transactional
-    public TokenPair login(String email, String password) {
+    public TokenPair login(String email, String password, Client client) {
         Attempt attempt = attempts.get(email.toLowerCase());
         if (attempt != null && attempt.blockedUntil() != null && attempt.blockedUntil().isAfter(LocalDateTime.now()))
             throw new LmsException("RATE_LIMITED", "Tài khoản tạm khóa do đăng nhập sai nhiều lần.", HttpStatus.TOO_MANY_REQUESTS, null);
@@ -51,11 +56,11 @@ public class AuthService {
         }
         attempts.remove(email.toLowerCase());
         user.setLastLoginAt(LocalDateTime.now());
-        return issuePair(user);
+        return issuePair(user, UUID.randomUUID().toString(), client);
     }
 
     @Transactional
-    public TokenPair refresh(String rawToken) {
+    public TokenPair refresh(String rawToken, Client client) {
         RefreshToken old = refreshTokens.findByTokenHash(hash(rawToken)).orElse(null);
         LocalDateTime now = LocalDateTime.now();
         if (old == null || old.getRevokedAt() != null || !old.getExpiresAt().isAfter(now))
@@ -63,7 +68,7 @@ public class AuthService {
         User user = users.findWithRolesById(old.getUser().getId()).orElseThrow(() -> unauthenticated("Tài khoản không khả dụng"));
         if (user.getStatus() != UserStatus.active) throw unauthenticated("Tài khoản không khả dụng");
         old.revoke();
-        return issuePair(user);
+        return issuePair(user, old.getSessionFamily(), client);
     }
 
     @Transactional
@@ -82,10 +87,13 @@ public class AuthService {
                 .orElseThrow(() -> new LmsException("NOT_FOUND", "Không tìm thấy người dùng", HttpStatus.NOT_FOUND, null));
     }
 
-    private TokenPair issuePair(User user) {
+    /** Token mới thuộc phiên `family` (đăng nhập: UUID mới; refresh: giữ family của token cũ). */
+    private TokenPair issuePair(User user, String family, Client client) {
         byte[] bytes = new byte[48]; random.nextBytes(bytes);
         String refresh = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
-        refreshTokens.save(new RefreshToken(user, hash(refresh), LocalDateTime.now().plusDays(refreshTtlDays)));
+        Client source = client == null ? Client.UNKNOWN : client;
+        refreshTokens.save(new RefreshToken(user, hash(refresh), LocalDateTime.now().plusDays(refreshTtlDays), family,
+                source.ip(), source.userAgent()));
         return new TokenPair(jwt.issueAccessToken(user), refresh, mapper.toSummary(user));
     }
     private void recordFailure(String email) {
