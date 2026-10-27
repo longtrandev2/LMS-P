@@ -13,8 +13,8 @@ import vn.lmsp.model.*;
 import vn.lmsp.repository.*;
 
 /**
- * Xuất bản bài: kiểm tra đầy đủ câu lập trình (§4), chặn theo kiểm tra đề (§7) rồi ghim phiên bản
- * — docs/assessment-spec.md, docs/api-spec.md §6.
+ * Xuất bản bài: sinh đề và tạo link câu bốc (exam-spec.md §3.6), kiểm tra đầy đủ câu lập trình (§4), chặn theo
+ * kiểm tra đề (§7) trên mọi link kể cả câu bốc, ghim phiên bản rồi lưu đề — docs/assessment-spec.md, docs/api-spec.md §6.
  */
 @Service
 @RequiredArgsConstructor
@@ -29,12 +29,15 @@ public class AssignmentPublishService {
     private final ProblemCheckGate checks;
     private final AssignmentReadService reader;
     private final AuditService audit;
+    private final PaperPublisher paperPublisher;
 
     @Transactional
     public AssignmentDetails publish(Long id, Long actorId, boolean admin, boolean confirmUnverified) {
         Assignment item = access.lecturerAssignment(id, actorId, admin, true);
         if (item.isPublished()) return reader.details(item);
-        List<AssignmentQuestion> rows = links.findAllByAssignment_IdOrderByPositionAscIdAsc(id);
+        List<AssignmentQuestion> rows = new ArrayList<>(links.findAllByAssignment_IdOrderByPositionAscIdAsc(id));
+        PaperPublisher.Prepared prepared = paperPublisher.prepare(item);
+        if (prepared != null) rows.addAll(prepared.drawn());
         if (rows.isEmpty()) throw bad("Thêm ít nhất một câu hỏi trước khi xuất bản");
         Map<AssignmentQuestion, QuestionVersion> pins = new LinkedHashMap<>();
         List<Long> failed = new ArrayList<>(), unverified = new ArrayList<>();
@@ -64,10 +67,11 @@ public class AssignmentPublishService {
                 "Câu lập trình chưa được kiểm tra đề; xác nhận để vẫn xuất bản", unverified);
         pins.forEach(AssignmentQuestion::pin);
         item.publish();
+        paperPublisher.persistPapers(item, prepared, rows);
         if (!unverified.isEmpty()) audit.record(actorId, "assignment.publish_unverified", "assignment", id, null,
                 Map.of("question_ids", unverified));
         audit.record(actorId, "assignment.publish", "assignment", id, Map.of("is_published", false),
-                Map.of("is_published", true, "question_count", rows.size()));
+                Map.of("is_published", true, "question_count", rows.size(), "paper_mode", item.getPaperMode().name()));
         return reader.details(item);
     }
 

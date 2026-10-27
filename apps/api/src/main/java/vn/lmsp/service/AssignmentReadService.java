@@ -2,7 +2,7 @@ package vn.lmsp.service;
 
 import java.util.ArrayList;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.lmsp.dto.AssignmentDtos.AssignmentDetails;
@@ -19,7 +19,6 @@ import vn.lmsp.repository.QuestionVersionRepository;
 
 @Service
 @Transactional(readOnly = true)
-@RequiredArgsConstructor
 public class AssignmentReadService {
     /** Một câu trong đề sinh viên đã thấy, kèm snapshot để chấm/xem lại. */
     public record PaperItem(AssignmentQuestion link, QuestionSnapshot snapshot, AssignmentQuestionView view) { }
@@ -29,23 +28,48 @@ public class AssignmentReadService {
     private final QuestionVersionService snapshots;
     private final AssignmentMapper mapper;
     private final QuestionPaperMapper papers;
+    /** null (dựng tay trong test cũ) = số liệu theo mọi link, không có cấu trúc đề. */
+    private final BlueprintViews blueprints;
 
-    public AssignmentSummary summary(Assignment assignment) {
-        return mapper.toSummary(assignment, links.findAllByAssignment_IdOrderByPositionAscIdAsc(assignment.getId()));
+    public AssignmentReadService(AssignmentQuestionRepository links, QuestionVersionRepository versions,
+                                 QuestionVersionService snapshots, AssignmentMapper mapper, QuestionPaperMapper papers) {
+        this(links, versions, snapshots, mapper, papers, null);
     }
 
-    /** Bản giảng viên: thứ tự gốc, có đáp án và mọi test. */
+    @Autowired
+    public AssignmentReadService(AssignmentQuestionRepository links, QuestionVersionRepository versions,
+                                 QuestionVersionService snapshots, AssignmentMapper mapper, QuestionPaperMapper papers,
+                                 BlueprintViews blueprints) {
+        this.links = links; this.versions = versions; this.snapshots = snapshots; this.mapper = mapper;
+        this.papers = papers; this.blueprints = blueprints;
+    }
+
+    /** `question_count`/`total_points` mô tả một đề — exam-spec.md §3.4, api-spec.md §7. */
+    public AssignmentSummary summary(Assignment assignment) {
+        if (blueprints == null)
+            return mapper.toSummary(assignment, links.findAllByAssignment_IdOrderByPositionAscIdAsc(assignment.getId()));
+        var metrics = blueprints.metrics(assignment);
+        return mapper.toSummary(assignment, metrics.questionCount(), metrics.totalPoints());
+    }
+
+    /** Bản giảng viên: thứ tự gốc, có đáp án và mọi test, kèm cấu trúc đề (phần, quy tắc + kho, vị trí câu cố định). */
     public AssignmentDetails details(Assignment assignment) {
         var questions = links.findAllByAssignment_IdOrderByPositionAscIdAsc(assignment.getId());
         var views = questions.stream().map(link -> {
             QuestionVersion version = version(link);
             return papers.lecturer(link, version.getId(), snapshots.read(version));
         }).toList();
-        return mapper.toDetails(mapper.toSummary(assignment, questions), views);
+        if (blueprints == null) return mapper.toDetails(mapper.toSummary(assignment, questions), views);
+        var blueprint = blueprints.views(assignment);
+        return mapper.toDetails(summary(assignment), views, blueprint.sections(), blueprint.drawRules(), blueprint.placements());
     }
 
-    /** Đề cho sinh viên, trộn theo seed (assignment, student, n) — docs/assessment-spec.md §6.1. */
+    /**
+     * Đề cho sinh viên, trộn theo seed (assignment, student, n) — docs/assessment-spec.md §6.1. Bài giao theo phiên chỉ
+     * trả metadata, `questions` rỗng: đề chỉ đọc qua phiên (BR9, exam-spec.md §5.3).
+     */
     public AssignmentDetails studentDetails(Assignment assignment, Long studentId, int n) {
+        if (assignment.isSessionBased()) return mapper.toDetails(summary(assignment), List.of());
         var questions = links.findAllByAssignment_IdOrderByPositionAscIdAsc(assignment.getId());
         var views = paper(assignment, questions, studentId, n).stream().map(PaperItem::view).toList();
         return mapper.toDetails(mapper.toSummary(assignment, questions), views);

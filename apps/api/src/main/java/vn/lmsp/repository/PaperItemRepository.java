@@ -7,5 +7,6 @@ import java.util.List;
 
 public interface PaperItemRepository extends JpaRepository<PaperItem, PaperItem.Key> {
     List<PaperItem> findAllByPaper_IdOrderByPositionAsc(Long paperId);
+    long countByPaper_Id(Long paperId);
     List<PaperItem> findAllByPaper_IdInOrderByPaper_IdAscPositionAsc(Collection<Long> paperIds);
 }
