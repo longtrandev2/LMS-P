@@ -30,18 +30,21 @@ export function FieldMessage({ id, error, hint }: { id: string; error?: string; 
   </p>;
 }
 
-/** Khung một nhóm trường trong form soạn câu. */
+/**
+ * Một section của trang soạn (DESIGN.md §4 Trang soạn): tiêu đề 16/600 + mô tả xám, không bọc khung —
+ * các section ngăn bằng `border-t` và khoảng trắng.
+ */
 export function EditorSection({ title, description, actions, children, field, className }: {
   title: string; description?: React.ReactNode; actions?: React.ReactNode; children: React.ReactNode; field?: string; className?: string;
 }) {
-  return <section data-field={field} className={cn("rounded-xl border bg-card", className)}>
-    <header className="flex flex-wrap items-start justify-between gap-3 border-b px-4 py-3 sm:px-5">
-      <div className="min-w-0 space-y-0.5">
-        <h2 className="text-sm font-semibold">{title}</h2>
-        {description ? <p className="text-xs leading-5 text-muted-foreground">{description}</p> : null}
+  return <section data-field={field} className={cn("scroll-mt-32 space-y-5 border-t pt-8 first:border-t-0 first:pt-0", className)}>
+    <header className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+      <div className="min-w-0 space-y-1">
+        <h2 className="text-base font-semibold tracking-tight">{title}</h2>
+        {description ? <p className="max-w-2xl text-sm leading-5 text-muted-foreground">{description}</p> : null}
       </div>
       {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
     </header>
-    <div className="space-y-4 p-4 sm:p-5">{children}</div>
+    <div className="space-y-4">{children}</div>
   </section>;
 }

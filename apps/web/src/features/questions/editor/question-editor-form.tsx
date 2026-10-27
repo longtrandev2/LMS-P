@@ -20,7 +20,7 @@ import { useQuestionForm } from "./use-question-form";
 export const bankHref = (bankId: number, categoryId?: number | null) =>
   `/questions?bank=${bankId}${categoryId != null ? `&category=${categoryId}` : ""}`;
 
-/** Trang soạn câu: form theo loại bên trái, xem trước như sinh viên bên phải (§8). */
+/** Trang soạn câu: header dính, form theo section bên trái, panel xem trước dính bên phải (§8). */
 export function QuestionEditorForm({ question, bank, categories, categoriesLoading, initialType, initialCategory }: {
   question: Question | null; bank: QuestionBank; categories: QuestionCategory[]; categoriesLoading: boolean;
   initialType: QuestionType; initialCategory: number | null;
@@ -62,27 +62,23 @@ export function QuestionEditorForm({ question, bank, categories, categoriesLoadi
   const backHref = bankHref(bank.id, question?.category_id ?? initialCategory);
 
   return <EditorContext.Provider value={api}>
-    <div className="space-y-6">
-      <EditorHeader backHref={backHref} bankName={bank.name} title={question ? `Sửa câu hỏi #${question.id}` : "Câu hỏi mới"}
-        version={version} dirty={form.dirty} saving={form.saving} onSave={() => void save()} />
-      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(340px,420px)]">
-        <form noValidate className="min-w-0 space-y-5" onSubmit={(event) => event.preventDefault()}>
-          <QuestionTypePicker value={form.draft.type} locked={!!question} onChange={form.changeType} />
-          <EditorSection title="Nội dung" field="content">
-            <MetaFields categories={categories} categoriesLoading={categoriesLoading} />
-            <ContentField />
-            <div data-field="explanation">
-              <MarkdownField id="question-explanation" label="Giải thích đáp án" optional value={form.draft.explanation}
-                onChange={(explanation) => form.patch({ explanation })} error={form.errors.explanation} maxLength={LIMITS.explanation} minHeight="min-h-24"
-                hint="Chỉ hiện cho sinh viên khi chính sách xem lại cho phép." placeholder="Vì sao đáp án này đúng…" />
-            </div>
-          </EditorSection>
-          <TypeAnswerEditor suggestVerify={justSaved} />
-        </form>
-        <aside className="min-w-0 xl:sticky xl:top-36 xl:max-h-[calc(100dvh-10rem)] xl:overflow-y-auto">
-          <QuestionPreview draft={form.draft} />
-        </aside>
-      </div>
+    <EditorHeader backHref={backHref} bankName={bank.name} title={question ? `Câu hỏi #${question.id}` : "Câu hỏi mới"} type={form.draft.type}
+      version={version} dirty={form.dirty} saving={form.saving} onSave={() => void save()} />
+    <div className="grid items-start gap-10 xl:grid-cols-[minmax(0,1fr)_minmax(360px,420px)] 2xl:gap-14">
+      <form noValidate className="min-w-0 space-y-8 pb-16" onSubmit={(event) => event.preventDefault()}>
+        {question ? null : <QuestionTypePicker value={form.draft.type} onChange={form.changeType} />}
+        <MetaFields categories={categories} categoriesLoading={categoriesLoading} />
+        <ContentField />
+        <TypeAnswerEditor suggestVerify={justSaved} />
+        <EditorSection field="explanation" title="Giải thích đáp án" description="Tùy chọn. Chỉ hiện cho sinh viên khi chính sách xem lại của bài cho phép.">
+          <MarkdownField id="question-explanation" label="Giải thích đáp án" hideLabel value={form.draft.explanation}
+            onChange={(explanation) => form.patch({ explanation })} error={form.errors.explanation} maxLength={LIMITS.explanation}
+            minHeight="min-h-24" placeholder="Vì sao đáp án này đúng…" />
+        </EditorSection>
+      </form>
+      <aside className="min-w-0 xl:sticky xl:top-28 xl:max-h-[calc(100dvh-8.5rem)] xl:overflow-y-auto">
+        <QuestionPreview draft={form.draft} />
+      </aside>
     </div>
     <AlertDialog open={leave.pendingHref != null} onOpenChange={(open) => !open && leave.cancel()}>
       <AlertDialogContent>

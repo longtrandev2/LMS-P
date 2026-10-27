@@ -20,9 +20,9 @@ export function QuestionCsvPreviewTable({ preview, rows, importErrors }: {
         <Checkbox id="csv-only-errors" checked={onlyErrors} onCheckedChange={(checked) => setOnlyErrors(checked === true)} /> Chỉ dòng lỗi
       </label>
     </div>
-    <div className="max-h-72 overflow-y-auto rounded-lg border">
+    <div className="max-h-72 overflow-y-auto border-t">
       <Table>
-        <TableHeader className="sticky top-0 bg-card"><TableRow>
+        <TableHeader className="sticky top-0 bg-popover"><TableRow>
           <TableHead className="w-14">Dòng</TableHead><TableHead className="w-28">Loại</TableHead><TableHead>Nội dung</TableHead>
           <TableHead className="w-32">Đáp án</TableHead><TableHead className="w-40">Trạng thái</TableHead>
         </TableRow></TableHeader>

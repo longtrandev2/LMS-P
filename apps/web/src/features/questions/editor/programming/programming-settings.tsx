@@ -27,7 +27,7 @@ export function ProgrammingSettings() {
     <fieldset className="space-y-2">
       <legend className="mb-2 text-sm font-medium">Ngôn ngữ cho phép</legend>
       <div className="grid gap-2 sm:grid-cols-2">
-        {LANGUAGES.map((lang) => <label key={lang.id} htmlFor={`lang-${lang.id}`} className="flex cursor-pointer items-center gap-2.5 rounded-lg border px-3 py-2.5 text-sm transition-colors duration-150 hover:bg-muted/40 has-[[data-state=checked]]:border-foreground/40">
+        {LANGUAGES.map((lang) => <label key={lang.id} htmlFor={`lang-${lang.id}`} className="flex h-10 cursor-pointer items-center gap-3 rounded-lg bg-secondary px-3 text-sm transition-colors duration-150 hover:bg-accent">
           <Checkbox id={`lang-${lang.id}`} checked={p.allowed_languages.includes(lang.id)} onCheckedChange={(checked) => toggleLanguage(lang.id, checked === true)} />
           <span className="font-medium">{lang.short}</span>
           <span className="ml-auto truncate text-xs text-muted-foreground">{lang.label}</span>
@@ -35,7 +35,7 @@ export function ProgrammingSettings() {
       </div>
       <FieldMessage id="languages-message" error={errors.languages} />
     </fieldset>
-    <div className="grid gap-4 sm:grid-cols-2">
+    <div className="grid gap-x-6 gap-y-5 sm:grid-cols-2">
       <div className="space-y-2" data-field="time_limit">
         <Label htmlFor="time-limit">Giới hạn thời gian (ms)</Label>
         <Input id="time-limit" inputMode="numeric" value={p.time_limit_ms} aria-invalid={!!errors.time_limit} aria-describedby="time-limit-message"
@@ -46,7 +46,7 @@ export function ProgrammingSettings() {
         <Label htmlFor="memory-limit">Giới hạn bộ nhớ</Label>
         <Select value={String(p.memory_limit_mb)} onValueChange={(value) => set({ memory_limit_mb: Number(value) })}>
           <SelectTrigger id="memory-limit" className="w-full"><SelectValue /></SelectTrigger>
-          <SelectContent position="popper">
+          <SelectContent>
             {[...new Set([...MEMORY_CHOICES, p.memory_limit_mb])].sort((a, b) => a - b)
               .map((mb) => <SelectItem key={mb} value={String(mb)}>{mb} MB</SelectItem>)}
           </SelectContent>
@@ -56,7 +56,7 @@ export function ProgrammingSettings() {
         <Label htmlFor="checker-mode">Cách so output</Label>
         <Select value={p.checker_mode} onValueChange={(value) => set({ checker_mode: value as CheckerMode })}>
           <SelectTrigger id="checker-mode" className="w-full" aria-describedby="checker-mode-message"><SelectValue /></SelectTrigger>
-          <SelectContent position="popper">
+          <SelectContent>
             {CHECKERS.map((item) => <SelectItem key={item.id} value={item.id}>{item.label}</SelectItem>)}
           </SelectContent>
         </Select>

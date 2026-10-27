@@ -17,11 +17,13 @@ const toId = (value: string | null | undefined) => {
 };
 
 function EditorSkeleton() {
-  return <div className="space-y-6" aria-busy="true" aria-label="Đang tải">
-    <Skeleton className="h-14 w-72" />
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
-      <div className="space-y-4"><Skeleton className="h-40 rounded-xl" /><Skeleton className="h-72 rounded-xl" /></div>
-      <Skeleton className="h-96 rounded-xl" />
+  return <div aria-busy="true" aria-label="Đang tải">
+    <div className="-mx-4 -mt-6 mb-8 flex h-14 items-center gap-3 border-b px-4 sm:-mx-8 sm:-mt-8 sm:px-8">
+      <Skeleton className="size-7" /><Skeleton className="h-4 w-40" /><Skeleton className="ml-auto h-8 w-28" />
+    </div>
+    <div className="grid gap-10 xl:grid-cols-[minmax(0,1fr)_minmax(360px,420px)]">
+      <div className="space-y-4"><Skeleton className="h-4 w-32" /><Skeleton className="h-8 w-full" /><Skeleton className="h-40 w-full" /></div>
+      <Skeleton className="h-80 rounded-xl" />
     </div>
   </div>;
 }

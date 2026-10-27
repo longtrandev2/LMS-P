@@ -34,14 +34,14 @@ export function FillBlankEditor() {
     return { ...d, blanks };
   });
   return <EditorSection field="blanks" title="Đáp án các ô"
-    description="Dùng nút “Chèn ô” ở phần nội dung để thêm ô [[n]] tại vị trí con trỏ. Danh sách dưới đây tự cập nhật theo nội dung."
+    description="Mỗi ô [[n]] trong nội dung có một danh sách đáp án chấp nhận. Danh sách tự cập nhật theo nội dung."
     actions={errors.blanks && count ? <Button type="button" size="sm" variant="outline" onClick={() => update(renumberBlanks)}>
       <ListOrdered aria-hidden /> Đánh số lại</Button> : null}>
-    {count === 0 ? <p className="rounded-lg border border-dashed px-4 py-6 text-center text-sm text-muted-foreground">
-      Nội dung chưa có ô nào. Đặt con trỏ vào chỗ cần điền rồi bấm “Chèn ô”.</p> : <ol className="space-y-4">
+    {count === 0 ? <p className="rounded-lg bg-secondary/60 px-4 py-6 text-center text-sm text-muted-foreground">
+      Nội dung chưa có ô nào. Đặt con trỏ vào chỗ cần điền rồi bấm “Chèn ô”.</p> : <ol className="space-y-5">
       {Array.from({ length: count }, (_, index) => {
         const blank = draft.blanks[index];
-        return <li key={index} data-field={`blanks.${index}`} className="rounded-lg border p-3">
+        return <li key={index} data-field={`blanks.${index}`}>
           <AcceptedAnswersInput id={`blank-${index + 1}`} label={`Ô [[${index + 1}]]`} values={blank?.accepted ?? []}
             caseSensitive={blank?.case_sensitive ?? false} error={errors[`blanks.${index}`]}
             onChange={(accepted) => setBlank(index, { accepted })}
