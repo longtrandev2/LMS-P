@@ -1,5 +1,6 @@
 import { ALL_LANGUAGES } from "@/lib/languages";
 import { PARTIAL_SCORING_TYPES } from "@/lib/question-types";
+import { FALLBACK_RULES, type ProgrammingRules } from "./programming/programming-rules";
 import type { CheckerMode, ProgrammingLanguage, Question, QuestionDifficulty, QuestionType, ScoringMode } from "@/types/api";
 
 /** Trạng thái form soạn câu hỏi — mọi danh sách có `key` cục bộ để React giữ ổn định khi thêm/xóa/đổi chỗ. */
@@ -41,7 +42,6 @@ export interface QuestionDraft {
 let counter = 0;
 export const newKey = () => `k${++counter}`;
 
-export const MEMORY_CHOICES = [64, 128, 256, 512, 1024];
 export const OPTION_LETTERS = "ABCDEFGH";
 
 export function defaultScoringMode(type: QuestionType): ScoringMode {
@@ -55,7 +55,8 @@ export const emptyBlank = (): BlankDraft => ({ key: newKey(), accepted: [], case
 export const emptyTest = (patch: Partial<TestDraft> = {}): TestDraft =>
   ({ key: newKey(), input: "", expected_output: "", is_public: false, ...patch });
 
-export function emptyDraft(type: QuestionType, categoryId: number | null): QuestionDraft {
+/** Câu mới: ngôn ngữ và giới hạn điền sẵn theo cấu hình hệ thống (`rules`). */
+export function emptyDraft(type: QuestionType, categoryId: number | null, rules: ProgrammingRules = FALLBACK_RULES): QuestionDraft {
   return {
     type, category_id: categoryId, difficulty: "medium", content: "", explanation: "",
     scoring_mode: defaultScoringMode(type),
@@ -63,7 +64,8 @@ export function emptyDraft(type: QuestionType, categoryId: number | null): Quest
     true_false: null, accepted: [], case_sensitive: false, numeric: { value: "", tolerance: "0" },
     blanks: [], pairs: [emptyPair(), emptyPair()], distractors: [], items: [emptyItem(), emptyItem(), emptyItem()],
     programming: {
-      allowed_languages: [...ALL_LANGUAGES], time_limit_ms: "1000", memory_limit_mb: 256, checker_mode: "token",
+      allowed_languages: [...rules.allowedLanguages], time_limit_ms: String(rules.defaultTimeMs), memory_limit_mb: rules.defaultMemoryMb,
+      checker_mode: "token",
       checker_epsilon: "1e-6", starter_codes: {}, solution_code: "", solution_language: null,
     },
     tests: [],

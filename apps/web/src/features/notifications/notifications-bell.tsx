@@ -1,40 +1,14 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Bell, BellOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/stores/auth";
+import { notificationHref } from "./notification-meta";
+import { NotificationRow } from "./notification-row";
 import { useNotifications } from "./use-notifications";
-import { formatRelativeTime } from "./relative-time";
 import type { NotificationItem } from "./types";
-
-function NotificationRow({ notification, onRead }: { notification: NotificationItem; onRead: (id: number) => void }) {
-  const unread = !notification.is_read;
-  return (
-    <li>
-      <button
-        type="button"
-        onClick={() => unread && onRead(notification.id)}
-        aria-label={unread ? `Đánh dấu đã đọc: ${notification.title}` : notification.title}
-        className="flex w-full items-start gap-2.5 rounded-md px-2 py-2 text-left transition-colors outline-none hover:bg-secondary focus-visible:bg-secondary"
-      >
-        <span aria-hidden className={cn("mt-[7px] size-1.5 shrink-0 rounded-full", unread ? "bg-info" : "bg-transparent")} />
-        <span className="min-w-0 flex-1">
-          <span className="flex items-baseline gap-3">
-            <span className={cn("min-w-0 flex-1 truncate text-sm", unread ? "font-medium" : "text-muted-foreground")}>
-              {notification.title}
-            </span>
-            <time dateTime={notification.created_at} className="shrink-0 text-xs text-muted-foreground tabular-nums">
-              {formatRelativeTime(notification.created_at)}
-            </time>
-          </span>
-          {notification.body ? (
-            <span className="mt-0.5 line-clamp-2 block text-xs text-muted-foreground">{notification.body}</span>
-          ) : null}
-        </span>
-      </button>
-    </li>
-  );
-}
 
 function Message({ children }: { children: React.ReactNode }) {
   return (
@@ -48,9 +22,17 @@ function Message({ children }: { children: React.ReactNode }) {
 /** Chuông thông báo ở topbar — số chưa đọc + popover danh sách hàng gọn. */
 export function NotificationsBell() {
   const { list, items, unreadCount, markRead, markAllRead } = useNotifications();
+  const user = useAuthStore((state) => state.user);
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+
+  function openItem(notification: NotificationItem, href: string | null) {
+    if (!notification.is_read) markRead.mutate(notification.id);
+    if (href) { setOpen(false); navigate(href); }
+  }
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button variant="ghost" size="icon-sm" aria-label={unreadCount > 0 ? `Thông báo, ${unreadCount} chưa đọc` : "Thông báo"} className="relative">
           <Bell aria-hidden />
@@ -90,7 +72,8 @@ export function NotificationsBell() {
           ) : (
             <ul>
               {items.map((notification) => (
-                <NotificationRow key={notification.id} notification={notification} onRead={(id) => markRead.mutate(id)} />
+                <NotificationRow key={notification.id} notification={notification}
+                  href={notificationHref(notification, user)} onOpen={openItem} />
               ))}
             </ul>
           )}

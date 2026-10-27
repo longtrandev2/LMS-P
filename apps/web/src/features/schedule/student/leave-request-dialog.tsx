@@ -9,7 +9,8 @@ import { ApiError } from "@/lib/api";
 import { errorText } from "@/lib/error-messages";
 import { periodRange } from "@/lib/schedule";
 import type { ClassSession, ClassSummary } from "@/types/api";
-import { EvidencePicker, validateEvidence } from "./evidence-picker";
+import { usePublicSettings } from "@/lib/use-public-settings";
+import { EVIDENCE_DEFAULT_MAX_MB, EvidencePicker, validateEvidence } from "./evidence-picker";
 import { periodLabel, shortDate, weekdayOf } from "./schedule-format";
 import { useCreateLeaveRequest } from "./use-student-schedule";
 
@@ -31,6 +32,7 @@ export function LeaveRequestDialog({ classId, clazz, session, onOpenChange }: {
   onOpenChange: (open: boolean) => void;
 }) {
   const create = useCreateLeaveRequest(classId);
+  const maxMb = usePublicSettings().data?.leave_evidence_max_mb ?? EVIDENCE_DEFAULT_MAX_MB;
   const [reason, setReason] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [touched, setTouched] = useState(false);
@@ -41,7 +43,7 @@ export function LeaveRequestDialog({ classId, clazz, session, onOpenChange }: {
   function pick(next: File | null) {
     setServerError(null);
     if (next) {
-      const problem = validateEvidence(next);
+      const problem = validateEvidence(next, maxMb);
       setFileError(problem);
       setFile(problem ? null : next);
     } else { setFile(null); setFileError(null); }
@@ -52,6 +54,8 @@ export function LeaveRequestDialog({ classId, clazz, session, onOpenChange }: {
     setTouched(true);
     if (!reason.trim()) return;
     if (!file) { setFileError("Vui lòng chọn tệp minh chứng."); return; }
+    const problem = validateEvidence(file, maxMb);
+    if (problem) { setFileError(problem); return; }
     setServerError(null);
     try {
       await create.mutateAsync({ sessionId: session.id, reason: reason.trim(), evidence: file });
@@ -96,7 +100,7 @@ export function LeaveRequestDialog({ classId, clazz, session, onOpenChange }: {
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="leave-evidence">Minh chứng <span className="text-destructive" aria-hidden>*</span></Label>
-            <EvidencePicker id="leave-evidence" file={file} error={fileError} onChange={pick} disabled={create.isPending} />
+            <EvidencePicker id="leave-evidence" file={file} error={fileError} onChange={pick} disabled={create.isPending} maxMb={maxMb} />
           </div>
           {serverError ? <p role="alert" className="rounded-md bg-destructive/8 px-3 py-2 text-sm text-destructive">{serverError}</p> : null}
           <p className="text-[13px] text-destructive">Sau khi gửi đơn, vui lòng chờ phê duyệt trước khi nghỉ học.</p>

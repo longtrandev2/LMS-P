@@ -58,7 +58,7 @@ function AuditRow({ log }: { log: AuditLog }) {
       </span>
       <span className="col-start-2 row-start-2 min-w-0 truncate text-xs text-muted-foreground md:col-start-auto md:row-start-auto md:text-sm">
         <span className="text-foreground/80" title={name ? entityLabel(log.entity_type) : undefined}>{name ?? entityLabel(log.entity_type)}</span>
-        <span className="ml-1.5 font-mono text-xs">#{log.entity_id}</span>
+        {log.entity_id ? <span className="ml-1.5 font-mono text-xs">#{log.entity_id}</span> : null}
       </span>
       <span className="col-start-3 row-span-2 row-start-1 flex min-w-16 justify-end md:col-start-auto md:row-span-1 md:row-start-auto">
         <AuditChangePopover log={log} />
