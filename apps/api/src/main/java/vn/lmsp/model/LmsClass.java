@@ -38,6 +38,8 @@ public class LmsClass {
     @PrePersist void createTimestamp() { createdAt = LocalDateTime.now(); }
     public Long getCourseId() { return course.getId(); }
     public Long getLecturerId() { return lecturer.getId(); }
+    /** Chính sách sổ điểm — docs/database-design.md §2.2; NULL = mặc định. */
+    public void setGradePolicy(JsonNode policy) { this.gradePolicy = policy; }
     public void update(String code, String name, String semester, User lecturer, JsonNode policy,
                        Integer maxStudents, LocalDateTime enrollFrom, LocalDateTime enrollUntil,
                        String room, String schedule, ClassStatus status) {
