@@ -5,17 +5,17 @@ export interface Crumb { label: string; href?: string }
 
 type Params = Record<string, string | undefined>;
 /** Tên thật lấy từ cache dữ liệu (rỗng khi chưa tải xong → dùng nhãn chung). */
-export interface CrumbNames { className?: string; assignmentTitle?: string }
+export interface CrumbNames { className?: string; assignmentTitle?: string; isExam?: boolean }
 interface Ctx { isAdmin: boolean; names: CrumbNames }
 interface RouteCrumbs { pattern: string; build: (p: Params, ctx: Ctx) => Crumb[] }
 
 const teachRoot = ({ isAdmin }: Ctx): Crumb =>
   isAdmin ? { label: "Học phần & lớp", href: "/admin/academics" } : { label: "Lớp phụ trách", href: "/courses" };
 const teachClass = (id: string | undefined, ctx: Ctx): Crumb =>
-  ({ label: ctx.names.className ?? "Lớp học", href: `/classes/${id}?tab=assignments` });
+  ({ label: ctx.names.className ?? "Lớp học", href: `/classes/${id}?tab=${ctx.names.isExam ? "exams" : "assignments"}` });
 const myClasses: Crumb = { label: "Lớp của tôi", href: "/me/classes" };
 const myClass = (id: string | undefined, ctx: Ctx): Crumb =>
-  ({ label: ctx.names.className ?? "Lớp học", href: `/me/classes/${id}?tab=assignments` });
+  ({ label: ctx.names.className ?? "Lớp học", href: `/me/classes/${id}?tab=${ctx.names.isExam ? "exams" : "assignments"}` });
 const myAssignment = (p: Params, ctx: Ctx): Crumb =>
   ({ label: ctx.names.assignmentTitle ?? "Bài tập", href: `/me/classes/${p.classId}/assignments/${p.assignmentId}` });
 const assignmentLabel = (ctx: Ctx, fallback: string) => ctx.names.assignmentTitle ?? fallback;
