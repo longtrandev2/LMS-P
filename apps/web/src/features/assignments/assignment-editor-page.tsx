@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -7,7 +7,10 @@ import { useAuthGuard } from "@/hooks/use-auth-guard";
 import { api } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
 import { AssignmentEditorForm } from "@/features/assignments/lecturer/assignment-editor-form";
-import type { AssignmentDetails, ClassSummary } from "@/types/api";
+import { isExamCategory } from "@/features/exams/shared/exam-labels";
+import type { AssignmentCategory, AssignmentDetails, ClassSummary } from "@/types/api";
+
+const CATEGORIES: AssignmentCategory[] = ["assignment", "quiz", "midterm", "final"];
 
 function EditorSkeleton() {
   return <div aria-busy="true" aria-label="Đang tải" className="mx-auto max-w-6xl space-y-8">
@@ -24,6 +27,9 @@ function EditorSkeleton() {
 /** `/classes/:classId/assignments/new` và `…/:assignmentId/edit` — soạn đề (docs/assessment-spec.md §8). */
 export function AssignmentEditorPage() {
   const { classId = "", assignmentId } = useParams();
+  const [search] = useSearchParams();
+  const requested = search.get("category") as AssignmentCategory | null;
+  const initialCategory = requested && CATEGORIES.includes(requested) ? requested : undefined;
   const { status } = useAuthGuard(["lecturer"]);
   const id = assignmentId ? Number(assignmentId) : null;
   const clazz = useQuery({
@@ -42,10 +48,10 @@ export function AssignmentEditorPage() {
   if (id != null && details.isPending) return <EditorSkeleton />;
 
   const assignment = details.data?.assignment;
-  const fallback = id == null ? "Bài tập / quiz mới" : assignment?.is_published ? "Điều chỉnh bài đã xuất bản" : "Sửa bản nháp";
+  const fallback = id == null ? initialCategory && isExamCategory(initialCategory) ? "Kỳ thi mới" : "Bài tập / quiz mới" : assignment?.is_published ? "Điều chỉnh bài đã xuất bản" : "Sửa bản nháp";
   const classLabel = clazz.data ? `${clazz.data.code} · ${clazz.data.name}` : "Lớp học";
   const badges = assignment ? <Badge variant={assignment.is_published ? "success" : "default"}>{assignment.is_published ? "Đã xuất bản" : "Nháp"}</Badge>
     : <Badge>Bài mới</Badge>;
   return <AssignmentEditorForm key={id ?? "new"} classId={Number(classId)} details={details.data ?? null}
-    title={assignment?.title || fallback} classLabel={classLabel} badges={badges} />;
+    title={assignment?.title || fallback} classLabel={classLabel} badges={badges} initialCategory={initialCategory} />;
 }

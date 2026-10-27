@@ -9,7 +9,7 @@ import { formatPoints } from "./labels";
 import { QuestionPickerSheet } from "./question-picker-sheet";
 import { QuestionPreviewDialog } from "./question-preview-dialog";
 import { SelectedQuestionRow } from "./selected-question-row";
-import { splitEvenly, totalPoints, type EditorForm, type FieldErrors, type SelectedQuestion } from "./editor-model";
+import { flattenToLegacy, splitEvenly, totalPoints, type EditorForm, type FieldErrors, type SelectedQuestion } from "./editor-model";
 import type { QuestionSummary } from "@/types/api";
 
 const DEFAULT_POINTS = "1";
@@ -30,6 +30,7 @@ export function EditorQuestionsSection({ classId, form, patch, errors, locked }:
   function add(items: QuestionSummary[]) {
     const fresh = items.filter((item) => !existing.has(item.id)).map((item) => ({
       question_id: item.id, type: item.type, content: item.content, difficulty: item.difficulty, bank_name: item.bank_name, points: DEFAULT_POINTS,
+      sectionKey: form.sections[0].key, variant: null,
     }));
     setQuestions([...questions, ...fresh]);
   }
@@ -76,6 +77,10 @@ export function EditorQuestionsSection({ classId, form, patch, errors, locked }:
       </ol>
     </div>}
     {errors.questions ? <p role="alert" className="text-sm text-destructive">{errors.questions}</p> : null}
+    {!locked && (form.rules.length > 0 || form.sections.length > 1) ? <div className="flex flex-wrap items-center gap-3 rounded-lg bg-warning/8 px-4 py-3 text-sm">
+      <span className="min-w-0 flex-1">Đề đang có {form.sections.length} phần và {form.rules.length} quy tắc ngẫu nhiên — bài tập thường không dùng được.</span>
+      <Button type="button" size="sm" variant="secondary" onClick={() => patch(flattenToLegacy(form))}>Gộp một phần, bỏ quy tắc</Button>
+    </div> : null}
 
     <QuestionPickerSheet open={pickerOpen} onOpenChange={setPickerOpen} classId={classId} quiz={quiz} existing={existing} onAdd={add} />
     <DrawDialog open={drawOpen} onOpenChange={setDrawOpen} classId={classId} quiz={quiz} existing={existing} onAdd={add} />
