@@ -51,7 +51,7 @@ export function AdminAcademicsPage() {
 
   const deletionLabel = deletingClass ? `lớp ${deletingClass.code}` : `học phần ${deletingCourse?.code}`;
   return <div className="space-y-8">
-    <PageHeader title="Học phần & lớp" description="Tạo học phần, mở lớp theo học kỳ và phân công giảng viên. Sinh viên được thêm trong trang của từng lớp."
+    <PageHeader title="Học phần & lớp" description="Tạo học phần, mở lớp theo học kỳ và phân công giảng viên phụ trách."
       actions={<Button onClick={() => { setEditingCourse(null); setCourseFormOpen(true); }}><Plus aria-hidden /> Tạo học phần</Button>} />
     <AdminCourseSection onCreate={() => { setEditingCourse(null); setCourseFormOpen(true); }}
       onOpenClass={(course) => { setClassCourseId(course.id); setEditingClass(null); }}

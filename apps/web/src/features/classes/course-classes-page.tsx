@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, School } from "lucide-react";
+import { Hash, Plus, School } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,7 +20,9 @@ import { PageHeader } from "@/components/page-header";
 import { EmptyState, ErrorState, TableSkeleton } from "@/components/state-blocks";
 import { ClassFormDialog } from "@/features/classes/class-form-dialog";
 import { CourseClassesTable } from "@/features/classes/course-classes-table";
+import { MetaRow } from "@/features/classes/meta-row";
 import { ClassSearchField } from "@/features/classes/class-search-field";
+import { FLUSH_TOOLBAR } from "@/features/classes/list-styles";
 import { api } from "@/lib/api";
 import { errorText } from "@/lib/error-messages";
 import { queryKeys } from "@/lib/query-keys";
@@ -75,18 +77,20 @@ export function CourseClassesPage({ courseId }: { courseId: string }) {
 
   return (
     <div className="space-y-6">
-
       <PageHeader
         title={course ? course.name : "Học phần"}
-        meta={course ? <span className="font-mono">{course.code}</span> : null}
-        description={course ? (isAdmin ? "Các lớp của học phần theo từng học kỳ." : "Các lớp của học phần được phân công cho bạn.") : "Đang tải thông tin học phần…"}
+        meta={course ? <MetaRow items={[
+          { key: "code", icon: Hash, label: "Mã học phần", content: <span className="font-mono">{course.code}</span> },
+          { key: "count", icon: School, label: "Số lớp", content: `${classesQuery.data?.total ?? "—"} lớp` },
+        ]} /> : null}
+        description={course ? course.description || (isAdmin ? "Các lớp của học phần theo từng học kỳ." : "Các lớp của học phần được phân công cho bạn.") : "Đang tải thông tin học phần…"}
         actions={isAdmin ? <Button onClick={() => { setEditingClass(null); setFormOpen(true); }}>
             <Plus aria-hidden /> Tạo lớp học phần
           </Button> : undefined}
       />
 
-      <section className="overflow-hidden rounded-xl border bg-card">
-        <ListToolbar search={<ClassSearchField value={search} onChange={setSearch} />}>
+      <section aria-label="Lớp học phần" className="space-y-3">
+        <ListToolbar className={FLUSH_TOOLBAR} search={<ClassSearchField value={search} onChange={setSearch} />}>
           <SortSelect value={sort} onChange={(value) => { setSort(value); setPage(1); }} options={[{ value: "code", label: "Theo mã lớp" }, { value: "name", label: "Theo tên" }, { value: "created_at", label: "Theo ngày tạo" }]} />
         </ListToolbar>
         <div>
@@ -113,7 +117,7 @@ export function CourseClassesPage({ courseId }: { courseId: string }) {
                 onEdit={(clazz) => { setEditingClass(clazz); setFormOpen(true); }}
                 onDelete={setDeletingClass}
               />
-              {classesQuery.data ? <DataTablePagination page={classesQuery.data.page} limit={classesQuery.data.limit} total={classesQuery.data.total} onPageChange={setPage} /> : null}
+              {classesQuery.data && classesQuery.data.total > classesQuery.data.limit ? <DataTablePagination page={classesQuery.data.page} limit={classesQuery.data.limit} total={classesQuery.data.total} onPageChange={setPage} className="border-t-0 px-0" /> : null}
             </>
           ) : null}
         </div>

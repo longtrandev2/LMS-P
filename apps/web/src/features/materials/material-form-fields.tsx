@@ -36,42 +36,32 @@ export function MaterialFormFields({
 }: MaterialFormFieldsProps) {
   return (
     <>
-      <div className="space-y-2">
-        <Label htmlFor="material-title">Tiêu đề</Label>
-        <Input
-          id="material-title"
-          value={title}
-          onChange={(e) => onTitle(e.target.value)}
-          placeholder="Ví dụ: Slide chương 3 — Socket"
-          aria-invalid={!!errors.title}
-        />
-        {errors.title ? <FieldError text={errors.title} /> : null}
+      <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_9.5rem]">
+        <div className="space-y-2">
+          <Label htmlFor="material-title">Tiêu đề</Label>
+          <Input id="material-title" value={title} onChange={(e) => onTitle(e.target.value)}
+            placeholder="Ví dụ: Slide chương 3 — Socket" aria-invalid={!!errors.title} />
+          {errors.title ? <FieldError text={errors.title} /> : null}
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="material-type">Phân loại</Label>
+          <Select value={type || defaultType || ""} onValueChange={(v) => onType(v as MaterialType)}>
+            <SelectTrigger id="material-type" className="w-full" aria-invalid={!!errors.type}>
+              <SelectValue placeholder="Chọn" />
+            </SelectTrigger>
+            <SelectContent>
+              {MATERIAL_TYPE_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {errors.type ? <FieldError text={errors.type} /> : null}
+        </div>
       </div>
       <div className="space-y-2">
-        <Label htmlFor="material-description">Mô tả (tùy chọn)</Label>
-        <Textarea
-          id="material-description"
-          value={description}
-          onChange={(e) => onDescription(e.target.value)}
-          rows={3}
-          placeholder="Ghi chú ngắn về nội dung học liệu"
-        />
-      </div>
-      <div className="space-y-2">
-        <Label>Phân loại</Label>
-        <Select value={type || defaultType || ""} onValueChange={(v) => onType(v as MaterialType)}>
-          <SelectTrigger className="w-full" aria-label="Phân loại học liệu">
-            <SelectValue placeholder="Chọn phân loại" />
-          </SelectTrigger>
-          <SelectContent>
-            {MATERIAL_TYPE_OPTIONS.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {errors.type ? <FieldError text={errors.type} /> : null}
+        <Label htmlFor="material-description">Mô tả <span className="font-normal text-muted-foreground">(tùy chọn)</span></Label>
+        <Textarea id="material-description" value={description} onChange={(e) => onDescription(e.target.value)}
+          rows={2} placeholder="Ghi chú ngắn về nội dung học liệu" />
       </div>
     </>
   );

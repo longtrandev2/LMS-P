@@ -10,6 +10,7 @@ import { ListToolbar, SearchField } from "@/components/list-toolbar";
 import { DataTablePagination } from "@/components/data-table-pagination";
 import { SortSelect } from "@/components/sort-select";
 import { EmptyState, ErrorState, TableSkeleton } from "@/components/state-blocks";
+import { FLUSH_TABLE, FLUSH_TOOLBAR } from "@/features/classes/list-styles";
 import { api } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
 import type { Course, Paginated } from "@/types/api";
@@ -44,15 +45,15 @@ export function AdminCourseSection({ onCreate, onOpenClass, onEdit, onDelete }: 
         </h2>
         <p className="text-sm text-muted-foreground">Tạo môn học trước, sau đó mở các lớp học phần theo học kỳ.</p>
       </div>
-      <div className="overflow-hidden rounded-xl border bg-card">
-        <ListToolbar search={<SearchField value={search} onChange={setSearch} placeholder="Tìm mã hoặc tên học phần" />}>
+      <div className="space-y-3">
+        <ListToolbar className={FLUSH_TOOLBAR} search={<SearchField value={search} onChange={setSearch} placeholder="Tìm mã hoặc tên học phần" />}>
           <SortSelect value={sort} onChange={(value) => { setSort(value); setPage(1); }} options={SORTS} />
         </ListToolbar>
         {query.isPending ? <TableSkeleton cols={4} rows={4} /> : query.isError ? <ErrorState error={query.error} onRetry={() => query.refetch()} />
           : query.data?.items.length === 0 ? <EmptyState compact icon={BookOpen} title={search ? "Không tìm thấy học phần" : "Chưa có học phần"}
               description={search ? "Thử mã hoặc tên khác." : "Tạo học phần để bắt đầu mở lớp."}
               action={!search ? <Button size="sm" onClick={onCreate}><Plus aria-hidden /> Tạo học phần</Button> : undefined} />
-          : <Table>
+          : <Table className={FLUSH_TABLE}>
             <TableHeader><TableRow>
               <TableHead className="w-32">Mã</TableHead><TableHead>Tên học phần</TableHead>
               <TableHead className="hidden md:table-cell">Mô tả</TableHead><TableHead className="w-px"><span className="sr-only">Thao tác</span></TableHead>
@@ -61,13 +62,13 @@ export function AdminCourseSection({ onCreate, onOpenClass, onEdit, onDelete }: 
               <TableCell className="font-mono text-xs font-medium">{course.code}</TableCell>
               <TableCell className="font-medium">{course.name}</TableCell>
               <TableCell className="hidden max-w-72 truncate text-muted-foreground md:table-cell">{course.description || "—"}</TableCell>
-              <TableCell><div className="flex justify-end gap-1">
-                <Button size="sm" variant="outline" onClick={() => onOpenClass(course)}><Plus aria-hidden /> Mở lớp</Button>
+              <TableCell><div className="flex justify-end">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon-sm" aria-label={`Thao tác với học phần ${course.code}`}><MoreHorizontal aria-hidden /></Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => onOpenClass(course)}><Plus aria-hidden /> Mở lớp học phần</DropdownMenuItem>
                     <DropdownMenuItem onClick={() => onEdit(course)}><Pencil aria-hidden /> Sửa học phần</DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem variant="destructive" onClick={() => onDelete(course)}><Trash2 aria-hidden /> Xóa học phần</DropdownMenuItem>
@@ -76,7 +77,7 @@ export function AdminCourseSection({ onCreate, onOpenClass, onEdit, onDelete }: 
               </div></TableCell>
             </TableRow>)}</TableBody>
           </Table>}
-        {query.data && query.data.items.length > 0 ? <DataTablePagination page={query.data.page} limit={query.data.limit} total={query.data.total} onPageChange={setPage} /> : null}
+        {query.data && query.data.total > query.data.limit ? <DataTablePagination page={query.data.page} limit={query.data.limit} total={query.data.total} onPageChange={setPage} className="border-t-0 px-0" /> : null}
       </div>
     </section>
   );

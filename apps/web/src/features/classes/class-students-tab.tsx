@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { UserPlus, Users } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ListToolbar } from "@/components/list-toolbar";
@@ -8,6 +9,7 @@ import { DataTablePagination } from "@/components/data-table-pagination";
 import { SortSelect } from "@/components/sort-select";
 import { EmptyState, ErrorState, TableSkeleton } from "@/components/state-blocks";
 import { EnrollStudentsDialog } from "@/features/classes/enroll-students-dialog";
+import { FLUSH_TABLE, FLUSH_TOOLBAR } from "@/features/classes/list-styles";
 import { RemoveStudentButton } from "@/features/classes/remove-student-button";
 import { ClassSearchField } from "@/features/classes/class-search-field";
 import { api } from "@/lib/api";
@@ -20,6 +22,11 @@ const SORTS = [
   { value: "student_code", label: "Theo mã sinh viên" },
   { value: "enrolled_at", label: "Theo ngày ghi danh" },
 ];
+
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  return ((parts.at(-2)?.[0] ?? "") + (parts.at(-1)?.[0] ?? "")).toUpperCase();
+}
 
 /** Tab Sinh viên (chỉ giảng viên/quản trị): danh sách ghi danh + thêm/xóa sinh viên. */
 export function ClassStudentsTab({ classId }: { classId: string }) {
@@ -44,8 +51,8 @@ export function ClassStudentsTab({ classId }: { classId: string }) {
   const addButton = <Button size="sm" onClick={() => setEnrollOpen(true)}><UserPlus aria-hidden /> Thêm sinh viên</Button>;
 
   return (
-    <section className="overflow-hidden rounded-xl border bg-card">
-      <ListToolbar search={<ClassSearchField value={search} onChange={setSearch} placeholder="Tìm theo tên, email hoặc mã sinh viên" />}>
+    <section aria-label="Sinh viên của lớp" className="space-y-3">
+      <ListToolbar className={FLUSH_TOOLBAR} search={<ClassSearchField value={search} onChange={setSearch} placeholder="Tìm tên, email, mã SV" />}>
         <SortSelect value={sort} onChange={(value) => { setSort(value); setPage(1); }} options={SORTS} />
         {addButton}
       </ListToolbar>
@@ -57,10 +64,9 @@ export function ClassStudentsTab({ classId }: { classId: string }) {
             description={search ? "Thử tên, email hoặc mã sinh viên khác." : "Thêm sinh viên bằng mã sinh viên hoặc email — từng người hoặc hàng loạt."}
             action={search ? undefined : addButton} />
         ) : (
-          <Table>
+          <Table className={FLUSH_TABLE}>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-12 text-right">#</TableHead>
                 <TableHead>Sinh viên</TableHead>
                 <TableHead>Mã SV</TableHead>
                 <TableHead className="hidden sm:table-cell">Ngày ghi danh</TableHead>
@@ -68,12 +74,16 @@ export function ClassStudentsTab({ classId }: { classId: string }) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {students?.map((student, index) => (
+              {students?.map((student) => (
                 <TableRow key={student.user_id}>
-                  <TableCell className="text-right text-muted-foreground tabular-nums">{(page - 1) * PAGE_SIZE + index + 1}</TableCell>
                   <TableCell>
-                    <p className="font-medium">{student.full_name}</p>
-                    <p className="text-xs text-muted-foreground">{student.email}</p>
+                    <div className="flex items-center gap-3">
+                      <Avatar size="sm"><AvatarFallback className="text-[10px]">{initials(student.full_name)}</AvatarFallback></Avatar>
+                      <div className="min-w-0">
+                        <p className="truncate font-medium">{student.full_name}</p>
+                        <p className="truncate text-xs text-muted-foreground">{student.email}</p>
+                      </div>
+                    </div>
                   </TableCell>
                   <TableCell className="font-mono text-xs">{student.student_code ?? "—"}</TableCell>
                   <TableCell className="hidden text-muted-foreground tabular-nums sm:table-cell">
@@ -87,8 +97,8 @@ export function ClassStudentsTab({ classId }: { classId: string }) {
             </TableBody>
           </Table>
         )}
-      {query.data && students && students.length > 0 ? (
-        <DataTablePagination page={query.data.page} limit={query.data.limit} total={query.data.total} onPageChange={setPage} />
+      {query.data && query.data.total > query.data.limit ? (
+        <DataTablePagination page={query.data.page} limit={query.data.limit} total={query.data.total} onPageChange={setPage} className="border-t-0 px-0" />
       ) : null}
       {enrollOpen ? <EnrollStudentsDialog onOpenChange={setEnrollOpen} classId={classId} onEnrolled={invalidate} /> : null}
     </section>

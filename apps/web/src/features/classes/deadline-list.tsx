@@ -1,54 +1,61 @@
 import { Link } from "react-router-dom";
-import { ChevronRight, Clock } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { formatUtcDateTime } from "@/lib/date-time";
+import { Check, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ASSIGNMENT_KIND, shortDateTime } from "./assignment-kind";
 import { remainingLabel, type Deadline } from "./class-assignments-query";
-
-const CATEGORY_LABEL = { quiz: "Quiz", assignment: "Bài tập", midterm: "Giữa kỳ", final: "Cuối kỳ" } as const;
 
 export interface DeadlineRow extends Deadline {
   href: string;
   /** Mã lớp (mono) — hiện khi danh sách gộp nhiều lớp. */
   classCode?: string;
+  /** Sinh viên đã nộp bài này. */
+  submitted?: boolean;
 }
 
 function DueTag({ row }: { row: DeadlineRow }) {
+  if (row.submitted) {
+    return <span className="inline-flex items-center gap-1 font-medium text-success"><Check className="size-3.5" aria-hidden />Đã nộp</span>;
+  }
   if (row.state === "upcoming" && row.assignment.available_from) {
-    return <span className="text-xs text-muted-foreground">Mở {formatUtcDateTime(row.assignment.available_from)}</span>;
+    return <span className="text-muted-foreground">Mở {shortDateTime(row.assignment.available_from)}</span>;
   }
   const { text, urgent } = remainingLabel(row.dueMs);
   return (
-    <span className={cn("inline-flex items-center gap-1.5 text-xs font-medium tabular-nums", urgent || row.state === "late" ? "text-warning" : "text-muted-foreground")}>
-      {row.state === "late" ? <Badge variant="warning">Nộp muộn</Badge> : <Clock className="size-3.5" aria-hidden />}
-      {text}
+    <span className={cn("font-medium", urgent || row.state === "late" ? "text-warning" : "text-foreground/80")}>
+      {row.state === "late" ? `Nộp muộn · ${text}` : text}
     </span>
   );
 }
 
-/** Danh sách "Sắp đến hạn" — hàng gọn có viền ngăn, sắp theo hạn (DESIGN.md §5). */
+/** Danh sách "Sắp đến hạn" (DESIGN.md §4 Trang chủ): loại · tên · lớp · "còn x ngày" — hàng ngăn viền, không khung. */
 export function DeadlineList({ rows }: { rows: DeadlineRow[] }) {
   return (
-    <ul className="divide-y">
-      {rows.map((row) => (
-        <li key={row.assignment.id}>
-          <Link
-            to={row.href}
-            className="group flex items-center gap-3 px-4 py-2.5 transition-colors duration-150 outline-none hover:bg-muted/40 focus-visible:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
-          >
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium">{row.assignment.title}</p>
-              <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
-                {row.classCode ? <span className="font-mono">{row.classCode}</span> : null}
-                <span>{CATEGORY_LABEL[row.assignment.category]}</span>
-                <span className="tabular-nums">Hạn {formatUtcDateTime(row.state === "late" && row.assignment.late_due_at ? row.assignment.late_due_at : row.assignment.due_at)}</span>
-              </p>
-            </div>
-            <div className="shrink-0"><DueTag row={row} /></div>
-            <ChevronRight className="size-4 shrink-0 text-muted-foreground/60 transition-colors group-hover:text-foreground" aria-hidden />
-          </Link>
-        </li>
-      ))}
+    <ul className="border-t">
+      {rows.map((row) => {
+        const kind = ASSIGNMENT_KIND[row.assignment.category];
+        const due = row.state === "late" && row.assignment.late_due_at ? row.assignment.late_due_at : row.assignment.due_at;
+        return (
+          <li key={row.assignment.id} className="border-b">
+            <Link
+              to={row.href}
+              className="group -mx-2 flex min-h-14 items-center gap-3 rounded-md px-2 py-2 transition-colors duration-150 outline-none hover:bg-secondary/60 focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <kind.icon className="size-4 shrink-0 text-muted-foreground" strokeWidth={1.75} aria-label={kind.label} />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium">{row.assignment.title}</p>
+                <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs text-muted-foreground">
+                  <span>{kind.label}</span>
+                  {row.classCode ? <><span aria-hidden>·</span><span className="font-mono">{row.classCode}</span></> : null}
+                  <span aria-hidden className="hidden sm:inline">·</span>
+                  <span className="hidden tabular-nums sm:inline">Hạn {shortDateTime(due)}</span>
+                </p>
+              </div>
+              <span className="shrink-0 text-right text-xs tabular-nums"><DueTag row={row} /></span>
+              <ChevronRight className="size-4 shrink-0 text-muted-foreground/50 transition-colors group-hover:text-foreground" aria-hidden />
+            </Link>
+          </li>
+        );
+      })}
     </ul>
   );
 }

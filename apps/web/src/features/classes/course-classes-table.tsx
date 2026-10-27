@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { ClassSummary } from "@/types/api";
+import { FLUSH_TABLE } from "./list-styles";
 
 interface CourseClassesTableProps {
   classes: ClassSummary[];
@@ -18,7 +19,7 @@ interface CourseClassesTableProps {
 export function CourseClassesTable({ classes, isAdmin, onEdit, onDelete }: CourseClassesTableProps) {
   const navigate = useNavigate();
   return (
-    <Table>
+    <Table className={FLUSH_TABLE}>
       <TableHeader>
         <TableRow>
           <TableHead>Lớp</TableHead>
