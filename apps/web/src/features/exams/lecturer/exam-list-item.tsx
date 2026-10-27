@@ -22,16 +22,16 @@ export function ExamListItem({ item, classId, busy, onPublish, onDelete }: {
   const draft = !item.is_published;
   const href = draft ? `${base}/edit` : `${base}/monitor`;
 
-  return <li className="relative flex min-h-14 items-center gap-3 border-b px-2 py-2.5 transition-colors duration-150 last:border-b-0 hover:bg-secondary/50">
+  return <li className="relative flex min-h-14 flex-wrap items-center gap-x-3 gap-y-2 sm:flex-nowrap border-b px-2 py-2.5 transition-colors duration-150 last:border-b-0 hover:bg-secondary/50">
     <Icon className="size-4 shrink-0 text-muted-foreground" strokeWidth={1.75} aria-hidden />
-    <div className="min-w-0 flex-1">
+    <div className="min-w-0 flex-1 basis-[calc(100%-1.75rem)] sm:basis-auto">
       <h3 className="truncate text-sm font-medium">
         <Link to={href} className="rounded-sm outline-none after:absolute after:inset-0 focus-visible:ring-2 focus-visible:ring-ring">{item.title}</Link>
       </h3>
       <ExamMeta item={item} showMode />
     </div>
-    <ExamPhaseBadge phase={phase} />
-    <div className="relative z-[1] flex w-[15.5rem] shrink-0 items-center justify-end gap-1">
+    <span className="ml-7 sm:ml-0"><ExamPhaseBadge phase={phase} /></span>
+    <div className="relative z-[1] flex flex-1 items-center justify-end gap-1 sm:w-[15.5rem] sm:flex-none sm:shrink-0">
       {draft ? <>
         <Button size="sm" variant="secondary" asChild><Link to={`${base}/edit`}><Pencil aria-hidden />Sửa</Link></Button>
         <Button size="sm" variant="secondary" asChild><Link to={`${base}/papers`}><Eye aria-hidden />Xem trước đề</Link></Button>
