@@ -162,10 +162,10 @@ Quy tắc tính ở `class-schedule-grades-spec.md` §5. Thành phần: `attenda
 | GET/PUT | /classes/{id}/grade-policy | mem(GET) / lec | `{weights: {attendance, assignment, midterm, final}, attendance: {max_absences, absent_penalty, late_penalty, excused_penalty}}`; PUT kiểm tra tổng trọng số = 100 → 400 `VALIDATION_ERROR`; ghi audit |
 | GET | /classes/{id}/gradebook | lec | `{policy, items: [GradeRow]}` cho mọi sinh viên đang học |
 | PUT | /classes/{id}/grades/{studentId}/{component} | lec | Ghi đè điểm thành phần `{score (0–10, bước 0,1) \| null, reason}`; `null` xóa ghi đè; ghi audit |
-| POST | /classes/{id}/grades/import/preview | lec | `{rows: [{row, student_code, midterm?, final?}]}` → từng dòng hợp lệ/lỗi (mã SV không thuộc lớp, điểm ngoài 0–10); không ghi DB |
+| POST | /classes/{id}/grades/import/preview | lec | `{rows: [{row, student_code, midterm?, final?}]}` (≤ 500 dòng, điểm 0–10 tối đa 2 chữ số lẻ) → `{valid_rows, rows: [{row, student_code, full_name, midterm, final, valid, reason}]}`; mã SV không thuộc lớp, trùng mã, điểm sai → dòng lỗi; không ghi DB |
 | POST | /classes/{id}/grades/import | lec | Cùng payload; ghi các dòng hợp lệ làm điểm nhập (`source=csv`); `{imported, errors}` |
 | GET | /classes/{id}/gradebook/export | lec | CSV UTF-8 có BOM: mã SV, họ tên, 4 thành phần, hệ 10, hệ 4, chữ, điều kiện dự thi |
-| GET | /me/classes/{id}/grades | student | `GradeRow` của chính mình + `policy` |
+| GET | /me/classes/{id}/grades | student | Các trường của `GradeRow` của chính mình (phẳng) kèm `policy` |
 
 **GradeRow**: `{student_id, student_code, full_name, components: {attendance|assignment|midterm|final: {score, system_score, override: {score, reason, updated_at}|null, status: "final"|"provisional"|"missing"}}, attendance: {total, present, late, excused, absent, unmarked, max_absences}, eligible, total10, total4, letter, passed, status: "final"|"provisional"}`. `total10/total4/letter` là `null` khi chưa đủ 4 thành phần.
 

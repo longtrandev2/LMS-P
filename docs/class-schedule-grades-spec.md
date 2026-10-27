@@ -57,7 +57,7 @@ Giảng viên đặt trọng số % cho từng lớp; tổng phải đúng 100 (
 | Thành phần | Điểm hệ thống |
 |---|---|
 | Chuyên cần | `max(0, 10 − absent × absent_penalty − late × late_penalty − excused × excused_penalty)`, chỉ tính các buổi đã điểm danh và không hủy |
-| Bài tập | Trung bình `điểm/điểm tối đa × 10` của các bài đã xuất bản hạng mục `quiz` và `assignment` **đã đóng** (sau `due_at`, hoặc `late_due_at` nếu cho nộp muộn); quiz lấy lượt theo `score_policy`, bài thường cộng điểm từng câu theo `score_policy`; không nộp = 0. Bài còn mở không tính; bài đã đóng còn bài code đang chấm → thành phần ở trạng thái tạm tính |
+| Bài tập | Trung bình `điểm/điểm tối đa × 10` của các bài đã xuất bản hạng mục `quiz` và `assignment` **đã đóng** (sau `due_at`, hoặc `late_due_at` nếu cho nộp muộn); quiz lấy lượt theo `score_policy`, bài thường cộng điểm từng câu theo `score_policy`; không nộp = 0. Bài còn mở không tính nhưng làm thành phần ở trạng thái tạm tính; bài đã đóng còn bài code đang chấm cũng tạm tính. Chưa có bài đóng nào → chưa có điểm |
 | Giữa kỳ / Cuối kỳ | Điểm giảng viên nhập tay hoặc nhập CSV. Nếu chưa nhập: trung bình các bài đã đóng thuộc hạng mục `midterm`/`final` (nếu có). Khi có kỳ thi M7, điểm kỳ thi đổ vào đây |
 
 **Ghi đè**: giảng viên có thể nhập điểm cho bất kỳ thành phần nào của một sinh viên (kèm lý do), ghi đè điểm hệ thống và điểm CSV; xóa ghi đè để quay về điểm hệ thống (mỗi thành phần chỉ lưu một điểm nhập). Mọi lần nhập/sửa/xóa ghi audit (BR7).
@@ -71,7 +71,7 @@ Giảng viên đặt trọng số % cho từng lớp; tổng phải đúng 100 (
 | `late_penalty` | Điểm trừ mỗi buổi muộn/về sớm | 0,5 |
 | `excused_penalty` | Điểm trừ mỗi buổi vắng có phép | 0 |
 
-Penalty trong khoảng 0–10, bước 0,25. Không đủ điều kiện dự thi → điểm Cuối kỳ tính 0 và tổng kết hiện trạng thái "Không đủ điều kiện dự thi" (giảng viên vẫn ghi đè được Chuyên cần nếu xét lại).
+Penalty trong khoảng 0–10, bước 0,25. Không đủ điều kiện dự thi → điểm Cuối kỳ tính 0 và tổng kết hiện trạng thái "Không đủ điều kiện dự thi". Giảng viên **ghi đè điểm Chuyên cần** của sinh viên (xét lại) thì sinh viên đó được coi là đủ điều kiện dự thi.
 
 ### 5.4 Tổng kết
 
