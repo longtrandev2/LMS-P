@@ -25,9 +25,15 @@ export function CorrectnessMark({ ok, label, className }: { ok: boolean; label?:
   </span>;
 }
 
-/** Viền thẻ theo trạng thái đúng/sai trên màn xem lại. */
+/** Thanh lựa chọn kiểu quiz Frappe: nền xám, bo 8px, viền trong suốt (để viền đã chọn không làm nhảy layout). */
+export const BAR = "rounded-lg border border-transparent bg-secondary px-4 py-3 text-sm transition-colors duration-150";
+
+/** Ô nhập dạng thanh (trả lời ngắn, đáp số, điền chỗ trống) cao bằng thanh lựa chọn. */
+export const BAR_INPUT = "h-11 rounded-lg px-4";
+
+/** Nền thanh theo trạng thái đúng/sai trên màn xem lại. */
 export function markTone(state: "correct" | "wrong" | null): string {
-  if (state === "correct") return "border-success/50 bg-success/5";
-  if (state === "wrong") return "border-destructive/50 bg-destructive/5";
+  if (state === "correct") return "bg-success/10 hover:bg-success/10 text-foreground";
+  if (state === "wrong") return "bg-destructive/10 hover:bg-destructive/10 text-foreground";
   return "";
 }

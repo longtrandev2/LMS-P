@@ -7,18 +7,18 @@ import { LANGUAGES } from "@/lib/languages";
 import type { ProgrammingLanguage } from "@/types/api";
 import { ConfirmDialog } from "../confirm-dialog";
 
-/** Chọn ngôn ngữ + editor + khôi phục code mẫu. */
+/** Thanh trên (Select ngôn ngữ · trạng thái nháp · "Khôi phục code mẫu") + editor viền nhẹ. */
 export function CodePane({ allowed, language, onLanguageChange, code, onCodeChange, onRestore, isStarter, readOnly }: {
   allowed: ProgrammingLanguage[]; language: ProgrammingLanguage; onLanguageChange: (language: ProgrammingLanguage) => void;
   code: string; onCodeChange: (code: string) => void; onRestore: () => void; isStarter: boolean; readOnly: boolean;
 }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const options = LANGUAGES.filter((item) => allowed.includes(item.id));
-  return <section aria-label="Soạn code" className="flex min-h-0 flex-col gap-2">
-    <div className="flex flex-wrap items-center gap-2">
+  return <section aria-label="Soạn code" className="flex flex-col">
+    <div className="flex min-h-12 flex-wrap items-center gap-x-3 gap-y-2 px-4 pt-3">
       <label htmlFor="workspace-language" className="sr-only">Ngôn ngữ</label>
       <Select value={language} onValueChange={(value) => onLanguageChange(value as ProgrammingLanguage)}>
-        <SelectTrigger id="workspace-language" size="sm" className="min-w-44">
+        <SelectTrigger id="workspace-language" className="min-w-44">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -26,12 +26,15 @@ export function CodePane({ allowed, language, onLanguageChange, code, onCodeChan
         </SelectContent>
       </Select>
       <span className="text-xs text-muted-foreground">{isStarter ? "Code mẫu" : "Nháp tự lưu trên trình duyệt này"}</span>
-      <Button type="button" size="xs" variant="ghost" className="ml-auto" disabled={isStarter || readOnly} onClick={() => setConfirmOpen(true)}>
+      <Button type="button" variant="link" size="sm" className="ml-auto text-muted-foreground hover:text-foreground"
+        disabled={isStarter || readOnly} onClick={() => setConfirmOpen(true)}>
         <RotateCcw aria-hidden />Khôi phục code mẫu
       </Button>
     </div>
-    <CodeEditor value={code} onChange={onCodeChange} language={language} readOnly={readOnly}
-      minHeight="20rem" maxHeight="34rem" ariaLabel="Trình soạn code" />
+    <div className="px-4 py-3">
+      <CodeEditor value={code} onChange={onCodeChange} language={language} readOnly={readOnly}
+        minHeight="max(18rem, calc(100dvh - 24rem))" ariaLabel="Trình soạn code" />
+    </div>
     <ConfirmDialog open={confirmOpen} onOpenChange={setConfirmOpen} destructive title="Khôi phục code mẫu?"
       description="Code hiện tại của ngôn ngữ này sẽ bị thay bằng code mẫu và nháp bị xóa. Bài đã nộp không bị ảnh hưởng."
       confirmLabel="Khôi phục" onConfirm={onRestore} />

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import { errorText } from "@/lib/error-messages";
 import { queryKeys } from "@/lib/query-keys";
+import { questionTypeLabel } from "@/lib/question-types";
 import type { Answer, AssignmentQuestion, AssignmentSubmission, AssignmentSummary } from "@/types/api";
 import { acceptsSubmissions, assignmentWindow } from "../../submission-window";
 import { countedAttempts, formatScore, sortLatestFirst } from "../../submission-result";
@@ -53,26 +54,26 @@ export function ObjectiveQuestionCard({ item, question, index, submissions, user
     else submit.mutate(answer);
   }
 
-  const status = latest ? (latest.score != null ? `${formatScore(latest.score)}/${formatScore(question.points)} điểm` : "Đã nộp") : "Chưa nộp";
-  return <article id={`question-${question.question_id}`} className="rounded-xl border bg-card" aria-labelledby={`q-${question.question_id}-title`}>
+  const status = latest
+    ? <span className="font-semibold tabular-nums">{latest.score != null ? <>{formatScore(latest.score)}<span className="font-normal text-muted-foreground">/{formatScore(question.points)}</span></> : "Đã nộp"}</span>
+    : <span className="text-muted-foreground">Chưa nộp</span>;
+  return <li id={`question-${question.question_id}`} className="scroll-mt-20 border-b py-4" aria-labelledby={`q-${question.question_id}-title`}>
     <QuestionCardHeader index={index} question={question} titleId={`q-${question.question_id}-title`}
-      status={<span className={latest ? "text-foreground" : "text-muted-foreground"}>{status}</span>} />
-    <div className="space-y-4 p-4">
-      <QuestionPrompt question={question} />
+      title={questionTypeLabel(question.type)} meta={`${formatScore(question.points)} điểm · ${attemptsText(used, item.max_attempts)}`} status={status} />
+    <div className="mt-4 space-y-5 sm:pl-8">
+      <QuestionPrompt question={question} className="text-[15px] font-medium" />
       <AnswerInput question={question} value={draft.value} onChange={draft.setValue} readOnly={locked} idPrefix={`q${question.question_id}`} />
-    </div>
-    <div className="flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3">
-      <p className="text-xs text-muted-foreground">
-        {attemptsText(used, item.max_attempts)}
-        {latest ? <> · <Link className="rounded-sm underline underline-offset-4 outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring" to={studentPaths.submission(latest.id)}>Chi tiết lượt gần nhất</Link></> : null}
-      </p>
-      <Button size="sm" disabled={locked || !answer || submit.isPending} onClick={requestSubmit}>
-        {submit.isPending ? "Đang nộp…" : remaining === 0 ? "Hết lượt" : "Nộp câu này"}
-      </Button>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        {latest ? <Link className="rounded-sm text-xs text-muted-foreground underline underline-offset-4 outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+          to={studentPaths.submission(latest.id)}>Chi tiết lượt gần nhất</Link> : <span />}
+        <Button disabled={locked || !answer || submit.isPending} onClick={requestSubmit}>
+          {submit.isPending ? "Đang nộp…" : remaining === 0 ? "Hết lượt" : "Nộp câu này"}
+        </Button>
+      </div>
     </div>
     <ConfirmDialog open={confirmOpen} onOpenChange={setConfirmOpen} title={`Nộp câu ${index + 1}?`}
       description={remaining === 1 ? "Đây là lượt cuối cùng của câu này. Sau khi nộp bạn không thể sửa câu trả lời."
         : `Bạn còn ${remaining ?? 0} lượt cho câu này. Mỗi lần nộp tính một lượt.`}
       confirmLabel="Nộp câu này" onConfirm={() => { if (answer) submit.mutate(answer); }} />
-  </article>;
+  </li>;
 }

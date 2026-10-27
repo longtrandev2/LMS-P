@@ -49,21 +49,24 @@ export function QuizRunner({ details, attemptNo, draftKey, remainingAfter }: {
     setSubmitOpen(true);
   }
 
-  return <div className="space-y-6">
-    <QuizHeader title={item.title} backTo={studentPaths.overview(item.class_id, item.id)}
-      subtitle={`Lượt ${attemptNo} · Nháp tự lưu trên trình duyệt này${late ? ` · Nộp muộn trừ ${item.late_penalty_percent}%` : ""}`}
-      answered={draft.answeredCount} total={questions.length} onSubmit={openSubmit} submitting={submit.isPending} />
-    <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_16rem]">
-      <div className="order-2 mx-auto w-full max-w-[720px] lg:order-1">
+  const note = remainingAfter == null ? "Không giới hạn số lượt làm." : remainingAfter === 0 ? "Đây là lượt cuối cùng của bạn."
+    : `Sau lượt này bạn còn ${remainingAfter} lượt.`;
+
+  // `data-layout="full"`: AppShell bỏ padding — cột phải dính sát mép như mục lục khóa học của Frappe.
+  return <div data-layout="full" className="lg:grid lg:min-h-[calc(100dvh-3rem)] lg:grid-cols-[minmax(0,1fr)_20rem]">
+    <div className="min-w-0 px-4 py-6 sm:px-8 sm:py-8">
+      <div className="mx-auto w-full max-w-[720px] space-y-6">
+        <QuizHeader item={item} attemptNo={attemptNo} backTo={studentPaths.overview(item.class_id, item.id)} late={late} />
         <QuizQuestionView question={question} index={index} total={questions.length}
           value={draft.answers[question.question_id] ?? {}} onChange={(value) => draft.setAnswer(question.question_id, value)}
           flagged={draft.flagged.includes(question.question_id)} onToggleFlag={() => draft.toggleFlag(question.question_id)}
           onPrev={() => goTo(index - 1)} onNext={() => goTo(index + 1)} onSubmit={openSubmit} />
       </div>
-      <aside className="order-1 lg:sticky lg:top-36 lg:order-2">
-        <QuizNavigator questions={questions} answers={draft.answers} flagged={draft.flagged} current={index} onSelect={goTo} />
-      </aside>
     </div>
+    <aside aria-label="Tiến độ và nộp bài" className="border-t bg-background lg:sticky lg:top-12 lg:h-[calc(100dvh-3rem)] lg:border-t-0 lg:border-l">
+      <QuizNavigator title={item.title} questions={questions} answers={draft.answers} flagged={draft.flagged} current={index}
+        onSelect={goTo} answered={draft.answeredCount} onSubmit={openSubmit} submitting={submit.isPending} note={note} />
+    </aside>
     <QuizSubmitDialog open={submitOpen} onOpenChange={setSubmitOpen} questions={questions} answers={draft.answers}
       flagged={draft.flagged} onJump={(next) => { setSubmitOpen(false); goTo(next); }} onConfirm={confirmSubmit}
       pending={submit.isPending} error={submit.error} latePenalty={late ? item.late_penalty_percent : null} remainingAfter={remainingAfter} />

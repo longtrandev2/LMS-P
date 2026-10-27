@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ALL_LANGUAGES, DEFAULT_STARTERS } from "@/lib/languages";
@@ -20,8 +20,8 @@ import { useCodeSubmit, useLatestSubmission } from "./use-workspace-submission";
 const MAX_SOURCE_BYTES = 128 * 1024;
 
 /** Workspace lập trình: đề/bài nộp bên trái, editor + chạy thử + nộp + kết quả bên phải. */
-export function ProblemWorkspace({ item, question, history, userId }: {
-  item: AssignmentSummary; question: AssignmentQuestion; history: AssignmentSubmission[]; userId: number | null;
+export function ProblemWorkspace({ item, question, history, userId, header }: {
+  item: AssignmentSummary; question: AssignmentQuestion; history: AssignmentSubmission[]; userId: number | null; header: ReactNode;
 }) {
   const programming = question.programming;
   const allowed = programming?.allowed_languages?.length ? programming.allowed_languages : ALL_LANGUAGES;
@@ -44,7 +44,7 @@ export function ProblemWorkspace({ item, question, history, userId }: {
   const tooLarge = new Blob([draft.code]).size > MAX_SOURCE_BYTES;
   const empty = !draft.code.trim();
   const note = !open ? "Bài đã đóng" : remaining === 0 ? "Đã hết lượt nộp" : tooLarge ? "Code vượt 128 KiB"
-    : remaining == null ? `Đã nộp ${used} lượt` : `Còn ${remaining}/${item.max_attempts} lượt nộp`;
+    : remaining == null ? `Đã nộp ${used} lượt` : `Còn ${remaining}/${item.max_attempts} lượt`;
 
   async function onRun() {
     setRunError(null);
@@ -63,20 +63,20 @@ export function ProblemWorkspace({ item, question, history, userId }: {
 
   const doSubmit = () => submit.mutate({ language: draft.language, source_code: draft.code });
 
-  return <div className="grid gap-4 lg:h-[calc(100dvh-13rem)] lg:min-h-[36rem] lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
-    <section aria-label="Đề và bài nộp" className="flex min-h-0 flex-col rounded-xl border bg-card">
-      <Tabs value={leftTab} onValueChange={setLeftTab} className="flex min-h-0 flex-1 flex-col gap-0">
-        <div className="border-b px-3 pt-1.5">
-          <TabsList variant="line">
-            <TabsTrigger value="statement">Đề bài</TabsTrigger>
-            <TabsTrigger value="submissions">Bài nộp ({history.length})</TabsTrigger>
-          </TabsList>
-        </div>
-        <TabsContent value="statement" className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-5"><ProblemStatement question={question} /></TabsContent>
-        <TabsContent value="submissions" className="min-h-0 flex-1 overflow-y-auto p-4"><SubmissionHistory rows={history} maxScore={question.points} /></TabsContent>
+  // `data-layout="full"`: tràn màn, hai cột ngăn bằng một viền, mỗi cột tự cuộn (DESIGN.md §4 "Workspace code").
+  return <div data-layout="full" className="grid lg:h-[calc(100dvh-3rem)] lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+    <section aria-label="Đề và bài nộp" className="flex min-h-0 flex-col border-b lg:border-r lg:border-b-0">
+      <div className="px-5 pt-5 sm:px-6">{header}</div>
+      <Tabs value={leftTab} onValueChange={setLeftTab} className="mt-3 flex min-h-0 flex-1 flex-col gap-0">
+        <TabsList variant="line" className="px-5 sm:px-6">
+          <TabsTrigger value="statement">Đề bài</TabsTrigger>
+          <TabsTrigger value="submissions">Bài nộp{history.length ? <span className="text-muted-foreground tabular-nums">{history.length}</span> : null}</TabsTrigger>
+        </TabsList>
+        <TabsContent value="statement" className="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6"><ProblemStatement question={question} /></TabsContent>
+        <TabsContent value="submissions" className="min-h-0 flex-1 overflow-y-auto px-5 py-2 sm:px-6"><SubmissionHistory rows={history} maxScore={question.points} /></TabsContent>
       </Tabs>
     </section>
-    <section aria-label="Làm bài" className="flex min-h-0 flex-col gap-3 lg:overflow-y-auto lg:pr-1">
+    <section aria-label="Làm bài" className="flex min-h-0 flex-col lg:overflow-y-auto">
       <CodePane allowed={allowed} language={draft.language} onLanguageChange={draft.setLanguage} code={draft.code}
         onCodeChange={draft.setCode} onRestore={draft.restoreStarter} isStarter={draft.isStarter} readOnly={false} />
       <RunControls useCustom={useCustom} onUseCustomChange={setUseCustom} customInput={customInput} onCustomInputChange={setCustomInput}
@@ -84,23 +84,19 @@ export function ProblemWorkspace({ item, question, history, userId }: {
         canRun={open && !empty && !tooLarge && (useCustom || (programming?.samples.length ?? 0) > 0)}
         onSubmit={() => (remaining === 1 ? setConfirmOpen(true) : doSubmit())} submitting={submit.isPending}
         canSubmit={open && remaining !== 0 && !empty && !tooLarge} note={note} />
-      <div className="rounded-xl border bg-card">
-        <Tabs value={panel} onValueChange={setPanel} className="gap-0">
-          <div className="border-b px-3 pt-1.5">
-            <TabsList variant="line">
-              <TabsTrigger value="run">Chạy thử</TabsTrigger>
-              <TabsTrigger value="submission">Lần nộp gần nhất</TabsTrigger>
-            </TabsList>
-          </div>
-          <TabsContent value="run" className="p-4" aria-live="polite">
-            <RunResult job={run.job} running={run.running} error={runError ?? run.error} custom={lastRunCustom} />
-          </TabsContent>
-          <TabsContent value="submission" className="p-4" aria-live="polite">
-            <LatestSubmissionResult submission={latest.details.data} loading={latest.activeId != null && latest.details.isPending}
-              error={latest.details.error} onRetry={() => void latest.details.refetch()} />
-          </TabsContent>
-        </Tabs>
-      </div>
+      <Tabs value={panel} onValueChange={setPanel} className="gap-0 border-t">
+        <TabsList variant="line" className="px-4">
+          <TabsTrigger value="run">Kết quả chạy thử</TabsTrigger>
+          <TabsTrigger value="submission">Lần nộp gần nhất</TabsTrigger>
+        </TabsList>
+        <TabsContent value="run" className="px-4 py-3" aria-live="polite">
+          <RunResult job={run.job} running={run.running} error={runError ?? run.error} custom={lastRunCustom} />
+        </TabsContent>
+        <TabsContent value="submission" className="px-4 py-3" aria-live="polite">
+          <LatestSubmissionResult submission={latest.details.data} loading={latest.activeId != null && latest.details.isPending}
+            error={latest.details.error} onRetry={() => void latest.details.refetch()} />
+        </TabsContent>
+      </Tabs>
     </section>
     <ConfirmDialog open={confirmOpen} onOpenChange={setConfirmOpen} title="Nộp lượt cuối?"
       description="Đây là lượt nộp cuối cùng của câu này. Hãy chạy thử với ví dụ mẫu trước khi nộp." confirmLabel="Nộp bài" onConfirm={doSubmit} />
