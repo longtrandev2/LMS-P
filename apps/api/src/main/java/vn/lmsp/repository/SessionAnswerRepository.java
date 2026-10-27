@@ -7,7 +7,7 @@ import vn.lmsp.model.SessionAnswer;
 import java.util.Collection;
 import java.util.List;
 
-public interface SessionAnswerRepository extends JpaRepository<SessionAnswer, SessionAnswer.Key> {
+public interface SessionAnswerRepository extends JpaRepository<SessionAnswer, SessionAnswer.Key>, SessionAnswerPersister {
     List<SessionAnswer> findAllBySession_Id(Long sessionId);
 
     /** Số câu đã có câu trả lời của mỗi phiên — màn giám sát. Mỗi phần tử: [session_id, count]. */

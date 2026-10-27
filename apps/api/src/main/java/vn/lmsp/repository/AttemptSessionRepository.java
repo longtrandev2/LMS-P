@@ -20,6 +20,7 @@ public interface AttemptSessionRepository extends JpaRepository<AttemptSession, 
     long countByAssignment_IdAndStudent_Id(Long assignmentId, Long studentId);
     List<AttemptSession> findAllByAssignment_IdOrderByStudent_IdAscAttemptNoDesc(Long assignmentId);
     Optional<AttemptSession> findByAssignmentAttempt_Id(Long attemptId);
+    List<AttemptSession> findAllByStudent_IdOrderByStartedAtDescIdDesc(Long studentId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select s from AttemptSession s where s.id = :id")
