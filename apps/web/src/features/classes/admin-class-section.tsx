@@ -12,6 +12,7 @@ import { ListToolbar, SearchField } from "@/components/list-toolbar";
 import { DataTablePagination } from "@/components/data-table-pagination";
 import { SortSelect } from "@/components/sort-select";
 import { EmptyState, ErrorState, TableSkeleton } from "@/components/state-blocks";
+import { FLUSH_TABLE, FLUSH_TOOLBAR } from "@/features/classes/list-styles";
 import { api } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
 import type { ClassSummary, Paginated } from "@/types/api";
@@ -46,14 +47,14 @@ export function AdminClassSection({ onAssign, onEdit, onDelete }: Props) {
         </h2>
         <p className="text-sm text-muted-foreground">Lớp đã mở, giảng viên phụ trách và sĩ số.</p>
       </div>
-      <div className="overflow-hidden rounded-xl border bg-card">
-        <ListToolbar search={<SearchField value={search} onChange={setSearch} placeholder="Tìm mã, tên lớp hoặc học phần" />}>
+      <div className="space-y-3">
+        <ListToolbar className={FLUSH_TOOLBAR} search={<SearchField value={search} onChange={setSearch} placeholder="Tìm mã, tên lớp hoặc học phần" />}>
           <SortSelect value={sort} onChange={(value) => { setSort(value); setPage(1); }} options={SORTS} />
         </ListToolbar>
         {query.isPending ? <TableSkeleton cols={5} rows={4} /> : query.isError ? <ErrorState error={query.error} onRetry={() => query.refetch()} />
           : query.data?.items.length === 0 ? <EmptyState compact icon={School} title={search ? "Không tìm thấy lớp" : "Chưa mở lớp học phần"}
               description={search ? "Thử từ khóa khác." : "Chọn “Mở lớp” tại một học phần ở phía trên."} />
-          : <Table>
+          : <Table className={FLUSH_TABLE}>
             <TableHeader><TableRow>
               <TableHead>Lớp học phần</TableHead><TableHead className="hidden md:table-cell">Học phần</TableHead>
               <TableHead>Học kỳ</TableHead><TableHead className="hidden sm:table-cell">Giảng viên</TableHead>
@@ -84,7 +85,7 @@ export function AdminClassSection({ onAssign, onEdit, onDelete }: Props) {
               </TableCell>
             </TableRow>)}</TableBody>
           </Table>}
-        {query.data && query.data.items.length > 0 ? <DataTablePagination page={query.data.page} limit={query.data.limit} total={query.data.total} onPageChange={setPage} /> : null}
+        {query.data && query.data.total > query.data.limit ? <DataTablePagination page={query.data.page} limit={query.data.limit} total={query.data.total} onPageChange={setPage} className="border-t-0 px-0" /> : null}
       </div>
     </section>
   );

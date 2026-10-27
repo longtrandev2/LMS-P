@@ -39,7 +39,7 @@ export function MyClassesPage() {
   const classes = query.data?.items;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <PageHeader title="Lớp của tôi" description="Bài sắp đến hạn và các lớp học phần bạn đang học." />
 
       <DeadlinesPanel
@@ -52,20 +52,18 @@ export function MyClassesPage() {
 
       <section aria-labelledby="my-classes-title" className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 id="my-classes-title" className="text-base font-semibold">Các lớp đang học</h2>
+          <h2 id="my-classes-title" className="text-base font-semibold">Các lớp đang học {query.data ? <span className="ml-1 text-sm font-normal text-muted-foreground tabular-nums">{query.data.total}</span> : null}</h2>
           <div className="flex w-full flex-wrap gap-2 sm:w-auto">
             <div className="w-full sm:w-64"><ClassSearchField value={search} onChange={setSearch} /></div>
             <SortSelect value={sort} onChange={(value) => { setSort(value); setPage(1); }} options={SORTS} />
           </div>
         </div>
         {query.isPending ? <CardGridSkeleton count={3} />
-          : query.isError ? <div className="rounded-xl border bg-card"><ErrorState error={query.error} onRetry={() => query.refetch()} /></div>
+          : query.isError ? <ErrorState error={query.error} onRetry={() => query.refetch()} />
           : classes && classes.length === 0 ? (
-            <div className="rounded-xl border bg-card">
               <EmptyState icon={School}
                 title={search ? "Không tìm thấy lớp" : "Bạn chưa được ghi danh vào lớp nào"}
                 description={search ? "Thử mã lớp, tên lớp hoặc học kỳ khác." : "Liên hệ giảng viên hoặc phòng đào tạo để được xếp vào lớp học phần."} />
-            </div>
           ) : (
             <>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -76,8 +74,8 @@ export function MyClassesPage() {
                 ))}
               </div>
               {query.data && query.data.total > query.data.limit ? (
-                <div className="rounded-xl border bg-card">
-                  <DataTablePagination page={query.data.page} limit={query.data.limit} total={query.data.total} onPageChange={setPage} className="border-t-0" />
+                <div>
+                  <DataTablePagination page={query.data.page} limit={query.data.limit} total={query.data.total} onPageChange={setPage} className="px-0" />
                 </div>
               ) : null}
             </>

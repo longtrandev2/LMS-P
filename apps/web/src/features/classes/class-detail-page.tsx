@@ -1,7 +1,12 @@
+import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { Plus, Upload } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ErrorState } from "@/components/state-blocks";
 import { MaterialsSection } from "@/features/materials/materials-section";
+import { UploadMaterialDialog } from "@/features/materials/upload-material-dialog";
 import { AssignmentsSection } from "@/features/assignments/assignments-section";
 import { ClassWorkspaceHeader } from "@/features/classes/class-workspace-header";
 import { ClassOverviewTab } from "@/features/classes/class-overview-tab";
@@ -15,10 +20,11 @@ import type { ClassSummary } from "@/types/api";
 
 const TABS = ["overview", "materials", "assignments", "students"] as const;
 
-/** Workspace lớp của giảng viên/quản trị (DESIGN.md §5): header lớp + tab ngang lưu ở `?tab=`. */
+/** Trang lớp của giảng viên/quản trị (DESIGN.md §4): đầu trang + hành động phải, tab gạch chân lưu ở `?tab=`. */
 export function ClassDetailPage({ classId }: { classId: string }) {
   const { status: guard, user } = useAuthGuard(["admin", "lecturer"]);
   const [tab, setTab] = useTabParam(TABS, "overview");
+  const [uploadOpen, setUploadOpen] = useState(false);
   const canManage = hasRole(user, "lecturer");
 
   const classQuery = useQuery({
@@ -29,15 +35,23 @@ export function ClassDetailPage({ classId }: { classId: string }) {
 
   if (guard !== "ok") return null;
 
+  // Tab Học liệu / Bài tập đã có nút tạo riêng — ẩn nút trùng ở đầu trang để mỗi vùng chỉ một hành động chính.
+  const actions = canManage ? (
+    <>
+      {tab !== "materials" ? <Button variant="outline" onClick={() => setUploadOpen(true)}><Upload aria-hidden /> Tải học liệu</Button> : null}
+      {tab !== "assignments" ? <Button asChild><Link to={`/classes/${classId}/assignments/new`}><Plus aria-hidden /> Tạo bài tập</Link></Button> : null}
+    </>
+  ) : undefined;
+
   return (
     <div className="space-y-6">
       {classQuery.isError ? (
-        <div className="rounded-xl border bg-card"><ErrorState error={classQuery.error} onRetry={() => classQuery.refetch()} /></div>
+        <ErrorState error={classQuery.error} onRetry={() => classQuery.refetch()} />
       ) : (
-        <ClassWorkspaceHeader clazz={classQuery.data} loading={classQuery.isPending} />
+        <ClassWorkspaceHeader clazz={classQuery.data} loading={classQuery.isPending} showLecturer={!canManage} actions={actions} />
       )}
 
-      <Tabs value={tab} onValueChange={setTab} className="gap-5">
+      <Tabs value={tab} onValueChange={setTab} className="gap-6">
         <TabsList variant="line" aria-label="Khu vực của lớp">
           <TabsTrigger value="overview">Tổng quan</TabsTrigger>
           <TabsTrigger value="materials">Học liệu</TabsTrigger>
@@ -47,7 +61,9 @@ export function ClassDetailPage({ classId }: { classId: string }) {
         <TabsContent value="overview">
           <ClassOverviewTab
             classId={classId}
+            clazz={classQuery.data}
             canManage={canManage}
+            summary
             onOpenTab={setTab}
             assignmentHref={(item) => `/classes/${classId}/assignments/${item.id}/results`}
           />
@@ -62,6 +78,7 @@ export function ClassDetailPage({ classId }: { classId: string }) {
           <ClassStudentsTab classId={classId} />
         </TabsContent>
       </Tabs>
+      {uploadOpen ? <UploadMaterialDialog classId={classId} onOpenChange={setUploadOpen} /> : null}
     </div>
   );
 }

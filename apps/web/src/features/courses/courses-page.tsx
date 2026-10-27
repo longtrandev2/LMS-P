@@ -38,7 +38,7 @@ export function CoursesPage() {
   if (guard !== "ok") return null;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <PageHeader
         title="Lớp phụ trách"
         description="Các lớp học phần bạn được phân công. Chọn lớp để quản lý học liệu, bài tập và sinh viên."
@@ -46,7 +46,6 @@ export function CoursesPage() {
       />
 
       <DeadlinesPanel
-        title="Bài đang mở"
         rows={deadlines.rows}
         loading={query.isPending || deadlines.isPending}
         failed={deadlines.failed}
@@ -60,18 +59,16 @@ export function CoursesPage() {
             Lớp học phần {query.data ? <span className="ml-1 text-sm font-normal text-muted-foreground tabular-nums">{query.data.total}</span> : null}
           </h2>
           <div className="flex w-full flex-wrap gap-2 sm:w-auto">
-            <div className="w-full sm:w-64"><ClassSearchField value={search} onChange={setSearch} placeholder="Tìm mã lớp hoặc tên học phần" /></div>
+            <div className="w-full sm:w-64"><ClassSearchField value={search} onChange={setSearch} placeholder="Tìm mã lớp, học phần" /></div>
             <SortSelect value={sort} onChange={(value) => { setSort(value); setPage(1); }} options={SORTS} />
           </div>
         </div>
         {query.isPending ? <CardGridSkeleton count={3} />
-          : query.isError ? <div className="rounded-xl border bg-card"><ErrorState error={query.error} onRetry={() => query.refetch()} /></div>
+          : query.isError ? <ErrorState error={query.error} onRetry={() => query.refetch()} />
           : classes.length === 0 ? (
-            <div className="rounded-xl border bg-card">
               <EmptyState icon={School}
                 title={search ? "Không tìm thấy lớp" : "Bạn chưa được phân công lớp nào"}
                 description={search ? "Thử tìm theo mã lớp, học phần hoặc học kỳ." : "Quản trị viên sẽ mở lớp học phần và phân công bạn phụ trách."} />
-            </div>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {classes.map((clazz) => (
@@ -82,8 +79,8 @@ export function CoursesPage() {
             </div>
           )}
         {query.data && query.data.total > query.data.limit ? (
-          <div className="rounded-xl border bg-card">
-            <DataTablePagination page={query.data.page} limit={query.data.limit} total={query.data.total} onPageChange={setPage} className="border-t-0" />
+          <div>
+            <DataTablePagination page={query.data.page} limit={query.data.limit} total={query.data.total} onPageChange={setPage} className="px-0" />
           </div>
         ) : null}
       </section>

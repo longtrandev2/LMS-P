@@ -38,18 +38,18 @@ export function MaterialsSection({ classId, canManage }: MaterialsSectionProps) 
 
   const materials = list.data?.items ?? [];
   const uploadButton = (
-    <Button size="sm" onClick={() => setUploadOpen(true)}><Plus aria-hidden /> Tải lên</Button>
+    <Button size="sm" onClick={() => setUploadOpen(true)}><Plus aria-hidden /> Tải học liệu</Button>
   );
 
   return (
-    <section aria-labelledby={`materials-${classId}`} className="overflow-hidden rounded-xl border bg-card">
-      <header className="flex min-h-12 flex-wrap items-center justify-between gap-3 border-b px-4 py-2">
-        <h2 id={`materials-${classId}`} className="text-sm font-semibold">
+    <section aria-labelledby={`materials-${classId}`} className="space-y-2">
+      <div className="flex min-h-8 flex-wrap items-center justify-between gap-3">
+        <h2 id={`materials-${classId}`} className="text-base font-semibold">
           Học liệu
-          {list.data ? <span className="ml-2 font-normal text-muted-foreground tabular-nums">{list.data.total}</span> : null}
+          {list.data ? <span className="ml-2 text-sm font-normal text-muted-foreground tabular-nums">{list.data.total}</span> : null}
         </h2>
-        {canManage ? uploadButton : null}
-      </header>
+        {canManage && materials.length > 0 ? uploadButton : null}
+      </div>
 
       {list.isPending ? (
         <ListSkeleton rows={4} />
@@ -61,9 +61,10 @@ export function MaterialsSection({ classId, canManage }: MaterialsSectionProps) 
           title="Chưa có học liệu"
           description={canManage ? "Tải tệp lên hoặc dán liên kết để chia sẻ tài liệu cho lớp." : "Giảng viên chưa chia sẻ học liệu cho lớp này."}
           action={canManage ? uploadButton : undefined}
+          className="border-t"
         />
       ) : (
-        <ul className="divide-y">
+        <ul className="border-t">
           {materials.map((material) => (
             <MaterialRow
               key={material.id}
