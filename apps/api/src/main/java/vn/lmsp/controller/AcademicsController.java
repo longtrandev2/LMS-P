@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import vn.lmsp.dto.AcademicsDtos.*;
 import vn.lmsp.service.AcademicsService;
 import vn.lmsp.service.EnrollmentService;
+import vn.lmsp.service.MyClassesService;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -18,6 +19,7 @@ import vn.lmsp.service.EnrollmentService;
 public class AcademicsController {
     private final AcademicsService service;
     private final EnrollmentService enrollmentService;
+    private final MyClassesService myClassesService;
 
     @GetMapping("/courses") @PreAuthorize("hasAnyRole('ADMIN','LECTURER')")
     public Page<CourseView> courses(@RequestParam(defaultValue="1") int page, @RequestParam(defaultValue="20") int limit,
@@ -99,7 +101,7 @@ public class AcademicsController {
     public Page<MyClassView> myClasses(@AuthenticationPrincipal String actor, @RequestParam(defaultValue="1") int page,
                                        @RequestParam(defaultValue="20") int limit, @RequestParam(required=false) String q,
                                        @RequestParam(defaultValue="code") String sort) {
-        return enrollmentService.myClasses(Long.valueOf(actor), checkedPage(page), checkedLimit(limit), q, sort);
+        return myClassesService.myClasses(Long.valueOf(actor), checkedPage(page), checkedLimit(limit), q, sort);
     }
 
     private boolean hasRole(Authentication auth, String role) { return auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals(role)); }
