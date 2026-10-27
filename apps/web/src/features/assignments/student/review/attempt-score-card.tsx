@@ -1,11 +1,13 @@
 import type { ReactNode } from "react";
-import { CircleCheck, CircleDot, CircleX, Clock, Hourglass, Send } from "lucide-react";
+import { CircleCheck, CircleDot, CircleX, Clock, FileText, Hourglass, Loader2, Send } from "lucide-react";
 import type { QuizAttempt } from "@/types/api";
 import { formatScore } from "../../submission-result";
 import { shortDateTime } from "../labels";
 import { MetaRow } from "../meta-row";
 
-export interface ReviewCounts { correct: number; partial: number; wrong: number }
+export interface ReviewCounts { correct: number; partial: number; wrong: number; pending?: number }
+
+const REASON_LABEL = { manual: "Tự nộp", timeout: "Hết giờ — hệ thống thu", forced: "Giảng viên thu" } as const;
 
 /** Đầu trang kết quả một lượt: tiêu đề + hành động, điểm lớn + %, hàng meta (nộp lúc · đúng · một phần · sai). */
 export function AttemptScoreCard({ attempt, title, fallbackMax, reviewAvailable, counts, actions }: {
@@ -17,7 +19,9 @@ export function AttemptScoreCard({ attempt, title, fallbackMax, reviewAvailable,
     <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
       <div className="min-w-0 space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">Kết quả lượt {attempt.attempt_no}</h1>
-        {title ? <p className="text-sm text-muted-foreground">{title}</p> : null}
+        {title || attempt.paper_code ? <p className="text-sm text-muted-foreground">
+          {title}{title && attempt.paper_code ? " · " : ""}{attempt.paper_code ? <>Mã đề <span className="font-mono font-medium text-foreground">{attempt.paper_code}</span></> : null}
+        </p> : null}
       </div>
       {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
     </div>
@@ -32,10 +36,12 @@ export function AttemptScoreCard({ attempt, title, fallbackMax, reviewAvailable,
       </div> : null}
       <MetaRow items={[
         { icon: Send, text: `Nộp lúc ${shortDateTime(attempt.submitted_at)}` },
+        attempt.submit_reason ? { icon: FileText, text: REASON_LABEL[attempt.submit_reason], className: attempt.submit_reason === "manual" ? undefined : "text-warning" } : null,
         attempt.is_late ? { icon: Hourglass, text: `Nộp muộn · đã trừ ${attempt.late_penalty_percent}%`, className: "text-warning" } : null,
         counts ? { icon: CircleCheck, text: `${counts.correct} đúng`, className: "text-success" } : null,
         counts && counts.partial ? { icon: CircleDot, text: `${counts.partial} đúng một phần`, className: "text-warning" } : null,
         counts ? { icon: CircleX, text: `${counts.wrong} sai hoặc bỏ trống`, className: counts.wrong ? "text-destructive" : undefined } : null,
+        counts?.pending ? { icon: Loader2, text: `${counts.pending} câu đang chấm`, className: "text-info" } : null,
       ]} />
     </section>
     {reviewAvailable ? null : <p className="flex items-start gap-2 rounded-lg bg-secondary px-4 py-3 text-sm text-muted-foreground">

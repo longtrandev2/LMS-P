@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, Navigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { acceptsSubmissions, assignmentWindow } from "@/features/assignments/submission-window";
 import { remainingAttempts } from "@/features/assignments/student/labels";
@@ -16,8 +16,9 @@ export function QuizAttemptPage() {
   const id = routeId(assignmentId);
   const userId = useAuthStore((state) => state.user?.id ?? null);
   const details = useAssignmentDetails(id);
+  const isSession = details.data?.assignment.delivery === "session";
   const isQuiz = details.data?.assignment.category === "quiz";
-  const attempts = useQuizAttempts(id, isQuiz);
+  const attempts = useQuizAttempts(id, isQuiz && !isSession);
   const used = attempts.data?.length;
   const overview = studentPaths.overview(classId, assignmentId ?? "");
   const back = <BackLink to={overview}>Về trang bài</BackLink>;
@@ -32,6 +33,8 @@ export function QuizAttemptPage() {
   if (!details.data) {
     return details.isError ? <PageError back={back} error={details.error} onRetry={() => void details.refetch()} /> : <PageSkeleton />;
   }
+  // Quiz có giờ/mã đề làm trong phòng thi: bắt đầu từ trang thông tin bài (exam-spec §1, §8).
+  if (isSession) return <Navigate to={overview} replace />;
   const item = details.data.assignment;
   const toOverview = <Button asChild variant="outline"><Link to={overview}>Về trang bài</Link></Button>;
   if (!isQuiz) return <PageNotice back={back} title="Bài này không phải quiz" description="Hãy làm từng câu ở trang tổng quan bài." action={toOverview} />;
