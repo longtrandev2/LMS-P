@@ -105,6 +105,8 @@ Ngoài các bước hiện có (kiểm tra câu, chặn kiểm tra đề code, g
 
    Mọi câu đều được ghim phiên bản.
 3. Tạo `assessment_papers`: `same` có 1 đề (`code = null`); `variants` có N đề (`code = "101"…`); `per_student` chưa có đề nào. Tạo kèm `paper_items` (câu + thứ tự gốc theo phần).
+   - **Thứ tự gốc**: theo phần. Trong mỗi phần, câu cố định đứng trước (theo `position`), sau đó là câu bốc ngẫu nhiên (theo thứ tự quy tắc, rồi thứ tự bốc).
+   - Bài không giao theo phiên không tạo bản ghi đề.
 
 Bất biến: với `same`, tập `assignment_questions` của bài **trùng** với đề duy nhất. Các luồng cũ (nộp quiz, kết quả, xem lại) đọc "mọi câu của bài" vì vậy vẫn đúng. Với `variants`/`per_student`, các luồng này phải đọc theo đề của phiên.
 
