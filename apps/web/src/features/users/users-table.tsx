@@ -16,8 +16,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { RoleBadge, StatusBadge } from "@/components/role-status-badges";
+import { Badge } from "@/components/ui/badge";
+import { ROLE_LABELS, StatusBadge } from "@/components/role-status-badges";
+import { formatUtcDateTime } from "@/lib/date-time";
 import type { User } from "@/types/api";
+import { formatRelativeTime } from "@/features/notifications/relative-time";
+import { UserIdentity } from "@/features/users/user-avatar";
 import { UserDetailsDialog } from "@/features/users/user-details-dialog";
 import { UserLockDialog } from "@/features/users/user-lock-dialog";
 
@@ -28,8 +32,9 @@ interface UsersTableProps {
   onChanged: () => void;
 }
 
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("vi-VN");
+function LastLogin({ value }: { value?: string | null }) {
+  if (!value) return <span className="text-muted-foreground/70">Chưa đăng nhập</span>;
+  return <time dateTime={value} title={formatUtcDateTime(value)}>{formatRelativeTime(value)}</time>;
 }
 
 export function UsersTable({ users, onEdit, onResetPassword, onChanged }: UsersTableProps) {
@@ -43,9 +48,9 @@ export function UsersTable({ users, onEdit, onResetPassword, onChanged }: UsersT
         <TableRow>
           <TableHead>Người dùng</TableHead>
           <TableHead className="hidden md:table-cell">Mã SV</TableHead>
-          <TableHead>Vai trò</TableHead>
+          <TableHead className="hidden sm:table-cell">Vai trò</TableHead>
           <TableHead>Trạng thái</TableHead>
-          <TableHead className="hidden lg:table-cell">Ngày tạo</TableHead>
+          <TableHead className="hidden lg:table-cell">Đăng nhập cuối</TableHead>
           <TableHead className="w-px">
             <span className="sr-only">Thao tác</span>
           </TableHead>
@@ -53,18 +58,17 @@ export function UsersTable({ users, onEdit, onResetPassword, onChanged }: UsersT
       </TableHeader>
       <TableBody>
         {users.map((user) => (
-          <TableRow key={user.id}>
-            <TableCell>
-              <p className="font-medium">{user.full_name}</p>
-              <p className="max-w-56 truncate text-xs text-muted-foreground">{user.email}</p>
+          <TableRow key={user.id} className="hover:bg-secondary/60">
+            <TableCell className="h-14">
+              <UserIdentity name={user.full_name} email={user.email} />
             </TableCell>
-            <TableCell className="hidden font-mono text-xs md:table-cell">
+            <TableCell className="hidden font-mono text-xs text-muted-foreground md:table-cell">
               {user.student_code ?? "—"}
             </TableCell>
-            <TableCell>
+            <TableCell className="hidden sm:table-cell">
               <span className="flex flex-wrap gap-1">
                 {user.roles.map((role) => (
-                  <RoleBadge key={role} role={role} />
+                  <Badge key={role}>{ROLE_LABELS[role]}</Badge>
                 ))}
               </span>
             </TableCell>
@@ -72,12 +76,12 @@ export function UsersTable({ users, onEdit, onResetPassword, onChanged }: UsersT
               <StatusBadge status={user.status} />
             </TableCell>
             <TableCell className="hidden text-muted-foreground tabular-nums lg:table-cell">
-              {formatDate(user.created_at)}
+              <LastLogin value={user.last_login_at} />
             </TableCell>
             <TableCell className="text-right">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon-sm" aria-label={`Thao tác với ${user.full_name}`}>
+                  <Button variant="ghost" size="icon-sm" className="text-muted-foreground" aria-label={`Thao tác với ${user.full_name}`}>
                     <MoreHorizontal aria-hidden />
                   </Button>
                 </DropdownMenuTrigger>

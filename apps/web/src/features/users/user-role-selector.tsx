@@ -1,3 +1,4 @@
+import { Check } from "lucide-react";
 import { ROLE_LABELS } from "@/components/role-status-badges";
 import type { Role } from "@/types/api";
 import { cn } from "@/lib/utils";
@@ -11,14 +12,15 @@ export function UserRoleSelector({ roles, onChange, error }: {
 }) {
   const toggle = (role: Role) => onChange(roles.includes(role) ? roles.filter((item) => item !== role) : [...roles, role]);
   return (
-    <fieldset className="space-y-2">
-      <legend className="text-sm font-medium">Vai trò</legend>
+    <fieldset className="space-y-1.5">
+      <legend className="mb-1.5 text-sm font-medium">Vai trò <span className="font-normal text-muted-foreground">· chọn một hoặc nhiều</span></legend>
       <div className="flex flex-wrap gap-2">
         {ALL_ROLES.map((role) => {
           const active = roles.includes(role);
           return <button key={role} type="button" aria-pressed={active} onClick={() => toggle(role)}
-            className={cn("h-8 cursor-pointer rounded-md border px-3 text-sm font-medium transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-              active ? "border-primary bg-primary text-primary-foreground" : "border-input bg-card text-muted-foreground hover:bg-accent hover:text-foreground")}>
+            className={cn("inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-md px-3 text-sm font-medium transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              active ? "bg-foreground text-background" : "bg-secondary text-muted-foreground hover:bg-accent hover:text-foreground")}>
+            {active ? <Check className="size-3.5" aria-hidden /> : null}
             {ROLE_LABELS[role]}
           </button>;
         })}
