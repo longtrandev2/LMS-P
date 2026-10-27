@@ -48,8 +48,8 @@ export function attendanceTiles(counts: Pick<AttendanceSummary, "present" | "lat
   return [
     ...head,
     { key: "present", label: "Có mặt", value: counts.present, tone: "success", icon: UserCheck },
-    { key: "late", label: "Muộn", value: counts.late, tone: "warning", icon: Clock },
-    { key: "excused", label: "Có phép", value: counts.excused, tone: "info", icon: FileCheck2 },
+    { key: "late", label: "Muộn", value: counts.late, tone: "info", icon: Clock },
+    { key: "excused", label: "Có phép", value: counts.excused, tone: "warning", icon: FileCheck2 },
     { key: "absent", label: "Vắng", value: counts.absent, tone: "destructive", icon: UserX },
   ];
 }

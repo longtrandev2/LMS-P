@@ -41,5 +41,5 @@ export interface Gradebook {
 export interface GradeImportRow { row: number; student_code: string; midterm?: number | null; final?: number | null }
 export interface GradeImportPreview {
   valid_rows: number;
-  rows: { row: number; student_code: string; full_name?: string | null; valid: boolean; reason?: string | null }[];
+  rows: { row: number; student_code: string; full_name?: string | null; midterm?: number | null; final?: number | null; valid: boolean; reason?: string | null }[];
 }

@@ -20,6 +20,8 @@ export interface Material {
   /** Tệp: đường dẫn server; link: URL đầy đủ */
   file_path?: string | null;
   size_bytes: number;
+  /** Buổi học gắn kèm (class-schedule-grades-spec §2). */
+  session_id?: number | null;
   uploaded_by: number;
   created_at: string;
 }
