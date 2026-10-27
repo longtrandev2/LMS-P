@@ -35,10 +35,16 @@ public class QuizAttemptService {
     private final AnswerNormalizer normalizer;
     private final ObjectiveGrader grader;
     private final ReviewPolicy reviews;
+    private final AttemptSessionRepository sessions;
+    private final SessionPaperReader sessionPapers;
+    private final MaintenanceGuard maintenance;
 
     @Transactional
     public QuizAttemptView submitQuiz(Long assignmentId, Long studentId, String rawKey, QuizSubmitInput body) {
+        maintenance.check(false);
         Assignment assignment = access.studentAssignment(assignmentId, studentId, true);
+        if (assignment.isSessionBased()) throw new LmsException("CONFLICT",
+                "Bài này làm theo phiên — hãy bắt đầu phiên làm bài", HttpStatus.CONFLICT, null);
         if (assignment.getCategory() != AssignmentCategory.QUIZ) throw bad("Bài này không phải quiz");
         String key = policy.key(rawKey);
         List<AssignmentQuestion> questionLinks = links.findAllByAssignment_IdOrderByPositionAscIdAsc(assignmentId);
@@ -72,18 +78,25 @@ public class QuizAttemptService {
     @Transactional(readOnly = true)
     public List<QuizAttemptView> quizHistory(Long assignmentId, Long studentId) {
         Assignment assignment = access.studentAssignment(assignmentId, studentId, false);
-        if (assignment.getCategory() != AssignmentCategory.QUIZ) throw bad("Bài này không phải quiz");
+        if (assignment.getCategory() != AssignmentCategory.QUIZ && !assignment.isSessionBased())
+            throw bad("Bài này không phải quiz");
         return attempts.findAllByAssignment_IdAndStudent_IdOrderByAttemptNoDesc(assignmentId, studentId).stream()
                 .map(attempt -> attemptView(attempt, assignment, false)).toList();
     }
 
-    /** `privileged` = giảng viên phụ trách/admin: luôn thấy điểm từng câu. */
+    /**
+     * `privileged` = giảng viên phụ trách/admin: luôn thấy điểm từng câu. Lượt giao theo phiên chỉ tính câu trong đề
+     * của phiên đó (docs/exam-spec.md §6).
+     */
     public QuizAttemptView attemptView(AssignmentAttempt attempt, Assignment assignment, boolean privileged) {
         var answers = submissions.findAllByAssignmentAttempt_IdOrderByQuestion_IdAsc(attempt.getId());
-        var questions = links.findAllByAssignment_IdOrderByPositionAscIdAsc(attempt.getAssignmentId());
+        AttemptSession session = assignment.isSessionBased()
+                ? sessions.findByAssignmentAttempt_Id(attempt.getId()).orElse(null) : null;
+        var questions = session != null ? sessionPapers.questions(session)
+                : links.findAllByAssignment_IdOrderByPositionAscIdAsc(attempt.getAssignmentId());
         boolean available = privileged || reviews.available(assignment, attempt.getSubmittedAt(), UtcTime.now());
         return mapper.toAttemptView(attempt, questions, answers, available,
-                reviews.availableAt(assignment, attempt.getSubmittedAt()));
+                reviews.availableAt(assignment, attempt.getSubmittedAt()), session);
     }
 
     private QuizAttemptView replay(AssignmentAttempt old, Assignment assignment, Long studentId,

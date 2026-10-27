@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.lmsp.common.UtcTime;
 import vn.lmsp.dto.AttendanceCounts;
+import vn.lmsp.dto.GradebookDtos;
 import vn.lmsp.dto.ScheduleDtos.*;
 import vn.lmsp.enums.AttendanceStatus;
 import vn.lmsp.enums.EnrollmentStatus;
@@ -31,6 +32,7 @@ public class AttendanceStatsService implements AttendanceSummaryProvider {
     private final AttendanceRecordRepository records;
     private final EnrollmentRepository enrollments;
     private final ClassAccess access;
+    private final SettingsProvider settings;
 
     @Override
     @Transactional(readOnly = true)
@@ -53,7 +55,8 @@ public class AttendanceStatsService implements AttendanceSummaryProvider {
         LmsClass clazz = member.clazz();
         LocalDateTime now = UtcTime.now();
         var totals = sessions.totals(classId, now);
-        int maxAbsences = maxAbsences(clazz.getGradePolicy(), num(totals.getTotal()));
+        int maxAbsences = allowedAbsences(GradePolicyCodec.read(clazz.getGradePolicy(), settings.defaultGradePolicy()),
+                num(totals.getTotal()));
         if (!member.manager()) {
             AttendanceCounts c = counts(totals, group(records.countByStatus(classId, actor, now)).get(actor));
             return new StudentAttendance(c.total(), c.present(), c.late(), c.excused(), c.absent(), c.unmarked(),
@@ -69,6 +72,12 @@ public class AttendanceStatsService implements AttendanceSummaryProvider {
                     c.present(), c.late(), c.excused(), c.absent(), c.unmarked(), maxAbsences, c.absences() <= maxAbsences));
         }
         return new ClassAttendanceSummary(num(totals.getTotal()), num(totals.getTaken()), maxAbsences, rows);
+    }
+
+    /** Chính sách đã gộp mặc định (lớp chưa cấu hình → `default_grade_policy`, admin-spec.md §1). */
+    static int allowedAbsences(GradebookDtos.GradePolicy policy, int totalSessions) {
+        Integer value = policy.attendance().max_absences();
+        return value != null && value >= 0 ? value : totalSessions / 5;
     }
 
     /** `grade_policy.attendance.max_absences`; trống → floor(20% × số buổi không hủy). */

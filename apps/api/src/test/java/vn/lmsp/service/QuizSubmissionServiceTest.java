@@ -29,6 +29,8 @@ class QuizSubmissionServiceTest {
     private final AssignmentAttemptRepository attempts = mock(AssignmentAttemptRepository.class);
     private final SubmissionRepository submissions = mock(SubmissionRepository.class);
     private final UserRepository users = mock(UserRepository.class);
+    private final AttemptSessionRepository sessions = mock(AttemptSessionRepository.class);
+    private final SessionPaperReader sessionPapers = mock(SessionPaperReader.class);
     private final List<Submission> savedAnswers = new ArrayList<>();
     private final User student = user(42, "student");
     private final Assignment assignment = assignment(AssignmentCategory.QUIZ);
@@ -40,7 +42,8 @@ class QuizSubmissionServiceTest {
         var snapshots = new QuestionVersionService(mock(QuestionVersionRepository.class),
                 mock(QuestionReadService.class), new ObjectMapper());
         service = new QuizAttemptService(access, links, attempts, submissions, users, snapshots, new SubmissionMapper(),
-                mock(AuditService.class), new SubmissionPolicy(), new AnswerNormalizer(), new ObjectiveGrader(), new ReviewPolicy());
+                mock(AuditService.class), new SubmissionPolicy(), new AnswerNormalizer(), new ObjectiveGrader(), new ReviewPolicy(),
+                sessions, sessionPapers, vn.lmsp.support.TestSettings.defaults());
         assignment.configureReview(ReviewMode.after_submit, true, false, false);
         for (int i = 0; i < 2; i++) {
             var question = question(100 + i, QuestionType.mcq);
@@ -149,5 +152,46 @@ class QuizSubmissionServiceTest {
 
     private QuizSubmitInput answer(Long optionId) {
         return new QuizSubmitInput(List.of(new AnswerInput(100L, List.of(optionId), null, null, null, null, null)));
+    }
+
+    @Test void sessionBasedAssignmentsCannotBeSubmittedAsWholeQuiz() {
+        assignment.configureDelivery(20, PaperMode.same, null, null);
+        assertThatThrownBy(() -> service.submitQuiz(50L, 42L, KEY, answer(11L)))
+                .isInstanceOfSatisfying(LmsException.class, error -> assertThat(error.getCode()).isEqualTo("CONFLICT"));
+        var exam = assignment(AssignmentCategory.FINAL);
+        when(access.studentAssignment(51L, 42L, true)).thenReturn(exam);
+        assertThatThrownBy(() -> service.submitQuiz(51L, 42L, KEY, answer(11L)))
+                .isInstanceOfSatisfying(LmsException.class, error -> assertThat(error.getCode()).isEqualTo("CONFLICT"));
+        verify(attempts, never()).saveAndFlush(any());
+    }
+
+    @Test void attemptViewOfASessionUsesOnlyThatSessionsQuestions() {
+        assignment.configureDelivery(20, PaperMode.variants, 2, null);
+        var attempt = identified(new AssignmentAttempt(assignment, student, 1, false, 0, new BigDecimal("4.00"), KEY,
+                UtcTime.now()), 77);
+        var paper = identified(new AssessmentPaper(assignment, "102", null, new BigDecimal("4.00")), 9);
+        var session = identified(new AttemptSession(assignment, student, 1, paper, List.of(2L), UtcTime.now().minusMinutes(5),
+                UtcTime.now().plusMinutes(15), null), 5);
+        session.markSubmitted(SubmitReason.manual, UtcTime.now(), attempt);
+        when(sessions.findByAssignmentAttempt_Id(77L)).thenReturn(Optional.of(session));
+        when(sessionPapers.questions(session)).thenReturn(List.of(questions.get(1)));
+        savedAnswers.add(new Submission(student, assignment, attempt, questions.get(1), null, 1, new BigDecimal("4.00"),
+                false, null, UtcTime.now()));
+        var view = service.attemptView(attempt, assignment, true);
+        assertThat(view.session_id()).isEqualTo(5L);
+        assertThat(view.paper_code()).isEqualTo("102");
+        assertThat(view.submit_reason()).isEqualTo(SubmitReason.manual);
+        assertThat(view.max_score()).isEqualByComparingTo("4.00");
+        assertThat(view.question_scores()).extracting(score -> score.question_id()).containsExactly(101L);
+    }
+
+    @Test void historyStillWorksForExamsAndLegacyAttemptsHaveNoSessionFields() {
+        var exam = assignment(AssignmentCategory.MIDTERM);
+        when(access.studentAssignment(51L, 42L, false)).thenReturn(exam);
+        assertThat(service.quizHistory(51L, 42L)).isEmpty();
+        var legacy = service.submitQuiz(50L, 42L, KEY, answer(11L));
+        assertThat(legacy.session_id()).isNull();
+        assertThat(legacy.paper_code()).isNull();
+        verifyNoInteractions(sessions);
     }
 }

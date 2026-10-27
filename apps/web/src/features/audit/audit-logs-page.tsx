@@ -8,6 +8,7 @@ import { useAuthGuard } from "@/hooks/use-auth-guard";
 import { api } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
 import type { Paginated } from "@/types/api";
+import { AuditExportButton } from "./audit-export-button";
 import { AuditFilters, type AuditFilterValues } from "./audit-filters";
 import { AuditLogList } from "./audit-log-list";
 import type { AuditLog } from "./types";
@@ -19,10 +20,11 @@ export function AuditLogsPage() {
   const { status } = useAuthGuard(["admin"]);
   const [page, setPage] = useState(1);
   const [values, setValues] = useState<AuditFilterValues>(EMPTY);
-  const filters = {
-    page, limit: PAGE_SIZE, actor_id: values.actor || undefined, action: values.action || undefined,
+  const criteria = {
+    actor_id: values.actor || undefined, action: values.action || undefined,
     entity_type: values.entity || undefined, from: values.from || undefined, to: values.to || undefined,
   };
+  const filters = { page, limit: PAGE_SIZE, ...criteria };
   const query = useQuery({
     queryKey: queryKeys.audit.list(filters),
     queryFn: ({ signal }) => api.get<Paginated<AuditLog>>("/admin/audit-logs", filters, signal),
@@ -35,7 +37,8 @@ export function AuditLogsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Nhật ký kiểm toán" description="Các thao tác nhạy cảm trong hệ thống, mới nhất ở trên cùng." />
+      <PageHeader title="Nhật ký kiểm toán" description="Các thao tác nhạy cảm trong hệ thống, mới nhất ở trên cùng."
+        actions={<AuditExportButton filters={criteria} />} />
       <div className="space-y-1">
         <AuditFilters
           value={values}

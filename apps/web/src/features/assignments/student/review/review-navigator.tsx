@@ -16,7 +16,7 @@ export function ReviewNavigator({ states }: { states: ReviewState[] }) {
       </li>)}
     </ol>
     <ul className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs text-muted-foreground" aria-hidden>
-      {LEGEND.map((state) => <li key={state} className="flex items-center gap-1.5">
+      {(states.includes("pending") ? [...LEGEND, "pending" as const] : LEGEND).map((state) => <li key={state} className="flex items-center gap-1.5">
         <span className={cn("size-2.5 rounded-sm", REVIEW_STATE_TONE[state])} />{REVIEW_STATE_LABEL[state]}
       </li>)}
     </ul>

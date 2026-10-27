@@ -63,6 +63,18 @@ class AssignmentScoreCollectorTest {
         verify(results, never()).results(3L, 7L, true);
     }
 
+    @Test void sessionExamWithCodeStillGradingIsProvisional() {
+        Assignment exam = assignment(6, AssignmentCategory.FINAL, NOW.minusHours(1));
+        when(assignments.findAllByLmsClass_IdAndPublishedTrueOrderByDueAtAscIdAsc(3L)).thenReturn(List.of(exam));
+        // Câu code bốc ngẫu nhiên không nằm trong `questions` (chỉ câu cố định chung) nhưng lượt còn đang chấm.
+        when(results.results(6L, 7L, true)).thenReturn(new ResultsTable(List.of(
+                new StudentResult(42L, "SV 42", "SV42", new BigDecimal("6"), BigDecimal.TEN, 1, List.of(), List.of(), true))));
+
+        var scores = collector.collect(clazz, NOW).get(GradeComponent.FINAL);
+
+        assertThat(scores.provisional(42L)).isTrue();
+    }
+
     @Test void lateWindowKeepsAssignmentOpenUntilLateDue() {
         Assignment late = assignment(5, AssignmentCategory.ASSIGNMENT, NOW.minusDays(1));
         late.update("Bài", null, AssignmentCategory.ASSIGNMENT, null, NOW.minusDays(1), true, NOW.plusDays(1), 10, null, ScorePolicy.best);

@@ -15,6 +15,8 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FieldError } from "@/components/form-field-error";
 import { errorText } from "@/lib/error-messages";
+import { mbToBytes, usePublicSettings } from "@/lib/use-public-settings";
+import { formatBytes } from "./format";
 import type { MaterialType } from "./types";
 import { MaterialFilePicker } from "./material-file-picker";
 import { MaterialFormFields } from "./material-form-fields";
@@ -25,8 +27,8 @@ interface UploadMaterialDialogProps {
   classId: string;
 }
 
-/** FR-MAT-01: tệp ≤ 100MB (pdf/doc/slide/zip) hoặc link */
-const MAX_UPLOAD_MB = 100;
+/** Khi chưa tải được cấu hình: mặc định `max_upload_mb` (admin-spec §1). */
+const DEFAULT_MAX_UPLOAD_MB = 20;
 const FILE_ACCEPT = ".pdf,.doc,.docx,.ppt,.pptx,.zip,.rar,.7z,.mp4,.webm";
 
 function typeFromFilename(name: string): MaterialType {
@@ -41,6 +43,7 @@ function typeFromFilename(name: string): MaterialType {
 
 export function UploadMaterialDialog({ onOpenChange, classId }: UploadMaterialDialogProps) {
   const upload = useUploadMaterial(classId);
+  const maxMb = usePublicSettings().data?.max_upload_mb ?? DEFAULT_MAX_UPLOAD_MB;
   const [file, setFile] = useState<File | null>(null);
   const [linkUrl, setLinkUrl] = useState("");
   const [title, setTitle] = useState("");
@@ -48,8 +51,17 @@ export function UploadMaterialDialog({ onOpenChange, classId }: UploadMaterialDi
   const [type, setType] = useState<MaterialType | "">("");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  function sizeError(selected: File): string | null {
+    return selected.size > mbToBytes(maxMb) ? `Tệp ${formatBytes(selected.size)} vượt giới hạn ${maxMb} MB của hệ thống.` : null;
+  }
+
   function handleFileChange(selected: File | null) {
     setFile(selected);
+    setErrors((prev) => {
+      const { file: _drop, ...rest } = prev;
+      const problem = selected ? sizeError(selected) : null;
+      return problem ? { ...rest, file: problem } : rest;
+    });
     if (selected) {
       setTitle((prev) => prev || selected.name.replace(/\.[^.]+$/, ""));
       setType((prev) => prev || typeFromFilename(selected.name));
@@ -61,9 +73,8 @@ export function UploadMaterialDialog({ onOpenChange, classId }: UploadMaterialDi
     if (!title.trim()) next.title = "Nhập tiêu đề học liệu.";
     if (mode === "file") {
       if (!file) next.file = "Chọn tệp để tải lên.";
-      if (file && file.size > MAX_UPLOAD_MB * 1024 * 1024) {
-        next.file = `Tệp vượt giới hạn ${MAX_UPLOAD_MB}MB.`;
-      }
+      const tooBig = file ? sizeError(file) : null;
+      if (tooBig) next.file = tooBig;
       if (!type) next.type = "Chọn phân loại.";
     } else {
       if (!/^https?:\/\/.+/i.test(linkUrl.trim())) next.link = "Dán liên kết hợp lệ (http/https).";
@@ -132,7 +143,7 @@ export function UploadMaterialDialog({ onOpenChange, classId }: UploadMaterialDi
             <form onSubmit={(e) => handleSubmit("file", e)} className="space-y-4" noValidate>
               <div className="space-y-2">
                 <Label htmlFor="material-file" className="sr-only">Tệp</Label>
-                <MaterialFilePicker id="material-file" file={file} accept={FILE_ACCEPT} maxMb={MAX_UPLOAD_MB}
+                <MaterialFilePicker id="material-file" file={file} accept={FILE_ACCEPT} maxMb={maxMb}
                   invalid={!!errors.file} onChange={handleFileChange} />
                 {errors.file ? <FieldError text={errors.file} /> : null}
               </div>

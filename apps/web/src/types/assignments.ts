@@ -2,6 +2,7 @@
 import type {
   AnswerSpec, CheckerMode, ProgrammingLanguage, QuestionDifficulty, QuestionTestCase, QuestionType, ScoringMode,
 } from "./questions";
+import type { BlueprintInput, BlueprintView, DeliverySettings, FixedQuestionInput, ReviewCodeFields, SessionAttemptFields } from "./exams";
 
 export type AssignmentCategory = "quiz" | "assignment" | "midterm" | "final";
 export type ScorePolicy = "best" | "last";
@@ -9,7 +10,7 @@ export type ReviewMode = "never" | "after_submit" | "after_close";
 export type GradingVerdict = "AC" | "WA" | "CE" | "TLE" | "MLE" | "RE" | "OLE" | "OK" | "SYSTEM_ERROR";
 export type SubmissionStatus = "pending" | "grading" | "completed" | "failed";
 
-export interface AssignmentSummary {
+export interface AssignmentSummary extends DeliverySettings {
   id: number;
   class_id: number;
   title: string;
@@ -33,7 +34,7 @@ export interface AssignmentSummary {
   updated_at: string;
 }
 /** Body tạo/sửa nháp (`POST /classes/{id}/assignments`, `PATCH /assignments/{id}`, `assignment` của bulk). */
-export interface AssignmentInput {
+export interface AssignmentInput extends BlueprintInput {
   title: string;
   description?: string | null;
   category: AssignmentCategory;
@@ -48,7 +49,7 @@ export interface AssignmentInput {
   review_shows_answers: boolean;
   shuffle_questions: boolean;
   shuffle_options: boolean;
-  questions: { question_id: number; points: number; position: number }[];
+  questions: FixedQuestionInput[];
 }
 export interface ProgrammingSample { position: number; input: string; expected_output: string }
 export interface AssignmentProgramming {
@@ -85,7 +86,7 @@ export interface AssignmentQuestion {
   memory_limit_mb?: number | null;
   test_cases: QuestionTestCase[];
 }
-export interface AssignmentDetails {
+export interface AssignmentDetails extends BlueprintView {
   assignment: AssignmentSummary;
   questions: AssignmentQuestion[];
 }
@@ -106,7 +107,7 @@ export interface QuizQuestionScore {
   max_score: number;
   selected_option_ids?: number[] | null;
 }
-export interface QuizAttempt {
+export interface QuizAttempt extends SessionAttemptFields {
   attempt_id: number;
   attempt_no: number;
   score: number;
@@ -130,7 +131,7 @@ export interface CorrectAnswer {
   matches?: Record<string, string>;
   order?: string[];
 }
-export interface ReviewQuestion {
+export interface ReviewQuestion extends ReviewCodeFields {
   question: AssignmentQuestion;
   response?: AnswerResponse | null;
   score: number;
@@ -206,4 +207,6 @@ export interface StudentResultRow {
   attempt_count: number;
   attempts?: { attempt_id: number; attempt_no: number; score: number; is_late: boolean; submitted_at: string }[];
   questions: { question_id: number; final_score?: number | null; attempt_count: number; last_status?: SubmissionStatus | null; last_verdict?: GradingVerdict | null }[];
+  /** Lượt được tính (hoặc bài nộp từng câu) còn bài code đang chấm. */
+  grading_pending?: boolean;
 }

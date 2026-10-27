@@ -10,9 +10,9 @@ import type { EditorForm, FieldErrors } from "./editor-model";
 export function EditorInfoSection({ form, patch, errors, published }: {
   form: EditorForm; patch: (next: Partial<EditorForm>) => void; errors: FieldErrors; published: boolean;
 }) {
-  const hasProgramming = form.questions.some((q) => q.type === "programming");
+  const hasProgramming = form.questions.some((q) => q.type === "programming") || form.rules.some((r) => r.type === "programming");
   const options = CATEGORY_OPTIONS.map((option) => option.id === "quiz" && hasProgramming
-    ? { ...option, description: "Không chọn được: đề đang có câu lập trình." , disabled: true }
+    ? { ...option, description: "Không chọn được: đề đang có câu lập trình.", disabled: true }
     : option);
   return <EditorSection id="info" title="Thông tin" description="Tên, mô tả và hạng mục tính điểm của bài.">
     <Field id="assignment-title" label="Tên bài" error={errors.title}>

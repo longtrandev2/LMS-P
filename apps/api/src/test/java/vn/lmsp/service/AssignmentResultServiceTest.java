@@ -9,6 +9,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.BeanUtils;
+import org.springframework.test.util.ReflectionTestUtils;
 import vn.lmsp.enums.*;
 import vn.lmsp.model.*;
 import vn.lmsp.repository.*;
@@ -19,6 +21,7 @@ class AssignmentResultServiceTest {
     private final AssignmentAttemptRepository attempts = mock(AssignmentAttemptRepository.class);
     private final SubmissionRepository submissions = mock(SubmissionRepository.class);
     private final EnrollmentRepository enrollments = mock(EnrollmentRepository.class);
+    private final PaperProvider papers = mock(PaperProvider.class);
     private final User student = user(42, "student");
     private final User absent = user(43, "student");
     private Assignment assignment;
@@ -26,7 +29,7 @@ class AssignmentResultServiceTest {
     private AssignmentResultService service;
 
     @BeforeEach void setup() {
-        service = new AssignmentResultService(access, links, attempts, submissions, enrollments);
+        service = new AssignmentResultService(access, links, attempts, submissions, enrollments, papers);
         when(enrollments.findAllByLmsClass_IdAndStatusOrderByStudent_Id(3L, EnrollmentStatus.active)).thenReturn(List.of(
                 new Enrollment(clazz(null), student, EnrollmentVia.lecturer), new Enrollment(clazz(null), absent, EnrollmentVia.lecturer)));
     }
@@ -85,5 +88,32 @@ class AssignmentResultServiceTest {
         assertThat(mine.final_score()).isEqualByComparingTo("4");
         assertThat(mine.attempt_count()).isEqualTo(2);
         assertThat(mine.attempts()).extracting(attempt -> attempt.attempt_no()).containsExactly(1, 2);
+    }
+
+    @Test void sessionBasedExamUsesPaperMaxScoreAndOnlyFixedCommonQuestions() {
+        assignment = assignment(AssignmentCategory.MIDTERM);
+        var fixed = link(assignment, question(100, QuestionType.programming), "4", 1);
+        var variantOnly = new AssignmentQuestion(assignment, question(101, QuestionType.mcq), BigDecimal.ONE, 2, null, 1);
+        var drawn = link(assignment, question(102, QuestionType.mcq), "1", 3);
+        ReflectionTestUtils.setField(drawn, "drawRule", BeanUtils.instantiateClass(AssignmentDrawRule.class));
+        when(access.lecturerAssignment(50L, 7L, false, false)).thenReturn(assignment);
+        when(links.findAllByAssignment_IdOrderByPositionAscIdAsc(50L)).thenReturn(List.of(fixed, variantOnly, drawn));
+        when(papers.maxScore(assignment)).thenReturn(new BigDecimal("10.00"));
+        var attempt = identified(new AssignmentAttempt(assignment, student, 1, false, 0, new BigDecimal("7.5"), "k1",
+                LocalDateTime.now()), 1);
+        when(attempts.findAllByAssignment_IdOrderByAttemptNoAsc(50L)).thenReturn(List.of(attempt));
+        var code = identified(Submission.programmingInAttempt(student, assignment, attempt, fixed, "python", "x", LocalDateTime.now()), 5);
+        when(submissions.findAllByAssignment_IdOrderBySubmittedAtDesc(50L)).thenReturn(List.of(code));
+
+        var rows = service.results(50L, 7L, false).items();
+
+        var mine = rows.getFirst();
+        assertThat(mine.max_score()).isEqualByComparingTo("10");
+        assertThat(mine.final_score()).isEqualByComparingTo("7.5");
+        assertThat(mine.attempts()).hasSize(1);
+        assertThat(mine.questions()).extracting(question -> question.question_id()).containsExactly(100L);
+        assertThat(mine.questions().getFirst().last_status()).isEqualTo(SubmissionStatus.pending);
+        assertThat(rows.get(1).final_score()).isNull();
+        assertThat(rows.get(1).max_score()).isEqualByComparingTo("10");
     }
 }

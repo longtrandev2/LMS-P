@@ -21,17 +21,19 @@ public class GradePolicyService {
     private final GradebookAccess access;
     private final AuditService audit;
     private final ObjectMapper json;
+    private final SettingsProvider settings;
 
     @Transactional(readOnly = true)
     public GradePolicy get(Long classId, Long actorId, boolean admin, boolean student) {
-        return GradePolicyCodec.read(access.memberClass(classId, actorId, admin, student).getGradePolicy());
+        return GradePolicyCodec.read(access.memberClass(classId, actorId, admin, student).getGradePolicy(),
+                settings.defaultGradePolicy());
     }
 
     @Transactional
     public GradePolicy update(Long classId, GradePolicyInput input, Long actorId, boolean admin) {
         LmsClass item = access.lecturerClass(classId, actorId, admin);
         GradePolicy policy = validate(input);
-        GradePolicy old = GradePolicyCodec.read(item.getGradePolicy());
+        GradePolicy old = GradePolicyCodec.read(item.getGradePolicy(), settings.defaultGradePolicy());
         item.setGradePolicy(json.valueToTree(policy));
         audit.record(actorId, "grade.policy", "class", classId, asMap(old), asMap(policy));
         return policy;

@@ -62,6 +62,14 @@ public class Submission {
         item.maxScore = link.getPoints(); item.idempotencyKey = key; item.submittedAt = now;
         return item;
     }
+    /** Bài code trong một lượt giao theo phiên (exam-spec.md §5.6). */
+    public static Submission programmingInAttempt(User student, Assignment assignment, AssignmentAttempt attempt,
+            AssignmentQuestion link, String language, String sourceCode, LocalDateTime now) {
+        Submission item = programming(student, assignment, link, attempt.getAttemptNo(), language, sourceCode, false, 0,
+                null, now);
+        item.assignmentAttempt = attempt;
+        return item;
+    }
     public Long getAssignmentId() { return assignment.getId(); }
     public Long getAssignmentAttemptId() { return assignmentAttempt == null ? null : assignmentAttempt.getId(); }
     public Long getStudentId() { return student.getId(); }

@@ -16,6 +16,7 @@ import vn.lmsp.dto.RunDtos.RunPayload;
 import vn.lmsp.dto.RunDtos.RunTest;
 import vn.lmsp.enums.QuestionType;
 import vn.lmsp.enums.RunJobKind;
+import vn.lmsp.model.AssignmentQuestion;
 import vn.lmsp.repository.AssignmentQuestionRepository;
 
 /**
@@ -32,6 +33,7 @@ public class PracticeRunService {
     private final SubmissionPolicy policy;
     private final PracticeRateLimiter limiter;
     private final RunJobGateway runs;
+    private final MaintenanceGuard maintenance;
 
     @Transactional
     public RunAccepted run(Long assignmentId, Long questionId, Long studentId, PracticeRunInput input) {
@@ -39,6 +41,17 @@ public class PracticeRunService {
         policy.window(assignment, UtcTime.now());
         var link = links.findByAssignment_IdAndQuestion_Id(assignmentId, questionId)
                 .orElseThrow(() -> bad("Câu hỏi không thuộc bài này"));
+        return runPinned(link, studentId, input);
+    }
+
+    /**
+     * Chạy thử một câu đã ghim phiên bản; caller đã kiểm tra quyền và khung giờ (bài thường: hạn nộp; phiên làm bài:
+     * phiên đang mở — docs/exam-spec.md §8.1). Dùng chung giới hạn lần/phút/sinh viên; bị chặn khi bảo trì (admin-spec §5.2).
+     */
+    public RunAccepted runPinned(AssignmentQuestion link, Long studentId, PracticeRunInput input) {
+        maintenance.check(false);
+        Long assignmentId = link.getAssignmentId();
+        Long questionId = link.getQuestionId();
         if (link.getQuestionVersion() == null) throw bad("Câu hỏi chưa được ghim phiên bản");
         var snapshot = snapshots.read(link.getQuestionVersion());
         ProgrammingView programming = snapshot.programming();

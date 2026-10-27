@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.context.ApplicationEventPublisher;
 import vn.lmsp.common.LmsException;
 import vn.lmsp.enums.AssignmentCategory;
 import vn.lmsp.enums.QuestionType;
@@ -24,6 +25,7 @@ class AssignmentPublishServiceTest {
     private final QuestionVersionRepository versions = mock(QuestionVersionRepository.class);
     private final ProblemCheckGate checks = mock(ProblemCheckGate.class);
     private final AuditService audit = mock(AuditService.class);
+    private final ApplicationEventPublisher events = mock(ApplicationEventPublisher.class);
     private final Assignment assignment = assignment(AssignmentCategory.ASSIGNMENT);
     private final Question question = question(100, QuestionType.programming);
     private final AssignmentQuestion link = link(assignment, question, "10", 1);
@@ -33,7 +35,7 @@ class AssignmentPublishServiceTest {
     @BeforeEach void setup() {
         var snapshots = new QuestionVersionService(versions, mock(QuestionReadService.class), new ObjectMapper());
         service = new AssignmentPublishService(access, links, questions, versions, mock(QuestionBankService.class), snapshots,
-                new ProgrammingProblemValidator(), checks, mock(AssignmentReadService.class), audit);
+                new ProgrammingProblemValidator(), checks, mock(AssignmentReadService.class), audit, mock(PaperPublisher.class), events);
         when(access.lecturerAssignment(50L, 7L, false, true)).thenReturn(assignment);
         when(links.findAllByAssignment_IdOrderByPositionAscIdAsc(50L)).thenReturn(List.of(link));
         when(questions.findByIdAndDeletedFalse(100L)).thenReturn(Optional.of(question));
@@ -46,6 +48,7 @@ class AssignmentPublishServiceTest {
         assertThat(assignment.isPublished()).isTrue();
         assertThat(link.getQuestionVersion()).isSameAs(latest);
         verify(audit, never()).record(any(), eq("assignment.publish_unverified"), any(), any(), any(), any());
+        verify(events).publishEvent(new AssignmentPublishedEvent(50L));
     }
 
     @Test void failedProblemCheckBlocksPublishingEvenWithConfirmation() {
@@ -57,6 +60,7 @@ class AssignmentPublishServiceTest {
         });
         assertThat(assignment.isPublished()).isFalse();
         assertThat(link.getQuestionVersion()).isNull();
+        verifyNoInteractions(events);
     }
 
     @Test void unverifiedProblemNeedsExplicitConfirmationWhichIsAudited() {

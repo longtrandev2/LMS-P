@@ -32,7 +32,8 @@ class AssignmentSubmissionServiceTest {
         link.pin(version(link.getQuestion(), 1, AssessmentFixtures.shortAnswer()));
         var snapshots = new QuestionVersionService(mock(QuestionVersionRepository.class), mock(QuestionReadService.class), new ObjectMapper());
         service = new AssignmentSubmissionService(access, links, submissions, users, snapshots, new SubmissionMapper(),
-                new SubmissionPolicy(), new AnswerNormalizer(), new ObjectiveGrader(), new ReviewPolicy());
+                new SubmissionPolicy(), new AnswerNormalizer(), new ObjectiveGrader(), new ReviewPolicy(),
+                vn.lmsp.support.TestSettings.defaults());
         when(access.studentAssignment(50L, 42L, true)).thenReturn(assignment);
         when(links.findByAssignment_IdAndQuestion_Id(50L, 100L)).thenReturn(Optional.of(link));
         when(users.findById(42L)).thenReturn(Optional.of(user(42, "student")));
@@ -70,6 +71,15 @@ class AssignmentSubmissionServiceTest {
         assertThat(service.submitQuestion(50L, 100L, 42L, KEY, text("tcp")).id()).isEqualTo(90L);
         assertThatThrownBy(() -> service.submitQuestion(50L, 100L, 42L, KEY, text("udp")))
                 .isInstanceOfSatisfying(LmsException.class, error -> assertThat(error.getCode()).isEqualTo("IDEMPOTENCY_CONFLICT"));
+        verify(submissions, never()).save(any());
+    }
+
+    @Test void sessionBasedQuizRejectsPerQuestionSubmissions() {
+        var timed = assignment(AssignmentCategory.QUIZ);
+        timed.configureDelivery(30, PaperMode.same, null, null);
+        when(access.studentAssignment(51L, 42L, true)).thenReturn(timed);
+        assertThatThrownBy(() -> service.submitQuestion(51L, 100L, 42L, KEY, text("tcp")))
+                .isInstanceOfSatisfying(LmsException.class, error -> assertThat(error.getCode()).isEqualTo("CONFLICT"));
         verify(submissions, never()).save(any());
     }
 }

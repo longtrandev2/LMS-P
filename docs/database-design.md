@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Phiên bản | 1.4 — 2026-10-25 |
+| Phiên bản | 1.6 — 2026-10-27 (V21 cấu hình, thông báo hệ thống, phiên đăng nhập) |
 | Nguồn yêu cầu | `srs.md` (M1–M10, BR1–BR15) |
 | Công nghệ | MySQL 8.4, InnoDB, utf8mb4, Spring Data JPA + Flyway migration |
 
@@ -115,17 +115,25 @@ erDiagram
 
 **assignment_attempts** — lượt nộp **toàn bài quiz**: id, assignment_id FK, student_id FK users, attempt_no INT, is_late BOOL default 0, late_penalty_percent INT UNSIGNED, score DECIMAL(8,2), idempotency_key CHAR(36) UNIQUE, submitted_at DATETIME. UNIQUE(assignment_id, student_id, attempt_no); index (student_id, submitted_at). Chỉ tạo khi nộp quiz chính thức; tạo lượt và toàn bộ submission MCQ của lượt trong cùng transaction. Điểm lượt = tổng điểm các câu sau phạt muộn, câu không trả lời = 0.
 
-### 2.6 Kỳ thi (M7)
+### 2.6 Kỳ thi, cấu trúc đề, phiên làm bài (M7) — `exam-spec.md`
 
-**exams** — id, class_id FK, title NVARCHAR(200), grade_category ENUM('midterm','final'), rules_text TEXT, duration_minutes INT, opens_at DATETIME, closes_at DATETIME, shuffle_questions BOOL default 0, is_published BOOL default 0, created_by FK, created_at, updated_at. `grade_category` xác định kỳ thi đóng góp vào hạng mục sổ điểm nào. Sau publish, exam và nội dung assessment bất biến; muốn đổi phải tạo exam nháp mới. Index (class_id, opens_at).
+Kỳ thi là `assignments` với `category IN ('midterm','final')`; không có bảng `exams` riêng. V20 thêm vào **assignments**: `time_limit_minutes` INT NULL, `paper_mode` VARCHAR(20) (`same|variants|per_student`, CHECK), `variant_count` INT NULL, `rules_text` TEXT NULL, `paper_seed` BIGINT.
 
-**exam_questions** — id, exam_id FK, question_id FK (nguồn trong bank), question_version_id FK NULL (được ghim khi publish), points DECIMAL(6,2), position SMALLINT. UNIQUE(exam_id, question_id).
+**assignment_sections** — id, assignment_id FK CASCADE, position, title. UNIQUE(assignment_id, position).
 
-**exam_sessions** — id, exam_id FK, student_id FK, started_at, ends_at (= min(started_at + duration, closes_at), server tính), status ENUM('in_progress','submitted','auto_submitted'), submitted_at NULL, ip VARCHAR(45). UNIQUE(exam_id, student_id); **index (status, ends_at)** cho sweeper auto-submit.
+**assignment_draw_rules** — id, assignment_id FK CASCADE, section_id FK NULL CASCADE, variant_no INT NULL (NULL = mọi mã đề), position, bank_id FK, category_id FK NULL, difficulty VARCHAR(10) NULL, type VARCHAR(20) NULL, count INT, points DECIMAL(6,2).
 
-**exam_answers** — id, exam_session_id FK, question_id FK, selected_option_ids JSON NULL (MCQ), code_text MEDIUMTEXT NULL (draft code), updated_at. UNIQUE(exam_session_id, question_id).
+**assignment_questions** (thêm) — section_id FK NULL, variant_no INT NULL, draw_rule_id FK NULL (NULL = câu cố định; khác NULL = câu bốc từ quy tắc, tạo khi xuất bản).
 
-**exam_events** — id, exam_session_id FK, event ENUM('start','autosave','ws_disconnect','ws_reconnect','submit','auto_submit'), detail JSON NULL, created_at. Index (exam_session_id).
+**assessment_papers** — id, assignment_id FK CASCADE, code VARCHAR(10) NULL (mã đề 101…; NULL với `same`/`per_student`), student_id FK NULL (đề riêng `per_student`), total_points DECIMAL(8,2), created_at. UNIQUE(assignment_id, code).
+
+**paper_items** — PK(paper_id, assignment_question_id), position; UNIQUE(paper_id, position). Thứ tự gốc theo phần, trước khi trộn theo sinh viên.
+
+**attempt_sessions** — id, assignment_id FK, student_id FK, attempt_no, paper_id FK, status (`in_progress|submitted`), question_order JSON (mảng assignment_question_id đúng thứ tự hiển thị), started_at, ends_at (đã gồm gia hạn), extra_minutes, rules_accepted_at NULL, last_seen_at, focus_lost_count, submitted_at NULL, submit_reason (`manual|timeout|forced`) NULL, assignment_attempt_id FK NULL UNIQUE. UNIQUE(assignment_id, student_id, attempt_no); **index (status, ends_at)** cho scheduler tự nộp.
+
+**session_answers** — PK(session_id, assignment_question_id), response JSON NULL (`AnswerResponse` đã chuẩn hóa), language, source_code MEDIUMTEXT, updated_at.
+
+**session_events** — id, session_id FK CASCADE, type VARCHAR(30), occurred_at, detail JSON NULL. Index (session_id, occurred_at).
 
 ### 2.7 Nộp bài & chấm (M5/M6) ⭐
 
@@ -177,13 +185,19 @@ Bảng `grade_adjustments` của thiết kế cũ không dùng (thay bằng ghi 
 
 **leave_requests** — id, class_id FK, session_id FK, student_id FK users, reason TEXT, evidence_path VARCHAR(500), evidence_name VARCHAR(255), evidence_size INT, evidence_type VARCHAR(100), status ENUM('pending','approved','rejected','cancelled'), review_note VARCHAR(500) NULL, reviewed_by FK users NULL, reviewed_at NULL, created_at. Index (class_id, status), (session_id, student_id). Tệp lưu dưới `storage/leave-requests/{class_id}/`.
 
-### 2.9 Thông báo / Audit / Cấu hình (M9/M10)
+### 2.9 Thông báo / Audit / Cấu hình / Vận hành (M9/M10) — `admin-spec.md`
 
-**notifications** — id, user_id FK, type VARCHAR(40) ('assignment.published','submission.graded','exam.published','grade.released','material.created','enrollment.created','session.upcoming','leave_request.created','leave_request.reviewed','grade.updated'), title VARCHAR(200), body TEXT NULL, data JSON NULL (vd submission_id), is_read BOOL default 0, created_at. Index (user_id, is_read, created_at).
+**notifications** — id, user_id FK, type VARCHAR(40) ('assignment.published','exam.published','exam.upcoming','grade.released','system.announcement','submission.graded','material.created','enrollment.created','session.upcoming','leave_request.created','leave_request.reviewed','grade.updated'), title VARCHAR(200), body TEXT NULL, data JSON NULL (vd submission_id), is_read BOOL default 0, created_at. Index (user_id, is_read, created_at).
 
-**audit_logs** — id, actor_id FK NULL (NULL = system), action VARCHAR(60) ('user.update','role.assign','grade.adjust','exam.publish','settings.update','submission.regrade'...), entity_type VARCHAR(40), entity_id BIGINT, old_value JSON, new_value JSON, ip VARCHAR(45), created_at. Index (entity_type, entity_id), (actor_id, created_at), (created_at). **Append-only.**
+**audit_logs** — id, actor_id FK NULL (NULL = system), action VARCHAR(60) ('user.update','role.assign','grade.adjust','exam.publish','settings.update','submission.regrade','grading.bulk_regrade','queue.purge','announcement.create','user.sessions_revoke'...), entity_type VARCHAR(40), entity_id BIGINT, old_value JSON, new_value JSON, ip VARCHAR(45), created_at. Index (entity_type, entity_id), (actor_id, created_at), (created_at). **Append-only.**
 
-**system_settings** — setting_key VARCHAR(60) PK, setting_value JSON, description VARCHAR(255), updated_by FK, updated_at. Keys: `allowed_languages`, `default_time_limit_ms`, `default_memory_limit_mb`, `max_upload_mb`.
+**system_settings** (V21) — setting_key VARCHAR(60) PK, setting_value JSON, updated_by FK NULL, updated_at. Khóa và mặc định: `admin-spec.md` §1 (thiếu khóa = mặc định).
+
+**announcements** (V21) — id, title VARCHAR(200), body TEXT, audience VARCHAR(10) ('all','role','class'), role VARCHAR(20) NULL, class_id FK NULL, recipient_count INT, created_by FK, created_at. Index (created_at).
+
+**refresh_tokens** (thêm V21) — session_family CHAR(36) (giữ qua các lần refresh), ip VARCHAR(45) NULL, user_agent VARCHAR(255) NULL, last_used_at DATETIME NULL. Index (user_id, session_family).
+
+**assignments** (thêm V21) — upcoming_notified_at, results_notified_at DATETIME NULL (đánh dấu đã gửi `exam.upcoming` / `grade.released`).
 
 ## 3. Máy trạng thái
 

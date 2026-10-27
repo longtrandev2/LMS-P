@@ -35,9 +35,11 @@ class ProgrammingProblemValidatorTest {
 
     @Test void rejectsLimitsAndCheckerOutsideTheNewRanges() {
         assertThatThrownBy(() -> validator.validateProblem(withProgramming(new ProgrammingView(null, null, null, null,
-                List.of("python"), 20_000, 256, "token", null)))).hasMessageContaining("100 đến 10000");
+                List.of("python"), 20_001, 256, "token", null)))).hasMessageContaining("100 đến 20000");
+        assertThatCode(() -> validator.validateProblem(withProgramming(new ProgrammingView(null, null, null, null,
+                List.of("python"), 20_000, 2048, "token", null)))).doesNotThrowAnyException();
         assertThatThrownBy(() -> validator.validateProblem(withProgramming(new ProgrammingView(null, null, null, null,
-                List.of("python"), 1000, 2048, "token", null)))).hasMessageContaining("32 đến 1024");
+                List.of("python"), 1000, 2049, "token", null)))).hasMessageContaining("32 đến 2048");
         assertThatThrownBy(() -> validator.validateProblem(withProgramming(new ProgrammingView(null, null, null, null,
                 List.of(), 1000, 256, "token", null)))).hasMessageContaining("ngôn ngữ");
         assertThatThrownBy(() -> validator.validateProblem(withProgramming(new ProgrammingView(null, null, null, null,

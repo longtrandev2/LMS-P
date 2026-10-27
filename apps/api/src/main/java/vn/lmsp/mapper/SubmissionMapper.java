@@ -14,6 +14,7 @@ import vn.lmsp.dto.ReviewDtos.QuizAttemptView;
 import vn.lmsp.enums.SubmissionType;
 import vn.lmsp.model.AssignmentAttempt;
 import vn.lmsp.model.AssignmentQuestion;
+import vn.lmsp.model.AttemptSession;
 import vn.lmsp.model.Submission;
 
 @Component
@@ -36,6 +37,15 @@ public class SubmissionMapper {
 
     public QuizAttemptView toAttemptView(AssignmentAttempt attempt, List<AssignmentQuestion> questions,
             List<Submission> submissions, boolean reviewAvailable, LocalDateTime reviewAvailableAt) {
+        return toAttemptView(attempt, questions, submissions, reviewAvailable, reviewAvailableAt, null);
+    }
+
+    /**
+     * Lượt giao theo phiên (docs/exam-spec.md §6): `questions` là câu của đề phiên đó; thêm `session_id`, `paper_code`,
+     * `submit_reason`. `session` null = lượt quiz thường.
+     */
+    public QuizAttemptView toAttemptView(AssignmentAttempt attempt, List<AssignmentQuestion> questions,
+            List<Submission> submissions, boolean reviewAvailable, LocalDateTime reviewAvailableAt, AttemptSession session) {
         BigDecimal maxScore = questions.stream().map(AssignmentQuestion::getPoints).reduce(BigDecimal.ZERO, BigDecimal::add);
         List<QuestionScore> scores = null;
         if (reviewAvailable) {
@@ -47,7 +57,9 @@ public class SubmissionMapper {
             }).toList();
         }
         return new QuizAttemptView(attempt.getId(), attempt.getAttemptNo(), attempt.getScore(), maxScore, attempt.isLate(),
-                attempt.getLatePenaltyPercent(), attempt.getSubmittedAt(), reviewAvailable, reviewAvailableAt, scores);
+                attempt.getLatePenaltyPercent(), attempt.getSubmittedAt(), reviewAvailable, reviewAvailableAt, scores,
+                session == null ? null : session.getId(), session == null ? null : session.getPaper().getCode(),
+                session == null ? null : session.getSubmitReason());
     }
 
     public static Map<Long, Submission> byQuestion(List<Submission> submissions) {

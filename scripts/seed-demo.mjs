@@ -9,6 +9,7 @@ import {
 } from "./seed-lib.mjs";
 import { seedAssessment } from "./seed-assessment.mjs";
 import { seedSchedule } from "./seed-schedule.mjs";
+import { seedExams } from "./seed-exams.mjs";
 
 const PDF = `%PDF-1.4
 1 0 obj <</Type/Catalog/Pages 2 0 R>> endobj
@@ -125,12 +126,13 @@ async function main() {
 
   await seedAssessment({ lecturer, student, klass, bank, catOverview, catSocket });
   await seedSchedule({ admin, lecturer, student, klass, course });
+  await seedExams({ lecturer, sv02: await login("sv02@lms.local"), sv03: await login("sv03@lms.local"), klass, bank });
 
   console.log(`
 Hoàn tất. Đăng nhập http://localhost:3000 (mật khẩu chung: ${DEMO_PASSWORD})
   admin@lms.local    — quản trị user/học phần/lớp, xem audit
-  lecturer@lms.local — lớp NET101-L01, ngân hàng đề (9 loại câu), các bài đã xuất bản, kết quả
-  student@lms.local  — đã có lượt nộp mẫu; sv02@lms.local / sv03@lms.local — tài khoản sạch để tự làm bài`);
+  lecturer@lms.local — lớp NET101-L01, ngân hàng đề (9 loại câu), bài tập, kỳ thi (giám sát giữa kỳ), kết quả
+  student@lms.local  — đã có lượt nộp mẫu; sv02 đã thi giữa kỳ, sv03 đang thi; giữa kỳ và quiz 15 phút để student tự làm`);
 }
 
 main().catch((error) => { console.error(`LỖI: ${error.message}`); process.exit(1); });

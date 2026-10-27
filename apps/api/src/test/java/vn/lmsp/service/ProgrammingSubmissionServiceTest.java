@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import vn.lmsp.common.LmsException;
 import org.mockito.ArgumentCaptor;
 import vn.lmsp.dto.AssignmentDtos.QuestionSubmissionInput;
 import vn.lmsp.enums.*;
@@ -32,7 +33,7 @@ class ProgrammingSubmissionServiceTest {
         link.pin(version(link.getQuestion(), 1, programmingSnapshot()));
         var snapshots = new QuestionVersionService(mock(QuestionVersionRepository.class), mock(QuestionReadService.class), new ObjectMapper());
         service = new ProgrammingSubmissionService(access, links, submissions, jobs, users, snapshots,
-                new SubmissionPolicy(), new GradingMapper(), mock(AuditService.class));
+                new SubmissionPolicy(), new GradingMapper(), mock(AuditService.class), vn.lmsp.support.TestSettings.defaults());
         when(access.studentAssignment(50L, 42L, true)).thenReturn(assignment);
         when(links.findByAssignment_IdAndQuestion_Id(50L, 100L)).thenReturn(Optional.of(link));
         when(users.findById(42L)).thenReturn(Optional.of(user(42, "student")));
@@ -106,5 +107,12 @@ class ProgrammingSubmissionServiceTest {
         link.pin(version(link.getQuestion(), 2, broken));
         assertThat(service.submit(50L, 100L, 42L, KEY, input).replayed()).isFalse();
         verify(jobs).save(any());
+    }
+
+    @Test void examsOnlyAcceptCodeThroughTheirSession() {
+        when(access.studentAssignment(51L, 42L, true)).thenReturn(assignment(AssignmentCategory.FINAL));
+        assertThatThrownBy(() -> service.submit(51L, 100L, 42L, KEY, input))
+                .isInstanceOfSatisfying(LmsException.class, error -> assertThat(error.getCode()).isEqualTo("CONFLICT"));
+        verifyNoInteractions(jobs);
     }
 }

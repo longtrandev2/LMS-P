@@ -8,6 +8,7 @@ import { WorkPanel } from "@/features/assignments/student/overview/work-panel";
 import { BackLink, PageError, PageNotice, PageSkeleton } from "@/features/assignments/student/page-states";
 import { routeId, studentPaths } from "@/features/assignments/student/paths";
 import { useAssignmentDetails, useQuizAttempts } from "@/features/assignments/student/use-student-data";
+import { SessionAssignmentOverview } from "@/features/exams/student/info/session-assignment-overview";
 
 /**
  * `/me/classes/:classId/assignments/:assignmentId` — tổng quan bài của sinh viên (assessment-spec §8), bố cục như trang
@@ -17,8 +18,9 @@ export function StudentAssignmentPage() {
   const { classId = "", assignmentId } = useParams();
   const id = routeId(assignmentId);
   const details = useAssignmentDetails(id);
+  const isSession = details.data?.assignment.delivery === "session";
   const isQuiz = details.data?.assignment.category === "quiz";
-  const attempts = useQuizAttempts(id, isQuiz);
+  const attempts = useQuizAttempts(id, isQuiz && !isSession);
   const back = <BackLink to={studentPaths.classPage(classId)}>Bài tập của lớp</BackLink>;
 
   if (!Number.isFinite(id)) return <PageNotice back={back} title="Không tìm thấy bài" description="Đường dẫn không hợp lệ." />;
@@ -26,6 +28,8 @@ export function StudentAssignmentPage() {
     return details.isError ? <PageError back={back} error={details.error} onRetry={() => void details.refetch()} /> : <PageSkeleton />;
   }
 
+  // Bài giao theo phiên (kỳ thi, quiz có giờ/mã đề): trang thông tin + phòng thi thay cho danh sách câu (exam-spec §8).
+  if (isSession) return <SessionAssignmentOverview details={details.data} />;
   const item = details.data.assignment;
   return <div className="space-y-8">
     <AssignmentHeader item={item} />

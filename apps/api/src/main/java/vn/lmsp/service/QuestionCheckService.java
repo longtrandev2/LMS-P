@@ -51,6 +51,7 @@ public class QuestionCheckService {
     @Transactional
     public RunAccepted draftCheck(DraftCheckInput input, Long actorId, boolean admin) {
         banks.requireEditableBank(input.bank_id(), actorId, admin);
+        programs.requireLimits(input.time_limit_ms(), input.memory_limit_mb());
         String checker = input.checker_mode() == null || input.checker_mode().isBlank() ? "token" : input.checker_mode();
         Double epsilon = "float".equals(checker)
                 ? (input.checker_epsilon() == null ? ProgrammingContentValidator.DEFAULT_EPSILON : input.checker_epsilon()) : null;

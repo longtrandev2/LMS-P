@@ -40,7 +40,8 @@ function useCrumbNames(pathname: string) {
   const className = isStudentArea
     ? myClasses.data?.find((item) => String(item.id) === classId)?.name
     : lecturerClass.data?.name;
-  return { className, assignmentTitle: assignment.data?.assignment.title };
+  const category = assignment.data?.assignment.category;
+  return { className, assignmentTitle: assignment.data?.assignment.title, isExam: category === "midterm" || category === "final" };
 }
 
 /** Breadcrumb topbar kiểu Frappe: mục cha nhạt, trang hiện tại đậm; mobile chỉ hiện mục cuối. */

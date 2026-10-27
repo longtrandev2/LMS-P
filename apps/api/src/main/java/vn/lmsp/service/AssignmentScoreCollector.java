@@ -53,7 +53,7 @@ public class AssignmentScoreCollector {
                 BigDecimal score = row.final_score() == null ? BigDecimal.ZERO
                         : row.final_score().multiply(TEN).divide(row.max_score(), 4, RoundingMode.HALF_UP);
                 builder.sums.merge(row.student_id(), score, BigDecimal::add);
-                if (row.questions() != null && row.questions().stream().anyMatch(q -> q.last_status() == SubmissionStatus.pending
+                if (row.grading_pending() || row.questions() != null && row.questions().stream().anyMatch(q -> q.last_status() == SubmissionStatus.pending
                         || q.last_status() == SubmissionStatus.grading)) builder.pending.add(row.student_id());
             }
         }
