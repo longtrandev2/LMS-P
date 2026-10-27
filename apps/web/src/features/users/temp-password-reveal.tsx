@@ -26,14 +26,14 @@ export function TempPasswordReveal({
   return (
     <div
       className={cn(
-        "flex items-center justify-between gap-3 rounded-lg border border-warning/30 bg-warning/10 px-4 py-3",
+        "flex items-center justify-between gap-3 rounded-lg bg-secondary py-2 pr-2 pl-4",
         className
       )}
     >
-      <code className="break-all font-mono text-base font-semibold">{password}</code>
+      <code className="font-mono text-base font-medium tracking-wide break-all">{password}</code>
       <Button
         type="button"
-        variant="outline"
+        variant="ghost"
         size="icon-sm"
         aria-label="Sao chép mật khẩu"
         onClick={copy}

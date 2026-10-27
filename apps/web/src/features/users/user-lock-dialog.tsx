@@ -24,9 +24,9 @@ export function UserLockDialog({ user, onOpenChange, onDone }: { user: User | nu
   return (
     <Dialog open={!!user} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
-        <DialogHeader><DialogTitle>{locking ? "Khóa tài khoản" : "Mở tài khoản"}</DialogTitle><DialogDescription>{user?.email}</DialogDescription></DialogHeader>
-        {locking ? <div className="space-y-2"><Label htmlFor="lock-reason">Lý do khóa</Label><Textarea id="lock-reason" value={reason} onChange={(event) => setReason(event.target.value)} maxLength={500} placeholder="Nhập lý do để ghi vào nhật ký kiểm toán…" /></div> : <p className="text-sm">Tài khoản sẽ có thể đăng nhập lại sau khi được mở.</p>}
-        <DialogFooter><Button variant="ghost" onClick={() => onOpenChange(false)}>Hủy</Button><Button variant={locking ? "destructive" : "default"} disabled={saving || (locking && !reason.trim())} onClick={submit}>{saving ? "Đang lưu…" : locking ? "Khóa tài khoản" : "Mở tài khoản"}</Button></DialogFooter>
+        <DialogHeader><DialogTitle>{locking ? "Khóa tài khoản" : "Mở tài khoản"}</DialogTitle><DialogDescription>{user ? `${user.full_name} · ${user.email}` : null}</DialogDescription></DialogHeader>
+        {locking ? <div className="space-y-2"><Label htmlFor="lock-reason">Lý do khóa</Label><Textarea id="lock-reason" value={reason} onChange={(event) => setReason(event.target.value)} maxLength={500} placeholder="Lý do được ghi vào nhật ký kiểm toán" /><p className="text-xs text-muted-foreground">Mọi phiên đăng nhập của người dùng sẽ bị thu hồi.</p></div> : <p className="text-sm text-muted-foreground">Người dùng có thể đăng nhập lại ngay sau khi tài khoản được mở.</p>}
+        <DialogFooter><Button variant="outline" onClick={() => onOpenChange(false)}>Hủy</Button><Button variant={locking ? "destructive" : "default"} disabled={saving || (locking && !reason.trim())} onClick={submit}>{saving ? "Đang lưu…" : locking ? "Khóa tài khoản" : "Mở tài khoản"}</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   );
