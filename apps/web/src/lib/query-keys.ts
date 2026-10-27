@@ -39,6 +39,16 @@ export const queryKeys = {
   submissions: {
     detail: (id: number) => ["submission", id] as const,
   },
+  admin: {
+    settings: ["admin", "settings"] as const,
+    publicSettings: ["settings", "public"] as const,
+    stats: (days: number) => ["admin", "stats", days] as const,
+    realtime: ["admin", "realtime"] as const,
+    queues: ["health", "queue"] as const,
+    failed: (page: number) => ["admin", "grading", "failed", page] as const,
+    announcements: (page: number) => ["admin", "announcements", page] as const,
+    userSessions: (userId: number) => ["admin", "users", userId, "sessions"] as const,
+  },
   exams: {
     papers: (assignmentId: number) => ["assignments", assignmentId, "papers"] as const,
     monitor: (assignmentId: number) => ["assignments", assignmentId, "monitor"] as const,

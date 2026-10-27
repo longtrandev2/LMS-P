@@ -9,6 +9,7 @@ const MESSAGES: Record<string, string> = {
   DEADLINE_PASSED: "Đã quá hạn nộp bài.",
   EXAM_NOT_OPEN: "Kỳ thi hiện chưa mở.",
   SESSION_ENDED: "Phiên làm bài đã kết thúc.",
+  MAINTENANCE: "Hệ thống đang bảo trì, vui lòng thử lại sau.",
   NOT_ELIGIBLE: "Bạn không đủ điều kiện dự thi (vượt số buổi nghỉ cho phép).",
   IDEMPOTENCY_CONFLICT: "Yêu cầu trùng lặp, vui lòng tải lại trang.",
   VALIDATION_ERROR: "Dữ liệu nhập chưa hợp lệ, vui lòng kiểm tra lại.",

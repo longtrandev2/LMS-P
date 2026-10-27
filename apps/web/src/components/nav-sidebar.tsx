@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { FileQuestion, History, Library, PanelLeftClose, PanelLeftOpen, School, Users, type LucideIcon } from "lucide-react";
+import { Activity, FileQuestion, History, LayoutDashboard, Library, PanelLeftClose, PanelLeftOpen, School, Settings, Users, type LucideIcon } from "lucide-react";
 import { UserMenu } from "@/components/user-menu";
 import { hasRole, useAuthStore } from "@/stores/auth";
 import { cn } from "@/lib/utils";
@@ -11,6 +11,8 @@ interface NavItem {
   icon: LucideIcon;
   /** Tiền tố đường dẫn cũng làm mục này active (vd. trang lớp con). */
   match?: string[];
+  /** Chỉ sáng khi đúng đường dẫn (không gồm trang con). */
+  exact?: boolean;
 }
 interface NavGroup { group: string; items: NavItem[] }
 
@@ -37,8 +39,11 @@ function navFor(user: CurrentUser | null): NavGroup[] {
     groups.push({
       group: "Quản trị",
       items: [
+        { href: "/admin", label: "Tổng quan", icon: LayoutDashboard, exact: true },
         { href: "/admin/users", label: "Người dùng", icon: Users },
         { href: "/admin/academics", label: "Học phần & lớp", icon: Library, match: ["/courses", "/classes"] },
+        { href: "/admin/operations", label: "Vận hành", icon: Activity },
+        { href: "/admin/settings", label: "Cấu hình", icon: Settings },
         { href: "/admin/audit-logs", label: "Nhật ký kiểm toán", icon: History },
         ...(!isLecturer ? [QUESTION_BANK] : []),
       ],
@@ -68,7 +73,7 @@ export function Sidebar({ collapsed = false, onToggle, onNavigate }: {
           <div key={group.group} className="space-y-0.5">
             {multipleGroups && !collapsed ? <p className="px-2 pb-1 text-xs text-muted-foreground">{group.group}</p> : null}
             {group.items.map((item) => {
-              const active = within(pathname, item.href) || (item.match ?? []).some((p) => within(pathname, p));
+              const active = item.exact ? pathname === item.href : within(pathname, item.href) || (item.match ?? []).some((p) => within(pathname, p));
               return (
                 <Link
                   key={item.href}

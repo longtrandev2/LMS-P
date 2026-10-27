@@ -23,6 +23,9 @@ const questions: Crumb = { label: "Ngân hàng câu hỏi", href: "/questions" }
 
 /** Bảng route → breadcrumb; route cụ thể trước route tổng quát. */
 const ROUTES: RouteCrumbs[] = [
+  { pattern: "/admin", build: () => [{ label: "Quản trị" }, { label: "Tổng quan" }] },
+  { pattern: "/admin/settings", build: () => [{ label: "Quản trị" }, { label: "Cấu hình" }] },
+  { pattern: "/admin/operations", build: () => [{ label: "Quản trị" }, { label: "Vận hành" }] },
   { pattern: "/admin/users", build: () => [{ label: "Quản trị" }, { label: "Người dùng" }] },
   { pattern: "/admin/academics", build: () => [{ label: "Quản trị" }, { label: "Học phần & lớp" }] },
   { pattern: "/admin/audit-logs", build: () => [{ label: "Quản trị" }, { label: "Nhật ký kiểm toán" }] },
