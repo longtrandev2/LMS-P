@@ -34,9 +34,11 @@ public class AssignmentSubmissionService {
     private final AnswerNormalizer normalizer;
     private final ObjectiveGrader grader;
     private final ReviewPolicy reviews;
+    private final MaintenanceGuard maintenance;
 
     @Transactional
     public SubmissionView submitQuestion(Long assignmentId, Long questionId, Long studentId, String rawKey, QuestionSubmissionInput body) {
+        maintenance.check(false);
         Assignment assignment = access.studentAssignment(assignmentId, studentId, true);
         if (assignment.isSessionBased()) throw sessionOnly();
         if (assignment.getCategory() == AssignmentCategory.QUIZ) throw bad("Quiz phải nộp toàn bộ đáp án trong một lượt");

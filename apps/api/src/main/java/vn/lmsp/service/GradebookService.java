@@ -35,31 +35,32 @@ public class GradebookService {
     private final GradeEntryRepository entries;
     private final AttendanceSummaryProvider attendance;
     private final AssignmentScoreCollector assignmentScores;
+    private final SettingsProvider settings;
 
     @Transactional(readOnly = true)
     public Gradebook gradebook(Long classId, Long actorId, boolean admin) {
         LmsClass clazz = access.lecturerClass(classId, actorId, admin);
-        GradePolicy policy = GradePolicyCodec.read(clazz.getGradePolicy());
+        GradePolicy policy = policy(clazz);
         return new Gradebook(policy, rows(clazz, policy, null));
     }
 
     @Transactional(readOnly = true)
     public MyGrades mine(Long classId, Long studentId) {
         LmsClass clazz = access.studentClass(classId, studentId);
-        GradePolicy policy = GradePolicyCodec.read(clazz.getGradePolicy());
+        GradePolicy policy = policy(clazz);
         return new MyGrades(policy, single(clazz, policy, studentId));
     }
 
     /** Dòng điểm của một sinh viên đang học (caller đã kiểm tra quyền). */
     @Transactional(readOnly = true)
     public GradeRow row(LmsClass clazz, Long studentId) {
-        return single(clazz, GradePolicyCodec.read(clazz.getGradePolicy()), studentId);
+        return single(clazz, policy(clazz), studentId);
     }
 
     /** Mọi sinh viên đang học, sắp theo mã SV (caller đã kiểm tra quyền). */
     @Transactional(readOnly = true)
     public List<GradeRow> rows(LmsClass clazz) {
-        return rows(clazz, GradePolicyCodec.read(clazz.getGradePolicy()), null);
+        return rows(clazz, policy(clazz), null);
     }
 
     private GradeRow single(LmsClass clazz, GradePolicy policy, Long studentId) {
@@ -102,5 +103,10 @@ public class GradebookService {
         if (onlyStudent != null) loaded.removeIf(u -> !onlyStudent.equals(u.getId()));
         loaded.sort(ROSTER_ORDER);
         return loaded;
+    }
+
+    /** Chính sách của lớp; lớp chưa cấu hình dùng `default_grade_policy` — admin-spec.md §1. */
+    private GradePolicy policy(LmsClass clazz) {
+        return GradePolicyCodec.read(clazz.getGradePolicy(), settings.defaultGradePolicy());
     }
 }

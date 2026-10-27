@@ -33,7 +33,7 @@ class AttemptSessionStartServiceTest {
     private final AuditService audit = mock(AuditService.class);
     private final AttemptSessionAssembler assembler = mock(AttemptSessionAssembler.class);
     private final AttemptSessionStartService service = new AttemptSessionStartService(mock(PlatformTransactionManager.class),
-            access, sessions, users, papers, eligibility, events, audit, assembler);
+            access, sessions, users, papers, eligibility, events, audit, assembler, vn.lmsp.support.TestSettings.defaults());
     private final StartSessionInput accept = new StartSessionInput(true);
     private Assignment assignment;
     private AssessmentPaper paper;

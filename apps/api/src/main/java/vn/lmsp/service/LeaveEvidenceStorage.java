@@ -17,33 +17,39 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.web.multipart.MultipartFile;
 import vn.lmsp.common.LmsException;
 
-/** Tệp minh chứng đơn xin nghỉ dưới `storage/leave-requests/{class_id}/` — pdf/jpg/png/webp/doc/docx, ≤ 5 MB. */
+/**
+ * Tệp minh chứng đơn xin nghỉ dưới `storage/leave-requests/{class_id}/` — pdf/jpg/png/webp/doc/docx,
+ * ≤ `leave_evidence_max_mb` (mặc định 5 MB, docs/admin-spec.md §1).
+ */
 @Component
 public class LeaveEvidenceStorage {
-    public static final long MAX_BYTES = 5L * 1024 * 1024;
     private static final String FOLDER = "leave-requests";
     private static final Map<String, String> TYPES = Map.of(
             ".pdf", "application/pdf", ".jpg", "image/jpeg", ".jpeg", "image/jpeg", ".png", "image/png",
             ".webp", "image/webp", ".doc", "application/msword",
             ".docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
     private final Path root;
+    private final SettingsProvider settings;
 
     public record StoredEvidence(String path, String name, int size, String type) { }
 
-    public LeaveEvidenceStorage(@Value("${lms.storage-dir:./storage}") String root) {
+    public LeaveEvidenceStorage(@Value("${lms.storage-dir:./storage}") String root, SettingsProvider settings) {
         this.root = Path.of(root).toAbsolutePath().normalize();
+        this.settings = settings;
     }
 
     public StoredEvidence store(Long classId, MultipartFile file) {
         if (file == null || file.isEmpty()) throw ScheduleErrors.invalid("Cần một tệp minh chứng");
-        if (file.getSize() > MAX_BYTES) throw ScheduleErrors.invalid("Tệp minh chứng tối đa 5 MB");
+        int maxMb = settings.leaveEvidenceMaxMb();
+        long maxBytes = maxMb * 1024L * 1024L;
+        if (file.getSize() > maxBytes) throw tooLarge(maxMb);
         String name = safeName(file.getOriginalFilename());
         String ext = extension(name);
         String type = TYPES.get(ext);
         if (type == null) throw ScheduleErrors.invalid("Tệp minh chứng chỉ hỗ trợ PDF, JPG, PNG, WEBP, DOC hoặc DOCX");
         byte[] bytes;
         try { bytes = file.getBytes(); } catch (IOException error) { throw storageError(); }
-        if (bytes.length > MAX_BYTES) throw ScheduleErrors.invalid("Tệp minh chứng tối đa 5 MB");
+        if (bytes.length > maxBytes) throw tooLarge(maxMb);
         if (!matchesSignature(ext, bytes)) throw ScheduleErrors.invalid("Nội dung tệp không khớp định dạng " + ext);
         String relative = FOLDER + "/" + classId + "/" + UUID.randomUUID() + ext;
         Path target = root.resolve(relative).normalize();
@@ -104,6 +110,8 @@ public class LeaveEvidenceStorage {
             }
         });
     }
+
+    private static LmsException tooLarge(int maxMb) { return ScheduleErrors.invalid("Tệp minh chứng tối đa " + maxMb + " MB"); }
 
     private static LmsException storageError() {
         return new LmsException("STORAGE_ERROR", "Không thể lưu tệp minh chứng", HttpStatus.INTERNAL_SERVER_ERROR, null);

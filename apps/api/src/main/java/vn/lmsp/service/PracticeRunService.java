@@ -33,6 +33,7 @@ public class PracticeRunService {
     private final SubmissionPolicy policy;
     private final PracticeRateLimiter limiter;
     private final RunJobGateway runs;
+    private final MaintenanceGuard maintenance;
 
     @Transactional
     public RunAccepted run(Long assignmentId, Long questionId, Long studentId, PracticeRunInput input) {
@@ -45,9 +46,10 @@ public class PracticeRunService {
 
     /**
      * Chạy thử một câu đã ghim phiên bản; caller đã kiểm tra quyền và khung giờ (bài thường: hạn nộp; phiên làm bài:
-     * phiên đang mở — docs/exam-spec.md §8.1). Dùng chung giới hạn 6 lần/phút/sinh viên.
+     * phiên đang mở — docs/exam-spec.md §8.1). Dùng chung giới hạn lần/phút/sinh viên; bị chặn khi bảo trì (admin-spec §5.2).
      */
     public RunAccepted runPinned(AssignmentQuestion link, Long studentId, PracticeRunInput input) {
+        maintenance.check(false);
         Long assignmentId = link.getAssignmentId();
         Long questionId = link.getQuestionId();
         if (link.getQuestionVersion() == null) throw bad("Câu hỏi chưa được ghim phiên bản");
