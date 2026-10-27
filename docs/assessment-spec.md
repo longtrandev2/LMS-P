@@ -175,7 +175,7 @@ Thêm vào `assignments`:
 
 ### 6.2 Bốc đề ngẫu nhiên
 
-`POST /questions/draw` nhận danh sách quy tắc (ngân hàng, danh mục?, độ khó?, loại?, số câu), trả câu hỏi bốc ngẫu nhiên không lặp từ các ngân hàng người dùng được xem, cùng thông báo quy tắc nào thiếu câu. Kết quả **điền vào danh sách câu của bản nháp**; giảng viên xem, đổi, xóa trước khi xuất bản. Đề vẫn chung cho cả lớp. Đề riêng từng sinh viên và quiz giới hạn thời gian làm cùng phiên thi M7.
+`POST /questions/draw` nhận danh sách quy tắc (ngân hàng, danh mục?, độ khó?, loại?, số câu), trả câu hỏi bốc ngẫu nhiên không lặp từ các ngân hàng người dùng được xem, cùng thông báo quy tắc nào thiếu câu. Kết quả **điền vào danh sách câu của bản nháp**; giảng viên xem, đổi, xóa trước khi xuất bản. Bốc lúc soạn cho ra một đề chung. Quy tắc bốc lưu trong đề, nhiều mã đề, đề riêng từng sinh viên và quiz giới hạn thời gian: `exam-spec.md`.
 
 ## 7. Job chạy thử (run jobs)
 

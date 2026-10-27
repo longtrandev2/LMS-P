@@ -2,7 +2,7 @@
 
 | Thuộc tính | Giá trị |
 |---|---|
-| Phiên bản | 1.9 — 2026-10-27 (lịch học/điểm danh/đơn xin nghỉ, sổ điểm 4 thành phần — `class-schedule-grades-spec.md`; câu hỏi/đề/chấm — `assessment-spec.md`) |
+| Phiên bản | 2.0 — 2026-10-27 (kỳ thi, đề nhiều mã, phiên làm bài — `exam-spec.md`; lịch học/điểm danh/đơn xin nghỉ, sổ điểm 4 thành phần — `class-schedule-grades-spec.md`; câu hỏi/đề/chấm — `assessment-spec.md`) |
 | Trạng thái | Baseline (spec-first, chuẩn đối chiếu cho DB/API/kiến trúc/plan) |
 | Nguồn требования | Subject gốc của giảng viên (English, bản gốc trong repo docs) |
 | Tham khảo mở rộng | `LMS – Phân tích nghiệp vụ và kiến trúc công nghệ.md` — CHỈ tham khảo, phạm vi lấy theo Subject + tài liệu này |
@@ -145,15 +145,16 @@ M6: API lưu bài nộp và job outbox trong cùng transaction; publisher dùng 
 ### M7 — Kỳ thi
 | ID | Ưu tiên | Yêu cầu |
 |---|---|---|
-| FR-EXM-01 | M | Tạo kỳ thi: tìm/chọn câu từ ngân hàng và danh mục, hạng mục điểm `midterm` hoặc `final`, thời lượng, opens_at/closes_at, nội dung quy chế, shuffle, xuất bản. Khi xuất bản, cố định danh sách câu, phiên bản câu hỏi, điểm và thứ tự |
-| FR-EXM-02 | M | Vào thi trong [opens_at, closes_at): xác nhận quy chế → tạo phiên; `ends_at = min(started_at + duration, closes_at)`; 1 phiên/thí sinh |
-| FR-EXM-03 | M | Đề chỉ hiển thị sau khi phiên bắt đầu (BR9); shuffle thứ tự câu theo thí sinh nếu bật |
-| FR-EXM-04 | M | Thời gian chuẩn do server; client hiển thị đếm ngược từ `remaining_seconds` định kỳ |
-| FR-EXM-05 | M | Tự lưu bài (autosave ~15s / debounce): đáp án MCQ + draft code |
-| FR-EXM-06 | M | Tự động nộp khi hết giờ (server sweeper, không phụ thuộc client): chấm MCQ, code vào queue **ưu tiên cao** |
-| FR-EXM-07 | M | Nộp sớm thủ công; sau ends_at từ chối |
-| FR-EXM-08 | S | Lecturer giám sát trực tiếp: danh sách phiên (trạng thái, đã nộp), poll 5s |
-| FR-EXM-09 | S | Ghi log sự kiện phiên thi: start, autosave, mất kết nối, reconnect, submit |
+| FR-EXM-01 | M | Tạo kỳ thi = bài tập `midterm`/`final` có thời lượng, khung giờ, quy chế, trộn câu/lựa chọn. Cấu trúc đề nhiều phần; mỗi phần gồm câu chọn tay và/hoặc quy tắc bốc ngẫu nhiên (ngân hàng, danh mục, độ khó, loại, số câu, điểm); ma trận đề danh mục × độ khó (`exam-spec.md` §3) |
+| FR-EXM-02 | M | Chế độ giao đề: một đề chung, nhiều mã đề (sinh khi xuất bản, chia đều cho sinh viên, có thể soạn tay từng mã), hoặc mỗi sinh viên một đề bốc riêng khi vào thi; xem trước và bốc lại khi còn nháp. Xuất bản ghim phiên bản mọi câu có thể xuất hiện |
+| FR-EXM-03 | M | Vào thi trong [available_from, closes_at): xác nhận quy chế → tạo phiên; `ends_at = min(started_at + thời lượng, closes_at)`; 1 phiên/thí sinh; vào lại thì tiếp tục phiên cũ; cuối kỳ chặn sinh viên không đủ điều kiện dự thi |
+| FR-EXM-04 | M | Đề chỉ hiển thị qua phiên (BR9); thứ tự câu/lựa chọn trộn theo thí sinh và giữ nguyên khi xem lại |
+| FR-EXM-05 | M | Thời gian chuẩn do server; client đếm ngược theo `server_now`/`ends_at`, hiệu chỉnh sau mỗi lần lưu/heartbeat |
+| FR-EXM-06 | M | Tự lưu (debounce + định kỳ 15s, bản sao cục bộ khi mất mạng): mọi loại câu + code |
+| FR-EXM-07 | M | Nộp sớm thủ công; server tự nộp khi hết giờ (không phụ thuộc client); chấm khách quan ngay, code vào queue **ưu tiên cao** |
+| FR-EXM-08 | S | Giảng viên giám sát (poll 5s): trạng thái, mã đề, thời gian còn lại, tiến độ, số lần rời trang, kết nối; gia hạn và thu bài từng sinh viên có lý do + audit |
+| FR-EXM-09 | S | Ghi log sự kiện phiên: bắt đầu, vào lại, rời/quay lại trang, mất/có mạng, nộp, tự nộp, thu bài, gia hạn; sinh viên được cảnh báo khi rời trang |
+| FR-EXM-10 | S | Quiz giới hạn thời gian và quiz đề riêng từng sinh viên dùng chung cơ chế phiên (`exam-spec.md` §1) |
 
 ### M8 — Sổ điểm
 | ID | Ưu tiên | Yêu cầu |
