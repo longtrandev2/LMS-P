@@ -70,8 +70,10 @@ public class AssignmentResultService {
             return new QuestionResult(question.getQuestionId(), picked == null ? null : picked.getScore(), tries.size(),
                     last == null ? null : last.getStatus(), last == null ? null : last.getVerdict());
         }).toList();
+        boolean pending = chosen != null && rows.stream().anyMatch(row -> chosen.getId().equals(row.getAssignmentAttemptId())
+                && !row.isTerminal());
         return new StudentResult(student.getId(), student.getFullName(), student.getStudentCode(),
-                chosen == null ? null : chosen.getScore(), maxScore, tries.size(), attemptViews, questionViews);
+                chosen == null ? null : chosen.getScore(), maxScore, tries.size(), attemptViews, questionViews, pending);
     }
 
     private StudentResult questionRow(Assignment assignment, User student, List<AssignmentQuestion> questions,
@@ -90,7 +92,7 @@ public class AssignmentResultService {
                     last == null ? null : last.getStatus(), last == null ? null : last.getVerdict()));
         }
         return new StudentResult(student.getId(), student.getFullName(), student.getStudentCode(), total, maxScore,
-                rows.size(), null, views);
+                rows.size(), null, views, rows.stream().anyMatch(row -> !row.isTerminal()));
     }
 
     private Submission find(List<Submission> rows, AssignmentAttempt attempt, AssignmentQuestion question) {

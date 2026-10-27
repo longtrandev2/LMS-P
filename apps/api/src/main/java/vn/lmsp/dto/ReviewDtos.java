@@ -64,7 +64,12 @@ public final class ReviewDtos {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record StudentResult(Long student_id, String student_full_name, String student_code, BigDecimal final_score,
                                 BigDecimal max_score, int attempt_count, List<AttemptResult> attempts,
-                                List<QuestionResult> questions) { }
+                                List<QuestionResult> questions, boolean grading_pending) {
+        public StudentResult(Long student_id, String student_full_name, String student_code, BigDecimal final_score,
+                             BigDecimal max_score, int attempt_count, List<AttemptResult> attempts, List<QuestionResult> questions) {
+            this(student_id, student_full_name, student_code, final_score, max_score, attempt_count, attempts, questions, false);
+        }
+    }
 
     public record ResultsTable(List<StudentResult> items) { }
 }

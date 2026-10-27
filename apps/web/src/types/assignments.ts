@@ -207,4 +207,6 @@ export interface StudentResultRow {
   attempt_count: number;
   attempts?: { attempt_id: number; attempt_no: number; score: number; is_late: boolean; submitted_at: string }[];
   questions: { question_id: number; final_score?: number | null; attempt_count: number; last_status?: SubmissionStatus | null; last_verdict?: GradingVerdict | null }[];
+  /** Lượt được tính (hoặc bài nộp từng câu) còn bài code đang chấm. */
+  grading_pending?: boolean;
 }
