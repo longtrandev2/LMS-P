@@ -45,6 +45,9 @@ export function useAttemptReview(assignmentId: number, attemptId: number) {
     queryKey: queryKeys.assignments.attemptReview(assignmentId, attemptId),
     queryFn: ({ signal }) => api.get<AttemptReview>(`/assignments/${assignmentId}/quiz-attempts/${attemptId}`, undefined, signal),
     enabled: Number.isFinite(assignmentId) && Number.isFinite(attemptId),
+    // Lượt của bài giao theo phiên: câu lập trình còn đang chấm → đọc lại cho tới khi có điểm.
+    refetchInterval: (query) => query.state.data?.questions.some((row) => row.question.type === "programming" && row.submission_id != null
+      && (isGrading(row.status) || row.score == null)) ? 4000 : false,
   });
 }
 

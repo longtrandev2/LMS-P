@@ -3,6 +3,9 @@ type Id = number | string;
 
 export const studentPaths = {
   classPage: (classId: Id) => `/me/classes/${classId}?tab=assignments`,
+  /** Kỳ thi (giữa kỳ/cuối kỳ) nằm ở tab "Kỳ thi", không ở tab Bài tập. */
+  classTabFor: (classId: Id, category: string) => `/me/classes/${classId}?tab=${category === "midterm" || category === "final" ? "exams" : "assignments"}`,
+  room: (sessionId: Id) => `/attempt-sessions/${sessionId}`,
   overview: (classId: Id, assignmentId: Id) => `/me/classes/${classId}/assignments/${assignmentId}`,
   attempt: (classId: Id, assignmentId: Id) => `/me/classes/${classId}/assignments/${assignmentId}/attempt`,
   review: (classId: Id, assignmentId: Id, attemptId: Id) => `/me/classes/${classId}/assignments/${assignmentId}/attempts/${attemptId}`,
