@@ -6,7 +6,7 @@ export const ATTENDANCE_LABEL: Record<AttendanceStatus, string> = {
 };
 /** Variant của `ui/badge` cho từng trạng thái; chưa điểm danh dùng `secondary`. */
 export const ATTENDANCE_TONE: Record<AttendanceStatus, "success" | "warning" | "info" | "destructive"> = {
-  present: "success", late: "warning", excused: "info", absent: "destructive",
+  present: "success", late: "info", excused: "warning", absent: "destructive",
 };
 export const LEAVE_STATUS_LABEL: Record<LeaveRequestStatus, string> = {
   pending: "Chờ duyệt", approved: "Đã duyệt", rejected: "Từ chối", cancelled: "Đã hủy",

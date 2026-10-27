@@ -6,8 +6,8 @@ export const GRADE_COMPONENT_LABEL: Record<GradeComponent, string> = {
   attendance: "Chuyên cần", assignment: "Bài tập", midterm: "Giữa kỳ", final: "Cuối kỳ",
 };
 
-/** Hiển thị điểm thang 10 kiểu Việt Nam (dấu phẩy, 1–2 chữ số thập phân). */
-export function formatScore(score: number | null | undefined, digits = 1): string {
+/** Hiển thị điểm kiểu Việt Nam (dấu phẩy). `minDigits` = số chữ số thập phân tối thiểu (hệ 4 dùng 1 → "4,0"). */
+export function formatScore(score: number | null | undefined, digits = 1, minDigits = 0): string {
   if (score == null) return "—";
-  return score.toLocaleString("vi-VN", { minimumFractionDigits: 0, maximumFractionDigits: digits });
+  return score.toLocaleString("vi-VN", { minimumFractionDigits: minDigits, maximumFractionDigits: Math.max(digits, minDigits) });
 }

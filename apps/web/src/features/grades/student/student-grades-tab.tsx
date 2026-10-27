@@ -88,7 +88,7 @@ export function StudentGradesTab({ classId }: { classId: string }) {
         ]} />
         <GradeGroup id="grades-total" title="Điểm tổng kết" lines={[
           { key: "t10", label: "Điểm hệ 10", value: <span className="text-base">{formatScore(data.total10)}</span> },
-          { key: "t4", label: "Điểm hệ 4", value: formatScore(data.total4) },
+          { key: "t4", label: "Điểm hệ 4", value: formatScore(data.total4, 1, 1) },
           { key: "letter", label: "Điểm chữ", value: <LetterBadge letter={data.letter} passed={data.passed} /> },
         ]} />
       </div>
