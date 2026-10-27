@@ -5,6 +5,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import vn.lmsp.dto.PaperDtos.AssignmentQuestionView;
@@ -49,13 +50,20 @@ public final class AttemptSessionDtos {
     /** Đồng hồ server — client hiệu chỉnh đếm ngược. `saved_at` chỉ có khi lưu; `focus_lost_count` chỉ có khi gửi sự kiện. */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record SessionClock(LocalDateTime saved_at, LocalDateTime server_now, LocalDateTime ends_at,
-                               long remaining_seconds, Integer focus_lost_count) { }
+                               long remaining_seconds, Integer focus_lost_count) {
+        public SessionClock {
+            saved_at = millis(saved_at);
+            server_now = millis(server_now);
+        }
+    }
 
     /** `attempt` chỉ có sau khi nộp (điểm/điểm từng câu theo chính sách xem lại như quiz). */
     public record AttemptSessionSummary(Long id, Long assignment_id, int attempt_no, AttemptSessionStatus status,
             String paper_code, LocalDateTime started_at, LocalDateTime ends_at, LocalDateTime server_now,
             long remaining_seconds, LocalDateTime submitted_at, SubmitReason submit_reason, int focus_lost_count,
-            QuizAttemptView attempt) { }
+            QuizAttemptView attempt) {
+        public AttemptSessionSummary { server_now = millis(server_now); }
+    }
 
     public record SessionSection(String title, List<AssignmentQuestionView> questions) { }
 
@@ -81,5 +89,12 @@ public final class AttemptSessionDtos {
             LocalDateTime last_seen_at, boolean online, SubmitReason submit_reason, BigDecimal score,
             BigDecimal max_score, boolean grading_pending) { }
 
-    public record MonitorTable(LocalDateTime server_now, MonitorSummary summary, List<MonitorRow> items) { }
+    public record MonitorTable(LocalDateTime server_now, MonitorSummary summary, List<MonitorRow> items) {
+        public MonitorTable { server_now = millis(server_now); }
+    }
+
+    /** Giờ server gửi client làm tròn tới mili giây (Date của JS không đọc được nano giây). */
+    private static LocalDateTime millis(LocalDateTime value) {
+        return value == null ? null : value.truncatedTo(ChronoUnit.MILLIS);
+    }
 }
