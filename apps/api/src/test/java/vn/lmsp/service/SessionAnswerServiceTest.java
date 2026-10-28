@@ -36,7 +36,8 @@ class SessionAnswerServiceTest {
     @BeforeEach void setup() {
         var snapshots = new QuestionVersionService(mock(QuestionVersionRepository.class), mock(QuestionReadService.class), new ObjectMapper());
         var assembler = new AttemptSessionAssembler(paper, answers, snapshots, new QuestionPaperMapper(), mock(QuizAttemptService.class));
-        service = new SessionAnswerService(access, paper, answers, snapshots, new AnswerNormalizer(), assembler);
+        service = new SessionAnswerService(access, paper, answers, snapshots, new AnswerNormalizer(), assembler,
+                mock(ExamRealtimeSignals.class));
         session = session(assignment, paper(assignment, null), List.of(choice, program), UtcTime.now().plusMinutes(30));
         when(access.ownSession(900L, 42L, true)).thenReturn(session);
         when(paper.questions(session)).thenReturn(List.of(choice, program));

@@ -4,14 +4,18 @@ import { queryKeys } from "@/lib/query-keys";
 import type { Paginated } from "@/types/api";
 import { NOTIFICATION_PAGE_LIMIT, type NotificationItem } from "./types";
 
-/** Danh sách thông báo và mutation đọc/đã đọc qua REST. */
+/**
+ * Danh sách thông báo và mutation đọc/đã đọc qua REST. Tín hiệu WS `notification.created` làm mới ngay
+ * (message-contracts §6.1); polling 120 s + khi quay lại tab chỉ là dự phòng.
+ */
 export function useNotifications() {
   const queryClient = useQueryClient();
   const list = useQuery({
     queryKey: queryKeys.notifications.list(),
     queryFn: ({ signal }) => api.get<Paginated<NotificationItem>>(
       "/notifications", { page: 1, limit: NOTIFICATION_PAGE_LIMIT }, signal),
-    refetchInterval: 30_000,
+    refetchInterval: 120_000,
+    refetchOnWindowFocus: true,
   });
   const invalidate = () => queryClient.invalidateQueries({ queryKey: queryKeys.notifications.list() });
   const markRead = useMutation({ mutationFn: (id: number) => api.patch(`/notifications/${id}/read`), onSuccess: invalidate });

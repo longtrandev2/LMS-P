@@ -27,7 +27,8 @@ class SettingsAdminServiceTest {
     private final UserRepository users = mock(UserRepository.class);
     private final AuditService audit = mock(AuditService.class);
     private final SystemSettingsService settings = new SystemSettingsService(repository, json, 20);
-    private final SettingsAdminService service = new SettingsAdminService(settings, repository, users, audit, json);
+    private final RealtimePublisher realtime = mock(RealtimePublisher.class);
+    private final SettingsAdminService service = new SettingsAdminService(settings, repository, users, audit, json, realtime);
 
     @BeforeEach void setup() {
         when(repository.findAll()).thenAnswer(call -> List.copyOf(rows));
@@ -80,6 +81,8 @@ class SettingsAdminServiceTest {
         verify(audit).record(eq(1L), eq("settings.update"), eq("system_settings"), eq(0L), before.capture(), after.capture());
         assertThat(before.getValue()).containsOnlyKeys(MAX_TIME, DEFAULT_TIME);
         assertThat(after.getValue()).containsOnlyKeys(MAX_TIME, DEFAULT_TIME, "reason").containsEntry("reason", "Giảm tải máy chấm");
+        verify(realtime).toAll(eq("settings.changed"), argThat(data ->
+                new HashSet<>((Collection<?>) data.get("keys")).equals(Set.of(MAX_TIME, DEFAULT_TIME))));
     }
 
     @Test void oneInvalidKeyRejectsTheWholeUpdate() {
@@ -90,7 +93,7 @@ class SettingsAdminServiceTest {
             assertThat((Map<String, String>) error.getDetails()).containsOnlyKeys(PRACTICE_RUNS, "khoa_la");
         });
         verify(repository, never()).save(any());
-        verifyNoInteractions(audit);
+        verifyNoInteractions(audit, realtime);
         assertThat(settings.maxTimeLimitMs()).isEqualTo(10000);
     }
 
@@ -135,7 +138,7 @@ class SettingsAdminServiceTest {
         var capped = new SystemSettingsService(repository, json, 10);
         assertThat(capped.maxUploadMb()).isEqualTo(10);
         assertThat(capped.leaveEvidenceMaxMb()).isEqualTo(5);
-        var view = new SettingsAdminService(capped, repository, users, audit, json).view().items();
+        var view = new SettingsAdminService(capped, repository, users, audit, json, mock(RealtimePublisher.class)).view().items();
         assertThat(view.stream().filter(item -> item.key().equals(MAX_UPLOAD)).findFirst().orElseThrow()
                 .default_value().intValue()).isEqualTo(10);
     }

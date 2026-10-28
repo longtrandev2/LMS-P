@@ -5,8 +5,10 @@ import { queryKeys } from "@/lib/query-keys";
 import type { AssignmentDetails } from "@/types/api";
 import type { AttemptSessionSummary, MonitorTable, SessionEventView } from "@/types/exams";
 import { serverMillis } from "./monitor-labels";
+import { useMonitorSignals } from "./use-monitor-signals";
 
-export const MONITOR_POLL_MS = 5000;
+/** Polling dự phòng; cập nhật chính đến từ tín hiệu WS `exam.session_changed` (message-contracts §6.1). */
+export const MONITOR_POLL_MS = 30_000;
 
 export function useMonitorAssignment(assignmentId: number, enabled: boolean) {
   return useQuery({
@@ -16,8 +18,9 @@ export function useMonitorAssignment(assignmentId: number, enabled: boolean) {
   });
 }
 
-/** Bảng giám sát — poll 5 giây; TanStack mặc định dừng poll khi tab ẩn và làm mới ngay khi quay lại. */
+/** Bảng giám sát — tín hiệu WS + poll 30 giây; TanStack mặc định dừng poll khi tab ẩn và làm mới ngay khi quay lại. */
 export function useMonitorTable(assignmentId: number, enabled: boolean) {
+  useMonitorSignals(assignmentId, enabled);
   return useQuery({
     queryKey: queryKeys.exams.monitor(assignmentId),
     queryFn: ({ signal }) => api.get<MonitorTable>(`/assignments/${assignmentId}/sessions`, undefined, signal),
