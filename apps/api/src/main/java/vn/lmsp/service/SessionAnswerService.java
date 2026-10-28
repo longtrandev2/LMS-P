@@ -33,6 +33,7 @@ public class SessionAnswerService {
     private final QuestionVersionService snapshots;
     private final AnswerNormalizer normalizer;
     private final AttemptSessionAssembler assembler;
+    private final ExamRealtimeSignals signals;
 
     @Transactional
     public SessionClock save(Long sessionId, Long studentId, SaveAnswersInput body) {
@@ -41,6 +42,7 @@ public class SessionAnswerService {
         if (!session.acceptsWrites(now)) throw SessionAccess.ended();
         apply(session, body == null ? null : body.answers(), now);
         session.touch(now);
+        signals.saved(session);
         return assembler.clock(session, now, now, null);
     }
 

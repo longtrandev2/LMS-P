@@ -36,7 +36,8 @@ class SessionAdminServiceTest {
     private SessionAdminService service;
 
     @BeforeEach void setup() {
-        service = new SessionAdminService(sessions, events, access, submitter, audit, new SessionAdminSummaryAssembler(quizzes));
+        service = new SessionAdminService(sessions, events, access, submitter, audit, new SessionAdminSummaryAssembler(quizzes),
+                mock(ExamRealtimeSignals.class));
         var now = UtcTime.now();
         session = identified(new AttemptSession(exam, student, 1, paper, List.of(1L), now.minusMinutes(50),
                 now.plusMinutes(10), null), 5);

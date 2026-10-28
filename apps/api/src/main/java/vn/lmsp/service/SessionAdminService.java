@@ -35,6 +35,7 @@ public class SessionAdminService {
     private final SessionSubmitter submitter;
     private final AuditService audit;
     private final SessionAdminSummaryAssembler summaries;
+    private final ExamRealtimeSignals signals;
 
     @Transactional
     public AttemptSessionSummary extend(Long sessionId, ExtendInput body, Long actorId, boolean admin) {
@@ -49,6 +50,7 @@ public class SessionAdminService {
         detail.put("reason", reason);
         detail.put("by", actorId);
         events.save(new SessionEvent(session, SessionEventType.extended, now, detail));
+        signals.onEvent(session, SessionEventType.extended);
         audit.record(actorId, "session.extend", "attempt_session", sessionId, Map.of("ends_at", before.toString()),
                 Map.of("ends_at", session.getEndsAt().toString(), "minutes", body.minutes(), "reason", reason));
         return summaries.summary(session, assignment, now);

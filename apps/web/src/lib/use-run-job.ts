@@ -2,8 +2,7 @@ import { useCallback, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
-import { useWebSocket } from "@/lib/ws";
-import { useAuthStore } from "@/stores/auth";
+import { useRealtimeEvents } from "@/lib/realtime/use-realtime";
 import type { RunAccepted, RunJob } from "@/types/api";
 
 const ACTIVE = new Set(["pending", "running"]);
@@ -14,7 +13,6 @@ const ACTIVE = new Set(["pending", "running"]);
  */
 export function useRunJob() {
   const client = useQueryClient();
-  const token = useAuthStore((state) => state.accessToken);
   const [runId, setRunId] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
   const job = useQuery({
@@ -26,12 +24,12 @@ export function useRunJob() {
   const refresh = useCallback(() => {
     if (runId) void client.invalidateQueries({ queryKey: queryKeys.runJobs.detail(runId) });
   }, [client, runId]);
-  useWebSocket(token, {
+  useRealtimeEvents({
     onMessage: (type, data) => {
       if (type.startsWith("run.") && (data as { run_id?: string } | undefined)?.run_id === runId) refresh();
     },
     onOpen: refresh,
-  });
+  }, { replayOpen: true });
   const start = useCallback(async (path: string, body: unknown) => {
     setStarting(true);
     try {

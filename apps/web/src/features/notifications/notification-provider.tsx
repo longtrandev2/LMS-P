@@ -1,6 +1,6 @@
 import { type ReactNode } from "react";
 
-/** Notification data is loaded through REST; WebSocket is reserved for grading updates. */
+/** Dữ liệu thông báo đọc qua REST; tín hiệu `notification.created` xử lý ở `lib/realtime/use-global-signals.ts`. */
 export function NotificationProvider({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }

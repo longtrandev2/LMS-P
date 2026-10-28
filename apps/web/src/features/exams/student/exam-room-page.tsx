@@ -10,6 +10,7 @@ import { routeId } from "@/features/assignments/student/paths";
 import { ExamRoom } from "./room/exam-room";
 import { SubmittedScreen } from "./submitted-screen";
 import { useSessionView } from "./use-exam-sessions";
+import { useTimingSignal } from "./room/use-timing-signal";
 
 function RoomSkeleton() {
   return <div className="flex h-dvh flex-col" aria-busy="true" aria-label="Đang tải phòng thi">
@@ -28,6 +29,8 @@ export function ExamRoomPage() {
   const client = useQueryClient();
   const [timedOut, setTimedOut] = useState(false);
   const view = useSessionView(id, timedOut);
+  // Gia hạn/thu bài: đọc lại phiên — đồng hồ tự hiệu chỉnh, phiên đã nộp thì chuyển màn "Đã nộp".
+  useTimingSignal(id, () => void view.refetch());
   const [ready, setReady] = useState(false);
   // Chỉ dựng phòng thi từ dữ liệu mới nhất (không dùng bản cache cũ khi vào lại phòng).
   if (!ready && view.data && !view.isFetching) setReady(true);

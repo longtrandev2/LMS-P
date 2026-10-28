@@ -26,6 +26,7 @@ public class SettingsAdminService {
     private final UserRepository users;
     private final AuditService audit;
     private final ObjectMapper json;
+    private final RealtimePublisher realtime;
 
     @Transactional(readOnly = true)
     public SettingsView view() {
@@ -81,6 +82,8 @@ public class SettingsAdminService {
             audit.record(actorId, AUDIT_ACTION, AUDIT_ENTITY, 0L, before, after);
             repository.flush();
             settings.refresh(merged);
+            // `settings.changed` tới mọi user đang kết nối sau commit — message-contracts.md §6.1.
+            realtime.toAll("settings.changed", Map.of("keys", List.copyOf(before.keySet())));
         }
         return view();
     }

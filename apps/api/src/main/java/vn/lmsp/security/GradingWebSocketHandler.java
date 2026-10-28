@@ -3,7 +3,9 @@ package vn.lmsp.security;
 import lombok.RequiredArgsConstructor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.*;
@@ -13,6 +15,8 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 @Component
 @RequiredArgsConstructor
 public class GradingWebSocketHandler extends TextWebSocketHandler {
+    /** Thuộc tính phiên WS do {@link GradingHandshakeInterceptor} đặt khi user có vai trò admin. */
+    public static final String ADMIN_ATTRIBUTE = "admin";
     private final ConcurrentHashMap<String, ConcurrentHashMap<String, WebSocketSession>> sessions = new ConcurrentHashMap<>();
     private final ObjectMapper json;
 
@@ -56,6 +60,20 @@ public class GradingWebSocketHandler extends TextWebSocketHandler {
     public void sendToUser(String userId, String payload) {
         var userSessions = sessions.get(userId);
         if (userSessions != null) userSessions.values().forEach(session -> send(session, payload));
+    }
+
+    /** Mọi kết nối đang mở (tín hiệu `settings.changed` — message-contracts.md §6.1). */
+    public void sendToAll(String payload) {
+        sessions.values().forEach(userSessions -> userSessions.values().forEach(session -> send(session, payload)));
+    }
+
+    /** Các user được nêu cùng mọi admin đang kết nối; mỗi kết nối nhận đúng một lần. */
+    public void sendToUsersAndAdmins(Collection<String> userIds, String payload) {
+        Set<String> targets = Set.copyOf(userIds);
+        sessions.forEach((userId, userSessions) -> userSessions.values().forEach(session -> {
+            if (targets.contains(userId) || Boolean.TRUE.equals(session.getAttributes().get(ADMIN_ATTRIBUTE)))
+                send(session, payload);
+        }));
     }
 
     private void send(WebSocketSession session, String payload) {

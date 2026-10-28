@@ -4,8 +4,7 @@ import { toast } from "sonner";
 import { ApiError, api } from "@/lib/api";
 import { errorText } from "@/lib/error-messages";
 import { queryKeys } from "@/lib/query-keys";
-import { useWebSocket } from "@/lib/ws";
-import { useAuthStore } from "@/stores/auth";
+import { useRealtimeEvents } from "@/lib/realtime/use-realtime";
 import type { AssignmentSubmission, ProgrammingLanguage } from "@/types/api";
 import { useIdempotencyKey } from "../use-idempotency-key";
 import { useSubmissionDetails } from "../use-student-data";
@@ -19,13 +18,12 @@ interface SubmitReceipt { submission_id?: number; id?: number; status?: string }
  */
 export function useLatestSubmission(assignmentId: number, history: AssignmentSubmission[]) {
   const client = useQueryClient();
-  const token = useAuthStore((state) => state.accessToken);
   const [submittedId, setSubmittedId] = useState<number | null>(null);
   const activeId = submittedId ?? history[0]?.id ?? null;
   const details = useSubmissionDetails(activeId);
 
   const refreshList = () => void client.invalidateQueries({ queryKey: queryKeys.assignments.mySubmissions(assignmentId) });
-  useWebSocket(token, {
+  useRealtimeEvents({
     onMessage: (type, data) => {
       if (!type.startsWith("submission.")) return;
       refreshList();
@@ -36,7 +34,7 @@ export function useLatestSubmission(assignmentId: number, history: AssignmentSub
       refreshList();
       if (activeId != null) void client.invalidateQueries({ queryKey: queryKeys.submissions.detail(activeId) });
     },
-  });
+  }, { replayOpen: true });
 
   return { activeId, details, setSubmittedId };
 }

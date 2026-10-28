@@ -26,7 +26,8 @@ class SessionEventServiceTest {
     private final SessionEventRepository events = mock(SessionEventRepository.class);
     private final AttemptSessionAssembler assembler = new AttemptSessionAssembler(null, null, null, null, null);
     private final Clock clock = Clock.fixed(Instant.parse("2026-10-27T00:00:00Z"), ZoneOffset.UTC);
-    private final SessionEventService service = new SessionEventService(access, events, new SessionEventRateLimiter(clock), assembler);
+    private final SessionEventService service = new SessionEventService(access, events, new SessionEventRateLimiter(clock), assembler,
+            mock(ExamRealtimeSignals.class));
     private AttemptSession session;
 
     @BeforeEach void setup() {

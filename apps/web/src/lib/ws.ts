@@ -23,16 +23,20 @@ interface UseWebSocketOptions {
   onMessage?: (type: string, data: unknown) => void;
   /** Gọi mỗi lần (re)connect thành công — dùng để đọc lại trạng thái đang chờ bằng REST (message-contracts §6). */
   onOpen?: () => void;
+  /** Gọi khi kết nối đóng (trước khi lên lịch kết nối lại). */
+  onClose?: () => void;
 }
 
-export function useWebSocket(token: string | null, { onMessage, onOpen }: UseWebSocketOptions = {}): void {
+export function useWebSocket(token: string | null, { onMessage, onOpen, onClose }: UseWebSocketOptions = {}): void {
   // Giữ handler mới nhất trong ref — tránh reconnect khi component cha re-render
   const handlerRef = useRef(onMessage);
   const openRef = useRef(onOpen);
+  const closeRef = useRef(onClose);
 
   useEffect(() => {
     handlerRef.current = onMessage;
     openRef.current = onOpen;
+    closeRef.current = onClose;
   });
 
   useEffect(() => {
@@ -75,6 +79,7 @@ export function useWebSocket(token: string | null, { onMessage, onOpen }: UseWeb
       };
       ws.onclose = () => {
         clearPing();
+        closeRef.current?.();
         scheduleReconnect();
       };
       ws.onerror = () => {
