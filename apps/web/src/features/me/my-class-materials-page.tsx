@@ -49,10 +49,10 @@ export function MyClassMaterialsPage({ classId }: { classId: string }) {
               <StudentScheduleTab classId={classId} clazz={clazz} />
             </TabsContent>
             <TabsContent value="assignments">
-              <AssignmentsSection classId={classId} canManage={false} canTake />
+              <AssignmentsSection classId={classId} canManage={false} canTake submittedIds={progress.submittedIds} />
             </TabsContent>
             <TabsContent value="exams">
-              <ExamsSection classId={classId} canManage={false} canTake />
+              <ExamsSection classId={classId} canManage={false} canTake submittedIds={progress.submittedIds} />
             </TabsContent>
             <TabsContent value="grades">
               <StudentGradesTab classId={classId} />

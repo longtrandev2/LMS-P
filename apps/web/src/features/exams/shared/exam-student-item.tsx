@@ -5,7 +5,9 @@ import { ExamMeta, ExamPhaseBadge, examPhase } from "./exam-status";
 import type { AssignmentSummary } from "@/types/api";
 
 /** Hàng kỳ thi phía sinh viên: tên + thời lượng/khung giờ · trạng thái · "Vào thi" (đang mở) hoặc "Xem". */
-export function ExamStudentItem({ item, classId }: { item: AssignmentSummary; classId: string }) {
+import { Badge } from "@/components/ui/badge"; // thêm import Badge nếu chưa có
+
+export function ExamStudentItem({ item, classId, submitted = false }: { item: AssignmentSummary; classId: string; submitted?: boolean }) {
   const phase = examPhase(item);
   const href = `/me/classes/${classId}/assignments/${item.id}`;
   const Icon = CATEGORY_ICON[item.category];
@@ -17,7 +19,10 @@ export function ExamStudentItem({ item, classId }: { item: AssignmentSummary; cl
       </h3>
       <ExamMeta item={item} showMode={false} />
     </div>
-    <span className="ml-7 sm:ml-0"><ExamPhaseBadge phase={phase} /></span>
+    <div className="ml-7 flex items-center gap-1.5 sm:ml-0">
+      {submitted ? <Badge variant="success">✓ Đã làm</Badge> : null}
+      <ExamPhaseBadge phase={phase} />
+    </div>
     <div className="relative z-[1] flex flex-1 justify-end sm:w-24 sm:flex-none sm:shrink-0">
       <Button size="sm" variant="secondary" asChild><Link to={href}>{phase === "open" ? "Vào thi" : "Xem"}</Link></Button>
     </div>

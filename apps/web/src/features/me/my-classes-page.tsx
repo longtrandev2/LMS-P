@@ -26,7 +26,7 @@ export function MyClassesPage() {
   useEffect(() => setPage(1), [search]);
 
   const allClasses = useMyClasses(guard === "ok");
-  const deadlines = useClassesDeadlines(allClasses.data ?? [], (clazz, item) => `/me/classes/${clazz.id}/assignments/${item.id}`);
+  const deadlines = useClassesDeadlines(allClasses.data ?? [], (clazz, item) => `/me/classes/${clazz.id}/assignments/${item.id}`, true);
   const filters = { page, limit: 12, q: search.trim() || undefined, sort };
   const query = useQuery({
     queryKey: queryKeys.me.classes(filters),

@@ -12,8 +12,8 @@ import { useAssignmentActions } from "@/features/exams/shared/use-assignment-act
  * Tab "Bài tập & Quiz" của lớp (không gồm kỳ thi — tab "Kỳ thi", exam-spec.md §8).
  * Giảng viên: tạo/sửa/xuất bản/xóa nháp/kết quả; sinh viên (`canTake`): mở bài.
  */
-export function AssignmentsSection({ classId, canManage, canTake = false }: {
-  classId: string; canManage: boolean; canTake?: boolean;
+export function AssignmentsSection({ classId, canManage, canTake = false, submittedIds }: {
+  classId: string; canManage: boolean; canTake?: boolean; submittedIds?: Set<number>;
 }) {
   const list = useQuery(classAssignmentsQuery(classId));
   const actions = useAssignmentActions();
@@ -36,7 +36,7 @@ export function AssignmentsSection({ classId, canManage, canTake = false }: {
       {list.data && items.length === 0 ? <EmptyState icon={ClipboardList} title="Chưa có bài tập hoặc quiz"
         description={canManage ? "Tạo bản nháp, chọn câu hỏi rồi xuất bản để sinh viên làm." : "Giảng viên chưa đăng bài nào cho lớp."} /> : null}
       {items.length ? <ul>{items.map((item) => <AssignmentListItem key={item.id} item={item} classId={classId}
-        canManage={canManage} canTake={canTake} busy={actions.busyId === item.id}
+        canManage={canManage} canTake={canTake} submitted={submittedIds?.has(item.id)} busy={actions.busyId === item.id}
         onPublish={() => actions.publish(item)} onDelete={() => actions.requestDelete(item)} />)}</ul> : null}
     </div>
     {actions.dialogs}

@@ -1,4 +1,6 @@
 import { useQueries } from "@tanstack/react-query";
+import { api } from "@/lib/api";
+import { queryKeys } from "@/lib/query-keys";
 import type { AssignmentSummary, ClassSummary } from "@/types/api";
 import { classAssignmentsQuery, openDeadlines } from "./class-assignments-query";
 import type { DeadlineRow } from "./deadline-list";
@@ -10,17 +12,48 @@ import type { DeadlineRow } from "./deadline-list";
 export function useClassesDeadlines(
   classes: ClassSummary[],
   hrefFor: (clazz: ClassSummary, item: AssignmentSummary) => string,
+  isStudent = false,
 ) {
   const results = useQueries({ queries: classes.map((clazz) => classAssignmentsQuery(clazz.id)) });
-  const rows: DeadlineRow[] = [];
+  const rawDeadlines: { clazz: ClassSummary; d: ReturnType<typeof openDeadlines>[number] }[] = [];
   const openCount = new Map<number, number>();
+
   classes.forEach((clazz, index) => {
     const data = results[index]?.data;
     if (!data) return;
     const deadlines = openDeadlines(data.items);
     openCount.set(clazz.id, deadlines.filter((d) => d.state !== "upcoming").length);
-    for (const d of deadlines) rows.push({ ...d, classCode: clazz.code, href: hrefFor(clazz, d.assignment) });
+    for (const d of deadlines) rawDeadlines.push({ clazz, d });
   });
+
+  const checkable = isStudent ? rawDeadlines.filter((item) => item.d.state !== "upcoming") : [];
+  const submissionQueries = useQueries({
+    queries: checkable.map(({ d }) => ({
+      queryKey: d.assignment.category === "quiz"
+        ? queryKeys.assignments.quizAttempts(d.assignment.id)
+        : queryKeys.assignments.mySubmissions(d.assignment.id),
+      queryFn: async ({ signal }: { signal: AbortSignal }) => {
+        const url = d.assignment.category === "quiz" ? `/assignments/${d.assignment.id}/quiz-attempts` : "/me/submissions";
+        const params = d.assignment.category === "quiz" ? undefined : { assignment_id: d.assignment.id };
+        const res = await api.get<unknown>(url, params, signal);
+        const list = Array.isArray(res) ? res : (res as { items?: unknown[] })?.items ?? [];
+        return list.length > 0;
+      },
+      staleTime: 30_000,
+    })),
+  });
+
+  const submittedMap = new Map<number, boolean>();
+  checkable.forEach(({ d }, index) => {
+    if (submissionQueries[index]?.data) submittedMap.set(d.assignment.id, true);
+  });
+
+  const rows: DeadlineRow[] = rawDeadlines.map(({ clazz, d }) => ({
+    ...d,
+    classCode: clazz.code,
+    href: hrefFor(clazz, d.assignment),
+    submitted: submittedMap.get(d.assignment.id) ?? false,
+  }));
   rows.sort((a, b) => a.dueMs - b.dueMs);
   return {
     rows,

@@ -18,7 +18,7 @@ const startOf = (item: AssignmentSummary) => utcDateTimeMillis(item.available_fr
  * Tab "Kỳ thi" của lớp — docs/exam-spec.md §8: bài `midterm`/`final` (giảng viên thấy cả nháp).
  * Cùng nguồn dữ liệu với tab Bài tập (`GET /classes/{id}/assignments`).
  */
-export function ExamsSection({ classId, canManage, canTake = false }: { classId: string; canManage: boolean; canTake?: boolean }) {
+export function ExamsSection({ classId, canManage, canTake = false, submittedIds }: { classId: string; canManage: boolean; canTake?: boolean; submittedIds?: Set<number> }) {
   const list = useQuery(classAssignmentsQuery(classId));
   const actions = useAssignmentActions();
   const items = (list.data?.items ?? []).filter(isExamItem).sort((a, b) => startOf(b) - startOf(a));
@@ -44,7 +44,7 @@ export function ExamsSection({ classId, canManage, canTake = false }: { classId:
       {items.length ? <ul>{items.map((item) => manage
         ? <ExamListItem key={item.id} item={item} classId={classId} busy={actions.busyId === item.id}
           onPublish={() => actions.publish(item)} onDelete={() => actions.requestDelete(item)} />
-        : <ExamStudentItem key={item.id} item={item} classId={classId} />)}</ul> : null}
+        : <ExamStudentItem key={item.id} item={item} classId={classId} submitted={submittedIds?.has(item.id)} />)}</ul> : null}
     </div>
     {manage ? actions.dialogs : null}
   </section>;

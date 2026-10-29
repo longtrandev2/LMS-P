@@ -16,8 +16,8 @@ const WINDOW_VARIANT = { upcoming: "info", open: "success", late: "warning", clo
  * Hàng bài trong tab "Bài tập" của lớp (DESIGN.md §4 "Danh sách"): icon loại · tên 14/500 + meta xám ·
  * badge trạng thái tô nhạt · hành động (giảng viên: "Kết quả" + menu `…`; sinh viên: "Mở bài").
  */
-export function AssignmentListItem({ item, classId, canManage, canTake, busy, onPublish, onDelete }: {
-  item: AssignmentSummary; classId: string; canManage: boolean; canTake: boolean; busy: boolean;
+export function AssignmentListItem({ item, classId, canManage, canTake, submitted = false, busy, onPublish, onDelete }: {
+  item: AssignmentSummary; classId: string; canManage: boolean; canTake: boolean; submitted?: boolean; busy: boolean;
   onPublish: () => void; onDelete: () => void;
 }) {
   const navigate = useNavigate();
@@ -46,7 +46,12 @@ export function AssignmentListItem({ item, classId, canManage, canTake, busy, on
         <span aria-hidden>·</span><span>{item.max_attempts ? `${item.max_attempts} lượt` : "Không giới hạn lượt"}</span>
       </p>
     </div>
-    {draft ? <Badge>Nháp</Badge> : <Badge variant={WINDOW_VARIANT[phase]}>{WINDOW_LABEL[phase]}</Badge>}
+    {draft ? <Badge>Nháp</Badge> : (
+      <div className="flex items-center gap-1.5">
+        {canTake && submitted ? <Badge variant="success">✓ Đã làm</Badge> : null}
+        <Badge variant={WINDOW_VARIANT[phase]}>{WINDOW_LABEL[phase]}</Badge>
+      </div>
+    )}
     <div className="relative z-[1] flex w-[7.5rem] shrink-0 items-center justify-end gap-1">
       {canTake ? (phase === "upcoming"
         ? <Button size="sm" variant="secondary" disabled>Chưa mở</Button>
