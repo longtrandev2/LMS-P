@@ -7,6 +7,7 @@ import { Sidebar } from "@/components/nav-sidebar";
 import { AppBreadcrumb } from "@/components/app-breadcrumb";
 import { isWideRoute } from "@/components/breadcrumb-routes";
 import { NotificationsBell } from "@/features/notifications/notifications-bell";
+import { UserMenu } from "@/components/user-menu";
 import { MaintenanceBanner } from "@/features/admin/shared/maintenance-banner";
 import { cn } from "@/lib/utils";
 
@@ -58,7 +59,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </SheetContent>
           </Sheet>
           <div className="min-w-0 flex-1"><AppBreadcrumb /></div>
-          <NotificationsBell />
+          <div className="flex items-center gap-2">
+            <NotificationsBell />
+            <UserMenu />
+          </div>
         </header>
         <MaintenanceBanner />
         <main id="main-content" tabIndex={-1}

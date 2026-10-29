@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { Activity, FileQuestion, History, LayoutDashboard, Library, PanelLeftClose, PanelLeftOpen, School, Settings, Users, type LucideIcon } from "lucide-react";
-import { UserMenu } from "@/components/user-menu";
+import { LogoMark } from "@/components/logo";
 import { hasRole, useAuthStore } from "@/stores/auth";
 import { cn } from "@/lib/utils";
 import type { CurrentUser } from "@/types/api";
@@ -66,8 +66,11 @@ export function Sidebar({ collapsed = false, onToggle, onNavigate }: {
   const multipleGroups = groups.length > 1;
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="shrink-0 p-2"><UserMenu collapsed={collapsed} onNavigate={onNavigate} /></div>
+        <div className="flex h-full flex-col">
+      <div className="flex h-12 shrink-0 items-center gap-2.5 px-3 border-b border-sidebar-border">
+        <LogoMark size={28} className="shrink-0" />
+        {collapsed ? null : <span className="font-semibold text-sm tracking-tight text-foreground">LMS-P</span>}
+      </div>
       <nav aria-label="Điều hướng chính" className="flex flex-1 flex-col gap-4 overflow-y-auto px-2 py-2">
         {groups.map((group) => (
           <div key={group.group} className="space-y-0.5">

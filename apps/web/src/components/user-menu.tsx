@@ -44,25 +44,20 @@ export function UserMenu({ collapsed = false, onNavigate }: { collapsed?: boolea
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger
+            <DropdownMenuTrigger
         aria-label="Tài khoản và cài đặt"
-        className={cn(
-          "flex w-full items-center gap-2.5 rounded-lg p-1.5 text-left outline-none transition-colors duration-150 hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring data-[state=open]:bg-accent",
-          collapsed && "justify-center"
-        )}
+        className="flex items-center gap-2 rounded-full p-1 outline-none transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
       >
-        <LogoMark size={30} className="shrink-0" />
-        {collapsed ? null : (
-          <>
-            <span className="min-w-0 flex-1 leading-tight">
-              <span className="block truncate text-sm font-semibold text-foreground">LMS-P</span>
-              <span className="block truncate text-xs text-muted-foreground">{user?.full_name}</span>
-            </span>
-            <ChevronDown className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-          </>
-        )}
+        <Avatar className="size-8">
+          {avatarSrc ? <AvatarImage src={avatarSrc} alt="" /> : null}
+          <AvatarFallback>{initialsOf(user?.full_name)}</AvatarFallback>
+        </Avatar>
+        <span className="hidden text-sm font-medium sm:inline-block max-w-[120px] truncate">
+          {user?.full_name}
+        </span>
+        <ChevronDown className="size-3.5 text-muted-foreground hidden sm:inline-block" aria-hidden />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-60">
+      <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel className="flex items-center gap-2.5 font-normal">
           <Avatar className="size-8">
             {avatarSrc ? <AvatarImage src={avatarSrc} alt="" /> : null}
