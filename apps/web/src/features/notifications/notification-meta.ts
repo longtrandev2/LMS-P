@@ -38,21 +38,48 @@ function idOf(data: NotificationItem["data"], key: string): number | null {
 export function notificationHref(item: NotificationItem, user: CurrentUser | null): string | null {
   const roles = user?.roles ?? [];
   const student = roles.includes("student");
+  const isManager = roles.includes("lecturer") || roles.includes("admin");
   const classId = idOf(item.data, "class_id");
+
+  // Bài tập & Kỳ thi: Sinh viên vào trang làm bài, Giảng viên vào trang kết quả
   if (ASSIGNMENT_TYPES.has(item.type)) {
     const assignmentId = idOf(item.data, "assignment_id");
     if (!classId || !assignmentId) return null;
     if (student) return `/me/classes/${classId}/assignments/${assignmentId}`;
-    if (roles.includes("lecturer") || roles.includes("admin")) return `/classes/${classId}/assignments/${assignmentId}/results`;
+    if (isManager) return `/classes/${classId}/assignments/${assignmentId}/results`;
     return null;
   }
+
+  // Kết quả chấm bài nộp lập trình
   if (item.type === "submission.graded") {
     const submissionId = idOf(item.data, "submission_id");
     return submissionId ? `/submissions/${submissionId}` : null;
   }
-  if (!student || !classId) return null;
-  if (item.type === "material.created") return `/me/classes/${classId}`;
-  if (item.type === "grade.updated") return `/me/classes/${classId}?tab=grades`;
-  if (item.type === "session.upcoming") return `/me/classes/${classId}?tab=schedule`;
+
+  // Đơn xin nghỉ: Giảng viên nhảy vào tab duyệt đơn, Sinh viên vào tab lịch học
+  if (item.type === "leave_request.created") {
+    return classId ? (isManager ? `/classes/${classId}?tab=leave` : `/me/classes/${classId}?tab=schedule`) : null;
+  }
+  if (item.type === "leave_request.reviewed") {
+    return classId ? (student ? `/me/classes/${classId}?tab=schedule` : `/classes/${classId}?tab=leave`) : null;
+  }
+
+  if (!classId) return null;
+
+  // Học liệu
+  if (item.type === "material.created") {
+    return student ? `/me/classes/${classId}` : `/classes/${classId}?tab=materials`;
+  }
+
+  // Cập nhật điểm
+  if (item.type === "grade.updated") {
+    return student ? `/me/classes/${classId}?tab=grades` : `/classes/${classId}?tab=grades`;
+  }
+
+  // Buổi học sắp tới
+  if (item.type === "session.upcoming") {
+    return student ? `/me/classes/${classId}?tab=schedule` : `/classes/${classId}?tab=schedule`;
+  }
+
   return null;
 }
