@@ -44,14 +44,15 @@ function AttemptRow({ attempt, item }: { attempt: QuizAttempt; item: AssignmentS
 export function QuizAttemptsSection({ item, attempts, isPending, error, onRetry }: {
   item: AssignmentSummary; attempts: QuizAttempt[]; isPending: boolean; error: unknown; onRetry: () => void;
 }) {
+  const list = Array.isArray(attempts) ? attempts : [];
   return <section aria-labelledby="quiz-attempts-title">
     <div className="flex items-baseline gap-2 border-b pb-3">
       <h2 id="quiz-attempts-title" className="text-base font-semibold">Lịch sử lượt làm</h2>
-      {attempts.length ? <span className="text-sm text-muted-foreground tabular-nums">{attempts.length}</span> : null}
+      {list.length ? <span className="text-sm text-muted-foreground tabular-nums">{list.length}</span> : null}
     </div>
     {isPending ? <div aria-busy="true" aria-label="Đang tải" className="space-y-3 py-4"><Skeleton className="h-6" /><Skeleton className="h-6" /></div>
       : error ? <ErrorState error={error} onRetry={onRetry} />
-      : attempts.length === 0 ? <EmptyState compact icon={History} title="Chưa có lượt nào" description="Kết quả từng lượt sẽ hiện ở đây sau khi bạn nộp." />
-      : <ul>{attempts.map((attempt) => <AttemptRow key={attempt.attempt_id} attempt={attempt} item={item} />)}</ul>}
+      : list.length === 0 ? <EmptyState compact icon={History} title="Chưa có lượt nào" description="Kết quả từng lượt sẽ hiện ở đây sau khi bạn nộp." />
+      : <ul>{list.map((attempt) => <AttemptRow key={attempt.attempt_id} attempt={attempt} item={item} />)}</ul>}
   </section>;
 }

@@ -36,8 +36,7 @@ export function useClassesDeadlines(
         const url = d.assignment.category === "quiz" ? `/assignments/${d.assignment.id}/quiz-attempts` : "/me/submissions";
         const params = d.assignment.category === "quiz" ? undefined : { assignment_id: d.assignment.id };
         const res = await api.get<unknown>(url, params, signal);
-        const list = Array.isArray(res) ? res : (res as { items?: unknown[] })?.items ?? [];
-        return list.length > 0;
+        return Array.isArray(res) ? res : (res as { items?: unknown[] })?.items ?? [];
       },
       staleTime: 30_000,
     })),
@@ -45,7 +44,8 @@ export function useClassesDeadlines(
 
   const submittedMap = new Map<number, boolean>();
   checkable.forEach(({ d }, index) => {
-    if (submissionQueries[index]?.data) submittedMap.set(d.assignment.id, true);
+    const list = submissionQueries[index]?.data as unknown[] | undefined;
+    if (list && list.length > 0) submittedMap.set(d.assignment.id, true);
   });
 
   const rows: DeadlineRow[] = rawDeadlines.map(({ clazz, d }) => ({

@@ -12,17 +12,18 @@ import { AssignmentPanel, policyFacts } from "./assignment-info";
 
 /** Panel phải của quiz: điểm theo chính sách, lượt còn lại, chính sách, nút Bắt đầu/Làm lại + Xem lại lượt gần nhất. */
 export function QuizPanel({ item, attempts, isPending }: { item: AssignmentSummary; attempts: QuizAttempt[]; isPending: boolean }) {
+  const list = Array.isArray(attempts) ? attempts : [];
   const userId = useAuthStore((state) => state.user?.id);
   const window = assignmentWindow(item);
-  const used = attempts.length;
+  const used = list.length;
   const remaining = remainingAttempts(used, item.max_attempts);
   const hasDraft = userId != null && readDraft(draftKeys.quiz(userId, item.id, used + 1)) != null;
   const blocked = !acceptsSubmissions(window) ? (window === "upcoming" ? "Bài chưa mở." : "Bài đã đóng, không nhận lượt mới.")
     : remaining === 0 ? "Bạn đã dùng hết lượt làm bài." : null;
   const label = hasDraft ? "Tiếp tục làm bài" : used ? "Làm lại" : "Bắt đầu làm bài";
-  const scores = attempts.map((attempt) => attempt.score);
-  const shown = item.score_policy === "best" ? (scores.length ? Math.max(...scores) : null) : attempts[0]?.score ?? null;
-  const latest = attempts[0];
+  const scores = list.map((attempt) => attempt.score);
+  const shown = item.score_policy === "best" ? (scores.length ? Math.max(...scores) : null) : list[0]?.score ?? null;
+  const latest = list[0];
 
   const primary = blocked || isPending
     ? <Button className="w-full" disabled>{isPending ? "Đang tải…" : label}</Button>
