@@ -25,8 +25,11 @@ public class GradingHandshakeInterceptor implements HandshakeInterceptor {
                     .filter(part -> part.startsWith("token=")).map(part -> java.net.URLDecoder.decode(part.substring(6), java.nio.charset.StandardCharsets.UTF_8))
                     .findFirst().orElseThrow();
             String userId = tokens.parseAccessToken(token).getSubject();
-            users.findById(Long.valueOf(userId)).filter(user -> user.getStatus() == vn.lmsp.enums.UserStatus.active).orElseThrow();
+            var user = users.findWithRolesById(Long.valueOf(userId))
+                    .filter(found -> found.getStatus() == vn.lmsp.enums.UserStatus.active).orElseThrow();
             attributes.put("userId", userId);
+            attributes.put(GradingWebSocketHandler.ADMIN_ATTRIBUTE,
+                    user.getRoles().stream().anyMatch(role -> "admin".equals(role.getName())));
             return true;
         } catch (RuntimeException error) {
             response.setStatusCode(org.springframework.http.HttpStatus.UNAUTHORIZED);

@@ -10,7 +10,7 @@ LMS Client/Server: React + Spring Boot + MySQL + RabbitMQ. **Spec-first** — đ
 
 ## Cấu trúc repo
 ```
-apps/api      # Spring Boot REST /api/v1, WebSocket grading
+apps/api      # Spring Boot REST /api/v1, WebSocket tín hiệu realtime
 apps/web      # React + TypeScript + Vite SPA, chia theo features
 apps/worker   # Spring Boot RabbitMQ consumer + Docker sandbox grader
 infra/        # docker-compose.yml, nginx/
@@ -36,5 +36,5 @@ docs/         # specs — nguồn chân lý
 - Backend: controller → service → repository; validate request bằng Jakarta Validation; lỗi theo envelope `api-spec.md` §1.
 - Frontend chia theo feature; logic gọi API qua client dùng chung; TypeScript strict; UI tiếng Việt.
 - Auth/RBAC bắt buộc ở backend service/security, không dựa vào ẩn nút UI.
-- WebSocket chỉ cập nhật trạng thái/kết quả chấm bài.
+- WebSocket chỉ đẩy **tín hiệu thay đổi** (chấm bài, chạy thử, thông báo, phiên thi — `message-contracts.md` §6); dữ liệu luôn đọc qua REST. Mọi màn dùng tín hiệu phải tự đọc lại REST khi kết nối lại và giữ polling chậm làm dự phòng.
 - Chạy compile/build/test trước khi báo hoàn tất.

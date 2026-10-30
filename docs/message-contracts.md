@@ -1,6 +1,6 @@
 # Hợp đồng chấm bài — RabbitMQ và WebSocket
 
-Phiên bản 4.0 — 2026-10-27. Kết quả từng test, checker, verdict OLE, run jobs. Quy tắc chấm ở `assessment-spec.md` §4–5, §7.
+Phiên bản 5.0 — 2026-10-28. Tín hiệu realtime WS (§6.1). 4.0: kết quả từng test, checker, verdict OLE, run jobs. Quy tắc chấm ở `assessment-spec.md` §4–5, §7.
 
 ## 1. Topology và quyền sở hữu dữ liệu
 
@@ -90,3 +90,17 @@ Kết nối `GET /ws?token=<access_token>`. JWT hợp lệ và user active mới
 ```
 
 `submission.status`/`submission.graded` gửi chủ bài nộp; `run.*` gửi người tạo job. Client ping mỗi 30 giây. WS phát sau DB commit và không lưu event khi client offline; khi kết nối lại (`onopen`), client đọc lại các submission/run đang chờ bằng REST.
+
+### 6.1 Tín hiệu realtime (v5)
+
+Nguyên tắc: WS chỉ mang **tín hiệu** "có thay đổi" kèm id; dữ liệu luôn đọc qua REST (đã kiểm tra quyền). Web mở **một** kết nối WS dùng chung khi đã đăng nhập; mọi màn dùng tín hiệu phải đọc lại REST khi kết nối lại và giữ polling chậm làm dự phòng.
+
+| `type` | Gửi tới | `data` | Phát khi | Client làm gì |
+|---|---|---|---|---|
+| `notification.created` | Người nhận thông báo | `{notification_id, type}` | Mỗi thông báo in-app được tạo (sau commit) | Tải lại danh sách thông báo; nếu `type = system.announcement` hoặc là thông báo bảo trì thì tải lại `/settings/public` |
+| `settings.changed` | Mọi user đang kết nối | `{keys: [..]}` | Admin lưu cấu hình (sau commit) | Tải lại `/settings/public` (banner bảo trì, giới hạn form) |
+| `exam.session_changed` | Giảng viên phụ trách lớp + admin đang kết nối | `{assignment_id, session_id, student_id, change}` với `change` ∈ `started`, `resumed`, `saved`, `focus`, `submitted`, `extended` | Phiên thi đổi trạng thái/tiến độ (sau commit). `saved` gộp tối đa 1 tín hiệu/5 s mỗi phiên | Màn giám sát tải lại bảng (debounce 1 s); polling dự phòng 30 s |
+| `session.timing_changed` | Chủ phiên | `{session_id, status, ends_at}` | Giảng viên gia hạn hoặc thu bài (sau commit) | Phòng thi đọc lại phiên: cập nhật đồng hồ, hoặc chuyển màn "Đã nộp" khi bị thu bài |
+
+- Polling dự phòng: chuông thông báo 120 s (và khi quay lại tab), `/settings/public` 120 s, giám sát 30 s.
+- Không đẩy qua WS: tự lưu/nộp bài thi, dashboard admin, điểm danh, sổ điểm.

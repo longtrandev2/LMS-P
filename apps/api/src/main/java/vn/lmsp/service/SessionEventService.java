@@ -26,6 +26,7 @@ public class SessionEventService {
     private final SessionEventRepository events;
     private final SessionEventRateLimiter limiter;
     private final AttemptSessionAssembler assembler;
+    private final ExamRealtimeSignals signals;
 
     @Transactional
     public SessionClock client(Long sessionId, Long studentId, SessionEventInput body) {
@@ -46,6 +47,7 @@ public class SessionEventService {
     /** Ghi một sự kiện (server hoặc client đã kiểm tra) trong giao dịch của caller. */
     public void record(AttemptSession session, SessionEventType type, LocalDateTime now, Map<String, Object> detail) {
         events.save(new SessionEvent(session, type, now, detail == null || detail.isEmpty() ? null : detail));
+        signals.onEvent(session, type);
     }
 
     /** Chỉ giữ giá trị vô hướng; chuỗi cắt còn 200 ký tự, khóa tối đa 50 ký tự. */

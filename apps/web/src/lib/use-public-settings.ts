@@ -5,10 +5,11 @@ import { useAuthStore } from "@/stores/auth";
 import type { PublicSettings } from "@/types/admin";
 
 const MINUTE = 60_000;
+const POLL_MS = 2 * MINUTE;
 
 /**
- * Cấu hình công khai — docs/admin-spec.md §1, §5.2. Mọi user đăng nhập đều đọc được; làm mới mỗi 60 giây
- * để banner bảo trì và các giới hạn (ngôn ngữ, time/memory limit, dung lượng upload) theo kịp thay đổi của admin.
+ * Cấu hình công khai — docs/admin-spec.md §1, §5.2. Mọi user đăng nhập đều đọc được; tín hiệu WS `settings.changed`
+ * làm mới ngay (message-contracts §6.1), polling 120 giây là dự phòng cho banner bảo trì và các giới hạn.
  */
 export function usePublicSettings() {
   const signedIn = useAuthStore((state) => state.user !== null);
@@ -16,7 +17,7 @@ export function usePublicSettings() {
     queryKey: queryKeys.admin.publicSettings,
     queryFn: ({ signal }) => api.get<PublicSettings>("/settings/public", undefined, signal),
     staleTime: MINUTE,
-    refetchInterval: MINUTE,
+    refetchInterval: POLL_MS,
     enabled: signedIn,
   });
 }

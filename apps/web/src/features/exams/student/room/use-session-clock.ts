@@ -19,7 +19,8 @@ const secondsLeft = (deadline: number) => Math.max(0, Math.ceil((deadline - Date
 
 /**
  * Đồng hồ đếm ngược của phiên: đếm cục bộ, hiệu chỉnh mỗi khi có `SessionClock` mới (lưu, heartbeat, sự kiện).
- * `onExpire` gọi một lần khi về 0 (gọi lại được nếu sau đó giảng viên gia hạn).
+ * `onExpire` gọi một lần khi về 0 (gọi lại được nếu sau đó giảng viên gia hạn). Khi `initial` đổi (đọc lại phiên sau
+ * tín hiệu `session.timing_changed`) thì hiệu chỉnh theo dữ liệu mới.
  */
 export function useSessionClock(initial: ClockLike, onExpire: () => void) {
   const [start] = useState(() => {
@@ -50,6 +51,11 @@ export function useSessionClock(initial: ClockLike, onExpire: () => void) {
     offset.current = offsetOf(clock, at);
     setRemaining(secondsLeft(deadline.current));
   }, []);
+
+  const first = useRef(initial);
+  useEffect(() => {
+    if (initial !== first.current) sync(initial);
+  }, [initial, sync]);
 
   useEffect(() => {
     const timer = window.setInterval(tick, 500);

@@ -11,7 +11,7 @@
 2. Nộp bài lập trình qua RabbitMQ; API trả `202 + submission_id`.
 3. API stateless với JWT; quyền được kiểm tra ở backend.
 4. Máy chủ là nguồn sự thật cho thời gian thi, trạng thái chấm và điểm.
-5. WebSocket chỉ phục vụ cập nhật trạng thái/kết quả chấm bài. Dữ liệu chính được đọc lại qua REST.
+5. WebSocket chỉ đẩy tín hiệu thay đổi: chấm bài, chạy thử, thông báo, cấu hình, phiên thi (`message-contracts.md` §6.1). Dữ liệu chính luôn đọc lại qua REST; client giữ polling chậm làm dự phòng.
 6. Thay đổi schema phải qua Flyway migration; không sửa CSDL bằng tay.
 
 ## 2. Kiến trúc tổng thể
