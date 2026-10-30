@@ -22,6 +22,13 @@ import vn.lmsp.service.UserAvatarService;
 public class UserManagementController {
     private final UserManagementService service;
     private final UserAvatarService avatars;
+    private final vn.lmsp.security.GradingWebSocketHandler sockets;
+
+    @GetMapping("/online-ids")
+    public java.util.Set<Long> onlineIds() {
+        return sockets.getOnlineUserIds();
+    }
+
     @PatchMapping("/me") public UserView updateMe(@AuthenticationPrincipal String actor,@Valid @RequestBody UpdateMe body) {
         return service.updateMe(Long.valueOf(actor),body);
     }

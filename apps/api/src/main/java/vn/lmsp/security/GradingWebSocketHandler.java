@@ -22,11 +22,17 @@ public class GradingWebSocketHandler extends TextWebSocketHandler {
 
     @Override public void afterConnectionEstablished(WebSocketSession session) {
         String userId = (String) session.getAttributes().get("userId");
+        if (userId == null) return;
+        boolean[] isFirst = new boolean[1];
         sessions.compute(userId, (ignored, userSessions) -> {
-            var connections = userSessions == null ? new ConcurrentHashMap<String, WebSocketSession>() : userSessions;
-            connections.put(session.getId(), new ConcurrentWebSocketSessionDecorator(session, 5000, 65536));
-            return connections;
+            if (userSessions == null) {
+                isFirst[0] = true;
+                userSessions = new ConcurrentHashMap<>();
+            }
+            userSessions.put(session.getId(), new ConcurrentWebSocketSessionDecorator(session, 5000, 65536));
+            return userSessions;
         });
+        if (isFirst[0]) broadcastPresence(userId, true);
     }
 
     @Override protected void handleTextMessage(WebSocketSession session, TextMessage message) {
@@ -45,10 +51,46 @@ public class GradingWebSocketHandler extends TextWebSocketHandler {
 
     @Override public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
         String userId = (String) session.getAttributes().get("userId");
+        if (userId == null) return;
+        boolean[] isLast = new boolean[1];
         sessions.computeIfPresent(userId, (ignored, userSessions) -> {
             userSessions.remove(session.getId());
-            return userSessions.isEmpty() ? null : userSessions;
+            if (userSessions.isEmpty()) {
+                isLast[0] = true;
+                return null;
+            }
+            return userSessions;
         });
+        if (isLast[0]) broadcastPresence(userId, false);
+    }
+
+    private void broadcastPresence(String userId, boolean online) {
+        try {
+            Long uid = Long.valueOf(userId);
+            String payload = json.writeValueAsString(Map.of(
+                    "type", "presence.changed",
+                    "ts", Instant.now().toEpochMilli(),
+                    "data", Map.of("user_id", uid, "online", online)));
+            sendToAll(payload);
+        } catch (Exception ignored) { }
+    }
+
+    public boolean isOnline(Long userId) {
+        if (userId == null) return false;
+        var conns = sessions.get(userId.toString());
+        return conns != null && !conns.isEmpty();
+    }
+
+    public Set<Long> getOnlineUserIds() {
+        Set<Long> result = new java.util.HashSet<>();
+        sessions.forEach((idStr, conns) -> {
+            if (conns != null && !conns.isEmpty()) {
+                try {
+                    result.add(Long.valueOf(idStr));
+                } catch (NumberFormatException ignored) { }
+            }
+        });
+        return result;
     }
 
     /** Chỉ đọc cho dashboard admin (admin-spec.md §3): số kết nối đang mở. */

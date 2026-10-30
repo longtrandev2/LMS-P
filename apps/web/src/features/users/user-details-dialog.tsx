@@ -22,7 +22,7 @@ function ClassList({ title, items }: { title: string; items: UserDetail["enrolle
   );
 }
 
-export function UserDetailsDialog({ user, onOpenChange }: { user: User | null; onOpenChange: (open: boolean) => void }) {
+export function UserDetailsDialog({ user, isOnline, onOpenChange }: { user: User | null; isOnline?: boolean; onOpenChange: (open: boolean) => void }) {
   const query = useQuery({ queryKey: ["users", "detail", user?.id], queryFn: () => api.get<UserDetail>(`/users/${user!.id}`), enabled: !!user });
   return (
     <Dialog open={!!user} onOpenChange={onOpenChange}>
@@ -30,12 +30,20 @@ export function UserDetailsDialog({ user, onOpenChange }: { user: User | null; o
         <DialogHeader><DialogTitle>Thông tin người dùng</DialogTitle><DialogDescription className="sr-only">{user?.email}</DialogDescription></DialogHeader>
         {query.isPending ? <p className="text-sm text-muted-foreground">Đang tải…</p> : query.data ? <div className="space-y-6">
           <div className="space-y-4">
-            <UserIdentity name={query.data.user.full_name} email={query.data.user.email} />
+            <UserIdentity name={query.data.user.full_name} email={query.data.user.email} isOnline={isOnline} />
             <dl className="grid grid-cols-[7rem_1fr] gap-x-4 gap-y-2 text-sm">
               <dt className="text-muted-foreground">Mã sinh viên</dt><dd className="font-mono text-xs leading-5">{query.data.user.student_code ?? "—"}</dd>
               <dt className="text-muted-foreground">Điện thoại</dt><dd>{query.data.user.phone ?? "—"}</dd>
               <dt className="text-muted-foreground">Vai trò</dt><dd className="flex flex-wrap gap-1">{query.data.user.roles.map((role) => <Badge key={role}>{ROLE_LABELS[role]}</Badge>)}</dd>
-              <dt className="text-muted-foreground">Trạng thái</dt><dd><StatusBadge status={query.data.user.status} /></dd>
+              <dt className="text-muted-foreground">Trạng thái</dt>
+              <dd className="flex items-center gap-2">
+                <StatusBadge status={query.data.user.status} />
+                {isOnline !== undefined && (
+                  <span className="text-xs text-muted-foreground">
+                    ({isOnline ? "Đang trực tuyến" : "Ngoại tuyến"})
+                  </span>
+                )}
+              </dd>
             </dl>
           </div>
           <ClassList title="Lớp đang học" items={query.data.enrolled_classes} /><ClassList title="Lớp đang dạy" items={query.data.teaching_classes} />

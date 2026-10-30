@@ -18,6 +18,8 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { ROLE_LABELS, StatusBadge } from "@/components/role-status-badges";
+import { cn } from "@/lib/utils";
+import { usePresence } from "./use-presence";
 import { formatUtcDateTime } from "@/lib/date-time";
 import type { User } from "@/types/api";
 import { formatRelativeTime } from "@/features/notifications/relative-time";
@@ -42,6 +44,7 @@ export function UsersTable({ users, onEdit, onResetPassword, onChanged }: UsersT
   const [lockingUser, setLockingUser] = useState<User | null>(null);
   const [detailsUser, setDetailsUser] = useState<User | null>(null);
   const [sessionsUser, setSessionsUser] = useState<User | null>(null);
+  const { isOnline } = usePresence();
 
   return (
     <>
@@ -62,7 +65,7 @@ export function UsersTable({ users, onEdit, onResetPassword, onChanged }: UsersT
         {users.map((user) => (
           <TableRow key={user.id} className="hover:bg-secondary/60">
             <TableCell className="h-14">
-              <UserIdentity name={user.full_name} email={user.email} />
+              <UserIdentity name={user.full_name} email={user.email} isOnline={isOnline(user.id)} />
             </TableCell>
             <TableCell className="hidden font-mono text-xs text-muted-foreground md:table-cell">
               {user.student_code ?? "—"}
@@ -75,7 +78,13 @@ export function UsersTable({ users, onEdit, onResetPassword, onChanged }: UsersT
               </span>
             </TableCell>
             <TableCell>
-              <StatusBadge status={user.status} />
+              <div className="flex flex-col items-start gap-1">
+                <StatusBadge status={user.status} />
+                <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <span className={cn("size-2 rounded-full", isOnline(user.id) ? "bg-emerald-500" : "bg-muted-foreground/40")} />
+                  {isOnline(user.id) ? "Trực tuyến" : "Ngoại tuyến"}
+                </span>
+              </div>
             </TableCell>
             <TableCell className="hidden text-muted-foreground tabular-nums lg:table-cell">
               <LastLogin value={user.last_login_at} />
@@ -122,7 +131,7 @@ export function UsersTable({ users, onEdit, onResetPassword, onChanged }: UsersT
       </TableBody>
     </Table>
     <UserLockDialog user={lockingUser} onOpenChange={(open) => !open && setLockingUser(null)} onDone={onChanged} />
-    <UserDetailsDialog user={detailsUser} onOpenChange={(open) => !open && setDetailsUser(null)} />
+    <UserDetailsDialog user={detailsUser} isOnline={detailsUser ? isOnline(detailsUser.id) : false} onOpenChange={(open) => !open && setDetailsUser(null)} />
     <UserSessionsSheet user={sessionsUser} onOpenChange={(open) => !open && setSessionsUser(null)} />
     </>
   );
