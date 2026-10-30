@@ -29,7 +29,6 @@ export function examWindowText(item: AssignmentSummary): string {
 export function ExamMeta({ item, showMode }: { item: AssignmentSummary; showMode: boolean }) {
   const parts = [
     categoryLabel(item.category),
-    minutesLabel(item.time_limit_minutes),
     showMode ? paperModeLabel(item.paper_mode, item.variant_count) : null,
     `${item.question_count} câu`,
     `${formatPoints(item.total_points)} điểm`,

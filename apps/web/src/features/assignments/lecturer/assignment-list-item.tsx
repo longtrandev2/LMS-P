@@ -39,7 +39,6 @@ export function AssignmentListItem({ item, classId, canManage, canTake, submitte
         <span>{categoryLabel(item.category)}</span>
         <span aria-hidden>·</span><span>{item.question_count} câu</span>
         <span aria-hidden>·</span><span>{formatPoints(item.total_points)} điểm</span>
-        {item.time_limit_minutes ? <><span aria-hidden>·</span><span>{item.time_limit_minutes} phút</span></> : null}
         {phase === "upcoming" && item.available_from ? <><span aria-hidden>·</span><span>Mở {shortDateTime(item.available_from)}</span></> : null}
         <span aria-hidden>·</span><span>Hạn {shortDateTime(item.due_at)}</span>
         {late ? <><span aria-hidden>·</span><span>muộn đến {shortDateTime(item.late_due_at)} (−{item.late_penalty_percent}%)</span></> : null}

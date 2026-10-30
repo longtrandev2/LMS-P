@@ -92,9 +92,12 @@ public class AttemptSessionStartService {
         return new Started(assembler.view(session, now), true);
     }
 
-    /** Giờ kết thúc luôn chốt theo thời gian đóng bài; đồng hồ đếm ngược thẳng đến closes_at. */
+    /** ends_at = min(started_at + time_limit, closes_at): vào sớm làm đủ giờ, vào muộn chỉ làm đến lúc đóng bài. */
     static LocalDateTime endsAt(Assignment assignment, LocalDateTime startedAt) {
-        return assignment.getClosesAt();
+        LocalDateTime closesAt = assignment.getClosesAt();
+        if (assignment.getTimeLimitMinutes() == null) return closesAt;
+        LocalDateTime idealEnd = startedAt.plusMinutes(assignment.getTimeLimitMinutes());
+        return idealEnd.isBefore(closesAt) ? idealEnd : closesAt;
     }
 
     /** Khung `[available_from, closes_at)` và còn ít nhất 1 phút trước `closes_at` — exam-spec.md §4. */

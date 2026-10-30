@@ -1,4 +1,5 @@
-import { Award, Files, ListChecks, RotateCcw, Timer } from "lucide-react";
+import { Award, CalendarClock, Files, ListChecks, RotateCcw } from "lucide-react";
+import { examWindowText } from "../exam-status";
 import { Badge } from "@/components/ui/badge";
 import type { AssignmentSummary } from "@/types/api";
 import { formatScore } from "@/features/assignments/submission-result";
@@ -22,7 +23,7 @@ export function ExamInfoHeader({ item, window }: { item: AssignmentSummary; wind
       <ExamWindowBadge window={window} />
     </div>
     <MetaRow items={[
-      { icon: Timer, text: durationText(item.time_limit_minutes) },
+      { icon: CalendarClock, text: examWindowText(item) },
       { icon: ListChecks, text: `${item.question_count} câu` },
       { icon: Award, text: `${formatScore(item.total_points)} điểm` },
       item.category === "quiz" ? { icon: RotateCcw, text: item.max_attempts == null ? "Không giới hạn lượt" : `${item.max_attempts} lượt làm` } : null,

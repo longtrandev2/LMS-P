@@ -43,7 +43,7 @@ export function ExamStartPanel({ item, window, sessions, loading }: {
   const facts: (MetaItem | null)[] = [
     item.available_from ? { icon: CalendarPlus, text: `Mở lúc ${shortDateTime(item.available_from)}` } : null,
     { icon: CalendarClock, text: `Đóng lúc ${shortDateTime(assignmentCloseAt(item))}` },
-    { icon: Hourglass, text: item.time_limit_minutes != null ? "Tính giờ từ lúc bấm Bắt đầu, không quá giờ đóng" : "Làm đến khi bài đóng" },
+    { icon: Hourglass, text: item.time_limit_minutes != null ? `Thời gian làm bài: ${item.time_limit_minutes} phút (không quá giờ đóng)` : "Làm đến khi bài đóng" },
     { icon: RotateCcw, text: item.max_attempts == null ? `Đã làm ${used} lượt · không giới hạn` : `Đã dùng ${used}/${item.max_attempts} lượt` },
     { icon: item.review_mode === "never" ? EyeOff : Eye, text: reviewPolicyText(item) },
   ];
