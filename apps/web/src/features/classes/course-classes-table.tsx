@@ -44,19 +44,19 @@ export function CourseClassesTable({ classes, isAdmin, onEdit, onDelete }: Cours
               {clazz.status === "locked" ? <Badge variant="destructive">Đã khóa</Badge> : <Badge variant="success">Hoạt động</Badge>}
             </TableCell>
             <TableCell className="text-right">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon-sm" aria-label={`Thao tác với lớp ${clazz.code}`}><MoreHorizontal aria-hidden /></Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => navigate(`/classes/${clazz.id}`)}><SquareArrowOutUpRight aria-hidden /> Mở trang lớp</DropdownMenuItem>
-                  {isAdmin ? <>
-                    <DropdownMenuItem onClick={() => onEdit(clazz)}><Pencil aria-hidden /> Sửa lớp</DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem variant="destructive" onClick={() => onDelete(clazz)}><Trash2 aria-hidden /> Xóa lớp</DropdownMenuItem>
-                  </> : null}
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <div className="inline-flex items-center gap-0.5">
+                <Button variant="ghost" size="icon-xs" title="Mở trang lớp" aria-label={`Mở trang lớp ${clazz.code}`} onClick={() => navigate(`/classes/${clazz.id}`)}>
+                  <SquareArrowOutUpRight className="size-3.5" aria-hidden />
+                </Button>
+                {isAdmin ? <>
+                  <Button variant="ghost" size="icon-xs" title="Sửa lớp" aria-label={`Sửa lớp ${clazz.code}`} onClick={() => onEdit(clazz)}>
+                    <Pencil className="size-3.5" aria-hidden />
+                  </Button>
+                  <Button variant="ghost" size="icon-xs" title="Xóa lớp" aria-label={`Xóa lớp ${clazz.code}`} className="text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => onDelete(clazz)}>
+                    <Trash2 className="size-3.5" aria-hidden />
+                  </Button>
+                </> : null}
+              </div>
             </TableCell>
           </TableRow>
         ))}

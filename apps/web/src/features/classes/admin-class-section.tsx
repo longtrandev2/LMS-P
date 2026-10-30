@@ -70,18 +70,18 @@ export function AdminClassSection({ onAssign, onEdit, onDelete }: Props) {
               <TableCell className="hidden sm:table-cell">{clazz.lecturer_name || "—"}</TableCell>
               <TableCell className="text-right tabular-nums">{clazz.enrolled_count ?? 0}{clazz.max_students ? ` / ${clazz.max_students}` : ""}</TableCell>
               <TableCell className="text-right">
-                <div className="flex items-center justify-end gap-1">
-                  <Button variant="ghost" size="icon-sm" title="Mở trang lớp" aria-label={`Mở trang lớp ${clazz.code}`} onClick={() => navigate(`/classes/${clazz.id}`)}>
-                    <SquareArrowOutUpRight className="size-4" aria-hidden />
+                <div className="inline-flex items-center gap-0.5">
+                  <Button variant="ghost" size="icon-xs" title="Mở trang lớp" aria-label={`Mở trang lớp ${clazz.code}`} onClick={() => navigate(`/classes/${clazz.id}`)}>
+                    <SquareArrowOutUpRight className="size-3.5" aria-hidden />
                   </Button>
-                  <Button variant="ghost" size="icon-sm" title="Đổi giảng viên" aria-label={`Đổi giảng viên lớp ${clazz.code}`} onClick={() => onAssign(clazz)}>
-                    <UserCog className="size-4" aria-hidden />
+                  <Button variant="ghost" size="icon-xs" title="Đổi giảng viên" aria-label={`Đổi giảng viên lớp ${clazz.code}`} onClick={() => onAssign(clazz)}>
+                    <UserCog className="size-3.5" aria-hidden />
                   </Button>
-                  <Button variant="ghost" size="icon-sm" title="Sửa lớp" aria-label={`Sửa lớp ${clazz.code}`} onClick={() => onEdit(clazz)}>
-                    <Pencil className="size-4" aria-hidden />
+                  <Button variant="ghost" size="icon-xs" title="Sửa lớp" aria-label={`Sửa lớp ${clazz.code}`} onClick={() => onEdit(clazz)}>
+                    <Pencil className="size-3.5" aria-hidden />
                   </Button>
-                  <Button variant="ghost" size="icon-sm" title="Xóa lớp" aria-label={`Xóa lớp ${clazz.code}`} className="text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => onDelete(clazz)}>
-                    <Trash2 className="size-4" aria-hidden />
+                  <Button variant="ghost" size="icon-xs" title="Xóa lớp" aria-label={`Xóa lớp ${clazz.code}`} className="text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => onDelete(clazz)}>
+                    <Trash2 className="size-3.5" aria-hidden />
                   </Button>
                 </div>
               </TableCell>

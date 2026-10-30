@@ -33,21 +33,15 @@ export function QuestionListItem({ item, canEdit, canDelete, onDelete }: {
       </p>
     </div>
     <Badge variant={DIFFICULTY_VARIANT[item.difficulty]} className="mt-0.5">{DIFFICULTY_LABEL[item.difficulty]}</Badge>
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon-sm" className="relative z-10 -my-0.5 text-muted-foreground" aria-label={`Thao tác với câu hỏi #${item.id}`}>
-          <MoreHorizontal aria-hidden />
+    <div className="relative z-10 inline-flex items-center gap-0.5">
+      <Button variant="ghost" size="icon-xs" title={canEdit ? "Chỉnh sửa câu hỏi" : "Xem câu hỏi"} aria-label={canEdit ? `Sửa #${item.id}` : `Xem #${item.id}`} onClick={() => navigate(href)}>
+        {canEdit ? <Pencil className="size-3.5" aria-hidden /> : <Eye className="size-3.5" aria-hidden />}
+      </Button>
+      {canDelete ? (
+        <Button variant="ghost" size="icon-xs" title="Xóa câu hỏi" aria-label={`Xóa câu hỏi #${item.id}`} className="text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={onDelete}>
+          <Trash2 className="size-3.5" aria-hidden />
         </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => navigate(href)}>
-          {canEdit ? <><Pencil aria-hidden /> Chỉnh sửa</> : <><Eye aria-hidden /> Xem</>}
-        </DropdownMenuItem>
-        {canDelete ? <>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem variant="destructive" onClick={onDelete}><Trash2 aria-hidden /> Xóa câu hỏi</DropdownMenuItem>
-        </> : null}
-      </DropdownMenuContent>
-    </DropdownMenu>
+      ) : null}
+    </div>
   </li>;
 }

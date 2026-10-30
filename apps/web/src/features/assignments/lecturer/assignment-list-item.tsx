@@ -51,29 +51,26 @@ export function AssignmentListItem({ item, classId, canManage, canTake, submitte
         <Badge variant={WINDOW_VARIANT[phase]}>{WINDOW_LABEL[phase]}</Badge>
       </div>
     )}
-    <div className="relative z-[1] flex w-[7.5rem] shrink-0 items-center justify-end gap-1">
+    <div className="relative z-[1] flex shrink-0 items-center justify-end gap-1.5">
       {canTake ? (phase === "upcoming"
         ? <Button size="sm" variant="secondary" disabled>Chưa mở</Button>
         : <Button size="sm" variant="secondary" asChild><Link to={href ?? "#"}>Mở bài</Link></Button>)
-        : item.is_published
-          ? <Button size="sm" variant="secondary" asChild><Link to={`${base}/results`}><BarChart3 aria-hidden />Kết quả</Link></Button>
-          : canManage ? <Button size="sm" variant="secondary" asChild><Link to={`${base}/edit`}><Pencil aria-hidden />Soạn</Link></Button> : null}
-      {!canTake && canManage ? <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon-sm" disabled={busy} aria-label={`Thao tác với ${item.title}`}><MoreHorizontal aria-hidden /></Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          {item.is_published
-            ? <DropdownMenuItem onClick={() => navigate(`${base}/edit`)}><Pencil aria-hidden /> Điều chỉnh</DropdownMenuItem>
-            : <>
-              <DropdownMenuItem disabled={item.question_count === 0} onClick={onPublish}>
-                <Send aria-hidden /> {item.question_count === 0 ? "Xuất bản (cần thêm câu hỏi)" : "Xuất bản"}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem variant="destructive" onClick={onDelete}><Trash2 aria-hidden /> Xóa bản nháp</DropdownMenuItem>
-            </>}
-        </DropdownMenuContent>
-      </DropdownMenu> : null}
+        : item.is_published ? (
+          <div className="inline-flex items-center gap-1">
+            <Button size="xs" variant="secondary" asChild><Link to={`${base}/results`}><BarChart3 className="size-3.5" aria-hidden />Kết quả</Link></Button>
+            {canManage ? <Button variant="ghost" size="icon-xs" title="Điều chỉnh" aria-label={`Điều chỉnh ${item.title}`} onClick={() => navigate(`${base}/edit`)}><Pencil className="size-3.5" aria-hidden /></Button> : null}
+          </div>
+        ) : canManage ? (
+          <div className="inline-flex items-center gap-1">
+            <Button size="xs" variant="secondary" asChild><Link to={`${base}/edit`}><Pencil className="size-3.5" aria-hidden />Soạn</Link></Button>
+            <Button variant="ghost" size="icon-xs" title={item.question_count === 0 ? "Cần thêm câu hỏi để xuất bản" : "Xuất bản"} disabled={item.question_count === 0 || busy} onClick={onPublish} aria-label="Xuất bản">
+              <Send className="size-3.5" aria-hidden />
+            </Button>
+            <Button variant="ghost" size="icon-xs" title="Xóa bản nháp" aria-label="Xóa bản nháp" className="text-destructive hover:bg-destructive/10 hover:text-destructive" disabled={busy} onClick={onDelete}>
+              <Trash2 className="size-3.5" aria-hidden />
+            </Button>
+          </div>
+        ) : null}
       {busy ? <span role="status" className="sr-only">Đang xử lý</span> : null}
     </div>
   </li>;

@@ -42,31 +42,29 @@ export function SessionRowActions({ classId, session, onEdit }: {
   }
 
   return (
-    <div className="flex items-center justify-end gap-0.5">
+    <div className="inline-flex items-center gap-0.5">
       {session.is_cancelled ? null : (
-        <Button variant="ghost" size="sm" asChild>
+        <Button variant="secondary" size="xs" asChild>
           <Link to={`/classes/${classId}/sessions/${session.id}`} aria-label={`Điểm danh ${label}`}>
-            <ClipboardCheck aria-hidden /> Điểm danh
+            <ClipboardCheck className="size-3.5" aria-hidden /> Điểm danh
           </Link>
         </Button>
       )}
-      <Button variant="ghost" size="icon-sm" aria-label={`Sửa ${label}`} onClick={() => onEdit(session)}><Pencil aria-hidden /></Button>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon-sm" aria-label={`Thao tác khác với ${label}`}><MoreHorizontal aria-hidden /></Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          {session.is_cancelled
-            ? <DropdownMenuItem onClick={restore}><RotateCcw aria-hidden /> Khôi phục buổi</DropdownMenuItem>
-            : <DropdownMenuItem onClick={() => setConfirm("cancel")}><Ban aria-hidden /> Hủy buổi</DropdownMenuItem>}
-          {session.attendance_taken_at ? null : (
-            <>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem variant="destructive" onClick={() => setConfirm("delete")}><Trash2 aria-hidden /> Xóa buổi</DropdownMenuItem>
-            </>
-          )}
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <Button variant="ghost" size="icon-xs" title="Sửa thông tin buổi" aria-label={`Sửa ${label}`} onClick={() => onEdit(session)}><Pencil className="size-3.5" aria-hidden /></Button>
+      {session.is_cancelled ? (
+        <Button variant="ghost" size="icon-xs" title="Khôi phục buổi học" aria-label={`Khôi phục ${label}`} onClick={restore}>
+          <RotateCcw className="size-3.5" aria-hidden />
+        </Button>
+      ) : (
+        <Button variant="ghost" size="icon-xs" title="Hủy buổi học" aria-label={`Hủy ${label}`} className="text-muted-foreground hover:text-foreground" onClick={() => setConfirm("cancel")}>
+          <Ban className="size-3.5" aria-hidden />
+        </Button>
+      )}
+      {!session.attendance_taken_at ? (
+        <Button variant="ghost" size="icon-xs" title="Xóa buổi học" aria-label={`Xóa ${label}`} className="text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => setConfirm("delete")}>
+          <Trash2 className="size-3.5" aria-hidden />
+        </Button>
+      ) : null}
       <AlertDialog open={confirm != null} onOpenChange={(open) => { if (!open) setConfirm(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>

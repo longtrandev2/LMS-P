@@ -63,17 +63,19 @@ export function AdminCourseSection({ onCreate, onOpenClass, onEdit, onDelete }: 
               <TableCell className="font-medium">{course.name}</TableCell>
               <TableCell className="text-right tabular-nums">{course.credits ?? "—"}</TableCell>
               <TableCell className="hidden max-w-72 truncate text-muted-foreground md:table-cell">{course.description || "—"}</TableCell>
-              <TableCell><div className="flex items-center justify-end gap-1">
-                <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => onOpenClass(course)}>
-                  <Plus className="mr-1 size-3.5" aria-hidden /> Mở lớp
-                </Button>
-                <Button variant="ghost" size="icon-sm" title="Sửa học phần" aria-label={`Sửa học phần ${course.code}`} onClick={() => onEdit(course)}>
-                  <Pencil className="size-4" aria-hidden />
-                </Button>
-                <Button variant="ghost" size="icon-sm" title="Xóa học phần" aria-label={`Xóa học phần ${course.code}`} className="text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => onDelete(course)}>
-                  <Trash2 className="size-4" aria-hidden />
-                </Button>
-              </div></TableCell>
+              <TableCell className="text-right">
+                <div className="inline-flex items-center gap-1">
+                  <Button variant="secondary" size="xs" onClick={() => onOpenClass(course)}>
+                    <Plus className="size-3.5" aria-hidden /> Mở lớp
+                  </Button>
+                  <Button variant="ghost" size="icon-xs" title="Sửa học phần" aria-label={`Sửa học phần ${course.code}`} onClick={() => onEdit(course)}>
+                    <Pencil className="size-3.5" aria-hidden />
+                  </Button>
+                  <Button variant="ghost" size="icon-xs" title="Xóa học phần" aria-label={`Xóa học phần ${course.code}`} className="text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => onDelete(course)}>
+                    <Trash2 className="size-3.5" aria-hidden />
+                  </Button>
+                </div>
+              </TableCell>
             </TableRow>)}</TableBody>
           </Table>}
         {query.data && query.data.total > query.data.limit ? <DataTablePagination page={query.data.page} limit={query.data.limit} total={query.data.total} onPageChange={setPage} className="border-t-0 px-0" /> : null}

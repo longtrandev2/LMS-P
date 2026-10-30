@@ -31,31 +31,27 @@ export function ExamListItem({ item, classId, busy, onPublish, onDelete }: {
       <ExamMeta item={item} showMode />
     </div>
     <span className="ml-7 sm:ml-0"><ExamPhaseBadge phase={phase} /></span>
-    <div className="relative z-[1] flex flex-1 items-center justify-end gap-1 sm:w-[15.5rem] sm:flex-none sm:shrink-0">
-      {draft ? <>
-        <Button size="sm" variant="secondary" asChild><Link to={`${base}/edit`}><Pencil aria-hidden />Sửa</Link></Button>
-        <Button size="sm" variant="secondary" asChild><Link to={`${base}/papers`}><Eye aria-hidden />Xem trước đề</Link></Button>
-      </> : <>
-        <Button size="sm" variant="secondary" asChild><Link to={`${base}/monitor`}><MonitorDot aria-hidden />Giám sát</Link></Button>
-        <Button size="sm" variant="secondary" asChild><Link to={`${base}/results`}><BarChart3 aria-hidden />Kết quả</Link></Button>
-      </>}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon-sm" disabled={busy} aria-label={`Thao tác với ${item.title}`}><MoreHorizontal aria-hidden /></Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          {draft ? <>
-            <DropdownMenuItem disabled={item.question_count === 0} onClick={onPublish}>
-              <Send aria-hidden /> {item.question_count === 0 ? "Xuất bản (cần thêm câu hỏi)" : "Xuất bản"}
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem variant="destructive" onClick={onDelete}><Trash2 aria-hidden /> Xóa bản nháp</DropdownMenuItem>
-          </> : <>
-            <DropdownMenuItem onClick={() => navigate(`${base}/papers`)}><Eye aria-hidden /> Xem trước đề</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate(`${base}/edit`)}><Pencil aria-hidden /> Điều chỉnh</DropdownMenuItem>
-          </>}
-        </DropdownMenuContent>
-      </DropdownMenu>
+    <div className="relative z-[1] flex flex-1 items-center justify-end gap-1 sm:flex-none sm:shrink-0">
+      {draft ? (
+        <div className="inline-flex items-center gap-1">
+          <Button size="xs" variant="secondary" asChild><Link to={`${base}/edit`}><Pencil className="size-3.5" aria-hidden />Sửa</Link></Button>
+          <Button size="xs" variant="secondary" asChild><Link to={`${base}/papers`}><Eye className="size-3.5" aria-hidden />Xem đề</Link></Button>
+          <Button variant="ghost" size="icon-xs" title={item.question_count === 0 ? "Cần thêm câu hỏi để xuất bản" : "Xuất bản"} disabled={item.question_count === 0 || busy} onClick={onPublish} aria-label="Xuất bản">
+            <Send className="size-3.5" aria-hidden />
+          </Button>
+          <Button variant="ghost" size="icon-xs" title="Xóa bản nháp" aria-label="Xóa bản nháp" className="text-destructive hover:bg-destructive/10 hover:text-destructive" disabled={busy} onClick={onDelete}>
+            <Trash2 className="size-3.5" aria-hidden />
+          </Button>
+        </div>
+      ) : (
+        <div className="inline-flex items-center gap-1">
+          <Button size="xs" variant="secondary" asChild><Link to={`${base}/monitor`}><MonitorDot className="size-3.5" aria-hidden />Giám sát</Link></Button>
+          <Button size="xs" variant="secondary" asChild><Link to={`${base}/results`}><BarChart3 className="size-3.5" aria-hidden />Kết quả</Link></Button>
+          <Button variant="ghost" size="icon-xs" title="Điều chỉnh kỳ thi" aria-label={`Điều chỉnh ${item.title}`} onClick={() => navigate(`${base}/edit`)}>
+            <Pencil className="size-3.5" aria-hidden />
+          </Button>
+        </div>
+      )}
       {busy ? <span role="status" className="sr-only">Đang xử lý</span> : null}
     </div>
   </li>;

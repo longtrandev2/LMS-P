@@ -34,24 +34,22 @@ export function MaterialRow({ material, canManage, downloading, onDownload, onEd
             <span className="tabular-nums">{formatMaterialDate(material.created_at)}</span>
           </p>
         </div>
-        <Button variant="ghost" size="icon-sm" disabled={downloading} onClick={() => onDownload(material)}
-          aria-label={`${action} ${material.title}`} title={action} className="text-muted-foreground hover:text-foreground">
-          {downloading ? <Loader2 className="animate-spin" aria-hidden /> : isLink ? <ExternalLink aria-hidden /> : <Download aria-hidden />}
-        </Button>
-        {canManage ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon-sm" aria-label={`Thao tác với ${material.title}`} className="text-muted-foreground hover:text-foreground">
-                <MoreHorizontal aria-hidden />
+        <div className="inline-flex items-center gap-0.5">
+          <Button variant="ghost" size="icon-xs" disabled={downloading} onClick={() => onDownload(material)}
+            aria-label={`${action} ${material.title}`} title={action} className="text-muted-foreground hover:text-foreground">
+            {downloading ? <Loader2 className="size-3.5 animate-spin" aria-hidden /> : isLink ? <ExternalLink className="size-3.5" aria-hidden /> : <Download className="size-3.5" aria-hidden />}
+          </Button>
+          {canManage ? (
+            <>
+              <Button variant="ghost" size="icon-xs" title="Sửa thông tin" aria-label={`Sửa ${material.title}`} onClick={() => onEdit(material)} className="text-muted-foreground hover:text-foreground">
+                <Pencil className="size-3.5" aria-hidden />
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => onEdit(material)}><Pencil aria-hidden /> Sửa thông tin</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem variant="destructive" onClick={() => onDelete(material)}><Trash2 aria-hidden /> Xóa học liệu</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ) : null}
+              <Button variant="ghost" size="icon-xs" title="Xóa học liệu" aria-label={`Xóa ${material.title}`} onClick={() => onDelete(material)} className="text-destructive hover:bg-destructive/10 hover:text-destructive">
+                <Trash2 className="size-3.5" aria-hidden />
+              </Button>
+            </>
+          ) : null}
+        </div>
       </div>
     </li>
   );

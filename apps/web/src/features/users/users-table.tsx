@@ -90,41 +90,30 @@ export function UsersTable({ users, onEdit, onResetPassword, onChanged }: UsersT
               <LastLogin value={user.last_login_at} />
             </TableCell>
             <TableCell className="text-right">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon-sm" className="text-muted-foreground" aria-label={`Thao tác với ${user.full_name}`}>
-                    <MoreHorizontal aria-hidden />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setDetailsUser(user)}><Eye aria-hidden /> Xem chi tiết</DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => onEdit(user)}>
-                    <Pencil aria-hidden /> Chỉnh sửa
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onResetPassword(user)}>
-                    <KeyRound aria-hidden /> Đặt lại mật khẩu
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setSessionsUser(user)}>
-                    <MonitorSmartphone aria-hidden /> Phiên đăng nhập
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={() => setLockingUser(user)}
-                    variant={user.status === "active" ? "destructive" : "default"}
-                  >
-                    {user.status === "active" ? (
-                      <>
-                        <Lock aria-hidden /> Khóa tài khoản
-                      </>
-                    ) : (
-                      <>
-                        <LockOpen aria-hidden /> Mở tài khoản
-                      </>
-                    )}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <div className="inline-flex items-center gap-0.5">
+                <Button variant="ghost" size="icon-xs" title="Xem chi tiết" aria-label={`Xem chi tiết ${user.full_name}`} onClick={() => setDetailsUser(user)}>
+                  <Eye className="size-3.5" aria-hidden />
+                </Button>
+                <Button variant="ghost" size="icon-xs" title="Chỉnh sửa" aria-label={`Chỉnh sửa ${user.full_name}`} onClick={() => onEdit(user)}>
+                  <Pencil className="size-3.5" aria-hidden />
+                </Button>
+                <Button variant="ghost" size="icon-xs" title="Đặt lại mật khẩu" aria-label={`Đặt lại mật khẩu ${user.full_name}`} onClick={() => onResetPassword(user)}>
+                  <KeyRound className="size-3.5" aria-hidden />
+                </Button>
+                <Button variant="ghost" size="icon-xs" title="Phiên đăng nhập" aria-label={`Phiên đăng nhập ${user.full_name}`} onClick={() => setSessionsUser(user)}>
+                  <MonitorSmartphone className="size-3.5" aria-hidden />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  title={user.status === "active" ? "Khóa tài khoản" : "Mở tài khoản"}
+                  aria-label={user.status === "active" ? `Khóa ${user.full_name}` : `Mở khóa ${user.full_name}`}
+                  className={user.status === "active" ? "text-destructive hover:bg-destructive/10 hover:text-destructive" : "text-emerald-600 hover:bg-emerald-500/10 hover:text-emerald-600"}
+                  onClick={() => setLockingUser(user)}
+                >
+                  {user.status === "active" ? <Lock className="size-3.5" aria-hidden /> : <LockOpen className="size-3.5" aria-hidden />}
+                </Button>
+              </div>
             </TableCell>
           </TableRow>
         ))}
