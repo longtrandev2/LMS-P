@@ -1,5 +1,5 @@
 import { Award, CalendarClock, Files, ListChecks, RotateCcw } from "lucide-react";
-import { examWindowText } from "../exam-status";
+import { examWindowText } from "@/features/exams/shared/exam-status";
 import { Badge } from "@/components/ui/badge";
 import type { AssignmentSummary } from "@/types/api";
 import { formatScore } from "@/features/assignments/submission-result";

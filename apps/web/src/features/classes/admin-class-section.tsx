@@ -70,18 +70,20 @@ export function AdminClassSection({ onAssign, onEdit, onDelete }: Props) {
               <TableCell className="hidden sm:table-cell">{clazz.lecturer_name || "—"}</TableCell>
               <TableCell className="text-right tabular-nums">{clazz.enrolled_count ?? 0}{clazz.max_students ? ` / ${clazz.max_students}` : ""}</TableCell>
               <TableCell className="text-right">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon-sm" aria-label={`Thao tác với lớp ${clazz.code}`}><MoreHorizontal aria-hidden /></Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => navigate(`/classes/${clazz.id}`)}><SquareArrowOutUpRight aria-hidden /> Mở trang lớp</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onAssign(clazz)}><UserCog aria-hidden /> Đổi giảng viên</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onEdit(clazz)}><Pencil aria-hidden /> Sửa lớp</DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem variant="destructive" onClick={() => onDelete(clazz)}><Trash2 aria-hidden /> Xóa lớp</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <div className="flex items-center justify-end gap-1">
+                  <Button variant="ghost" size="icon-sm" title="Mở trang lớp" aria-label={`Mở trang lớp ${clazz.code}`} onClick={() => navigate(`/classes/${clazz.id}`)}>
+                    <SquareArrowOutUpRight className="size-4" aria-hidden />
+                  </Button>
+                  <Button variant="ghost" size="icon-sm" title="Đổi giảng viên" aria-label={`Đổi giảng viên lớp ${clazz.code}`} onClick={() => onAssign(clazz)}>
+                    <UserCog className="size-4" aria-hidden />
+                  </Button>
+                  <Button variant="ghost" size="icon-sm" title="Sửa lớp" aria-label={`Sửa lớp ${clazz.code}`} onClick={() => onEdit(clazz)}>
+                    <Pencil className="size-4" aria-hidden />
+                  </Button>
+                  <Button variant="ghost" size="icon-sm" title="Xóa lớp" aria-label={`Xóa lớp ${clazz.code}`} className="text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => onDelete(clazz)}>
+                    <Trash2 className="size-4" aria-hidden />
+                  </Button>
+                </div>
               </TableCell>
             </TableRow>)}</TableBody>
           </Table>}

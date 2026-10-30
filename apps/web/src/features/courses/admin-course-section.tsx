@@ -63,18 +63,16 @@ export function AdminCourseSection({ onCreate, onOpenClass, onEdit, onDelete }: 
               <TableCell className="font-medium">{course.name}</TableCell>
               <TableCell className="text-right tabular-nums">{course.credits ?? "—"}</TableCell>
               <TableCell className="hidden max-w-72 truncate text-muted-foreground md:table-cell">{course.description || "—"}</TableCell>
-              <TableCell><div className="flex justify-end">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon-sm" aria-label={`Thao tác với học phần ${course.code}`}><MoreHorizontal aria-hidden /></Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => onOpenClass(course)}><Plus aria-hidden /> Mở lớp học phần</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onEdit(course)}><Pencil aria-hidden /> Sửa học phần</DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem variant="destructive" onClick={() => onDelete(course)}><Trash2 aria-hidden /> Xóa học phần</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+              <TableCell><div className="flex items-center justify-end gap-1">
+                <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => onOpenClass(course)}>
+                  <Plus className="mr-1 size-3.5" aria-hidden /> Mở lớp
+                </Button>
+                <Button variant="ghost" size="icon-sm" title="Sửa học phần" aria-label={`Sửa học phần ${course.code}`} onClick={() => onEdit(course)}>
+                  <Pencil className="size-4" aria-hidden />
+                </Button>
+                <Button variant="ghost" size="icon-sm" title="Xóa học phần" aria-label={`Xóa học phần ${course.code}`} className="text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => onDelete(course)}>
+                  <Trash2 className="size-4" aria-hidden />
+                </Button>
               </div></TableCell>
             </TableRow>)}</TableBody>
           </Table>}
