@@ -21,7 +21,7 @@ public final class AdminDtos {
     public record MaintenanceView(boolean enabled, String message) { }
     public record PublicSettings(List<String> allowed_languages, int default_time_limit_ms, int default_memory_limit_mb,
                                  int max_time_limit_ms, int max_memory_limit_mb, int max_upload_mb,
-                                 int leave_evidence_max_mb, MaintenanceView maintenance) { }
+                                 int leave_evidence_max_mb, int inactivity_timeout_minutes, MaintenanceView maintenance) { }
 
     // ---- Thống kê (§2) ----
     public record UserTotals(long student, long lecturer, long admin, long locked) { }

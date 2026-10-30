@@ -20,7 +20,8 @@ public final class SettingDefinitions {
     public static final String ALLOWED_LANGUAGES = "allowed_languages", DEFAULT_TIME = "default_time_limit_ms",
             DEFAULT_MEMORY = "default_memory_limit_mb", MAX_TIME = "max_time_limit_ms", MAX_MEMORY = "max_memory_limit_mb",
             PRACTICE_RUNS = "practice_runs_per_minute", MAX_UPLOAD = "max_upload_mb", LEAVE_EVIDENCE = "leave_evidence_max_mb",
-            GRADE_POLICY = "default_grade_policy", MAINTENANCE = "maintenance";
+            GRADE_POLICY = "default_grade_policy", MAINTENANCE = "maintenance",
+            INACTIVITY_TIMEOUT = "inactivity_timeout_minutes";
     /** Biên tuyệt đối khi soạn câu (kể cả khi admin nâng trần); worker nhận tới 30000 ms / 2048 MB. */
     public static final int TIME_FLOOR = 100, TIME_CEILING = 20_000, MEMORY_FLOOR = 32, MEMORY_CEILING = 2048;
     public static final int MAINTENANCE_MESSAGE_MAX = 500;
@@ -55,6 +56,9 @@ public final class SettingDefinitions {
                 "Chính sách điểm cho lớp chưa tự cấu hình (trọng số, số buổi nghỉ tối đa, điểm trừ chuyên cần)", this::gradePolicy);
         add(MAINTENANCE, maintenanceNode(false, null),
                 "Chế độ bảo trì: chặn thao tác bắt đầu việc mới của người không phải admin", this::maintenance);
+        add(INACTIVITY_TIMEOUT, IntNode.valueOf(30),
+                "Thời gian treo máy tối đa trước khi tự động đăng xuất (phút), 0 để tắt",
+                node -> integer(node, 0, 1440, " phút"));
     }
 
     public Collection<Definition> all() { return definitions.values(); }

@@ -20,6 +20,7 @@ public interface SettingsProvider {
     int leaveEvidenceMaxMb();
     GradePolicy defaultGradePolicy();
     Maintenance maintenance();
+    int inactivityTimeoutMinutes();
 
     record Maintenance(boolean enabled, String message) {
         public static final Maintenance OFF = new Maintenance(false, null);

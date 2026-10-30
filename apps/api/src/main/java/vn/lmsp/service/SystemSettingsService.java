@@ -30,17 +30,18 @@ public class SystemSettingsService implements SettingsProvider, MaintenanceGuard
     /** Giá trị đã chuẩn hóa theo khóa và bản đọc nhanh. */
     record Values(Map<String, JsonNode> raw, List<String> languages, int defaultTime, int defaultMemory, int maxTime,
                   int maxMemory, int practiceRuns, int maxUpload, int leaveEvidence, GradePolicy gradePolicy,
-                  Maintenance maintenance) {
+                  Maintenance maintenance, int inactivityTimeout) {
         static Values of(Map<String, JsonNode> raw) {
             List<String> languages = new ArrayList<>();
             raw.get(ALLOWED_LANGUAGES).forEach(item -> languages.add(item.textValue()));
             JsonNode maintenance = raw.get(MAINTENANCE);
             String message = maintenance.path("message").isTextual() ? maintenance.path("message").textValue() : null;
+            int timeout = raw.containsKey(INACTIVITY_TIMEOUT) ? raw.get(INACTIVITY_TIMEOUT).intValue() : 30;
             return new Values(Map.copyOf(raw), List.copyOf(languages), raw.get(DEFAULT_TIME).intValue(),
                     raw.get(DEFAULT_MEMORY).intValue(), raw.get(MAX_TIME).intValue(), raw.get(MAX_MEMORY).intValue(),
                     raw.get(PRACTICE_RUNS).intValue(), raw.get(MAX_UPLOAD).intValue(), raw.get(LEAVE_EVIDENCE).intValue(),
                     GradePolicyCodec.read(raw.get(GRADE_POLICY)),
-                    new Maintenance(maintenance.path("enabled").booleanValue(), message));
+                    new Maintenance(maintenance.path("enabled").booleanValue(), message), timeout);
         }
     }
 
@@ -119,6 +120,7 @@ public class SystemSettingsService implements SettingsProvider, MaintenanceGuard
     @Override public int leaveEvidenceMaxMb() { return Math.min(values().leaveEvidence(), uploadCapMb); }
     @Override public GradePolicy defaultGradePolicy() { return values().gradePolicy(); }
     @Override public Maintenance maintenance() { return values().maintenance(); }
+    @Override public int inactivityTimeoutMinutes() { return values().inactivityTimeout(); }
 
     @Override
     public void check(boolean admin) {
@@ -131,7 +133,7 @@ public class SystemSettingsService implements SettingsProvider, MaintenanceGuard
         Values v = values();
         Maintenance m = v.maintenance();
         return new PublicSettings(v.languages(), v.defaultTime(), v.defaultMemory(), v.maxTime(), v.maxMemory(),
-                maxUploadMb(), leaveEvidenceMaxMb(), new MaintenanceView(m.enabled(), m.enabled() ? message(m) : m.message()));
+                maxUploadMb(), leaveEvidenceMaxMb(), v.inactivityTimeout(), new MaintenanceView(m.enabled(), m.enabled() ? message(m) : m.message()));
     }
 
     private static String message(Maintenance maintenance) {

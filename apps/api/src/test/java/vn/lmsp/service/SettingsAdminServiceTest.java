@@ -39,7 +39,7 @@ class SettingsAdminServiceTest {
     @Test void emptyTableListsEveryKeyWithDefaultsAndVietnameseDescriptions() {
         var items = service.view().items();
         assertThat(items).extracting(SettingView::key).containsExactly(ALLOWED_LANGUAGES, DEFAULT_TIME, DEFAULT_MEMORY,
-                MAX_TIME, MAX_MEMORY, PRACTICE_RUNS, MAX_UPLOAD, LEAVE_EVIDENCE, GRADE_POLICY, MAINTENANCE);
+                MAX_TIME, MAX_MEMORY, PRACTICE_RUNS, MAX_UPLOAD, LEAVE_EVIDENCE, GRADE_POLICY, MAINTENANCE, INACTIVITY_TIMEOUT);
         assertThat(items).allSatisfy(item -> {
             assertThat(item.value()).isEqualTo(item.default_value());
             assertThat(item.description()).isNotBlank();

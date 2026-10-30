@@ -9,6 +9,7 @@ import { isWideRoute } from "@/components/breadcrumb-routes";
 import { NotificationsBell } from "@/features/notifications/notifications-bell";
 import { UserMenu } from "@/components/user-menu";
 import { MaintenanceBanner } from "@/features/admin/shared/maintenance-banner";
+import { useInactivityTimeout } from "@/hooks/use-inactivity-timeout";
 import { cn } from "@/lib/utils";
 
 const COLLAPSE_KEY = "lmsp-sidebar-collapsed";
@@ -24,6 +25,7 @@ function readCollapsed(): boolean {
  * Header dính bên trong trang dùng `sticky top-12`.
  */
 export function AppShell({ children }: { children: React.ReactNode }) {
+  useInactivityTimeout();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(readCollapsed);
   const { pathname } = useLocation();

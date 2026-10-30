@@ -3,7 +3,7 @@
 export type SettingKey =
   | "allowed_languages" | "default_time_limit_ms" | "default_memory_limit_mb" | "max_time_limit_ms"
   | "max_memory_limit_mb" | "practice_runs_per_minute" | "max_upload_mb" | "leave_evidence_max_mb"
-  | "default_grade_policy" | "maintenance";
+  | "default_grade_policy" | "maintenance" | "inactivity_timeout_minutes";
 
 export interface UserRef { id: number; full_name: string }
 export interface SettingView {
@@ -23,6 +23,7 @@ export interface PublicSettings {
   max_memory_limit_mb: number;
   max_upload_mb: number;
   leave_evidence_max_mb: number;
+  inactivity_timeout_minutes: number;
   maintenance: MaintenanceSetting;
 }
 

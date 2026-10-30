@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/page-header";
 import { ErrorState } from "@/components/state-blocks";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
-import { CodeSection, UploadSection } from "./code-upload-sections";
+import { CodeSection, UploadSection, SecuritySection } from "./code-upload-sections";
 import { GradePolicySection } from "./grade-policy-section";
 import { MaintenanceSection } from "./maintenance-section";
 import { SaveSettingsBar } from "./save-settings-bar";
@@ -55,6 +55,7 @@ export function AdminSettingsPage() {
             <div>
               <CodeSection form={form} draft={draft} />
               <UploadSection form={form} draft={draft} />
+              <SecuritySection form={form} draft={draft} />
               <GradePolicySection form={form} draft={draft} />
               <MaintenanceSection form={form} draft={draft} />
             </div>

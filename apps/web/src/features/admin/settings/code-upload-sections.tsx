@@ -1,4 +1,7 @@
+import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { LANGUAGES } from "@/lib/languages";
 import { cn } from "@/lib/utils";
 import type { SettingKey } from "@/types/admin";
@@ -65,6 +68,84 @@ export function UploadSection({ form, draft }: { form: SettingsForm; draft: Sett
     <SettingsSection id="upload" title="Upload" keys={UPLOAD_KEYS} map={form.map}
       description="Dung lượng tối đa mỗi tệp. Không vượt trần cấu hình của server.">
       <IntFields form={form} draft={draft} keys={["max_upload_mb", "leave_evidence_max_mb"]} />
+    </SettingsSection>
+  );
+}
+
+const SECURITY_KEYS: SettingKey[] = ["inactivity_timeout_minutes"];
+
+/** Nhóm "Bảo mật & Phiên làm việc": công tắc bật/tắt + thời gian treo máy tự động đăng xuất. */
+export function SecuritySection({ form, draft }: { form: SettingsForm; draft: SettingsDraft }) {
+  const base = draftFrom(form.map);
+  const rawValue = draft.ints.inactivity_timeout_minutes;
+  const numValue = Number(rawValue);
+
+  const isEnabled = rawValue !== "" && rawValue !== "0" && !isNaN(numValue) && numValue > 0;
+  const savedVal = Number(base.ints.inactivity_timeout_minutes);
+  const isSavedEnabled = !isNaN(savedVal) && savedVal > 0;
+
+  const handleToggle = (checked: boolean) => {
+    form.update((d) => ({
+      ...d,
+      ints: {
+        ...d.ints,
+        inactivity_timeout_minutes: checked ? (numValue > 0 ? String(numValue) : "30") : "0",
+      },
+    }), "inactivity_timeout_minutes");
+  };
+
+  return (
+    <SettingsSection
+      id="security"
+      title="Bảo mật & Phiên làm việc"
+      keys={SECURITY_KEYS}
+      map={form.map}
+      description="Tự động đăng xuất tài khoản khi không có thao tác trong khoảng thời gian quy định. Không áp dụng khi sinh viên đang làm bài thi hoặc quiz."
+    >
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <Switch
+            id="inactivity-enabled"
+            checked={isEnabled}
+            onCheckedChange={handleToggle}
+          />
+          <Label htmlFor="inactivity-enabled" className="cursor-pointer font-medium">
+            Tự động đăng xuất khi treo máy
+          </Label>
+          {isSavedEnabled ? (
+            <Badge variant="success">Đang bật</Badge>
+          ) : (
+            <Badge>Đang tắt</Badge>
+          )}
+        </div>
+
+        {isEnabled && (
+          <div className="pt-1">
+            <NumberField
+              id="setting-inactivity_timeout_minutes"
+              label={SETTING_LABEL.inactivity_timeout_minutes}
+              unit={INT_UNIT.inactivity_timeout_minutes}
+              value={draft.ints.inactivity_timeout_minutes}
+              changed={base.ints.inactivity_timeout_minutes !== draft.ints.inactivity_timeout_minutes}
+              onChange={(value) =>
+                form.update(
+                  (d) => ({ ...d, ints: { ...d.ints, inactivity_timeout_minutes: value } }),
+                  "inactivity_timeout_minutes"
+                )
+              }
+              defaultText={formatSetting(
+                "inactivity_timeout_minutes",
+                form.map.inactivity_timeout_minutes?.default_value
+              )}
+              hint="Từ 1 đến 1440 phút (mặc định 30 phút)"
+              error={
+                form.serverErrors.inactivity_timeout_minutes ??
+                form.clientErrors.inactivity_timeout_minutes
+              }
+            />
+          </div>
+        )}
+      </div>
     </SettingsSection>
   );
 }

@@ -5,7 +5,7 @@ import type { MaintenanceSetting, SettingKey, SettingView } from "@/types/admin"
 /** Bản nháp của form cấu hình: số giữ dạng chuỗi để người dùng gõ tự do — docs/admin-spec.md §1. */
 export type IntKey =
   | "default_time_limit_ms" | "default_memory_limit_mb" | "max_time_limit_ms" | "max_memory_limit_mb"
-  | "practice_runs_per_minute" | "max_upload_mb" | "leave_evidence_max_mb";
+  | "practice_runs_per_minute" | "max_upload_mb" | "leave_evidence_max_mb" | "inactivity_timeout_minutes";
 export type PenaltyKey = "absent_penalty" | "late_penalty" | "excused_penalty";
 
 export interface SettingsDraft {
@@ -19,7 +19,7 @@ export interface SettingsDraft {
 
 export const INT_KEYS: IntKey[] = [
   "default_time_limit_ms", "default_memory_limit_mb", "max_time_limit_ms", "max_memory_limit_mb",
-  "practice_runs_per_minute", "max_upload_mb", "leave_evidence_max_mb",
+  "practice_runs_per_minute", "max_upload_mb", "leave_evidence_max_mb", "inactivity_timeout_minutes",
 ];
 export const PENALTY_KEYS: PenaltyKey[] = ["absent_penalty", "late_penalty", "excused_penalty"];
 const LANG_ORDER = ["python", "c", "cpp", "java"];

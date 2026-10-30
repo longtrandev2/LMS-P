@@ -16,15 +16,18 @@ export const SETTING_LABEL: Record<SettingKey, string> = {
   leave_evidence_max_mb: "Dung lượng minh chứng",
   default_grade_policy: "Chính sách điểm mặc định",
   maintenance: "Chế độ bảo trì",
+  inactivity_timeout_minutes: "Thời gian chờ treo máy",
 };
 
 export const INT_UNIT: Record<IntKey, string> = {
   default_time_limit_ms: "ms", default_memory_limit_mb: "MB", max_time_limit_ms: "ms", max_memory_limit_mb: "MB",
   practice_runs_per_minute: "lần", max_upload_mb: "MB", leave_evidence_max_mb: "MB",
+  inactivity_timeout_minutes: "phút",
 };
 
 /** Khoảng hợp lệ hiển thị dưới ô (server kiểm chính thức). */
 export function rangeHint(key: IntKey, maxTime: string, maxMem: string): string {
+  if (key === "inactivity_timeout_minutes") return "Từ 1 đến 1440 phút (ví dụ: 30)";
   const cap = (s: string) => (/^\d+$/.test(s) ? Number(s).toLocaleString("vi-VN") : "tối đa");
   switch (key) {
     case "default_time_limit_ms": return `100 – ${cap(maxTime)} ms`;
