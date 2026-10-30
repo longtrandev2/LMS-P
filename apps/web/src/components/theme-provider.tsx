@@ -10,8 +10,14 @@ function storedTheme(): ThemeMode {
   return value === "dark" || value === "system" ? value : "light";
 }
 
+function isNightTime(): boolean {
+  const hour = new Date().getHours();
+  return hour >= 18 || hour < 6; // Từ 18h tối đến 6h sáng tự động chuyển chế độ tối
+}
+
 function applyTheme(theme: ThemeMode) {
-  const dark = theme === "dark" || (theme === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
+  const systemDark = matchMedia("(prefers-color-scheme: dark)").matches || isNightTime();
+  const dark = theme === "dark" || (theme === "system" && systemDark);
   document.documentElement.classList.toggle("dark", dark);
 }
 
@@ -26,11 +32,14 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       const next: ThemeMode = event.newValue === "light" || event.newValue === "dark" ? event.newValue : "system";
       setThemeState(next);
     };
+    const syncTime = () => theme === "system" && applyTheme("system");
     media.addEventListener("change", syncSystem);
     window.addEventListener("storage", syncStorage);
+    window.addEventListener("focus", syncTime);
     return () => {
       media.removeEventListener("change", syncSystem);
       window.removeEventListener("storage", syncStorage);
+      window.removeEventListener("focus", syncTime);
     };
   }, [theme]);
 
