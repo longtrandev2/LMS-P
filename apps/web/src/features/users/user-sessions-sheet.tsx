@@ -65,7 +65,7 @@ export function UserSessionsSheet({ user, onOpenChange }: { user: User | null; o
             <LogOut aria-hidden /> Đăng xuất mọi nơi
           </Button>
           <p className="text-xs text-muted-foreground">
-            Thu hồi chặn làm mới token; access token đang dùng còn hiệu lực đến khi hết hạn (vài phút).
+            Thu hồi sẽ đăng xuất ngay lập tức người dùng khỏi thiết bị theo thời gian thực (realtime).
           </p>
         </SheetFooter>
       </SheetContent>

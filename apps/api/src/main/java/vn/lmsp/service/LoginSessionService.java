@@ -22,6 +22,7 @@ public class LoginSessionService {
     private final UserRepository users;
     private final RefreshTokenRepository tokens;
     private final AuditService audit;
+    private final RealtimePublisher realtime;
 
     /** Phiên còn hiệu lực (chưa thu hồi, chưa hết hạn), dùng gần nhất trước. */
     @Transactional(readOnly = true)
@@ -45,6 +46,7 @@ public class LoginSessionService {
         if (family == null || !tokens.existsByUser_IdAndSessionFamily(userId, family))
             throw notFound("Không tìm thấy phiên đăng nhập");
         int count = tokens.revokeFamily(userId, family, LocalDateTime.now());
+        realtime.toUser(userId, "auth.kick", Map.of("reason", "Phiên đăng nhập của bạn đã bị thu hồi bởi quản trị viên."));
         audit.record(actorId, "user.sessions_revoke", "user", userId, null, Map.of("family", family, "count", count));
     }
 
@@ -52,6 +54,7 @@ public class LoginSessionService {
     public void revokeAll(Long userId, Long actorId) {
         requireUser(userId);
         int count = tokens.revokeAll(userId, LocalDateTime.now());
+        realtime.toUser(userId, "auth.kick", Map.of("reason", "Tất cả các phiên đăng nhập của bạn đã bị thu hồi bởi quản trị viên."));
         audit.record(actorId, "user.sessions_revoke", "user", userId, null, Map.of("family", "all", "count", count));
     }
 

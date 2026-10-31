@@ -25,7 +25,7 @@ public class UserManagementService {
     private final PasswordEncoder passwords; private final AuditService audit; private final EnrollmentRepository enrollments;
     private final ClassRepository classes;
     private final UserMapper mapper;
-    private final AcademicsMapper academicsMapper;
+    private final AcademicsMapper academicsMapper; private final RealtimePublisher realtime;
     private final SecureRandom random=new SecureRandom(); private static final String ALPHABET="abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
     @Transactional(readOnly=true) public Page<UserView> list(String role,String status,String q,String sort,int page,int limit) {
@@ -62,11 +62,17 @@ public class UserManagementService {
                 lockReason=input.lock_reason()==null ? "" : input.lock_reason().trim();
                 if(lockReason.isBlank()) throw invalid("Cần nhập lý do khóa tài khoản");
             }
-            user.setStatus(nextStatus); if(nextStatus==UserStatus.locked) revoke(user);
+            user.setStatus(nextStatus);
+            if(nextStatus==UserStatus.locked) {
+                revoke(user); realtime.toUser(id, "auth.kick", Map.of("reason", "Tài khoản của bạn đã bị khóa: " + (lockReason==null||lockReason.isBlank() ? "Vi phạm quy định hệ thống" : lockReason)));
+            }
         }
         if(input.role_names()!=null) user.setRoles(resolveRoles(input.role_names()));
         String temporary=null;
-        if(input.reset_password()) { temporary=generatePassword(); user.setPasswordHash(passwords.encode(temporary)); revoke(user); }
+        if(input.reset_password()) {
+            temporary=generatePassword(); user.setPasswordHash(passwords.encode(temporary)); revoke(user);
+            realtime.toUser(id, "auth.kick", Map.of("reason", "Mật khẩu của bạn đã được đặt lại bởi quản trị viên. Vui lòng đăng nhập lại."));
+        }
         try { users.flush(); } catch(org.springframework.dao.DataIntegrityViolationException error) { throw conflict("Mã sinh viên đã tồn tại"); }
         Map<String,Object> next=mapper.toAuditValue(user); next.put("password_reset",input.reset_password()); next.put("sessions_revoked",input.reset_password() || "locked".equals(input.status()));
         if(lockReason!=null) next.put("lock_reason",lockReason);
@@ -86,6 +92,7 @@ public class UserManagementService {
     }
     @Transactional public int revokeSessions(Long id,Long actorId) {
         user(id); var active=tokens.findAllByUser_IdAndRevokedAtIsNull(id); active.forEach(RefreshToken::revoke);
+        realtime.toUser(id, "auth.kick", Map.of("reason", "Phiên đăng nhập của bạn đã bị thu hồi bởi quản trị viên."));
         audit.record(actorId,"user.sessions.revoke","user",id,null,Map.of("revoked_count",active.size())); return active.size();
     }
     @Transactional public ImportResult importCsv(String content,Long actorId) {

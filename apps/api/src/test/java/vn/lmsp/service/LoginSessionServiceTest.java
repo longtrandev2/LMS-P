@@ -21,7 +21,8 @@ class LoginSessionServiceTest {
     private final UserRepository users = mock(UserRepository.class);
     private final RefreshTokenRepository tokens = mock(RefreshTokenRepository.class);
     private final AuditService audit = mock(AuditService.class);
-    private final LoginSessionService service = new LoginSessionService(users, tokens, audit);
+    private final RealtimePublisher realtime = mock(RealtimePublisher.class);
+    private final LoginSessionService service = new LoginSessionService(users, tokens, audit, realtime);
     private final User student = user(42, "student");
     private final LocalDateTime now = LocalDateTime.now();
 
