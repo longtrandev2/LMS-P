@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,12 +27,7 @@ interface ClassFormDialogProps {
 }
 
 const SEMESTER_PATTERN = /^\d{4}\.\d$/;
-const dateInput = (value?: string | null) => value?.slice(0, 16) ?? "";
 
-/**
- * State khởi tạo từ props — mount có điều kiện kèm `key`, không cần effect sync.
- * Chỉ admin tạo/sửa lớp và phân công giảng viên từ gợi ý tài khoản.
- */
 export function ClassFormDialog({ onOpenChange, courseId, clazz, onSaved }: ClassFormDialogProps) {
   const isEdit = !!clazz;
 
@@ -40,23 +35,51 @@ export function ClassFormDialog({ onOpenChange, courseId, clazz, onSaved }: Clas
   const [name, setName] = useState(clazz?.name ?? "");
   const [semester, setSemester] = useState(clazz?.semester ?? "");
   const [settings, setSettings] = useState<ClassSettings>({
-    maxStudents: clazz?.max_students?.toString() ?? "", enrollFrom: dateInput(clazz?.enroll_from),
-    enrollUntil: dateInput(clazz?.enroll_until), room: clazz?.room ?? "", schedule: clazz?.schedule ?? "",
+    room: clazz?.room ?? "", schedule: clazz?.schedule ?? "",
     status: clazz?.status ?? "active",
   });
   const [lecturerId, setLecturerId] = useState<number | null>(clazz?.lecturer_id ?? null);
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  useEffect(() => {
+    if (isEdit) return;
+    let cancelled = false;
+    async function autoFill() {
+      try {
+        const [course, classRes] = await Promise.all([
+          api.get<{ code: string; name: string }>(`/courses/${courseId}`),
+          api.get<{ items: Array<{ code: string; name: string; semester?: string }> }>(`/classes`, { course_id: courseId, limit: 100 }),
+        ]);
+        if (cancelled) return;
+        const classes = classRes.items ?? [];
+        let maxNo = 0;
+        for (const c of classes) {
+          const mCode = c.code.match(/(\d+)$/);
+          const mName = c.name.match(/(\d+)$/);
+          if (mCode) maxNo = Math.max(maxNo, parseInt(mCode[1], 10));
+          if (mName) maxNo = Math.max(maxNo, parseInt(mName[1], 10));
+        }
+        const nextNo = maxNo + 1;
+        const pad = String(nextNo).padStart(2, "0");
+        setCode((prev) => prev || `${course.code}.${pad}`);
+        setName((prev) => prev || `Nhóm ${pad}`);
+        if (classes.length > 0 && classes[0].semester) {
+          setSemester((prev) => prev || classes[0].semester || "");
+        }
+      } catch { /* người dùng nhập tay nếu tải lỗi */ }
+    }
+    void autoFill();
+    return () => { cancelled = true; };
+  }, [courseId, isEdit]);
+
   function validate(): boolean {
     const next: Record<string, string> = {};
     if (!code.trim()) next.code = "Vui lòng nhập mã lớp.";
-    if (name.trim().length < 3) next.name = "Tên lớp tối thiểu 3 ký tự.";
+    if (name.trim().length < 2) next.name = "Tên nhóm tối thiểu 2 ký tự.";
     if (!SEMESTER_PATTERN.test(semester.trim()))
       next.semester = 'Học kỳ theo dạng "2026.1" hoặc "2026.2".';
     if (lecturerId == null) next.lecturer = "Chọn giảng viên phụ trách.";
-    if (settings.maxStudents && (!/^\d+$/.test(settings.maxStudents) || Number(settings.maxStudents) < 1)) next.capacity = "Sĩ số tối đa phải là số nguyên lớn hơn 0.";
-    if (settings.enrollFrom && settings.enrollUntil && settings.enrollUntil <= settings.enrollFrom) next.window = "Thời gian đóng ghi danh phải sau thời gian mở.";
     setErrors(next);
     return Object.keys(next).length === 0;
   }
@@ -71,15 +94,9 @@ export function ClassFormDialog({ onOpenChange, courseId, clazz, onSaved }: Clas
       semester: semester.trim(),
       course_id: Number(courseId),
       lecturer_id: lecturerId as number,
-      max_students: settings.maxStudents ? Number(settings.maxStudents) : null,
-      enroll_from: settings.enrollFrom || null,
-      enroll_until: settings.enrollUntil || null,
       room: settings.room.trim(),
       schedule: settings.schedule.trim(),
       status: settings.status,
-      clear_capacity: !settings.maxStudents,
-      clear_enroll_from: !settings.enrollFrom,
-      clear_enroll_until: !settings.enrollUntil,
     };
     try {
       if (isEdit) {
@@ -115,18 +132,18 @@ export function ClassFormDialog({ onOpenChange, courseId, clazz, onSaved }: Clas
               value={code}
               onChange={(e) => setCode(e.target.value)}
               className="font-mono"
-              placeholder="VD: MMT1010.1"
+              placeholder="VD: MMT1010.01"
               aria-invalid={!!errors.code}
             />
             {errors.code ? <FieldError text={errors.code} /> : null}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="class-name">Tên lớp</Label>
+            <Label htmlFor="class-name">Tên nhóm</Label>
             <Input
               id="class-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="VD: Nhập môn lập trình — Lớp 1"
+              placeholder="VD: Nhóm 01"
               aria-invalid={!!errors.name}
             />
             {errors.name ? <FieldError text={errors.name} /> : null}
@@ -150,7 +167,6 @@ export function ClassFormDialog({ onOpenChange, courseId, clazz, onSaved }: Clas
           </div>
 
           <ClassSettingsFields value={settings} onChange={setSettings} />
-          {errors.capacity || errors.window ? <FieldError text={errors.capacity ?? errors.window} /> : null}
 
           <DialogFooter>
             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>

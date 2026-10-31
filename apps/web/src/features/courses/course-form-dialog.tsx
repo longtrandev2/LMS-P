@@ -37,7 +37,7 @@ export function CourseFormDialog({ onOpenChange, course, onSaved }: CourseFormDi
     const next: Record<string, string> = {};
     if (!code.trim()) next.code = "Vui lòng nhập mã học phần.";
     if (name.trim().length < 3) next.name = "Tên học phần tối thiểu 3 ký tự.";
-    if (!/^d+$/.test(credits) || Number(credits) < 1 || Number(credits) > 10) next.credits = "Số tín chỉ là số nguyên 1–10.";
+    if (!/^\d+$/i.test(credits) || Number(credits) < 1 || Number(credits) > 10) next.credits = "Số tín chỉ là số nguyên 1–10.";
     setErrors(next);
     return Object.keys(next).length === 0;
   }
