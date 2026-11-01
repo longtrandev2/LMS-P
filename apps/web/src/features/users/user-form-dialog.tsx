@@ -16,6 +16,7 @@ import { api } from "@/lib/api";
 import { errorText } from "@/lib/error-messages";
 import type { Role, User, UserWithTempPassword } from "@/types/api";
 import { UserRoleSelector } from "@/features/users/user-role-selector";
+import { userCodeLabel } from "@/features/users/user-code-label";
 import { FieldError } from "@/components/form-field-error";
 
 interface UserFormDialogProps {
@@ -35,6 +36,7 @@ export function UserFormDialog({ onOpenChange, user, onSaved }: UserFormDialogPr
   const [fullName, setFullName] = useState(user?.full_name ?? "");
   const [studentCode, setStudentCode] = useState(user?.student_code ?? "");
   const [roles, setRoles] = useState<Role[]>(user?.roles?.length ? user.roles : ["student"]);
+  const codeLabel = userCodeLabel(roles);
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -47,7 +49,7 @@ export function UserFormDialog({ onOpenChange, user, onSaved }: UserFormDialogPr
     if (fullName.trim().length < 2) next.fullName = "Họ tên tối thiểu 2 ký tự.";
     if (roles.length === 0) next.roles = "Chọn ít nhất một vai trò.";
     if (roles.includes("student") && !studentCode.trim())
-      next.studentCode = "Sinh viên cần mã số.";
+      next.studentCode = `${codeLabel} không được để trống.`;
     if (!isEdit && password && password.length < 8)
       next.password = "Mật khẩu tối thiểu 8 ký tự.";
     setErrors(next);
@@ -60,7 +62,6 @@ export function UserFormDialog({ onOpenChange, user, onSaved }: UserFormDialogPr
     setSubmitting(true);
     try {
       if (isEdit) {
-        // UserUpdateIn BE không nhận student_code — chỉ gửi field hợp lệ
         await api.patch(`/users/${user.id}`, {
           full_name: fullName.trim(),
           student_code: studentCode.trim() || null,
@@ -98,7 +99,7 @@ export function UserFormDialog({ onOpenChange, user, onSaved }: UserFormDialogPr
         <DialogHeader>
           <DialogTitle>{isEdit ? "Sửa người dùng" : "Thêm người dùng"}</DialogTitle>
           <DialogDescription>
-            {isEdit ? "Cập nhật họ tên, mã sinh viên và vai trò của tài khoản." : "Để trống mật khẩu để hệ thống sinh mật khẩu tạm."}
+            {isEdit ? `Cập nhật họ tên, ${codeLabel.toLowerCase()} và vai trò của tài khoản.` : "Để trống mật khẩu để hệ thống sinh mật khẩu tạm."}
           </DialogDescription>
         </DialogHeader>
 
@@ -127,13 +128,16 @@ export function UserFormDialog({ onOpenChange, user, onSaved }: UserFormDialogPr
                 {errors.fullName ? <FieldError text={errors.fullName} /> : null}
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="user-code">Mã sinh viên</Label>
+                <Label htmlFor="user-code">{codeLabel}</Label>
                 <Input id="user-code" value={studentCode} onChange={(e) => setStudentCode(e.target.value)} className="font-mono"
-                  placeholder="VD: 21DH110123" aria-invalid={!!errors.studentCode} />
+                  placeholder={`Nhập ${codeLabel.toLowerCase()}`} aria-invalid={!!errors.studentCode} />
                 {errors.studentCode ? <FieldError text={errors.studentCode} /> : isEdit ? <p className="text-xs text-muted-foreground">Để trống để xóa mã.</p> : null}
               </div>
               <div className="sm:col-span-2">
-                <UserRoleSelector roles={roles} onChange={setRoles} error={errors.roles} />
+                <UserRoleSelector roles={roles} onChange={(next) => {
+                  setRoles(next);
+                  setErrors((current) => ({ ...current, studentCode: "", roles: "" }));
+                }} error={errors.roles} />
               </div>
               {!isEdit ? (
                 <div className="space-y-1.5 sm:col-span-2">

@@ -22,7 +22,7 @@ export function UsersToolbar(props: UsersToolbarProps) {
       <SearchField
         value={search}
         onChange={onSearch}
-        placeholder="Tìm theo tên, email hoặc mã SV"
+        placeholder="Tìm theo tên, email hoặc mã người dùng"
         className="w-full sm:w-72"
       />
       {fetching ? <span className="text-xs text-muted-foreground" aria-live="polite">Đang tải…</span> : null}
