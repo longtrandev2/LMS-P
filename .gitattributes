@@ -1,0 +1,5 @@
+# Chuẩn hóa text: index lưu LF, checkout theo nền tảng
+* text=auto
+
+# Script shell chạy trong container Linux — bắt buộc LF ở mọi nền tảng
+*.sh text eol=lf

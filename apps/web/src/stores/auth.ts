@@ -38,7 +38,7 @@ export function hasRole(
 
 /** Trang mặc định theo vai trò mạnh nhất */
 export function homePathFor(user: CurrentUser | null): string {
-  if (hasRole(user, "admin")) return "/admin/users";
+  if (hasRole(user, "admin")) return "/admin";
   if (hasRole(user, "lecturer")) return "/courses";
   if (hasRole(user, "student")) return "/me/classes";
   return "/login";

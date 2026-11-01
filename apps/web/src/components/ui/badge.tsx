@@ -3,16 +3,24 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "cn"
 import { Slot } from "radix-ui"
 
+/**
+ * Badge kiểu frappe-ui — DESIGN.md §6: nền tô nhạt cùng màu chữ, không viền.
+ * Trạng thái: `success` | `warning` | `destructive`; trung tính: `default` | `outline` | `secondary`;
+ * `solid` (nền đen/trắng) dùng cho vai trò Quản trị.
+ */
 const badgeVariants = cva(
-  "group/badge inline-flex w-fit shrink-0 items-center justify-center gap-1.5 overflow-hidden rounded-md border bg-transparent px-2 py-0.5 text-xs font-medium whitespace-nowrap transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 has-data-[icon=inline-end]:pr-1 has-data-[icon=inline-start]:pl-1 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&>svg]:pointer-events-none [&>svg]:size-3!",
+  "group/badge inline-flex h-5 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-md border border-transparent px-1.5 text-xs font-medium whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:ring-ring [&>svg]:pointer-events-none [&>svg]:size-3!",
   {
     variants: {
       variant: {
-        default: "text-foreground [a]:hover:text-foreground/70",
-        secondary: "text-muted-foreground [a]:hover:text-foreground",
-        destructive:
-          "text-destructive focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 [a]:hover:text-destructive/70",
-        outline: "text-foreground [a]:hover:text-foreground/70",
+        default: "bg-secondary text-secondary-foreground [a]:hover:bg-accent",
+        secondary: "bg-secondary text-muted-foreground [a]:hover:text-foreground",
+        outline: "border-border text-foreground [a]:hover:bg-secondary",
+        solid: "bg-foreground text-background",
+        success: "bg-success/12 text-success",
+        warning: "bg-warning/14 text-warning",
+        destructive: "bg-destructive/10 text-destructive",
+        info: "bg-info/10 text-info",
         ghost: "text-muted-foreground hover:text-foreground",
         link: "text-foreground underline-offset-4 hover:underline",
       },

@@ -1,14 +1,15 @@
 # AGENTS.md — LMS-P
 
-Hướng dẫn cho mọi AI agent làm việc trong repo này. **Nguốc chân lý đầy đủ: `CLAUDE.md` (root) + `docs/`.**
+Hướng dẫn cho mọi AI agent làm việc trong repo. Nguồn chân lý nghiệp vụ: `CLAUDE.md` và `docs/`.
 
-Tóm tắt:
-- Spec-first: đọc `docs/srs.md` + `docs/system-architecture.md` trước khi code; đổi hành vi → đổi spec trước.
-- DB: chỉ qua SQLAlchemy models + Alembic migration (autogenerate flow). Cấm sửa schema tay.
-- Kiến trúc: modular monolith `apps/api/app/modules/<m>/{router,service,repository,schemas,models}.py`; worker `apps/worker`; chi tiết trong `docs/system-architecture.md` §4.
-- File < 200 dòng, kebab-case, không over-engineering (YAGNI/KISS/DRY).
-- Git: conventional commits, feature branch + PR + review, không commit secret/`.env`/storage. Agent song song không tự commit — lead lo.
-- FE: quy trình design chuẩn (design tokens → components → pages), không AI-slop, tiếng Việt.
-- Xong việc phải chạy được compile/build/test thật.
+- Spec-first: đọc `docs/srs.md` + `docs/system-architecture.md`; đổi yêu cầu/hành vi thì cập nhật spec trước.
+- DB: chỉ dùng JPA entities và Flyway migrations. Cấm sửa schema trực tiếp trong MySQL.
+- Backend: Spring Boot tại `apps/api`; package theo `common`, `config`, `controller`, `dto`, `enums`, `feature`, `mapper`, `model`, `repository`, `security`, `service`.
+- Worker: Spring Boot consumer tách riêng ở `apps/worker`.
+- Frontend: React + TypeScript SPA tại `apps/web`; chia theo feature, component dùng chung đặt ở `components/`.
+- File code < 200 dòng, kebab-case cho TS; Java dùng PascalCase cho class và camelCase cho method.
+- Git: conventional commits, feature branch + PR + review, không commit secret/`.env`/storage.
+- UI tiếng Việt; thiết kế tokens → components → pages, tránh template chung chung.
+- Xong việc phải chạy compile/build/test thật nếu runtime có sẵn.
 
-Stack: Next.js 15 + TS · FastAPI + SQLAlchemy 2 async + Alembic · MySQL 8 · RabbitMQ (aio-pika, consumer tự viết) · Docker sandbox · JWT + argon2.
+Stack: React + TypeScript + Vite · Java 21 + Spring Boot · Spring Data JPA + Flyway · MySQL 8.4 · RabbitMQ/Spring AMQP · Docker sandbox · JWT + BCrypt/Argon2.

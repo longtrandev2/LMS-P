@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useRef } from "react";
 
 /**
@@ -15,7 +13,7 @@ interface WsEnvelope {
 }
 
 function wsUrl(token: string): string {
-  const base = (process.env.NEXT_PUBLIC_WS_URL ?? "ws://localhost:8000/ws").trim();
+  const base = (import.meta.env.VITE_WS_URL ?? "ws://localhost:8000/ws").trim();
   const sep = base.includes("?") ? "&" : "?";
   return `${base}${sep}token=${encodeURIComponent(token)}`;
 }
@@ -23,14 +21,22 @@ function wsUrl(token: string): string {
 interface UseWebSocketOptions {
   /** Nhận mọi event server-push theo envelope {type, ts, data} */
   onMessage?: (type: string, data: unknown) => void;
+  /** Gọi mỗi lần (re)connect thành công — dùng để đọc lại trạng thái đang chờ bằng REST (message-contracts §6). */
+  onOpen?: () => void;
+  /** Gọi khi kết nối đóng (trước khi lên lịch kết nối lại). */
+  onClose?: () => void;
 }
 
-export function useWebSocket(token: string | null, { onMessage }: UseWebSocketOptions = {}): void {
+export function useWebSocket(token: string | null, { onMessage, onOpen, onClose }: UseWebSocketOptions = {}): void {
   // Giữ handler mới nhất trong ref — tránh reconnect khi component cha re-render
   const handlerRef = useRef(onMessage);
+  const openRef = useRef(onOpen);
+  const closeRef = useRef(onClose);
 
   useEffect(() => {
     handlerRef.current = onMessage;
+    openRef.current = onOpen;
+    closeRef.current = onClose;
   });
 
   useEffect(() => {
@@ -57,6 +63,7 @@ export function useWebSocket(token: string | null, { onMessage }: UseWebSocketOp
       ws = new WebSocket(wsUrl(token as string));
       ws.onopen = () => {
         attempts = 0;
+        openRef.current?.();
         clearPing();
         pingTimer = setInterval(() => {
           if (ws?.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: "ping" }));
@@ -72,6 +79,7 @@ export function useWebSocket(token: string | null, { onMessage }: UseWebSocketOp
       };
       ws.onclose = () => {
         clearPing();
+        closeRef.current?.();
         scheduleReconnect();
       };
       ws.onerror = () => {

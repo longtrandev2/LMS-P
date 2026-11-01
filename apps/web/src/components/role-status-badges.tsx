@@ -1,5 +1,4 @@
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
 import type { Role, UserStatus } from "@/types/api";
 
 const ROLE_LABELS: Record<Role, string> = {
@@ -8,18 +7,11 @@ const ROLE_LABELS: Record<Role, string> = {
   student: "Sinh viên",
 };
 
-const ROLE_CLASS: Record<Role, string> = {
-  admin: "bg-primary text-primary-foreground border-transparent",
-  lecturer: "border-primary/40 text-primary",
-  student: "bg-muted text-muted-foreground border-transparent",
-};
+/** DESIGN.md §6 — vai trò: Admin đen đặc, Giảng viên viền, Sinh viên muted. */
+const ROLE_VARIANT = { admin: "solid", lecturer: "outline", student: "secondary" } as const;
 
 export function RoleBadge({ role }: { role: Role }) {
-  return (
-    <Badge variant="outline" className={cn("cursor-default", ROLE_CLASS[role])}>
-      {ROLE_LABELS[role]}
-    </Badge>
-  );
+  return <Badge variant={ROLE_VARIANT[role]}>{ROLE_LABELS[role]}</Badge>;
 }
 
 export function RoleLabels() {
@@ -28,13 +20,9 @@ export function RoleLabels() {
 
 export function StatusBadge({ status }: { status: UserStatus }) {
   return status === "active" ? (
-    <Badge variant="outline" className="cursor-default border-success/40 text-success">
-      Hoạt động
-    </Badge>
+    <Badge variant="success">Hoạt động</Badge>
   ) : (
-    <Badge variant="outline" className="cursor-default border-destructive/40 text-destructive">
-      Đã khóa
-    </Badge>
+    <Badge variant="destructive">Đã khóa</Badge>
   );
 }
 

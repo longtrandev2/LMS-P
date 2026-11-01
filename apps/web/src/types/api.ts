@@ -1,4 +1,10 @@
-/** Kiểu dùng chung khớp apps/api (modules/identity + academics schemas) */
+export type { QuestionType, QuestionDifficulty, ScoringMode, ProgrammingLanguage, CheckerMode, QuestionOption, BlankSpec, PairSpec, ChoiceItem, AnswerSpec, QuestionProgramming, QuestionTestCase, QuestionSummary, Question, QuestionInput, DrawRule, DrawResult, QuestionBank, QuestionCategory, QuestionCsvRow, QuestionCsvPreview, QuestionImportResult } from "./questions";
+export type { AssignmentCategory, ScorePolicy, ReviewMode, GradingVerdict, SubmissionStatus, AssignmentSummary, AssignmentInput, ProgrammingSample, AssignmentProgramming, AssignmentQuestion, AssignmentDetails, Answer, AnswerResponse, QuizQuestionScore, QuizAttempt, CorrectAnswer, ReviewQuestion, AttemptReview, AssignmentSubmission, TestResultView, GradingResultView, SubmissionDetails, StudentResultRow } from "./assignments";
+export type { SessionMode, AttendanceStatus, LeaveRequestStatus, ClassSession, SessionPattern, GenerateSessionsInput, AttendanceRow, SessionAttendance, AttendanceSummary, ClassAttendanceSummary, LeaveRequest } from "./schedule";
+export type { GradeComponent, GradePolicy, ComponentGrade, GradeRow, Gradebook, GradeImportRow, GradeImportPreview } from "./grades";
+export type { RunJobKind, RunJobStatus, RunTestResult, RunJob, RunAccepted, DraftCheckInput, PracticeRunInput } from "./runs";
+
+/** Kiểu dữ liệu dùng chung theo DTO của Spring API. */
 
 export type Role = "admin" | "lecturer" | "student";
 export type UserStatus = "active" | "locked";
@@ -9,6 +15,8 @@ export interface CurrentUser {
   email: string;
   full_name: string;
   student_code?: string | null;
+  phone?: string | null;
+  avatar_url?: string | null;
   roles: Role[];
   status: UserStatus;
 }
@@ -18,6 +26,8 @@ export interface User {
   email: string;
   full_name: string;
   student_code?: string | null;
+  phone?: string | null;
+  avatar_url?: string | null;
   roles: Role[];
   status: UserStatus;
   last_login_at?: string | null;
@@ -35,8 +45,16 @@ export interface Course {
   code: string;
   name: string;
   description?: string | null;
+  /** Số tín chỉ 1–10 (class-schedule-grades-spec §1). */
+  credits?: number;
   created_by: number;
   created_at: string;
+}
+
+export interface ClassLecturer {
+  id: number;
+  full_name: string;
+  avatar_url?: string | null;
 }
 
 export interface ClassSummary {
@@ -45,10 +63,28 @@ export interface ClassSummary {
   code: string;
   name: string;
   semester: string;
-  lecturer_id: number;
+  lecturers: ClassLecturer[];
   lecturer_name: string;
   course_code: string;
   course_name: string;
+  grade_policy?: unknown;
+  max_students?: number | null;
+  enroll_from?: string | null;
+  enroll_until?: string | null;
+  room?: string | null;
+  schedule?: string | null;
+  status?: "active" | "locked";
+  enrolled_count?: number;
+  seats_left?: number | null;
+  /** Chỉ có ở `GET /me/classes` — thẻ lớp của sinh viên (class-schedule-grades-spec §6). */
+  credits?: number;
+  total_sessions?: number;
+  held_sessions?: number;
+  attended_sessions?: number;
+  next_session_at?: string | null;
+  materials_count?: number;
+  open_assignments_count?: number;
+  lecturer_avatar_url?: string | null;
 }
 
 export interface ClassStudent {
@@ -58,6 +94,13 @@ export interface ClassStudent {
   student_code?: string | null;
   status: string;
   enrolled_at: string;
+}
+
+export interface StudentCandidate {
+  user_id: number;
+  email: string;
+  full_name: string;
+  student_code?: string | null;
 }
 
 /** Envelope phân trang chuẩn §1: {items, total, page, limit} */
@@ -82,4 +125,16 @@ export interface ImportResult {
   errors: { row: number; reason: string }[];
   /** Mật khẩu tạm của các tài khoản vừa tạo — v1 không có email, admin tự giao */
   temp_passwords: { email: string; temp_password: string }[];
+}
+
+export interface ImportPreview {
+  valid_rows: number;
+  errors: { row: number; reason: string }[];
+  duplicates: { row: number; email?: string | null; student_code?: string | null }[];
+}
+
+export interface UserDetail {
+  user: User;
+  enrolled_classes: { id: number; code: string; name: string; course_name: string; semester: string }[];
+  teaching_classes: { id: number; code: string; name: string; course_name: string; semester: string }[];
 }

@@ -1,17 +1,27 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@import "./design-tokens.css";
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, "Segoe UI", Arial, sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, "Cascadia Code", Consolas, monospace;
   /* Heading dùng luôn sans — product-clean, không serif display */
   --font-heading: var(--font-sans);
-  --tracking-heading: -0.02em;
+  --tracking-heading: -0.01em;
+  --color-info: var(--info);
+  --color-brand-soft: var(--brand-soft);
+  /* Đổ bóng theo frappe-ui elevation; card thường không có bóng */
+  --shadow-xs: var(--elevation-sm);
+  --shadow-sm: var(--elevation-sm);
+  --shadow: var(--elevation-base);
+  --shadow-md: var(--elevation-md);
+  --shadow-lg: var(--elevation-lg);
+  --shadow-xl: var(--elevation-xl);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -43,6 +53,7 @@
   --color-card: var(--card);
   --color-gold: var(--gold);
   --color-success: var(--success);
+  --color-warning: var(--warning);
   --color-cta: var(--cta);
   --color-cta-foreground: var(--cta-foreground);
   --radius-sm: calc(var(--radius) * 0.6);
@@ -52,95 +63,9 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
-  /* Elevation — bóng đen trung tính rất nhẹ, dùng cho card/popover */
-  --shadow-soft: 0 1px 2px oklch(0 0 0 / 0.05), 0 6px 16px oklch(0 0 0 / 0.06);
-  --shadow-glass: 0 2px 6px oklch(0 0 0 / 0.05), 0 16px 40px oklch(0 0 0 / 0.1);
-}
-
-/* Monochrome product — light (trắng/đen, đỏ làm CTA hành động chính) */
-:root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.145 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.967 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.967 0 0);
-  --muted-foreground: oklch(0.552 0 0);
-  --accent: oklch(0.967 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.3);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.145 0 0);
-  /* Chart: bậc xám + đỏ CTA + xanh lá (pass) */
-  --chart-1: oklch(0.205 0 0);
-  --chart-2: oklch(0.577 0.245 27.3);
-  --chart-3: oklch(0.527 0.154 150);
-  --chart-4: oklch(0.552 0 0);
-  --chart-5: oklch(0.708 0 0);
-  --radius: 0.625rem;
-  /* CTA đỏ — nút hành động chính (red-600) */
-  --cta: oklch(0.577 0.245 27.3);
-  --cta-foreground: oklch(1 0 0);
-  /* Token cũ giữ tên để không phá code: --gold giờ là đỏ CTA */
-  --gold: oklch(0.577 0.245 27.3);
-  --success: oklch(0.527 0.154 150);
-  /* Logo badge = màu nội dung chính */
-  --mark-ink: oklch(0.145 0 0);
-  /* Sidebar: nền gần trắng + viền, chuẩn product (Linear/Vercel) */
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.205 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.951 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.205 0 0);
-}
-
-/* Monochrome product — dark (đen xám đậm, đỏ CTA sáng hơn để đạt contrast) */
-.dark {
-  --background: oklch(0.13 0 0);
-  --foreground: oklch(0.97 0 0);
-  --card: oklch(0.17 0 0);
-  --card-foreground: oklch(0.97 0 0);
-  --popover: oklch(0.17 0 0);
-  --popover-foreground: oklch(0.97 0 0);
-  --primary: oklch(0.97 0 0);
-  --primary-foreground: oklch(0.145 0 0);
-  --secondary: oklch(0.21 0 0);
-  --secondary-foreground: oklch(0.97 0 0);
-  --muted: oklch(0.21 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.21 0 0);
-  --accent-foreground: oklch(0.97 0 0);
-  --destructive: oklch(0.704 0.191 22.2);
-  --border: oklch(0.26 0 0);
-  --input: oklch(0.28 0 0);
-  --ring: oklch(0.552 0 0);
-  --chart-1: oklch(0.97 0 0);
-  --chart-2: oklch(0.637 0.237 25);
-  --chart-3: oklch(0.723 0.219 149.6);
-  --chart-4: oklch(0.708 0 0);
-  --chart-5: oklch(0.371 0 0);
-  --cta: oklch(0.637 0.237 25);
-  --cta-foreground: oklch(1 0 0);
-  --gold: oklch(0.637 0.237 25);
-  --success: oklch(0.723 0.219 149.6);
-  --mark-ink: oklch(0.97 0 0);
-  --sidebar: oklch(0.16 0 0);
-  --sidebar-foreground: oklch(0.922 0 0);
-  --sidebar-primary: oklch(0.97 0 0);
-  --sidebar-primary-foreground: oklch(0.145 0 0);
-  --sidebar-accent: oklch(0.24 0 0);
-  --sidebar-accent-foreground: oklch(0.97 0 0);
-  --sidebar-border: oklch(0.26 0 0);
-  --sidebar-ring: oklch(0.552 0 0);
+  /* Elevation — chỉ cho lớp nổi (popover/dialog/dropdown); panel/card KHÔNG đổ bóng */
+  --shadow-soft: var(--elevation-sm);
+  --shadow-glass: var(--elevation-lg);
 }
 
 @layer base {
@@ -149,14 +74,26 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    font-weight: 420;
+    letter-spacing: 0.01em;
+    font-feature-settings: "cv11", "ss03";
+    -webkit-font-smoothing: antialiased;
   }
   html {
     @apply font-sans;
+    /* Topbar dính cao 56px — neo cuộn không bị che */
+    scroll-padding-top: 4rem;
   }
+  button, input, select, textarea { font: inherit; }
+  select { color: inherit; }
+  ::selection { background: color-mix(in srgb, var(--primary) 25%, transparent); }
   h1,
   h2,
   h3 {
     @apply font-heading;
+    letter-spacing: var(--tracking-heading);
   }
 }
 
