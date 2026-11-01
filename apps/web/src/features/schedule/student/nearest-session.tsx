@@ -63,7 +63,7 @@ export function NearestSession({ session, onRequestLeave }: { session: ClassSess
         <div><dt className="text-xs text-muted-foreground">Giảng viên</dt>
           <dd className="mt-1 flex min-w-0 items-center gap-1.5 font-medium">
             <UserRound className="size-4 shrink-0 text-muted-foreground" strokeWidth={1.75} aria-hidden />
-            <span className="truncate">{session.lecturer_name ?? "—"}</span>
+            <span className="truncate" title={session.lecturer_name ?? undefined}>{session.lecturer_name ?? "—"}</span>
           </dd></div>
         <div><dt className="text-xs text-muted-foreground">Điểm danh</dt><dd className="mt-1"><AttendanceCell session={session} now={now} /></dd></div>
       </dl>

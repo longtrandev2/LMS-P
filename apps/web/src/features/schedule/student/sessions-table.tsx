@@ -71,7 +71,7 @@ export function SessionsTable({ classId, sessions, nextId, onRequestLeave }: {
               <TableCell>{session.room || <span className="text-muted-foreground">—</span>}</TableCell>
               <TableCell><ModeBadge mode={session.mode} /></TableCell>
               <TableCell><AttendanceCell session={session} now={now} /></TableCell>
-              <TableCell className="max-w-40 truncate">{session.lecturer_name ?? "—"}</TableCell>
+              <TableCell className="max-w-40 truncate" title={session.lecturer_name ?? undefined}>{session.lecturer_name ?? "—"}</TableCell>
               <TableCell className="max-w-56 truncate whitespace-normal">
                 {session.title ? <span className="line-clamp-2">{session.title}</span> : <span className="text-muted-foreground">—</span>}
               </TableCell>

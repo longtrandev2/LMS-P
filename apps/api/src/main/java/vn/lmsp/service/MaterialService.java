@@ -100,8 +100,9 @@ public class MaterialService {
             notifications.create(e.getStudent().getId(),"material.created","Học liệu mới: "+m.getTitle(),m.getDescription(),Map.of("material_id",m.getId(),"class_id",clazz.getId()));
     }
     private void checkAccess(LmsClass c, Long userId, boolean privileged) {
-        if (!privileged && c.getStatus() == ClassStatus.locked) throw new LmsException("CLASS_LOCKED","Lớp học đang bị khóa",HttpStatus.FORBIDDEN,null);
-        if(privileged || c.getLecturerId().equals(userId) || enrollments.existsByLmsClass_IdAndStudent_IdAndStatus(c.getId(),userId,EnrollmentStatus.active)) return;
+        boolean manager = privileged || c.hasLecturer(userId);
+        if (!manager && c.getStatus() == ClassStatus.locked) throw new LmsException("CLASS_LOCKED","Lớp học đang bị khóa",HttpStatus.FORBIDDEN,null);
+        if(manager || enrollments.existsByLmsClass_IdAndStudent_IdAndStatus(c.getId(),userId,EnrollmentStatus.active)) return;
         throw new LmsException("ENROLLMENT_REQUIRED","Bạn chưa tham gia lớp học",HttpStatus.FORBIDDEN,null);
     }
     private void checkSession(Long classId, Long sessionId) {
@@ -109,7 +110,7 @@ public class MaterialService {
         ClassSession s=sessions.findById(sessionId).orElseThrow(()->invalid("Không tìm thấy buổi học"));
         if(!s.getClassId().equals(classId)) throw invalid("Buổi học không thuộc lớp này");
     }
-    private void checkOwner(LmsClass c, Long actorId) { if(!c.getLecturerId().equals(actorId)) throw new LmsException("FORBIDDEN","Chỉ giảng viên phụ trách lớp mới được quản lý học liệu",HttpStatus.FORBIDDEN,null); }
+    private void checkOwner(LmsClass c, Long actorId) { if(!c.hasLecturer(actorId)) throw new LmsException("FORBIDDEN","Chỉ giảng viên phụ trách lớp mới được quản lý học liệu",HttpStatus.FORBIDDEN,null); }
     private LmsClass clazz(Long id) { return classes.findById(id).orElseThrow(()->new LmsException("NOT_FOUND","Không tìm thấy lớp học",HttpStatus.NOT_FOUND,null)); }
     private Material material(Long id) { return materials.findById(id).orElseThrow(()->new LmsException("NOT_FOUND","Không tìm thấy học liệu",HttpStatus.NOT_FOUND,null)); }
     private User user(Long id) { return users.findById(id).orElseThrow(()->new LmsException("NOT_FOUND","Không tìm thấy người dùng",HttpStatus.NOT_FOUND,null)); }

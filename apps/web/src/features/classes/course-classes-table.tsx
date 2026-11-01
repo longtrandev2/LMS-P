@@ -1,10 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
-import { MoreHorizontal, Pencil, SquareArrowOutUpRight, Trash2 } from "lucide-react";
+import { Pencil, SquareArrowOutUpRight, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { ClassSummary } from "@/types/api";
 import { FLUSH_TABLE } from "./list-styles";
@@ -38,7 +35,7 @@ export function CourseClassesTable({ classes, isAdmin, onEdit, onDelete }: Cours
               <span className="block font-mono text-xs text-muted-foreground">{clazz.code}</span>
             </TableCell>
             <TableCell className="font-mono text-xs">{clazz.semester}</TableCell>
-            <TableCell className="hidden sm:table-cell">{clazz.lecturer_name || "—"}</TableCell>
+            <TableCell className="hidden sm:table-cell"><span className="break-words">{clazz.lecturer_name || "—"}</span></TableCell>
             <TableCell className="text-right tabular-nums">{clazz.enrolled_count ?? 0}{clazz.max_students ? ` / ${clazz.max_students}` : ""}</TableCell>
             <TableCell>
               {clazz.status === "locked" ? <Badge variant="destructive">Đã khóa</Badge> : <Badge variant="success">Hoạt động</Badge>}

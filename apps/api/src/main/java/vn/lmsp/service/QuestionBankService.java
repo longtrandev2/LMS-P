@@ -40,7 +40,7 @@ public class QuestionBankService {
         if (admin) throw failure("FORBIDDEN", "Giảng viên phụ trách học phần mới được tạo ngân hàng", HttpStatus.FORBIDDEN);
         Course course = courses.findById(input.course_id())
                 .orElseThrow(() -> failure("NOT_FOUND", "Không tìm thấy học phần", HttpStatus.NOT_FOUND));
-        if (!classes.existsByCourse_IdAndLecturer_Id(course.getId(), actorId))
+        if (!classes.existsByCourse_IdAndLecturers_Id(course.getId(), actorId))
             throw failure("FORBIDDEN", "Bạn chưa được phân công giảng dạy học phần", HttpStatus.FORBIDDEN);
         String name = text(input.name(), "Tên ngân hàng");
         User owner = user(actorId);
@@ -143,7 +143,7 @@ public class QuestionBankService {
     @Transactional
     public BankPermissionView grant(Long id, Long lecturerId, BankPermission permission, Long actor, boolean admin) {
         QuestionBank bank = requireManagedBank(id, actor, admin);
-        if (bank.getCourseId() == null || !classes.existsByCourse_IdAndLecturer_Id(bank.getCourseId(), lecturerId))
+        if (bank.getCourseId() == null || !classes.existsByCourse_IdAndLecturers_Id(bank.getCourseId(), lecturerId))
             throw failure("VALIDATION_ERROR", "Giảng viên chưa được phân công vào học phần", HttpStatus.BAD_REQUEST);
         if (bank.getOwnerId().equals(lecturerId))
             throw failure("VALIDATION_ERROR", "Chủ ngân hàng đã có toàn quyền", HttpStatus.BAD_REQUEST);

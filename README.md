@@ -104,3 +104,15 @@ Stack `lms-grading-check` dùng API cổng 18000 và RabbitMQ Management 15673; 
 - [SRS](docs/srs.md) · [Kiến trúc](docs/system-architecture.md) · [Database](docs/database-design.md)
 - [API](docs/api-spec.md) · [Message](docs/message-contracts.md) · [Tech decisions](docs/tech-decisions.md)
 - [Roadmap](docs/development-roadmap.md)
+
+## Nhiều giảng viên phụ trách một lớp
+
+Admin có thể chọn nhiều người khi mở/sửa lớp hoặc dùng nút **Phân công giảng viên** để thêm/gỡ từng người. Mỗi lớp giữ ít nhất một giảng viên; mọi người được phân công có quyền quản lý lớp ngang nhau.
+
+Khi cập nhật từ bản cũ, build và khởi động lại cả API lẫn web; API tự chạy Flyway V22 để chuyển phân công cũ sang `class_lecturers`. Không cần reset dữ liệu. Các script/client gọi API tạo/sửa lớp dùng `lecturer_ids: [id, ...]` thay cho `lecturer_id`.
+
+```powershell
+docker compose --env-file infra/.env -f infra/docker-compose.yml up -d --build api web
+```
+
+Hai kiểm thử MySQL tùy chọn (`ClassLecturerMigrationTest`, `ClassLecturerPersistenceTest`) chạy khi có biến môi trường `LMS_MIGRATION_TEST_URL` và `LMS_TEST_DATABASE_URL`: trỏ tới **hai database kiểm thử riêng biệt, trống**, cùng `LMS_TEST_DATABASE_USER` và `LMS_TEST_DATABASE_PASSWORD`. Test migration tạo dữ liệu V21 rồi nâng lên V22; test JPA kiểm tra nhiều giảng viên, phân trang và thu hồi quyền theo lớp/học phần. Không đặt các URL này vào database đang sử dụng. Khi không có các biến này, bộ unit test vẫn chạy bình thường và bỏ qua hai kiểm thử MySQL.

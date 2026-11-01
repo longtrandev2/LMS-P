@@ -16,14 +16,14 @@ public class QuestionBankAccessService {
     public boolean canView(QuestionBank bank, Long actor, boolean admin) {
         if (admin || bank.getOwnerId().equals(actor)) return true;
         Long courseId = bank.getCourseId();
-        if (courseId == null || !classes.existsByCourse_IdAndLecturer_Id(courseId, actor)) return false;
+        if (courseId == null || !classes.existsByCourse_IdAndLecturers_Id(courseId, actor)) return false;
         return "shared".equals(bank.getVisibility()) || permissions.findById_BankIdAndId_LecturerId(bank.getId(), actor).isPresent();
     }
 
     public boolean canEdit(QuestionBank bank, Long actor, boolean admin) {
         if (admin || bank.getOwnerId().equals(actor)) return true;
         Long courseId = bank.getCourseId();
-        if (courseId == null || !classes.existsByCourse_IdAndLecturer_Id(courseId, actor)) return false;
+        if (courseId == null || !classes.existsByCourse_IdAndLecturers_Id(courseId, actor)) return false;
         return permissions.findById_BankIdAndId_LecturerId(bank.getId(), actor)
                 .map(item -> item.getPermission() == BankPermission.edit).orElse(false);
     }

@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { FieldError } from "@/components/form-field-error";
 import { api } from "@/lib/api";
 import { errorText } from "@/lib/error-messages";
-import type { ClassSummary } from "@/types/api";
+import type { ClassLecturer, ClassSummary } from "@/types/api";
 import { ClassSettingsFields, type ClassSettings } from "@/features/classes/class-settings-fields";
 import { ClassLecturerField } from "@/features/classes/class-lecturer-field";
 
@@ -38,7 +38,7 @@ export function ClassFormDialog({ onOpenChange, courseId, clazz, onSaved }: Clas
     room: clazz?.room ?? "", schedule: clazz?.schedule ?? "",
     status: clazz?.status ?? "active",
   });
-  const [lecturerId, setLecturerId] = useState<number | null>(clazz?.lecturer_id ?? null);
+  const [lecturers, setLecturers] = useState<ClassLecturer[]>(clazz?.lecturers ?? []);
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -79,7 +79,7 @@ export function ClassFormDialog({ onOpenChange, courseId, clazz, onSaved }: Clas
     if (name.trim().length < 2) next.name = "Tên nhóm tối thiểu 2 ký tự.";
     if (!SEMESTER_PATTERN.test(semester.trim()))
       next.semester = 'Học kỳ theo dạng "2026.1" hoặc "2026.2".';
-    if (lecturerId == null) next.lecturer = "Chọn giảng viên phụ trách.";
+    if (lecturers.length === 0) next.lecturer = "Chọn ít nhất một giảng viên phụ trách.";
     setErrors(next);
     return Object.keys(next).length === 0;
   }
@@ -93,7 +93,7 @@ export function ClassFormDialog({ onOpenChange, courseId, clazz, onSaved }: Clas
       name: name.trim(),
       semester: semester.trim(),
       course_id: Number(courseId),
-      lecturer_id: lecturerId as number,
+      lecturer_ids: lecturers.map((user) => user.id),
       room: settings.room.trim(),
       schedule: settings.schedule.trim(),
       status: settings.status,
@@ -122,7 +122,7 @@ export function ClassFormDialog({ onOpenChange, courseId, clazz, onSaved }: Clas
           <DialogTitle>
             {isEdit ? "Sửa lớp học phần" : "Mở lớp & phân công giảng viên"}
           </DialogTitle>
-          <DialogDescription>Nhập thông tin lớp và chọn giảng viên phụ trách trước khi lưu.</DialogDescription>
+          <DialogDescription>Nhập thông tin lớp và chọn một hoặc nhiều giảng viên phụ trách trước khi lưu.</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4" noValidate>
           <div className="space-y-2">
@@ -162,8 +162,8 @@ export function ClassFormDialog({ onOpenChange, courseId, clazz, onSaved }: Clas
           </div>
 
           <div className="rounded-lg border bg-muted/40 p-3">
-            <ClassLecturerField lecturerId={lecturerId} initialName={clazz?.lecturer_name ?? ""}
-              error={errors.lecturer} onChange={setLecturerId} />
+            <ClassLecturerField lecturers={lecturers}
+              error={errors.lecturer} onChange={(next) => { setLecturers(next); setErrors((current) => ({ ...current, lecturer: "" })); }} />
           </div>
 
           <ClassSettingsFields value={settings} onChange={setSettings} />

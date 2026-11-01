@@ -16,7 +16,8 @@ erDiagram
     roles ||--o{ user_roles : ""
     users ||--o{ refresh_tokens : ""
     courses ||--o{ classes : ""
-    users ||--o{ classes : "lecturer"
+    users ||--o{ class_lecturers : "lecturer"
+    classes ||--|{ class_lecturers : "assigned"
     classes ||--o{ enrollments : ""
     users ||--o{ enrollments : "student"
     classes ||--o{ materials : ""
@@ -82,7 +83,8 @@ erDiagram
 ### 2.2 Khóa học & lớp (M2)
 
 **courses** — id, code VARCHAR(20) UNIQUE, name NVARCHAR(200), description TEXT, credits TINYINT UNSIGNED default 3 (1–10), created_by FK users, created_at.
-**classes** — id, course_id FK, code VARCHAR(30), name NVARCHAR(200), semester VARCHAR(20) (vd '2026.1'), lecturer_id FK users, max_students INT UNSIGNED NULL (NULL = không giới hạn; BR12: không được < sĩ số hiện tại), enroll_from DATETIME NULL, enroll_until DATETIME NULL (NULL/NULL = luôn mở; enroll_until > enroll_from), room VARCHAR(50) NULL, schedule VARCHAR(100) NULL, status ENUM('active','locked') default 'active', grade_policy JSON NULL (`{"weights":{"attendance":10,"assignment":20,"midterm":20,"final":50},"attendance":{"max_absences":null,"absent_penalty":2,"late_penalty":0.5,"excused_penalty":0}}` — NULL = mặc định, `class-schedule-grades-spec.md` §5), created_at. UNIQUE(course_id, code); index (semester), (enroll_until).
+**classes** — id, course_id FK, code VARCHAR(30), name NVARCHAR(200), semester VARCHAR(20) (vd '2026.1'), max_students INT UNSIGNED NULL (NULL = không giới hạn; BR12: không được < sĩ số hiện tại), enroll_from DATETIME NULL, enroll_until DATETIME NULL (NULL/NULL = luôn mở; enroll_until > enroll_from), room VARCHAR(50) NULL, schedule VARCHAR(100) NULL, status ENUM('active','locked') default 'active', grade_policy JSON NULL (`{"weights":{"attendance":10,"assignment":20,"midterm":20,"final":50},"attendance":{"max_absences":null,"absent_penalty":2,"late_penalty":0.5,"excused_penalty":0}}` — NULL = mặc định, `class-schedule-grades-spec.md` §5), created_at. UNIQUE(course_id, code); index (semester), (enroll_until).
+**class_lecturers** — PK(class_id FK classes, lecturer_id FK users), index(lecturer_id); một lớp có nhiều giảng viên ngang quyền. V22 chuyển phân công cũ vào bảng này.
 **enrollments** — id, class_id FK, student_id FK, status ENUM('active','dropped') default active, enrolled_at, enrolled_via ENUM('lecturer','self') default 'lecturer'. UNIQUE(class_id, student_id); index (student_id).
 
 ### 2.3 Học liệu (M3)
@@ -217,3 +219,7 @@ ExamSession:       in_progress ──submit──▶ submitted
 - Điểm/số liệu tổng hợp: query + cache app-level ngắn (60s) nếu cần; v1 ưu tiên query thẳng, đo trước tối ưu.
 - Charset utf8mb4 + collation utf8mb4_0900_ai_ci toàn hệ thống (tiếng Việt).
 - Migration: Flyway. DB đã có Alembic schema được baseline ở version 4; DB mới chạy V1–V4. Mỗi thay đổi schema sau đó phải qua migration versioned (bắt đầu V5), cấm sửa tay.
+
+## Phân công nhiều giảng viên (V22)
+
+`class_lecturers`: `class_id BIGINT NOT NULL` FK classes, `lecturer_id BIGINT NOT NULL` FK users; PK ghép `(class_id, lecturer_id)`, index `lecturer_id`. FK lớp ON DELETE CASCADE chỉ xóa phân công khi lớp bị xóa; FK giảng viên RESTRICT. JPA `LmsClass.lecturers` là tập ManyToMany không cascade tài khoản. V22 tạo bảng, sao chép mọi phân công hiện tại rồi bỏ FK/cột `classes.lecturer_id`. Mỗi lớp phải có ít nhất một giảng viên; service kiểm tra danh sách, quyền và ghi audit trong cùng transaction. Các mô tả `classes.lecturer_id` cũ trong tài liệu được thay bằng bảng liên kết này.

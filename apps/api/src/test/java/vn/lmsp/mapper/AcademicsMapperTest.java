@@ -10,6 +10,19 @@ import vn.lmsp.model.Enrollment;
 class AcademicsMapperTest {
     private final AcademicsMapper mapper = new AcademicsMapper();
 
+    @Test void allLecturersAreProjectedInStableOrderWithoutSelectingAPrimaryLecturer() {
+        var clazz = clazz(null);
+        var other = user(8, "lecturer");
+        other.updateProfile("Giảng viên thứ hai", null);
+        clazz.assignLecturers(java.util.List.of(other, user(7, "lecturer")));
+        var view = mapper.toClassView(clazz, 0);
+        assertThat(view.lecturers()).extracting(v -> v.id()).containsExactly(7L, 8L);
+        assertThat(view.lecturer_name()).isEqualTo("Demo lecturer, Giảng viên thứ hai");
+        var mine = mapper.toMyClassView(new Enrollment(clazz, user(42, "student"), EnrollmentVia.lecturer));
+        assertThat(mine.lecturers()).hasSize(2);
+        assertThat(mine.lecturer_avatar_url()).isNull();
+    }
+
     @Test
     void unlimitedCapacityHasNoRemainingSeatLimit() {
         var view = mapper.toClassView(clazz(null), 5);

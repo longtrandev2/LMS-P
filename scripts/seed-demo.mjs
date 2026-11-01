@@ -50,7 +50,7 @@ async function main() {
   const klass = await findOrCreate(async () => items(await api("/classes", { token: admin })), (c) => c.code === "NET101-L01",
     () => api("/classes", { method: "POST", token: admin, body: {
       course_id: course.id, code: "NET101-L01", name: "Lập trình mạng — Lớp 1", semester: "2026.2",
-      lecturer_id: demoLecturer.id, max_students: 40, room: "A1.1", schedule: "T3 1-3, T5 1-3" } }),
+      lecturer_ids: [demoLecturer.id], max_students: 40, room: "A1.1", schedule: "T3 1-3, T5 1-3" } }),
     "Lớp NET101-L01");
   const enrolled = items(await api(`/classes/${klass.id}/students`, { token: lecturer })).map((s) => s.user_id ?? s.id);
   const missing = [sv1, sv2, sv3].filter((s) => s && !enrolled.includes(s.id)).map((s) => s.id);

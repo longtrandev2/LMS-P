@@ -23,7 +23,7 @@ class QuestionBankAccessServiceTest {
         Course course = identified(new Course("JAVA", "Java", null, owner), 2);
         QuestionBank bank = identified(new QuestionBank(course, owner, "OOP", null, "private", owner), 20);
         var viewer = user(9, "lecturer");
-        when(classes.existsByCourse_IdAndLecturer_Id(2L, 9L)).thenReturn(true);
+        when(classes.existsByCourse_IdAndLecturers_Id(2L, 9L)).thenReturn(true);
 
         assertThat(access.canView(bank, 9L, false)).isFalse();
         assertThat(access.canEdit(bank, 9L, false)).isFalse();
@@ -32,7 +32,7 @@ class QuestionBankAccessServiceTest {
         assertThat(access.canView(bank, 9L, false)).isTrue();
         assertThat(access.canEdit(bank, 9L, false)).isFalse();
 
-        when(classes.existsByCourse_IdAndLecturer_Id(2L, 9L)).thenReturn(false);
+        when(classes.existsByCourse_IdAndLecturers_Id(2L, 9L)).thenReturn(false);
         assertThat(access.canView(bank, 9L, false)).isFalse();
     }
 
@@ -40,7 +40,7 @@ class QuestionBankAccessServiceTest {
         var owner = user(7, "lecturer");
         Course course = identified(new Course("JAVA", "Java", null, owner), 2);
         QuestionBank bank = identified(new QuestionBank(course, owner, "Collections", null, "shared", owner), 21);
-        when(classes.existsByCourse_IdAndLecturer_Id(2L, 9L)).thenReturn(true);
+        when(classes.existsByCourse_IdAndLecturers_Id(2L, 9L)).thenReturn(true);
 
         assertThat(access.canView(bank, 9L, false)).isTrue();
         assertThat(access.canEdit(bank, 9L, false)).isFalse();

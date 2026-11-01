@@ -38,7 +38,7 @@ class LeaveReviewServiceTest {
     @BeforeEach void setUp() {
         request = leave(item, an, 77, LeaveRequestStatus.pending);
         when(leaves.findLockedById(77L)).thenReturn(Optional.of(request));
-        when(users.findById(7L)).thenReturn(Optional.of(clazz.getLecturer()));
+        when(users.findById(7L)).thenReturn(Optional.of(clazz.getLecturers().iterator().next()));
     }
 
     @Test void approvalCreatesExcusedAttendanceAndNotifiesStudent() {
@@ -75,7 +75,7 @@ class LeaveReviewServiceTest {
     }
 
     @Test void onlyPendingRequestsCanBeReviewed() {
-        request.review(LeaveRequestStatus.rejected, null, clazz.getLecturer(), LocalDateTime.now());
+        request.review(LeaveRequestStatus.rejected, null, clazz.getLecturers().iterator().next(), LocalDateTime.now());
         assertThatThrownBy(() -> service.change(77L, new LeaveReview(LeaveRequestStatus.approved, null), 7L, false))
                 .extracting("code").isEqualTo("CONFLICT");
     }

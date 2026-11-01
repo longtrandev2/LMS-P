@@ -18,16 +18,16 @@ public final class AcademicsDtos {
     public record CourseView(Long id, String code, String name, String description, int credits, Long created_by, LocalDateTime created_at) { }
     public record ClassInput(@NotNull Long course_id, @Size(min=1,max=30) String code,
                              @Size(min=1,max=200) String name, @Size(min=1,max=20) String semester,
-                             @NotNull Long lecturer_id, JsonNode grade_policy, Integer max_students,
+                             @NotNull @Size(min=1) List<@NotNull @Positive Long> lecturer_ids, JsonNode grade_policy, Integer max_students,
                              LocalDateTime enroll_from, LocalDateTime enroll_until, String room,
                              String schedule, ClassStatus status) { }
     public record ClassPatch(@Size(min=1,max=30) String code, @Size(min=1,max=200) String name,
-                             @Size(min=1,max=20) String semester, Long lecturer_id, JsonNode grade_policy,
+                             @Size(min=1,max=20) String semester, @Size(min=1) List<@NotNull @Positive Long> lecturer_ids, JsonNode grade_policy,
                              Integer max_students, LocalDateTime enroll_from, LocalDateTime enroll_until,
                              String room, String schedule, ClassStatus status, Boolean clear_capacity,
                              Boolean clear_enroll_from, Boolean clear_enroll_until) { }
     public record ClassView(Long id, Long course_id, String code, String name, String semester,
-                            Long lecturer_id, JsonNode grade_policy, LocalDateTime created_at,
+                            List<LecturerView> lecturers, JsonNode grade_policy, LocalDateTime created_at,
                             String course_code, String course_name, String lecturer_name, Integer max_students,
                             LocalDateTime enroll_from, LocalDateTime enroll_until, String room, String schedule,
                             ClassStatus status, long enrolled_count, Integer seats_left, int credits) { }
@@ -45,10 +45,11 @@ public final class AcademicsDtos {
     public record StudentCandidateView(Long user_id, String email, String full_name, String student_code) { }
     /** Thẻ lớp của sinh viên — class-schedule-grades-spec §6. */
     public record MyClassView(Long id, Long course_id, String code, String name, String semester,
-                              Long lecturer_id, String status, String course_code, String course_name,
+                              List<LecturerView> lecturers, String status, String course_code, String course_name,
                               String lecturer_name, int credits, long total_sessions, long held_sessions,
                               long attended_sessions, LocalDateTime next_session_at, long materials_count,
                               long open_assignments_count, String lecturer_avatar_url) { }
+    public record LecturerView(Long id, String full_name, String avatar_url) { }
     /** Số liệu thẻ lớp tính bằng truy vấn gộp (ClassCardQueries). */
     public record ClassCardStats(long totalSessions, long heldSessions, long attendedSessions,
                                  LocalDateTime nextSessionAt, long materialsCount, long openAssignmentsCount) {

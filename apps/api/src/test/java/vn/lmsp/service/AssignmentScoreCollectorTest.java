@@ -39,11 +39,11 @@ class AssignmentScoreCollectorTest {
         Assignment open = assignment(3, AssignmentCategory.ASSIGNMENT, NOW.plusDays(1));
         Assignment midterm = assignment(4, AssignmentCategory.MIDTERM, NOW.minusHours(1));
         when(assignments.findAllByLmsClass_IdAndPublishedTrueOrderByDueAtAscIdAsc(3L)).thenReturn(List.of(quiz, homework, open, midterm));
-        when(results.results(1L, 7L, true)).thenReturn(new ResultsTable(List.of(
+        when(results.results(1L, null, true)).thenReturn(new ResultsTable(List.of(
                 result(42, "8", "10", SubmissionStatus.completed), result(43, null, "10", null))));
-        when(results.results(2L, 7L, true)).thenReturn(new ResultsTable(List.of(
+        when(results.results(2L, null, true)).thenReturn(new ResultsTable(List.of(
                 result(42, "15", "20", SubmissionStatus.completed), result(43, "20", "20", SubmissionStatus.grading))));
-        when(results.results(4L, 7L, true)).thenReturn(new ResultsTable(List.of(
+        when(results.results(4L, null, true)).thenReturn(new ResultsTable(List.of(
                 result(42, "7", "10", SubmissionStatus.completed), result(43, "3", "4", SubmissionStatus.completed))));
 
         var scores = collector.collect(clazz, NOW);
@@ -60,14 +60,14 @@ class AssignmentScoreCollectorTest {
         assertThat(midtermScores.average(43L)).isEqualByComparingTo("7.50");
         assertThat(midtermScores.provisional(42L)).isFalse();
         assertThat(scores.get(GradeComponent.FINAL)).isNull();
-        verify(results, never()).results(3L, 7L, true);
+        verify(results, never()).results(3L, null, true);
     }
 
     @Test void sessionExamWithCodeStillGradingIsProvisional() {
         Assignment exam = assignment(6, AssignmentCategory.FINAL, NOW.minusHours(1));
         when(assignments.findAllByLmsClass_IdAndPublishedTrueOrderByDueAtAscIdAsc(3L)).thenReturn(List.of(exam));
         // Câu code bốc ngẫu nhiên không nằm trong `questions` (chỉ câu cố định chung) nhưng lượt còn đang chấm.
-        when(results.results(6L, 7L, true)).thenReturn(new ResultsTable(List.of(
+        when(results.results(6L, null, true)).thenReturn(new ResultsTable(List.of(
                 new StudentResult(42L, "SV 42", "SV42", new BigDecimal("6"), BigDecimal.TEN, 1, List.of(), List.of(), true))));
 
         var scores = collector.collect(clazz, NOW).get(GradeComponent.FINAL);

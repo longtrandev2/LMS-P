@@ -30,7 +30,7 @@ public class SessionViewAssembler {
     public List<SessionView> views(LmsClass clazz, List<ClassSession> sessions, Long studentId) {
         if (sessions.isEmpty()) return List.of();
         List<Long> ids = sessions.stream().map(ClassSession::getId).toList();
-        String lecturerName = clazz.getLecturer().getFullName();
+        String lecturerName = vn.lmsp.mapper.AcademicsMapper.lecturerNames(clazz);
         Map<Long, List<Material>> attached = new HashMap<>();
         materials.findBySessionIdInOrderByCreatedAtAscIdAsc(ids)
                 .forEach(m -> attached.computeIfAbsent(m.getSessionId(), k -> new ArrayList<>()).add(m));

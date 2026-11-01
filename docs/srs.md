@@ -92,14 +92,16 @@ Nhãn mã định danh trên frontend (tạo/sửa tài khoản, chi tiết ngư
 ### M2 — Học phần & lớp học phần
 | ID | Ưu tiên | Yêu cầu |
 |---|---|---|
-| FR-CRS-01 | M | Admin quản lý CRUD học phần (course) và CRUD lớp học phần thuộc học phần, học kỳ; admin phân một giảng viên phụ trách khi tạo/sửa lớp. Lecturer chỉ xem và quản lý nghiệp vụ của các lớp được phân công, không tạo/sửa/xóa học phần hoặc lớp. Thuộc tính lớp: **sĩ số tối đa** `max_students` (NULL = không giới hạn), **khung giờ ghi danh** `enroll_from`/`enroll_until`, phòng học, lịch học (text), trạng thái `active`/`locked` |
+| FR-CRS-01 | M | Admin quản lý CRUD học phần (course) và CRUD lớp học phần thuộc học phần, học kỳ; admin phân công một hoặc nhiều giảng viên phụ trách khi tạo/sửa lớp; mọi giảng viên được phân công có quyền quản lý nghiệp vụ ngang nhau. Lecturer chỉ xem và quản lý nghiệp vụ của các lớp được phân công, không tạo/sửa/xóa học phần hoặc lớp. Thuộc tính lớp: **sĩ số tối đa** `max_students` (NULL = không giới hạn), **khung giờ ghi danh** `enroll_from`/`enroll_until`, phòng học, lịch học (text), trạng thái `active`/`locked` |
 | FR-CRS-02 | M | Xếp sinh viên vào lớp do nhà trường quản lý: admin có thể thêm/xóa ở mọi lớp; lecturer chỉ quản lý danh sách lớp mình phụ trách. Có thể tìm sinh viên active chưa thuộc lớp theo tên/mã SV/email, xem gợi ý và chọn nhiều người; hoặc nhập CSV có xem trước. Không hỗ trợ nhập định danh đơn lẻ qua form hoặc dán danh sách. Lớp giới hạn sĩ số, admin được vượt giới hạn. Sinh viên chỉ xem lớp đã được xếp, không tự ghi danh/rời lớp. Xóa chuyển enrollment sang `dropped`, giữ lịch sử |
 | FR-CRS-03 | M | Kiểm soát truy cập theo ghi danh (xem BR2) |
 | FR-CRS-04 | M | Sinh viên xem danh sách lớp đã được xếp và học liệu/bài tập tương ứng; không hiển thị catalog lớp mở để tự ghi danh |
 | FR-CRS-05 | S | Import CSV danh sách lớp hỗ trợ tải file mẫu, xem trước sinh viên nhận diện được, báo dòng lỗi/trùng và xác nhận nhập |
 | FR-CRS-06 | M | Danh sách (courses, classes, lớp của tôi, sinh viên lớp, học liệu) hỗ trợ **search + phân trang + sort** theo quy ước chung api-spec |
 
-Giao diện admin có khu quản lý học phần và khu quản lý lớp riêng: từ học phần có hành động **Mở lớp và phân công giảng viên**; ở danh sách lớp hiện giảng viên phụ trách và có hành động **Đổi giảng viên**. Giao diện giảng viên tập trung vào danh sách lớp được phân công và đường vào lớp, không hiển thị thao tác quản trị.
+Giao diện admin có khu quản lý học phần và khu quản lý lớp riêng: từ học phần có hành động **Mở lớp và phân công giảng viên**; ở danh sách lớp hiện giảng viên phụ trách và có hành động **Phân công giảng viên** để thêm/gỡ từng người. Giao diện giảng viên tập trung vào danh sách lớp được phân công và đường vào lớp, không hiển thị thao tác quản trị.
+
+Mỗi lớp phải có ít nhất một giảng viên phụ trách; từ chối danh sách rỗng, trùng ID, ID không tồn tại hoặc tài khoản không có vai trò giảng viên. Khi phân công mới, tài khoản phải đang hoạt động; có thể giữ người đã bị khóa trong danh sách cũ. Gỡ phân công thu hồi quyền lớp và quyền theo học phần tương ứng ở lần truy cập tiếp theo. Thông báo lớp, đơn xin nghỉ và tín hiệu giám sát thi gửi đến tất cả giảng viên được phân công (thông báo lớp bỏ qua tài khoản khóa). Chỉ admin được thay đổi phân công.
 
 ### M3 — Học liệu
 | ID | Ưu tiên | Yêu cầu |

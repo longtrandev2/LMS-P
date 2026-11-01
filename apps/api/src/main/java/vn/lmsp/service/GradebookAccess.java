@@ -19,7 +19,7 @@ public class GradebookAccess {
 
     public LmsClass lecturerClass(Long classId, Long actorId, boolean admin) {
         LmsClass item = load(classId);
-        if (!admin && !item.getLecturerId().equals(actorId))
+        if (!admin && !item.hasLecturer(actorId))
             throw new LmsException("FORBIDDEN", "Chỉ giảng viên phụ trách hoặc quản trị viên được quản lý sổ điểm", HttpStatus.FORBIDDEN, null);
         return item;
     }

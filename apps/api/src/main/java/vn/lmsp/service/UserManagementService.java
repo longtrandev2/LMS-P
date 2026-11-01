@@ -47,7 +47,7 @@ public class UserManagementService {
         var enrolled=enrollments.findAllByStudent_IdAndStatusOrderByLmsClass_Id(id,EnrollmentStatus.active).stream()
                 .map(e -> academicsMapper.toClassReference(e.getLmsClass())).toList();
         var teaching=target.getRoles().stream().anyMatch(r -> r.getName().equals("lecturer"))
-                ? classes.findAllByLecturer_IdOrderByIdDesc(id).stream().map(academicsMapper::toClassReference).toList()
+                ? classes.findAllByLecturers_IdOrderByIdDesc(id).stream().map(academicsMapper::toClassReference).toList()
                 : List.<ClassReference>of();
         return new UserDetail(mapper.toView(target),enrolled,teaching);
     }

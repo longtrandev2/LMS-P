@@ -65,7 +65,7 @@ public class LeaveRequestService {
         var stored = storage.store(clazz.getId(), evidence);
         LeaveRequest item = leaveRequests.save(new LeaveRequest(session, student, text, stored.path(), stored.name(),
                 stored.size(), stored.type()));
-        notifications.create(clazz.getLecturerId(), "leave_request.created", "Đơn xin nghỉ mới: " + student.getFullName(),
+        for (Long lecturerId : clazz.getLecturerIds()) notifications.create(lecturerId, "leave_request.created", "Đơn xin nghỉ mới: " + student.getFullName(),
                 "Buổi " + session.getSessionNo() + " (" + session.getSessionDate().format(VN_DATE) + ") — lớp " + clazz.getName(),
                 Map.of("leave_request_id", item.getId(), "class_id", clazz.getId(), "session_id", sessionId));
         return mapper.toLeaveView(item);

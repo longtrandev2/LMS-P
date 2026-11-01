@@ -20,9 +20,9 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
            countQuery="select count(e) from Enrollment e where e.lmsClass.id=:classId and e.status=:status and (:q is null or lower(e.student.email) like lower(concat('%',:q,'%')) or lower(e.student.fullName) like lower(concat('%',:q,'%')) or lower(coalesce(e.student.studentCode,'')) like lower(concat('%',:q,'%'))) ")
     Page<Enrollment> searchRoster(@Param("classId") Long classId, @Param("status") EnrollmentStatus status,
                                   @Param("q") String query, Pageable pageable);
-    @EntityGraph(attributePaths={"lmsClass","lmsClass.course","lmsClass.lecturer"})
+    @EntityGraph(attributePaths={"lmsClass","lmsClass.course"})
     Page<Enrollment> findByStudent_IdOrderByLmsClass_Id(Long studentId, Pageable pageable);
-    @EntityGraph(attributePaths={"lmsClass","lmsClass.course","lmsClass.lecturer"})
+    @EntityGraph(attributePaths={"lmsClass","lmsClass.course"})
     @Query(value="select e from Enrollment e where e.student.id=:studentId and e.status=:status and (:q is null or lower(e.lmsClass.code) like lower(concat('%',:q,'%')) or lower(e.lmsClass.name) like lower(concat('%',:q,'%')) or lower(e.lmsClass.course.name) like lower(concat('%',:q,'%')) or lower(e.lmsClass.course.code) like lower(concat('%',:q,'%')) or lower(e.lmsClass.semester) like lower(concat('%',:q,'%'))) ",
            countQuery="select count(e) from Enrollment e where e.student.id=:studentId and e.status=:status and (:q is null or lower(e.lmsClass.code) like lower(concat('%',:q,'%')) or lower(e.lmsClass.name) like lower(concat('%',:q,'%')) or lower(e.lmsClass.course.name) like lower(concat('%',:q,'%')) or lower(e.lmsClass.course.code) like lower(concat('%',:q,'%')) or lower(e.lmsClass.semester) like lower(concat('%',:q,'%'))) ")
     Page<Enrollment> searchMyClasses(@Param("studentId") Long studentId, @Param("status") EnrollmentStatus status,
