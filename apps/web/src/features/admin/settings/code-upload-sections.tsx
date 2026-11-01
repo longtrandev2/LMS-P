@@ -77,21 +77,19 @@ const SECURITY_KEYS: SettingKey[] = ["inactivity_timeout_minutes"];
 /** Nhóm "Bảo mật & Phiên làm việc": công tắc bật/tắt + thời gian treo máy tự động đăng xuất. */
 export function SecuritySection({ form, draft }: { form: SettingsForm; draft: SettingsDraft }) {
   const base = draftFrom(form.map);
-  const rawValue = draft.ints.inactivity_timeout_minutes;
-  const numValue = Number(rawValue);
-
-  const isEnabled = rawValue !== "" && rawValue !== "0" && !isNaN(numValue) && numValue > 0;
+  const isEnabled = draft.inactivity_enabled;
   const savedVal = Number(base.ints.inactivity_timeout_minutes);
   const isSavedEnabled = !isNaN(savedVal) && savedVal > 0;
 
   const handleToggle = (checked: boolean) => {
-    form.update((d) => ({
-      ...d,
-      ints: {
-        ...d.ints,
-        inactivity_timeout_minutes: checked ? (numValue > 0 ? String(numValue) : "30") : "0",
-      },
-    }), "inactivity_timeout_minutes");
+    form.update((d) => {
+      const minutes = d.ints.inactivity_timeout_minutes;
+      const valid = /^\d+$/.test(minutes.trim()) && Number(minutes) >= 1 && Number(minutes) <= 1440;
+      return {
+        ...d, inactivity_enabled: checked,
+        ints: { ...d.ints, inactivity_timeout_minutes: checked && !valid ? "30" : minutes },
+      };
+    }, "inactivity_timeout_minutes");
   };
 
   return (

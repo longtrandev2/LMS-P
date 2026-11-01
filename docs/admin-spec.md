@@ -25,6 +25,9 @@ Bảng `system_settings` (khóa → giá trị JSON). Thiếu khóa thì dùng m
 | | `leave_evidence_max_mb` | 1 – 20, không vượt trần server | 5 | Minh chứng đơn xin nghỉ |
 | Sổ điểm | `default_grade_policy` | cùng định dạng và kiểm tra như `grade_policy` của lớp (`class-schedule-grades-spec.md` §5) | 10/20/20/50; nghỉ tối đa null (= 20%); trừ 2 / 0,5 / 0 | Chính sách của lớp chưa tự cấu hình |
 | Vận hành | `maintenance` | `{enabled: bool, message: string ≤ 500}` | `{enabled: false}` | §5.2 |
+| Bảo mật | `inactivity_timeout_minutes` | số nguyên 0–1440; 0 = tắt, khi bật là 1–1440 phút | 30 | Tự đăng xuất khi không thao tác; miễn trừ màn làm quiz, lập trình và phòng thi |
+
+Frontend giữ trạng thái công tắc tự đăng xuất độc lập với chuỗi đang nhập ở ô số phút. Khi bật, người dùng có thể xóa giá trị để gõ lại mà ô vẫn hiện và giữ focus; ô trống, không nguyên hoặc ngoài 1–1440 báo lỗi và chặn lưu. Chỉ tắt bằng công tắc mới gửi giá trị 0. Bật lại giữ số phút đang sửa nếu hợp lệ, nếu không dùng 30; hủy thay đổi hoặc lưu thành công khôi phục cả công tắc và số phút theo cấu hình đã lưu.
 
 - `GET /admin/settings` → `{items: [{key, value, default_value, description, updated_by: {id, full_name}|null, updated_at|null}]}`.
 - `PUT /admin/settings {values: {key: value, …}, reason?}`: kiểm tra toàn bộ trước khi ghi; một khóa sai thì không ghi khóa nào (400 `VALIDATION_ERROR`, `details: {key: message}`). Ràng buộc chéo (default ≤ max) kiểm tra trên giá trị sau khi gộp. Audit `settings.update` với before/after của các khóa đổi.
