@@ -1,12 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { MoreHorizontal, Pencil, School, SquareArrowOutUpRight, Trash2, UserCog } from "lucide-react";
+import { Pencil, School, SquareArrowOutUpRight, Trash2, UserCog } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ListToolbar, SearchField } from "@/components/list-toolbar";
 import { DataTablePagination } from "@/components/data-table-pagination";
@@ -67,14 +64,14 @@ export function AdminClassSection({ onAssign, onEdit, onDelete }: Props) {
               </TableCell>
               <TableCell className="hidden md:table-cell"><span className="block max-w-56 truncate">{clazz.course_name}</span><span className="block font-mono text-xs text-muted-foreground">{clazz.course_code}</span></TableCell>
               <TableCell className="font-mono text-xs">{clazz.semester}</TableCell>
-              <TableCell className="hidden sm:table-cell">{clazz.lecturer_name || "—"}</TableCell>
+              <TableCell className="hidden sm:table-cell"><span className="break-words">{clazz.lecturer_name || "—"}</span></TableCell>
               <TableCell className="text-right tabular-nums">{clazz.enrolled_count ?? 0}{clazz.max_students ? ` / ${clazz.max_students}` : ""}</TableCell>
               <TableCell className="text-right">
                 <div className="inline-flex items-center gap-0.5">
                   <Button variant="ghost" size="icon-xs" title="Mở trang lớp" aria-label={`Mở trang lớp ${clazz.code}`} onClick={() => navigate(`/classes/${clazz.id}`)}>
                     <SquareArrowOutUpRight className="size-3.5" aria-hidden />
                   </Button>
-                  <Button variant="ghost" size="icon-xs" title="Đổi giảng viên" aria-label={`Đổi giảng viên lớp ${clazz.code}`} onClick={() => onAssign(clazz)}>
+                  <Button variant="ghost" size="icon-xs" title="Phân công giảng viên" aria-label={`Phân công giảng viên lớp ${clazz.code}`} onClick={() => onAssign(clazz)}>
                     <UserCog className="size-3.5" aria-hidden />
                   </Button>
                   <Button variant="ghost" size="icon-xs" title="Sửa lớp" aria-label={`Sửa lớp ${clazz.code}`} onClick={() => onEdit(clazz)}>

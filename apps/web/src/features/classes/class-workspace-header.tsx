@@ -69,7 +69,7 @@ export function ClassWorkspaceHeader({ clazz, loading, showCapacity = true, acti
             {clazz.lecturer_avatar_url ? <AvatarImage src={clazz.lecturer_avatar_url} alt="" /> : null}
             <AvatarFallback className="bg-background text-[10px]">{initials(clazz.lecturer_name)}</AvatarFallback>
           </Avatar>
-          <span className="truncate">{clazz.lecturer_name}</span>
+          <span className="truncate" title={clazz.lecturer_name}>{clazz.lecturer_name}</span>
         </InfoCell>
         {showCapacity ? (
           <InfoCell label="Sĩ số / Phòng">

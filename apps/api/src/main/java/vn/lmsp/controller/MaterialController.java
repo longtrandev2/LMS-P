@@ -47,7 +47,7 @@ public class MaterialController {
     }
     @DeleteMapping("/materials/{id}") @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id,@AuthenticationPrincipal String actor) { service.delete(id,Long.valueOf(actor)); }
-    private boolean privileged(Authentication auth) { return auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ROLE_LECTURER")); }
+    private boolean privileged(Authentication auth) { return auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN")); }
     private int checkedLimit(int limit) { if(limit<1 || limit>100) throw new IllegalArgumentException("limit phải từ 1 đến 100"); return limit; }
     private String extension(String path) { int dot=Objects.requireNonNullElse(path,"").lastIndexOf('.'); return dot<0 ? "" : path.substring(dot); }
 }

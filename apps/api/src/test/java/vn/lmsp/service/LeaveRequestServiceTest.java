@@ -8,6 +8,7 @@ import static vn.lmsp.support.ScheduleFixtures.*;
 
 import java.time.LocalDate;
 import java.util.Optional;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
@@ -50,6 +51,13 @@ class LeaveRequestServiceTest {
         assertThat(view.status()).isEqualTo(LeaveRequestStatus.pending);
         assertThat(view.evidence_name()).isEqualTo("giay.pdf");
         verify(notifications).create(eq(7L), eq("leave_request.created"), contains("Demo student"), anyString(), anyMap());
+    }
+
+    @Test void leaveRequestNotifiesEveryAssignedLecturer() {
+        clazz.assignLecturers(List.of(user(7, "lecturer"), user(8, "lecturer")));
+        service.create(30L, 42L, "Ốm", file);
+        verify(notifications).create(eq(7L), eq("leave_request.created"), anyString(), anyString(), anyMap());
+        verify(notifications).create(eq(8L), eq("leave_request.created"), anyString(), anyString(), anyMap());
     }
 
     @Test void reasonIsRequiredAndLimited() {

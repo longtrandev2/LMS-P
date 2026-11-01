@@ -36,7 +36,7 @@ class SessionGenerateServiceTest {
 
     @BeforeEach void setUp() {
         when(access.manageLocked(3L, 7L, false)).thenReturn(clazz);
-        when(users.getReferenceById(7L)).thenReturn(clazz.getLecturer());
+        when(users.getReferenceById(7L)).thenReturn(clazz.getLecturers().iterator().next());
         when(sessions.findByLmsClass_IdOrderByStartsAtAscEndsAtAscIdAsc(3L)).thenReturn(List.of());
     }
 

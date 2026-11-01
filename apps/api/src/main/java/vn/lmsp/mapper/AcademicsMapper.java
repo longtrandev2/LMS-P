@@ -4,6 +4,9 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
 import vn.lmsp.dto.AcademicsDtos.*;
 import vn.lmsp.dto.UserManagementDtos.ClassReference;
@@ -23,8 +26,8 @@ public class AcademicsMapper {
         Integer seatsLeft = clazz.getMaxStudents() == null
                 ? null : Math.max(0, clazz.getMaxStudents() - (int) enrolledCount);
         return new ClassView(clazz.getId(), clazz.getCourseId(), clazz.getCode(), clazz.getName(),
-                clazz.getSemester(), clazz.getLecturerId(), clazz.getGradePolicy(), clazz.getCreatedAt(),
-                clazz.getCourse().getCode(), clazz.getCourse().getName(), clazz.getLecturer().getFullName(),
+                clazz.getSemester(), toLecturers(clazz), clazz.getGradePolicy(), clazz.getCreatedAt(),
+                clazz.getCourse().getCode(), clazz.getCourse().getName(), lecturerNames(clazz),
                 clazz.getMaxStudents(), clazz.getEnrollFrom(), clazz.getEnrollUntil(), clazz.getRoom(),
                 clazz.getSchedule(), clazz.getStatus(), enrolledCount, seatsLeft, clazz.getCourse().getCredits());
     }
@@ -44,12 +47,23 @@ public class AcademicsMapper {
 
     public MyClassView toMyClassView(Enrollment enrollment, ClassCardStats stats) {
         LmsClass clazz = enrollment.getLmsClass();
-        User lecturer = clazz.getLecturer();
+        var lecturers = toLecturers(clazz);
         return new MyClassView(clazz.getId(), clazz.getCourseId(), clazz.getCode(), clazz.getName(),
-                clazz.getSemester(), clazz.getLecturerId(), enrollment.getStatus().name(),
-                clazz.getCourse().getCode(), clazz.getCourse().getName(), lecturer.getFullName(),
+                clazz.getSemester(), lecturers, enrollment.getStatus().name(),
+                clazz.getCourse().getCode(), clazz.getCourse().getName(), lecturerNames(clazz),
                 clazz.getCourse().getCredits(), stats.totalSessions(), stats.heldSessions(), stats.attendedSessions(),
-                stats.nextSessionAt(), stats.materialsCount(), stats.openAssignmentsCount(), avatarUrl(lecturer));
+                stats.nextSessionAt(), stats.materialsCount(), stats.openAssignmentsCount(),
+                lecturers.size() == 1 ? lecturers.getFirst().avatar_url() : null);
+    }
+
+    public List<LecturerView> toLecturers(LmsClass clazz) {
+        return clazz.getLecturers().stream().sorted(Comparator.comparing(User::getId))
+                .map(user -> new LecturerView(user.getId(), user.getFullName(), avatarUrl(user))).toList();
+    }
+
+    public static String lecturerNames(LmsClass clazz) {
+        return clazz.getLecturers().stream().sorted(Comparator.comparing(User::getId))
+                .map(User::getFullName).collect(Collectors.joining(", "));
     }
 
     /** Cùng định dạng với UserMapper (`/users/{id}/avatar?v=...`). */
@@ -77,7 +91,7 @@ public class AcademicsMapper {
         value.put("code", clazz.getCode());
         value.put("name", clazz.getName());
         value.put("semester", clazz.getSemester());
-        value.put("lecturer_id", clazz.getLecturerId());
+        value.put("lecturer_ids", clazz.getLecturerIds());
         value.put("grade_policy", clazz.getGradePolicy());
         value.put("max_students", clazz.getMaxStudents());
         value.put("enroll_from", clazz.getEnrollFrom());

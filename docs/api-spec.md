@@ -50,7 +50,7 @@
 | GET | /courses/{id} | lec/adm | Admin xem mọi học phần; lecturer chỉ xem học phần có lớp được phân công |
 | PATCH/DELETE | /courses/{id} | adm | Sửa / xóa học phần |
 | GET | /classes | lec/adm | Admin xem mọi lớp; lecturer chỉ xem lớp được phân công (`q`, filter `course_id`, `semester`, sort `code`,`name`,`created_at`) |
-| POST | /classes | adm | Tạo lớp, chọn học phần và giảng viên phụ trách (`course_id`, `lecturer_id`, `max_students`, `enroll_from`, `enroll_until`, `room`, `schedule`) |
+| POST | /classes | adm | Tạo lớp, chọn học phần và giảng viên phụ trách (`course_id`, `lecturer_ids`, `max_students`, `enroll_from`, `enroll_until`, `room`, `schedule`) |
 | GET | /classes/{id} | lec/adm | Chi tiết lớp; lecturer chỉ xem lớp được phân công |
 | PATCH/DELETE | /classes/{id} | adm | Sửa / xóa lớp; phân công giảng viên tại đây. Validate BR12: max_students ≥ sĩ số hiện tại, enroll_until > enroll_from |
 | GET | /admin/classes | adm | Mọi lớp (search/filter như trên) — admin xem + override sĩ số/khung giờ/khóa lớp |
@@ -62,6 +62,8 @@
 | DELETE | /classes/{id}/enrollments/{studentId} | lec/adm | Hủy ghi danh (enrollment → `dropped`, giữ lịch sử); lecturer chỉ trong lớp mình phụ trách |
 | GET | /classes/{id}/students | lec/adm | Danh sách SV lớp: `q` (tên/email/mã SV), sort (`full_name`, `student_code`, `enrolled_at`) + phân trang; lecturer chỉ xem lớp mình phụ trách |
 | GET | /me/classes | student | Lớp đã ghi danh (`q`, sort) (Page envelope); mỗi lớp thêm `credits`, `total_sessions`, `held_sessions`, `attended_sessions`, `next_session_at`, `materials_count`, `open_assignments_count`, `lecturer_avatar_url` (`class-schedule-grades-spec.md` §6) |
+
+Phân công nhiều giảng viên: `POST /classes` yêu cầu `lecturer_ids: [id, ...]`; `PATCH /classes/{id}` và `/admin/classes/{id}` nhận `lecturer_ids` tùy chọn, thay thế toàn bộ danh sách trong một transaction có khóa lớp. Bỏ trường này khi PATCH giữ nguyên phân công. Danh sách có ít nhất 1 ID dương, không null/không trùng; mỗi người có vai trò lecturer và đang active khi được thêm mới. Response lớp và `/me/classes` trả `lecturers: [{id, full_name, avatar_url}]` theo ID tăng dần; `lecturer_name` là tên tất cả giảng viên ghép bằng dấu phẩy cho các màn tóm tắt. `lecturer_avatar_url` chỉ có giá trị khi lớp có đúng một giảng viên. Không còn trường lớp `lecturer_id`. Audit `class.create`/`class.update` lưu danh sách `lecturer_ids` before/after; chỉ admin được sửa phân công.
 
 ## 4. Materials (M3)
 

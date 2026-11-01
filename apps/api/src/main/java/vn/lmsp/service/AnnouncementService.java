@@ -65,7 +65,8 @@ public class AnnouncementService {
 
     private List<Long> classRecipients(LmsClass clazz) {
         List<Long> ids = new ArrayList<>(enrollments.findUnlockedActiveStudentIds(clazz.getId()));
-        if (clazz.getLecturer().getStatus() != UserStatus.locked) ids.add(clazz.getLecturerId());
+        clazz.getLecturers().stream().filter(user -> user.getStatus() != UserStatus.locked)
+                .forEach(user -> ids.add(user.getId()));
         return ids;
     }
 

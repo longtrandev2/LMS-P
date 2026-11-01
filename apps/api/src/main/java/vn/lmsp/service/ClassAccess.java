@@ -38,7 +38,7 @@ public class ClassAccess {
     }
 
     public boolean isManager(LmsClass clazz, Long actor, boolean admin) {
-        return admin || clazz.getLecturerId().equals(actor);
+        return admin || clazz.hasLecturer(actor);
     }
 
     public void requireManager(LmsClass clazz, Long actor, boolean admin) {

@@ -46,7 +46,7 @@ public class AssignmentScoreCollector {
             GradeComponent component = componentOf(assignment.getCategory());
             Builder builder = builders.computeIfAbsent(component, ignored -> new Builder());
             if (!now.isAfter(assignment.getClosesAt())) { builder.open++; continue; }
-            List<StudentResult> rows = results.results(assignment.getId(), clazz.getLecturerId(), true).items();
+            List<StudentResult> rows = results.results(assignment.getId(), null, true).items();
             if (rows.isEmpty() || rows.getFirst().max_score() == null || rows.getFirst().max_score().signum() <= 0) continue;
             builder.closed++;
             for (StudentResult row : rows) {

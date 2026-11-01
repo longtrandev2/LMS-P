@@ -6,6 +6,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+import org.hibernate.annotations.BatchSize;
 import vn.lmsp.enums.ClassStatus;
 
 @Entity
@@ -17,7 +22,11 @@ public class LmsClass {
     @Column(nullable = false, length = 30) private String code;
     @Column(nullable = false, length = 200) private String name;
     @Column(nullable = false, length = 20) private String semester;
-    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "lecturer_id", nullable = false) private User lecturer;
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "class_lecturers", joinColumns = @JoinColumn(name = "class_id"),
+            inverseJoinColumns = @JoinColumn(name = "lecturer_id"))
+    @OrderBy("id ASC") @BatchSize(size = 100)
+    private Set<User> lecturers = new LinkedHashSet<>();
     @Column(name = "max_students") private Integer maxStudents;
     @Column(name = "enroll_from") private LocalDateTime enrollFrom;
     @Column(name = "enroll_until") private LocalDateTime enrollUntil;
@@ -31,22 +40,26 @@ public class LmsClass {
                     Integer maxStudents, LocalDateTime enrollFrom, LocalDateTime enrollUntil,
                     String room, String schedule, ClassStatus status) {
         this.course = course; this.code = code; this.name = name; this.semester = semester;
-        this.lecturer = lecturer; this.gradePolicy = gradePolicy; this.maxStudents = maxStudents;
+        this.lecturers.add(lecturer); this.gradePolicy = gradePolicy; this.maxStudents = maxStudents;
         this.enrollFrom = enrollFrom; this.enrollUntil = enrollUntil; this.room = room; this.schedule = schedule;
         this.status = status == null ? ClassStatus.active : status;
     }
     @PrePersist void createTimestamp() { createdAt = LocalDateTime.now(); }
     public Long getCourseId() { return course.getId(); }
-    public Long getLecturerId() { return lecturer.getId(); }
+    public boolean hasLecturer(Long userId) { return lecturers.stream().anyMatch(user -> user.getId().equals(userId)); }
+    public List<Long> getLecturerIds() { return lecturers.stream().map(User::getId).sorted().toList(); }
+    public void assignLecturers(Collection<User> assigned) {
+        if (assigned == null || assigned.isEmpty()) throw new IllegalArgumentException("Class requires lecturers");
+        lecturers.clear(); lecturers.addAll(assigned);
+    }
     /** Chính sách sổ điểm — docs/database-design.md §2.2; NULL = mặc định. */
     public void setGradePolicy(JsonNode policy) { this.gradePolicy = policy; }
-    public void update(String code, String name, String semester, User lecturer, JsonNode policy,
+    public void update(String code, String name, String semester, JsonNode policy,
                        Integer maxStudents, LocalDateTime enrollFrom, LocalDateTime enrollUntil,
                        String room, String schedule, ClassStatus status) {
         if (code != null) this.code = code;
         if (name != null) this.name = name;
         if (semester != null) this.semester = semester;
-        if (lecturer != null) this.lecturer = lecturer;
         if (policy != null) this.gradePolicy = policy;
         if (maxStudents != null) this.maxStudents = maxStudents;
         if (enrollFrom != null) this.enrollFrom = enrollFrom;

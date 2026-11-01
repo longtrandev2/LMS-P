@@ -53,7 +53,6 @@ public class Assignment {
     @PrePersist void onCreate() { createdAt = UtcTime.now(); updatedAt = createdAt; }
     @PreUpdate void onUpdate() { updatedAt = UtcTime.now(); }
     public Long getClassId() { return lmsClass.getId(); }
-    public Long getLecturerId() { return lmsClass.getLecturerId(); }
     public void update(String title, String description, AssignmentCategory category, LocalDateTime availableFrom,
             LocalDateTime dueAt, boolean allowLate, LocalDateTime lateDueAt, int penalty, Integer maxAttempts, ScorePolicy policy) {
         this.title = title; this.description = description; this.category = category; this.availableFrom = availableFrom;

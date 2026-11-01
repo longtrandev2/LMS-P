@@ -20,6 +20,8 @@
 - Soạn câu hỏi, soạn bài, làm quiz, workspace code, chi tiết bài nộp là trang riêng (`docs/assessment-spec.md` §8), không dùng dialog.
 - Không thêm số liệu minh họa; mọi số lấy từ API.
 
+Form tạo/sửa lớp và hộp thoại phân công cho phép tìm và chọn nhiều giảng viên; người đã chọn hiển thị thành danh sách có nút gỡ từng người. Gõ tìm kiếm không xóa lựa chọn hiện tại; không cho lưu danh sách rỗng. Danh sách lớp, header và lịch học hiển thị đầy đủ tên các giảng viên (có tooltip nếu rút gọn).
+
 ## Khả năng truy cập
 
 - Nhãn cho mọi trường, tên truy cập cho nút chỉ có icon, focus nhìn thấy bằng bàn phím, tương phản chữ đạt 4.5:1.

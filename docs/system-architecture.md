@@ -12,7 +12,8 @@
 3. API stateless với JWT; quyền được kiểm tra ở backend.
 4. Máy chủ là nguồn sự thật cho thời gian thi, trạng thái chấm và điểm.
 5. WebSocket chỉ đẩy tín hiệu thay đổi: chấm bài, chạy thử, thông báo, cấu hình, phiên thi (`message-contracts.md` §6.1). Dữ liệu chính luôn đọc lại qua REST; client giữ polling chậm làm dự phòng.
-6. Thay đổi schema phải qua Flyway migration; không sửa CSDL bằng tay.
+6. Lớp có nhiều giảng viên ngang quyền qua `class_lecturers`; mọi truy vấn phạm vi lớp/học phần và thông báo kiểm tra toàn bộ phân công. Phân trang lớp dùng EXISTS và tải danh sách giảng viên theo batch để không nhân bản kết quả hoặc phân trang trong bộ nhớ.
+7. Thay đổi schema phải qua Flyway migration; không sửa CSDL bằng tay.
 
 ## 2. Kiến trúc tổng thể
 

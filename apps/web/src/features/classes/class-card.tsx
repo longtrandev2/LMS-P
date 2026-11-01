@@ -32,7 +32,7 @@ function LecturerChip({ name, avatarPath }: { name: string; avatarPath?: string 
   return (
     <span className="flex min-w-0 items-center gap-1.5 text-foreground/80">
       <UserAvatar name={name} src={src} size="sm" className="size-5 text-[9px]" />
-      <span className="truncate">{name}</span>
+      <span className="truncate" title={name}>{name}</span>
     </span>
   );
 }

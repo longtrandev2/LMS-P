@@ -47,7 +47,7 @@ export function StudentClassHeader({ clazz, loading }: { clazz?: ClassSummary; l
           {clazz.lecturer_name ? (
             <>
               <UserAvatar name={clazz.lecturer_name} src={avatar} size="sm" className="bg-background" />
-              <span className="truncate">{clazz.lecturer_name}</span>
+              <span className="truncate" title={clazz.lecturer_name}>{clazz.lecturer_name}</span>
             </>
           ) : <span className="font-normal text-muted-foreground">Chưa phân công</span>}
         </InfoItem>

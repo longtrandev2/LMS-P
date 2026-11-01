@@ -16,7 +16,7 @@ public final class ScheduleFixtures {
 
     public static ClassSession session(LmsClass clazz, long id, int no, LocalDate date, int start, int end) {
         return identified(new ClassSession(clazz, no, date, start, end, "A101", SessionMode.in_person, null, null,
-                clazz.getLecturer()), id);
+                clazz.getLecturers().iterator().next()), id);
     }
 
     public static Enrollment enrollment(LmsClass clazz, User student) {
@@ -35,5 +35,5 @@ public final class ScheduleFixtures {
         return item;
     }
 
-    private static User clazzLecturer(ClassSession session) { return session.getLmsClass().getLecturer(); }
+    private static User clazzLecturer(ClassSession session) { return session.getLmsClass().getLecturers().iterator().next(); }
 }

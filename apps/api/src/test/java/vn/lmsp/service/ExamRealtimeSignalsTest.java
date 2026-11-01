@@ -48,6 +48,13 @@ class ExamRealtimeSignalsTest {
         verifyNoInteractions(realtime);
     }
 
+    @Test void allAssignedLecturersReceiveExamMonitoringSignals() {
+        session.getAssignment().getLmsClass().assignLecturers(List.of(
+                vn.lmsp.support.DomainFixtures.user(7, "lecturer"), vn.lmsp.support.DomainFixtures.user(8, "lecturer")));
+        signals.onEvent(session, SessionEventType.started);
+        verify(realtime).toUsersAndAdmins(eq(List.of(7L, 8L)), eq("exam.session_changed"), anyMap());
+    }
+
     @Test void savedAndFocusAreThrottledToOnePerFiveSecondsPerSession() {
         signals.saved(session);
         signals.saved(session);

@@ -152,7 +152,7 @@ public class EnrollmentService {
         return result;
     }
     private void requireManager(LmsClass clazz, Long actorId, boolean admin) {
-        if (!admin && !clazz.getLecturerId().equals(actorId)) throw failure("FORBIDDEN", "Giảng viên chỉ được quản lý sinh viên trong lớp mình phụ trách", HttpStatus.FORBIDDEN);
+        if (!admin && !clazz.hasLecturer(actorId)) throw failure("FORBIDDEN", "Giảng viên chỉ được quản lý sinh viên trong lớp mình phụ trách", HttpStatus.FORBIDDEN);
     }
     private static String validateTarget(EnrollTarget target) {
         return target == null || target.studentId() == null ? "Cần chọn sinh viên từ kết quả tìm kiếm" : null;

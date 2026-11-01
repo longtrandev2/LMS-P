@@ -81,11 +81,23 @@ class AnnouncementServiceTest {
 
     @Test void lockedLecturerIsSkipped() {
         LmsClass clazz = clazz(null);
-        clazz.getLecturer().setStatus(UserStatus.locked);
+        clazz.getLecturers().iterator().next().setStatus(UserStatus.locked);
         when(classes.findById(3L)).thenReturn(Optional.of(clazz));
         when(enrollments.findUnlockedActiveStudentIds(3L)).thenReturn(List.of(42L));
         assertThat(service.create(input(AnnouncementAudience.CLASS, null, 3L), 1L).recipient_count()).isEqualTo(1);
         verify(notifications, never()).create(eq(7L), anyString(), anyString(), anyString(), anyMap());
+    }
+
+    @Test void classAudienceIncludesEveryUnlockedAssignedLecturer() {
+        LmsClass clazz = clazz(null);
+        var locked = user(9, "lecturer"); locked.setStatus(UserStatus.locked);
+        clazz.assignLecturers(List.of(user(7, "lecturer"), user(8, "lecturer"), locked));
+        when(classes.findById(3L)).thenReturn(Optional.of(clazz));
+        when(enrollments.findUnlockedActiveStudentIds(3L)).thenReturn(List.of(42L, 8L));
+        assertThat(service.create(input(AnnouncementAudience.CLASS, null, 3L), 1L).recipient_count()).isEqualTo(3);
+        verify(notifications).create(eq(7L), anyString(), anyString(), anyString(), anyMap());
+        verify(notifications).create(eq(8L), anyString(), anyString(), anyString(), anyMap());
+        verify(notifications, never()).create(eq(9L), anyString(), anyString(), anyString(), anyMap());
     }
 
     @Test void classAudienceRequiresAnExistingClass() {

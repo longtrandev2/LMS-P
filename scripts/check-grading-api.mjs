@@ -66,7 +66,7 @@ const token = admin.access_token;
 const tag = Date.now().toString().slice(-10);
 const course = await api("/courses", token, "POST", { code: "QA" + tag, name: "Grading API check" }, 201);
 const clazz = await api("/classes", token, "POST", { course_id: course.id, code: "QA01", name: "QA",
-  semester: "2026-1", lecturer_id: lecturer.user.id }, 201);
+  semester: "2026-1", lecturer_ids: [lecturer.user.id] }, 201);
 await api("/classes/" + clazz.id + "/enrollments", token, "POST", { students: [{ student_id: student.user.id }] }, 201);
 const bank = await api("/courses/" + course.id + "/question-bank", token, "PUT");
 const question = await api("/questions", token, "POST", { bank_id: bank.id, type: "programming",

@@ -14,6 +14,7 @@ import vn.lmsp.common.LmsException;
 import vn.lmsp.dto.AcademicsDtos.*;
 import vn.lmsp.enums.ClassStatus;
 import vn.lmsp.enums.EnrollmentStatus;
+import vn.lmsp.enums.UserStatus;
 import vn.lmsp.mapper.AcademicsMapper;
 import vn.lmsp.model.Course;
 import vn.lmsp.model.LmsClass;
@@ -51,7 +52,7 @@ public class AcademicsService {
     @Transactional(readOnly = true)
     public CourseView course(Long id, Long actorId, boolean admin) {
         Course item = courseEntity(id);
-        if (!admin && !classes.existsByCourse_IdAndLecturer_Id(id, actorId)) throw forbidden();
+        if (!admin && !classes.existsByCourse_IdAndLecturers_Id(id, actorId)) throw forbidden();
         return mapper.toCourseView(item);
     }
 
@@ -83,9 +84,12 @@ public class AcademicsService {
     public ClassView createClass(ClassInput input, Long actorId) {
         requireText(input.code(), "code"); requireText(input.name(), "name"); requireText(input.semester(), "semester");
         validateSettings(input.max_students(), input.enroll_from(), input.enroll_until(), input.room(), input.schedule(), 0);
-        LmsClass item = classes.save(new LmsClass(courseEntity(input.course_id()), input.code().trim(), input.name().trim(),
-                input.semester().trim(), lecturer(input.lecturer_id()), input.grade_policy(), input.max_students(),
-                input.enroll_from(), input.enroll_until(), input.room(), input.schedule(), input.status()));
+        List<User> assigned = lecturers(input.lecturer_ids(), List.of());
+        LmsClass item = new LmsClass(courseEntity(input.course_id()), input.code().trim(), input.name().trim(),
+                input.semester().trim(), assigned.getFirst(), input.grade_policy(), input.max_students(),
+                input.enroll_from(), input.enroll_until(), input.room(), input.schedule(), input.status());
+        item.assignLecturers(assigned);
+        item = classes.save(item);
         audit.record(actorId, "class.create", "class", item.getId(), null, mapper.toClassAuditValue(item));
         return mapper.toClassView(item, 0);
     }
@@ -93,7 +97,7 @@ public class AcademicsService {
     @Transactional(readOnly = true)
     public ClassView getClass(Long id, Long userId, boolean admin, boolean lecturerRole) {
         LmsClass item = classEntity(id);
-        if (lecturerRole && !admin && !item.getLecturerId().equals(userId)) throw forbidden();
+        if (lecturerRole && !admin && !item.hasLecturer(userId)) throw forbidden();
         boolean unrestricted = admin || lecturerRole;
         if (!unrestricted && item.getStatus() == ClassStatus.locked) throw failure("CLASS_LOCKED", "Lớp học đang bị khóa", HttpStatus.FORBIDDEN);
         if (!unrestricted && !enrollments.existsByLmsClass_IdAndStudent_IdAndStatus(id, userId, EnrollmentStatus.active))
@@ -112,8 +116,8 @@ public class AcademicsService {
         String schedule = input.schedule() == null ? item.getSchedule() : nullableText(input.schedule());
         validateSettings(capacity, from, until, room, schedule, currentCount);
         Map<String, Object> old = mapper.toClassAuditValue(item);
-        User lecturer = input.lecturer_id() == null ? null : lecturer(input.lecturer_id());
-        item.update(input.code(), input.name(), input.semester(), lecturer, input.grade_policy(), input.max_students(),
+        if (input.lecturer_ids() != null) item.assignLecturers(lecturers(input.lecturer_ids(), item.getLecturerIds()));
+        item.update(input.code(), input.name(), input.semester(), input.grade_policy(), input.max_students(),
                 input.enroll_from(), input.enroll_until(), input.room(), input.schedule(), input.status());
         item.updateEnrollmentSettings(capacity, from, until, room, schedule, input.status() == null ? item.getStatus() : input.status());
         audit.record(actorId, "class.update", "class", id, old, mapper.toClassAuditValue(item));
@@ -144,10 +148,17 @@ public class AcademicsService {
     private Course courseEntity(Long id) { return courses.findById(id).orElseThrow(() -> notFound("Không tìm thấy khóa học")); }
     private LmsClass classEntity(Long id) { return classes.findById(id).orElseThrow(() -> notFound("Không tìm thấy lớp học")); }
     private User user(Long id) { return users.findWithRolesById(id).orElseThrow(() -> notFound("Không tìm thấy người dùng")); }
-    private User lecturer(Long id) {
-        User value = user(id);
-        if (value.getRoles().stream().noneMatch(r -> r.getName().equals("lecturer"))) throw failure("VALIDATION_ERROR", "Tài khoản không có vai trò giảng viên", HttpStatus.BAD_REQUEST);
-        return value;
+    private List<User> lecturers(List<Long> ids, List<Long> current) {
+        if (ids == null || ids.isEmpty() || ids.stream().anyMatch(id -> id == null || id < 1)
+                || ids.stream().distinct().count() != ids.size())
+            throw failure("VALIDATION_ERROR", "Chọn ít nhất một giảng viên, không trùng mã", HttpStatus.BAD_REQUEST);
+        return ids.stream().sorted().map(id -> {
+            User value = user(id);
+            if (value.getRoles().stream().noneMatch(r -> r.getName().equals("lecturer"))
+                    || value.getStatus() != UserStatus.active && !current.contains(id))
+                throw failure("VALIDATION_ERROR", "Cần tài khoản giảng viên đang hoạt động", HttpStatus.BAD_REQUEST);
+            return value;
+        }).toList();
     }
     private static void validateSettings(Integer capacity, LocalDateTime from, LocalDateTime until, String room, String schedule, long count) {
         if (capacity != null && capacity < count) throw failure("VALIDATION_ERROR", "Sức chứa không được thấp hơn sĩ số hiện tại", HttpStatus.BAD_REQUEST);

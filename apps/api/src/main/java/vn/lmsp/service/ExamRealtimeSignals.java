@@ -61,7 +61,7 @@ public class ExamRealtimeSignals {
         data.put("session_id", session.getId());
         data.put("student_id", session.getStudentId());
         data.put("change", change);
-        realtime.toUsersAndAdmins(List.of(session.getAssignment().getLecturerId()), SESSION_CHANGED, data);
+        realtime.toUsersAndAdmins(session.getAssignment().getLmsClass().getLecturerIds(), SESSION_CHANGED, data);
     }
 
     private void timingChanged(AttemptSession session) {

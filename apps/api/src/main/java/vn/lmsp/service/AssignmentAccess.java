@@ -21,7 +21,7 @@ public class AssignmentAccess {
 
     public LmsClass lecturerClass(Long id, Long actor, boolean admin) {
         LmsClass item = classes.findById(id).orElseThrow(() -> notFound("Không tìm thấy lớp học"));
-        if (!admin && !item.getLecturerId().equals(actor)) throw denied();
+        if (!admin && !item.hasLecturer(actor)) throw denied();
         return item;
     }
     public LmsClass studentClass(Long id, Long studentId) {
@@ -33,7 +33,7 @@ public class AssignmentAccess {
     public Assignment lecturerAssignment(Long id, Long actor, boolean admin, boolean lock) {
         Assignment item = (lock ? assignments.findLockedById(id) : assignments.findById(id))
                 .orElseThrow(() -> notFound("Không tìm thấy bài tập"));
-        if (!admin && !item.getLecturerId().equals(actor)) throw denied();
+        if (!admin && !item.getLmsClass().hasLecturer(actor)) throw denied();
         return item;
     }
     public Assignment studentAssignment(Long id, Long studentId, boolean lock) {

@@ -51,13 +51,19 @@ export interface Course {
   created_at: string;
 }
 
+export interface ClassLecturer {
+  id: number;
+  full_name: string;
+  avatar_url?: string | null;
+}
+
 export interface ClassSummary {
   id: number;
   course_id: number;
   code: string;
   name: string;
   semester: string;
-  lecturer_id: number;
+  lecturers: ClassLecturer[];
   lecturer_name: string;
   course_code: string;
   course_name: string;
