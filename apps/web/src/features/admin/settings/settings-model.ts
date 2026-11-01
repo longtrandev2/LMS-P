@@ -10,6 +10,7 @@ export type PenaltyKey = "absent_penalty" | "late_penalty" | "excused_penalty";
 
 export interface SettingsDraft {
   allowed_languages: string[];
+  inactivity_enabled: boolean;
   ints: Record<IntKey, string>;
   weights: Record<GradeComponent, string>;
   max_absences: string;
@@ -36,6 +37,7 @@ export function draftFrom(map: SettingsMap): SettingsDraft {
   const maintenance = (map.maintenance?.value ?? { enabled: false }) as MaintenanceSetting;
   return {
     allowed_languages: (map.allowed_languages?.value as string[] | undefined) ?? [],
+    inactivity_enabled: Number(map.inactivity_timeout_minutes?.value ?? 30) > 0,
     ints: Object.fromEntries(INT_KEYS.map((k) => [k, map[k]?.value == null ? "" : String(map[k]?.value)])) as Record<IntKey, string>,
     weights: Object.fromEntries(GRADE_COMPONENTS.map((c) => [c, String(policy?.weights[c] ?? "")])) as Record<GradeComponent, string>,
     max_absences: policy?.attendance.max_absences == null ? "" : String(policy.attendance.max_absences),
@@ -51,6 +53,7 @@ export function valuesFrom(draft: SettingsDraft): Record<SettingKey, unknown> {
   return {
     allowed_languages: LANG_ORDER.filter((l) => draft.allowed_languages.includes(l)),
     ...ints,
+    inactivity_timeout_minutes: draft.inactivity_enabled ? ints.inactivity_timeout_minutes : 0,
     default_grade_policy: {
       weights: Object.fromEntries(GRADE_COMPONENTS.map((c) => [c, int(draft.weights[c])])),
       attendance: {
@@ -84,7 +87,13 @@ export type ClientErrors = Partial<Record<string, string>>;
 export function validateDraft(draft: SettingsDraft): ClientErrors {
   const errors: ClientErrors = {};
   if (draft.allowed_languages.length === 0) errors.allowed_languages = "Chọn ít nhất một ngôn ngữ.";
-  for (const k of INT_KEYS) if (!isIntText(draft.ints[k])) errors[k] = "Nhập số nguyên dương.";
+  for (const k of INT_KEYS) {
+    if (k === "inactivity_timeout_minutes") continue;
+    if (!isIntText(draft.ints[k])) errors[k] = "Nhập số nguyên dương.";
+  }
+  if (draft.inactivity_enabled && (!isIntText(draft.ints.inactivity_timeout_minutes)
+      || Number(draft.ints.inactivity_timeout_minutes) < 1 || Number(draft.ints.inactivity_timeout_minutes) > 1440))
+    errors.inactivity_timeout_minutes = "Nhập số nguyên từ 1 đến 1440 phút.";
   const n = (k: IntKey) => Number(draft.ints[k]);
   if (!errors.default_time_limit_ms && !errors.max_time_limit_ms && n("default_time_limit_ms") > n("max_time_limit_ms"))
     errors.default_time_limit_ms = "Không được lớn hơn thời gian tối đa.";
