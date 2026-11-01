@@ -70,26 +70,38 @@ export function ProfilePasswordSection({ user, onSaved }: { user: CurrentUser; o
   const setSession = useAuthStore((state) => state.setSession);
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [saving, setSaving] = useState(false);
+  const passwordMismatch = confirmPassword.length > 0 && confirmPassword !== newPassword;
+  const canSave = !!oldPassword && newPassword.length >= 8 && newPassword.length <= 128 && confirmPassword === newPassword;
   async function save() {
+    if (saving || !canSave) return;
     setSaving(true);
     try {
       const result = await api.patch<CurrentUser>("/users/me", {
         full_name: user.full_name, phone: (user.phone ?? "").trim(), old_password: oldPassword, new_password: newPassword,
       });
-      onSaved(result); setOldPassword(""); setNewPassword("");
+      onSaved(result); setOldPassword(""); setNewPassword(""); setConfirmPassword("");
       setSession(await api.post<LoginResponse>("/auth/login", { email: user.email, password: newPassword }));
       toast.success("Đã đổi mật khẩu.");
     } catch (error) { toast.error(errorText(error)); } finally { setSaving(false); }
   }
   return (
     <Section id="profile-password" title="Đổi mật khẩu" description="Sau khi đổi, các phiên đăng nhập khác sẽ bị đăng xuất."
-      onSubmit={save} saving={saving} canSave={!!oldPassword && newPassword.length >= 8}>
-      <Field id="old-password" label="Mật khẩu hiện tại">
-        <Input id="old-password" type="password" autoComplete="current-password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} />
-      </Field>
+      onSubmit={save} saving={saving} canSave={canSave}>
+      <div className="sm:col-span-2">
+        <Field id="old-password" label="Mật khẩu hiện tại">
+          <Input id="old-password" type="password" autoComplete="current-password" required value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} />
+        </Field>
+      </div>
       <Field id="new-password" label="Mật khẩu mới" hint="Tối thiểu 8 ký tự.">
-        <Input id="new-password" type="password" autoComplete="new-password" minLength={8} maxLength={128} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+        <Input id="new-password" type="password" autoComplete="new-password" required minLength={8} maxLength={128} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+      </Field>
+      <Field id="confirm-password" label="Xác nhận mật khẩu mới">
+        <Input id="confirm-password" type="password" autoComplete="new-password" required minLength={8} maxLength={128}
+          value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
+          aria-invalid={passwordMismatch} aria-describedby={passwordMismatch ? "confirm-password-error" : undefined} />
+        {passwordMismatch ? <p id="confirm-password-error" role="alert" className="text-xs text-destructive">Mật khẩu xác nhận không khớp với mật khẩu mới.</p> : null}
       </Field>
     </Section>
   );

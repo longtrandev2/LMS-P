@@ -81,11 +81,13 @@ Frontend dùng React + TypeScript (SPA); backend dùng Java + Spring Boot. MySQL
 |---|---|---|
 | FR-AUTH-01 | M | Đăng nhập email + mật khẩu (argon2id) → access token (15m) + refresh token (7d, rotate). Sai 5 lần liên tiếp/khóa tạm 15 phút theo tài khoản |
 | FR-AUTH-02 | M | Refresh → cấp cặp mới + revoke cũ; logout revoke refresh |
-| FR-AUTH-03 | M | Hồ sơ cá nhân: GET /auth/me; sửa họ tên, SĐT; đổi mật khẩu; **upload ảnh đại diện** (jpg/png/webp ≤2MB, lưu file trong `storage/avatars/<user_id>`, không lưu binary trong DB) |
+| FR-AUTH-03 | M | Hồ sơ cá nhân: GET /auth/me; sửa họ tên, SĐT; đổi mật khẩu (frontend yêu cầu nhập lại mật khẩu mới để xác nhận, báo lỗi khi không khớp và chỉ gửi yêu cầu khi hai giá trị giống nhau; không gửi trường xác nhận lên API); **upload ảnh đại diện** (jpg/png/webp ≤2MB, lưu file trong `storage/avatars/<user_id>`, không lưu binary trong DB) |
 | FR-AUTH-04 | M | RBAC 3 role; user có thể có nhiều role; kiểm tra quyền ở tầng service (không chỉ UI) |
 | FR-AUTH-05 | M | Admin: CRUD user, gán role, import CSV hàng loạt, reset mật khẩu, khóa/mở tài khoản (kèm lý do → audit; khóa → revoke toàn bộ refresh token). **Chi tiết user**: roles, lớp đang học (nếu SV), lớp đang dạy (nếu GV); filter theo role/trạng thái, search tên/email/mã SV |
 | FR-AUTH-06 | S | WebSocket xác thực bằng token khi kết nối |
 | FR-AUTH-07 | S | Admin (nên có): import CSV có bước **preview + validate trước commit** (báo trùng email/mã SV từng dòng, file mẫu), xuất CSV danh sách user, ép đăng xuất 1 user bất kỳ (revoke sessions) |
+
+Nhãn mã định danh trên frontend (tạo/sửa tài khoản, chi tiết người dùng và hồ sơ cá nhân) theo vai trò ưu tiên: có `admin` → “Mã quản trị viên”; nếu không có admin nhưng có `lecturer` → “Mã giảng viên”; còn lại có `student` → “Mã sinh viên”. Chưa chọn vai trò thì dùng “Mã người dùng”. Danh sách nhiều vai trò và ô tìm kiếm dùng tên chung “Mã người dùng”. API và dữ liệu tiếp tục dùng trường `student_code` hiện có.
 
 ### M2 — Học phần & lớp học phần
 | ID | Ưu tiên | Yêu cầu |

@@ -16,6 +16,7 @@
 - Không có trang giới thiệu: `/` chuyển thẳng vào ứng dụng hoặc màn đăng nhập.
 - Trang danh sách: thanh công cụ → bảng có phân trang. Trang lớp: header lớp + tab ngang (Tổng quan, Học liệu, Bài tập, Sinh viên, Kết quả).
 - Trang chủ theo vai trò có khối "Sắp đến hạn" và các lớp.
+- Form đổi mật khẩu: mật khẩu hiện tại ở hàng riêng; mật khẩu mới và xác nhận mật khẩu mới nằm cạnh nhau từ breakpoint `sm`, xếp dọc trên màn hình nhỏ.
 - Soạn câu hỏi, soạn bài, làm quiz, workspace code, chi tiết bài nộp là trang riêng (`docs/assessment-spec.md` §8), không dùng dialog.
 - Không thêm số liệu minh họa; mọi số lấy từ API.
 

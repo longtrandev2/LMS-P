@@ -52,7 +52,7 @@ export function UsersTable({ users, onEdit, onResetPassword, onChanged }: UsersT
       <TableHeader>
         <TableRow>
           <TableHead>Người dùng</TableHead>
-          <TableHead className="hidden md:table-cell">Mã SV</TableHead>
+          <TableHead className="hidden md:table-cell">Mã người dùng</TableHead>
           <TableHead className="hidden sm:table-cell">Vai trò</TableHead>
           <TableHead>Trạng thái</TableHead>
           <TableHead className="hidden lg:table-cell">Đăng nhập cuối</TableHead>

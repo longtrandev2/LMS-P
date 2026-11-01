@@ -8,6 +8,7 @@ import { api } from "@/lib/api";
 import { errorText } from "@/lib/error-messages";
 import type { CurrentUser } from "@/types/api";
 import { UserAvatar } from "@/features/users/user-avatar";
+import { userCodeLabel } from "@/features/users/user-code-label";
 
 /** Cột trái trang hồ sơ: avatar, tên, vai trò, đổi/xóa ảnh — không khung, kiểu trang settings của Frappe. */
 export function ProfileIdentity({ user, onUpdated }: { user: CurrentUser; onUpdated: (user: CurrentUser) => void }) {
@@ -58,7 +59,7 @@ export function ProfileIdentity({ user, onUpdated }: { user: CurrentUser; onUpda
       </div>
       {user.student_code ? (
         <dl className="space-y-1 border-t pt-4 text-sm">
-          <dt className="text-xs text-muted-foreground">Mã sinh viên</dt>
+          <dt className="text-xs text-muted-foreground">{userCodeLabel(user.roles)}</dt>
           <dd className="font-mono">{user.student_code}</dd>
         </dl>
       ) : null}

@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Badge } from "@/components/ui/badge";
 import { ROLE_LABELS, StatusBadge } from "@/components/role-status-badges";
 import { UserIdentity } from "@/features/users/user-avatar";
+import { userCodeLabel } from "@/features/users/user-code-label";
 import { api } from "@/lib/api";
 import type { User, UserDetail } from "@/types/api";
 
@@ -32,7 +33,7 @@ export function UserDetailsDialog({ user, isOnline, onOpenChange }: { user: User
           <div className="space-y-4">
             <UserIdentity name={query.data.user.full_name} email={query.data.user.email} isOnline={isOnline} />
             <dl className="grid grid-cols-[7rem_1fr] gap-x-4 gap-y-2 text-sm">
-              <dt className="text-muted-foreground">Mã sinh viên</dt><dd className="font-mono text-xs leading-5">{query.data.user.student_code ?? "—"}</dd>
+              <dt className="text-muted-foreground">{userCodeLabel(query.data.user.roles)}</dt><dd className="font-mono text-xs leading-5">{query.data.user.student_code ?? "—"}</dd>
               <dt className="text-muted-foreground">Điện thoại</dt><dd>{query.data.user.phone ?? "—"}</dd>
               <dt className="text-muted-foreground">Vai trò</dt><dd className="flex flex-wrap gap-1">{query.data.user.roles.map((role) => <Badge key={role}>{ROLE_LABELS[role]}</Badge>)}</dd>
               <dt className="text-muted-foreground">Trạng thái</dt>
