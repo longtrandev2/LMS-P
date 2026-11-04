@@ -13,8 +13,29 @@ const WORKERS = arg("workers", "1,2,3").split(",").map(Number);
 const N = Number(arg("n", "30"));
 const LANGS = arg("langs", "python,cpp").split(",");
 const STUDENT = arg("student", "sv03@lms.local");
+// sum2: "Thi: tổng hai số" (python/cpp/java); sumn: "Code: tổng dãy số" (python/c/cpp/java, test 1000 số)
+const PROBLEM = arg("problem", "sum2");
+const PROBLEMS = {
+  sum2: { prefix: "Đọc hai số nguyên", title: "[Đo tải] Chấm code" },
+  sumn: { prefix: "Cho dãy gồm", title: "[Đo tải] Chấm code — tổng dãy" },
+};
 const infra = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../infra");
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+// String.raw: giữ nguyên chuỗi thoát (\n) bên trong mã C/C++.
+const CODE_SUMN = {
+  python: String.raw`n = int(input())
+print(sum(map(int, input().split())))
+`,
+  c: String.raw`#include <stdio.h>
+int main(void){int n;long long s=0,x;if(scanf("%d",&n)!=1)return 0;for(int i=0;i<n;i++){scanf("%lld",&x);s+=x;}printf("%lld\n",s);return 0;}
+`,
+  cpp: String.raw`#include <bits/stdc++.h>
+int main(){int n;long long s=0,x;std::cin>>n;while(n--){std::cin>>x;s+=x;}std::cout<<s<<"\n";}
+`,
+  java: String.raw`import java.util.*;
+public class Main{public static void main(String[] a){Scanner s=new Scanner(System.in);int n=s.nextInt();long t=0;for(int i=0;i<n;i++)t+=s.nextLong();System.out.println(t);}}
+`,
+};
 const CODE = {
   python: "a, b = map(int, input().split())\nprint(a + b)\n",
   cpp: "#include <bits/stdc++.h>\nint main(){long long a,b;std::cin>>a>>b;std::cout<<a+b<<\"\\n\";}\n",
@@ -35,9 +56,9 @@ async function target(lec) {
   const klass = items(await api("/classes", { token: lec })).find((c) => c.code === "NET101-L01");
   const bank = items(await api("/question-banks", { token: lec })).find((b) => b.name === "Ngân hàng đề NET101");
   const question = items(await api(`/questions?bank_id=${bank.id}&limit=100`, { token: lec }))
-    .find((q) => q.type === "programming" && q.content.startsWith("Đọc hai số nguyên"));
+    .find((q) => q.type === "programming" && q.content.startsWith(PROBLEMS[PROBLEM].prefix));
   if (!question) throw new Error("Không tìm thấy câu 'Thi: tổng hai số' — chạy seed-demo trước");
-  const assignment = await ensureAssignment(lec, klass.id, { title: "[Đo tải] Chấm code", description: "Bài dùng cho scripts/load-grading.mjs",
+  const assignment = await ensureAssignment(lec, klass.id, { title: PROBLEMS[PROBLEM].title, description: "Bài dùng cho scripts/load-grading.mjs",
     category: "assignment", due_at: days(365), max_attempts: null, score_policy: "best", review_mode: "after_submit",
     review_shows_answers: true, shuffle_questions: false, shuffle_options: false,
     questions: [{ question_id: question.id, points: 1, position: 1 }] }, "Bài đo tải");
@@ -49,7 +70,7 @@ async function round(stu, { assignment, question }, lang, n = N) {
   const sent = await Promise.all(Array.from({ length: n }, async () => {
     const start = Date.now();
     const r = await api(`/assignments/${assignment.id}/questions/${question.id}/submissions`,
-      { method: "POST", token: stu, idempotencyKey: crypto.randomUUID(), body: { language: lang, source_code: CODE[lang] } });
+      { method: "POST", token: stu, idempotencyKey: crypto.randomUUID(), body: { language: lang, source_code: (PROBLEM === "sumn" ? CODE_SUMN : CODE)[lang] } });
     return { id: r.submission_id, start };
   }));
   const pending = new Map(sent.map((s) => [s.id, s]));
