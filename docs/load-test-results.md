@@ -4,7 +4,7 @@
 
 | Worker | Ngôn ngữ | TB (ms) | p50 | p95 | Xong hết 30 bài (ms) | Bài/phút | Chạy trong sandbox TB (ms) | Kết quả |
 |---|---|---|---|---|---|---|---|---|
-| 1 | Python | 26 127 | 26 264 | 44 824 | 46 125 | 39 | — | AC 30 |
+| 1 | Python | 26 127 | 26 264 | 44 824 | 46 125 | 39 | 1 254 | AC 30 |
 | 1 | C++ | 90 255 | 91 634 | 164 628 | 170 901 | 11 | 5 415 | AC 30 |
 | 2 | Python | 14 732 | 14 076 | 26 729 | 27 062 | 67 | 1 463 | AC 30 |
 | 2 | C++ | 52 305 | 51 116 | 103 522 | 103 840 | 17 | 6 472 | AC 30 |
@@ -13,7 +13,7 @@
 
 ## Nhận xét
 
-- **Python:** 1 → 2 worker tăng thông lượng ×1,7 (39 → 67 bài/phút). Lên 3 worker lại **giảm** (49 bài/phút) vì laptop 4 nhân bị tranh CPU: thời gian chạy mỗi bài trong sandbox tăng gấp đôi (1,5 s → 3,1 s).
+- **Python:** 1 → 2 worker tăng thông lượng ×1,7 (39 → 67 bài/phút). Lên 3 worker lại **giảm** (49 bài/phút) vì laptop 4 nhân bị tranh CPU: thời gian chạy mỗi bài trong sandbox tăng gấp đôi (1,3 s → 1,5 s → 3,1 s với 1 → 2 → 3 worker).
 - **C++:** biên dịch nặng nên thông lượng thấp hơn nhiều (11 → 17 → 25 bài/phút) nhưng vẫn tăng tới 3 worker; thời gian chạy mỗi bài tăng dần (5,4 → 6,8 s) do tranh CPU.
 - **Không có TLE/sai oan** ở mọi cấu hình (180/180 AC) với time limit 1 s.
 - Độ trễ trung bình chủ yếu là **thời gian chờ hàng đợi** khi 30 bài đến cùng lúc, không phải thời gian chấm.
